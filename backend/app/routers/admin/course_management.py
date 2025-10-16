@@ -1,173 +1,237 @@
-from fastapi import APIRouter, HTTPException, Form, Depends, Request
+from fastapi import (
+    APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
+)
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from uuid import uuid4
-
-from app.models.course import Course
-from app.models.user import User
+from datetime import datetime
+from pathlib import Path
+from app.database.connection import get_db
 from app.models.academic_year import AcademicYear
 from app.models.major import Major
-from app.database.connection import get_db
 
-# ============================================================
-# ⚙️ Router cấu hình
-# ============================================================
-course_router = APIRouter(prefix="/admin/Course", tags=["Admin - Course Management"])
+from fastapi import (
+    APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
+)
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+from datetime import datetime
+from pathlib import Path
+
+from app.database.connection import get_db
+from app.services import course_service
+from app.models.course import Course
+from app.models.user import User
+
+# =====================================================
+# 🧭 Template Config
+# =====================================================
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
+    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/Course"
 )
 
-# ============================================================
-# 🧩 1️⃣ Trang quản lý khóa học
-# ============================================================
+# =====================================================
+# 🚀 Router (đặt tên đồng bộ với hệ thống)
+# =====================================================
+course_router = APIRouter(
+    prefix="/admin/Course",
+    tags=["Admin - Course Management"]
+)
+
+# =====================================================
+# 📋 1️⃣ Danh sách khóa học
+# =====================================================
 @course_router.get("/manage", response_class=HTMLResponse)
 async def manage_courses(request: Request, db: Session = Depends(get_db)):
-    courses = (
-        db.query(Course)
-        .order_by(Course.created_at.desc())
-        .all()
-    )
+    """Hiển thị danh sách tất cả khóa học trong hệ thống."""
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+
+    if not user_id or role != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    courses = course_service.get_all_courses(db, user_id, "admin")
+
     return templates.TemplateResponse(
-        "admin/Course/manage.html",
-        {"request": request, "courses": courses, "active_page": "course"}
+        "manage.html",
+        {
+            "request": request,
+            "courses": courses,
+            "active_page": "course",
+            "now": datetime.now(),
+        },
     )
 
-# ============================================================
-# ➕ 2️⃣ Trang thêm khóa học mới (GET)
-# ============================================================
+
+# =====================================================
+# ➕ 2️⃣ Trang tạo khóa học (GET)
+# =====================================================
 @course_router.get("/create", response_class=HTMLResponse)
-async def create_course_page(request: Request, db: Session = Depends(get_db)):
+async def create_page(request: Request, db: Session = Depends(get_db)):
+    """Trang thêm khóa học mới."""
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
     teachers = db.query(User).filter(User.role == "teacher").all()
     years = db.query(AcademicYear).all()
     majors = db.query(Major).all()
 
     return templates.TemplateResponse(
-        "admin/Course/create.html",
+        "create.html",
         {
             "request": request,
             "teachers": teachers,
             "years": years,
             "majors": majors,
-            "active_page": "course"
-        }
+            "active_page": "course",
+        },
     )
 
-# ➕ 2️⃣ Thêm khóa học mới (POST)
-@course_router.post("/add")
-async def add_course(
-    course_code: str = Form(...),
+
+# =====================================================
+# 💾 3️⃣ Xử lý tạo khóa học (POST)
+# =====================================================
+@course_router.post("/create")
+async def create_course(
+    request: Request,
+    db: Session = Depends(get_db),
     course_name: str = Form(...),
-    description: str = Form(None),
-    credit_hours: int = Form(...),
-    teacher_id: str = Form(None),
-    academic_year_id: str = Form(None),
-    major_id: str = Form(None),
-    start_date: str = Form(None),
-    end_date: str = Form(None),
-    db: Session = Depends(get_db)
+    description: str = Form(""),
+    credit_hours: int = Form(3),
+    subject: str = Form("Other"),
+    grade_level: int | None = Form(None),
+    teacher_id: str | None = Form(None),
+    academic_year_id: str | None = Form(None),
+    major_id: str | None = Form(None),
+    start_date: str | None = Form(None),
+    end_date: str | None = Form(None),
+    thumbnail: UploadFile | None = File(None),
 ):
-    try:
-        new_course = Course(
-            id=str(uuid4()),
-            course_code=course_code,
-            course_name=course_name,
-            description=description,
-            credit_hours=credit_hours,
-            teacher_id=teacher_id,
-            academic_year_id=academic_year_id,
-            major_id=major_id,
-            status="draft",
-        )
+    """Thêm khóa học mới (Admin có thể chọn giáo viên)."""
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
 
-        # Xử lý ngày bắt đầu / kết thúc (nếu có)
-        if start_date:
-            new_course.start_date = start_date
-        if end_date:
-            new_course.end_date = end_date
+    result = await course_service.create_course(
+        db, teacher_id or "", course_name, description,
+        credit_hours, subject, grade_level, thumbnail,
+        role="admin"
+    )
 
-        db.add(new_course)
-        db.commit()
-        db.refresh(new_course)
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
 
-        return RedirectResponse(url="/admin/Course/manage", status_code=303)
+    return RedirectResponse(url="/admin/Course/manage", status_code=303)
 
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Lỗi khi thêm khóa học: {e}")
 
-# ============================================================
-# ✏️ 3️⃣ Trang chỉnh sửa khóa học (GET)
-# ============================================================
+# =====================================================
+# ✏️ 4️⃣ Trang chỉnh sửa khóa học (GET)
+# =====================================================
 @course_router.get("/edit/{course_id}", response_class=HTMLResponse)
-async def edit_course_page(course_id: str, request: Request, db: Session = Depends(get_db)):
-    course = db.query(Course).filter(Course.id == course_id).first()
+async def page_edit(course_id: str, request: Request, db: Session = Depends(get_db)):
+    """Hiển thị form chỉnh sửa khóa học."""
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+
+    if not user_id or role != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    course = course_service.get_course_owned(db, user_id, course_id, role="admin")
     if not course:
-        raise HTTPException(status_code=404, detail="Khóa học không tồn tại")
+        raise HTTPException(status_code=404, detail="Không tìm thấy khóa học.")
 
     teachers = db.query(User).filter(User.role == "teacher").all()
     years = db.query(AcademicYear).all()
     majors = db.query(Major).all()
 
     return templates.TemplateResponse(
-        "admin/Course/edit.html",
+        "edit.html",
         {
             "request": request,
             "course": course,
             "teachers": teachers,
             "years": years,
             "majors": majors,
-            "active_page": "course"
-        }
+            "active_page": "course",
+        },
     )
 
-# ✏️ 3️⃣ Cập nhật khóa học (POST)
+
+# =====================================================
+# 💾 5️⃣ Cập nhật khóa học (POST)
+# =====================================================
 @course_router.post("/edit/{course_id}")
-async def edit_course_action(
+async def update_course_action(
     course_id: str,
-    course_code: str = Form(...),
+    request: Request,
+    db: Session = Depends(get_db),
     course_name: str = Form(...),
-    description: str = Form(None),
-    credit_hours: int = Form(...),
-    teacher_id: str = Form(None),
-    academic_year_id: str = Form(None),
-    major_id: str = Form(None),
-    start_date: str = Form(None),
-    end_date: str = Form(None),
-    status: str = Form("draft"),
-    db: Session = Depends(get_db)
+    description: str = Form(""),
+    credit_hours: int = Form(3),
+    status_str: str = Form("draft"),
+    subject: str = Form("Other"),
+    grade_level: int | None = Form(None),
+    teacher_id: str | None = Form(None),
+    thumbnail: UploadFile | None = File(None),
 ):
-    course = db.query(Course).filter(Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=404, detail="Khóa học không tồn tại")
+    """Cập nhật thông tin khóa học (admin)."""
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
 
-    course.course_code = course_code
-    course.course_name = course_name
-    course.description = description
-    course.credit_hours = credit_hours
-    course.teacher_id = teacher_id
-    course.academic_year_id = academic_year_id
-    course.major_id = major_id
-    course.status = status
+    result = await course_service.update_course(
+        db, teacher_id or "", course_id,
+        course_name, description, credit_hours,
+        status_str, subject, grade_level, thumbnail,
+        role="admin"
+    )
 
-    if start_date:
-        course.start_date = start_date
-    if end_date:
-        course.end_date = end_date
+    if isinstance(result, dict) and "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
 
-    db.commit()
-    db.refresh(course)
     return RedirectResponse(url="/admin/Course/manage", status_code=303)
 
-# ============================================================
-# ❌ 4️⃣ Xóa khóa học
-# ============================================================
-@course_router.get("/delete/{course_id}")
-async def delete_course(course_id: str, db: Session = Depends(get_db)):
+
+# =====================================================
+# ❌ 6️⃣ Xóa khóa học
+# =====================================================
+@course_router.post("/delete/{course_id}")
+async def delete_course(course_id: str, request: Request, db: Session = Depends(get_db)):
+    """Xóa khóa học (admin)."""
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+
+    if not user_id or role != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    ok = course_service.delete_course(db, user_id, course_id, role="admin")
+    if not ok:
+        raise HTTPException(status_code=404, detail="Không thể xóa khóa học.")
+
+    return RedirectResponse(url="/admin/Course/manage", status_code=303)
+
+
+# =====================================================
+# 📘 7️⃣ Xem chi tiết khóa học
+# =====================================================
+@course_router.get("/detail/{course_id}", response_class=HTMLResponse)
+async def course_detail(course_id: str, request: Request, db: Session = Depends(get_db)):
+    """Hiển thị chi tiết khóa học."""
+    if request.session.get("role") != "admin":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
-        raise HTTPException(status_code=404, detail="Khóa học không tồn tại")
+        raise HTTPException(status_code=404, detail="Không tìm thấy khóa học.")
 
-    db.delete(course)
-    db.commit()
-    return RedirectResponse(url="/admin/Course/manage", status_code=303)
+    teacher = db.query(User).filter(User.id == course.teacher_id).first()
+    return templates.TemplateResponse(
+        "detail.html",
+        {
+            "request": request,
+            "course": course,
+            "teacher": teacher,
+            "active_page": "course",
+            "now": datetime.now(),
+        },
+    )
