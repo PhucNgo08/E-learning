@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>📘 Quản lý lớp học</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="text-primary mb-4"><i class="bi bi-mortarboard-fill me-2"></i>Danh sách lớp học</h2>
+
+    <a href="/admin/Class/create" class="btn btn-success mb-3">
+      <i class="bi bi-plus-circle"></i> Thêm lớp học mới
+    </a>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-primary text-center">
+            <tr>
+              <th>#</th>
+              <th>Mã lớp</th>
+              <th>Tên lớp</th>
+              <th>Ngành</th>
+              <th>Năm học</th>
+              <th>GV chủ nhiệm</th>
+              <th>Số SV</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in classes %}
+            <tr>
+              <td class="text-center">{{ loop.index }}</td>
+              <td>{{ c.class_code }}</td>
+              <td>{{ c.class_name }}</td>
+              <td>{{ c.major.major_name if c.major else "—" }}</td>
+              <td>{{ c.academic_year.year_name if c.academic_year else "—" }}</td>
+              <td>{{ c.homeroom_teacher.full_name if c.homeroom_teacher else "Chưa phân công" }}</td>
+              <td class="text-center">{{ c.current_students }}/{{ c.max_students }}</td>
+              <td class="text-center">
+                {% if c.status == 'active' %}
+                  <span class="badge bg-success">Đang học</span>
+                {% elif c.status == 'completed' %}
+                  <span class="badge bg-secondary">Hoàn thành</span>
+                {% elif c.status == 'open_for_enrollment' %}
+                  <span class="badge bg-info text-dark">Mở đăng ký</span>
+                {% else %}
+                  <span class="badge bg-warning text-dark">Kế hoạch</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="/admin/Class/edit/{{ c.id }}" class="btn btn-sm btn-outline-primary">✏️</a>
+                <a href="/admin/Class/delete/{{ c.id }}" class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Bạn có chắc muốn xóa lớp này không?');">🗑️</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="9" class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-3 d-block mb-2"></i>Chưa có lớp học nào.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="/admin/dashboard" class="btn btn-secondary mt-4">
+      <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
+    </a>
+  </div>
+</body>
+</html>

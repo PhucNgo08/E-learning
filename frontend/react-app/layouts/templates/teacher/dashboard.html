@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>🎓 Bảng điều khiển giáo viên</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background: #f5f8ff;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Navbar */
+    .navbar {
+      background: linear-gradient(90deg, #0056d2, #003087);
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+      font-weight: 500;
+    }
+    .nav-link.active {
+      border-bottom: 2px solid #ffc107;
+    }
+
+    /* Dashboard cards */
+    .dashboard-stat {
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+    }
+    .dashboard-stat:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    }
+
+    .dashboard-stat i {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: #003087;
+    }
+
+    .recent-section h5 {
+      color: #003087;
+      font-weight: 600;
+    }
+
+    footer {
+      background: #003087;
+      color: #fff;
+      padding: 15px 0;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    canvas {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#">🎓 E-Learning - Giáo viên</a>
+      <div class="collapse navbar-collapse justify-content-end">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a href="/teacher/dashboard" class="nav-link active">Dashboard</a></li>
+          <li class="nav-item"><a href="/teacher/courses/list" class="nav-link">Khóa học</a></li>
+       
+          <li class="nav-item"><a href="/teacher/materials/list" class="nav-link">Tài liệu</a></li>
+          <li class="nav-item"><a href="/teacher/reviews/manage" class="nav-link">Đánh giá</a></li>
+          <li class="nav-item"><a href="/teacher/profile" class="nav-link">Hồ sơ</a></li>
+           <a href="/auth/logout" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-box-arrow-right"></i> Đăng xuất
+            </a>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h2 class="fw-bold text-primary">Xin chào, {{ teacher.full_name }} 👋</h2>
+        <p class="text-muted mb-0">Cập nhật lần cuối: {{ now.strftime("%H:%M - %d/%m/%Y") }}</p>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-4">
+        <div class="dashboard-stat text-center p-4">
+          <i class="bi bi-journal-text text-primary"></i>
+          <h3 class="mt-2">{{ total_courses }}</h3>
+          <p class="text-muted mb-0">Khóa học đang giảng dạy</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="dashboard-stat text-center p-4">
+          <i class="bi bi-play-circle text-success"></i>
+          <h3 class="mt-2">{{ total_lessons }}</h3>
+          <p class="text-muted mb-0">Bài học đã tạo</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="dashboard-stat text-center p-4">
+          <i class="bi bi-star text-warning"></i>
+          <h3 class="mt-2">{{ total_reviews }}</h3>
+          <p class="text-muted mb-0">Lượt đánh giá từ học viên</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-5">
+      <div class="col-md-6">
+        <div class="p-3 bg-white rounded shadow-sm">
+          <h5 class="mb-3 text-primary"><i class="bi bi-bar-chart"></i> Biểu đồ số bài học</h5>
+          <canvas id="lessonChart" height="180"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="p-3 bg-white rounded shadow-sm">
+          <h5 class="mb-3 text-primary"><i class="bi bi-pie-chart"></i> Trạng thái khóa học</h5>
+          <canvas id="courseStatusChart" height="180"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Courses and Reviews -->
+    <div class="row recent-section">
+      <div class="col-md-6 mb-4">
+        <h5><i class="bi bi-book"></i> Khóa học gần đây</h5>
+        <div class="list-group shadow-sm">
+          {% if recent_courses %}
+            {% for c in recent_courses %}
+              <a href="/teacher/courses/detail/{{ c.id }}" class="list-group-item list-group-item-action">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <strong>{{ c.course_name }}</strong><br>
+                    <small class="text-muted">{{ c.course_code }}</small>
+                  </div>
+                  <span class="badge {% if c.status == 'published' %}bg-success{% elif c.status == 'draft' %}bg-secondary{% else %}bg-info{% endif %}">
+                    {{ c.status }}
+                  </span>
+                </div>
+              </a>
+            {% endfor %}
+          {% else %}
+            <div class="list-group-item text-center text-muted">Chưa có khóa học nào.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="col-md-6 mb-4">
+        <h5><i class="bi bi-chat-left-text"></i> Đánh giá mới nhất</h5>
+        <div class="list-group shadow-sm">
+          {% if recent_reviews %}
+            {% for r in recent_reviews %}
+              <div class="list-group-item">
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <strong>{{ r.title or "Không có tiêu đề" }}</strong><br>
+                    <small class="text-muted">{{ r.course.course_name }}</small>
+                  </div>
+                  <span class="text-warning">
+                    {% for i in range(r.overall_rating|int) %}
+                      <i class="bi bi-star-fill"></i>
+                    {% endfor %}
+                    {% for i in range(5 - r.overall_rating|int) %}
+                      <i class="bi bi-star"></i>
+                    {% endfor %}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="list-group-item text-center text-muted">Chưa có đánh giá nào.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <small>© {{ now.year }} E-Learning Platform | Giáo viên: {{ teacher.full_name }}</small>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  {% block extra_scripts %}
+  <script>
+    const courses = JSON.parse('{{ courses_json | tojson | safe }}');
+
+    if (courses.length > 0) {
+      // Bar Chart - Lesson Count
+      new Chart(document.getElementById("lessonChart"), {
+        type: "bar",
+        data: {
+          labels: courses.map(c => c.course_name),
+          datasets: [{
+            label: "Số bài học",
+            data: courses.map(c => c.lesson_count || Math.floor(Math.random() * 10) + 1),
+            backgroundColor: "rgba(13,110,253,0.7)",
+            borderColor: "#0d6efd",
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: "Số bài học" } },
+            x: { title: { display: true, text: "Khóa học" } }
+          }
+        }
+      });
+
+      // Pie Chart - Course Status
+      const statusCount = {
+        published: courses.filter(c => c.status === "published").length,
+        draft: courses.filter(c => c.status === "draft").length,
+        archived: courses.filter(c => c.status === "archived").length
+      };
+
+      new Chart(document.getElementById("courseStatusChart"), {
+        type: "doughnut",
+        data: {
+          labels: ["Xuất bản", "Nháp", "Lưu trữ"],
+          datasets: [{
+            data: [statusCount.published, statusCount.draft, statusCount.archived],
+            backgroundColor: ["#28a745", "#6c757d", "#17a2b8"],
+            hoverOffset: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: "bottom" }
+          }
+        }
+      });
+    }
+  </script>
+  {% endblock %}
+</body>
+</html>

@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xem Báo Cáo</title>
+</head>
+<body>
+    <h1>{{ report.report_name }}</h1>
+    <p><strong>Mô Tả:</strong> {{ report.description }}</p>
+    <p><strong>Nội Dung:</strong> {{ report.content }}</p>
+    <p><strong>Ngày Tạo:</strong> {{ report.created_at }}</p>
+    <br>
+    <a href="/admin/report/manage-reports">Trở lại Quản Lý Báo Cáo</a>
+</body>
+</html>

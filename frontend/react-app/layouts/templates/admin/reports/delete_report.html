@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xác Nhận Xóa Báo Cáo</title>
+</head>
+<body>
+    <h1>Xác Nhận Xóa Báo Cáo</h1>
+    <p>Bạn có chắc chắn muốn xóa báo cáo "{{ report.report_name }}" không?</p>
+    <form method="post" action="/admin/report/delete/{{ report.id }}">
+        <button type="submit">Xóa Báo Cáo</button>
+    </form>
+    <br>
+    <a href="/admin/report/manage-reports">Trở lại Quản Lý Báo Cáo</a>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>➕ Ghi danh học viên</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background: linear-gradient(135deg, #f2f7ff, #e7eefc);
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
+    .card {
+      border-radius: 14px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+    h3 {
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100">
+
+  <div class="card p-4" style="max-width:650px;width:100%;">
+    <h3 class="text-center text-primary mb-4">➕ Ghi danh học viên vào lớp</h3>
+
+    <form method="post" action="/admin/enrollments/create">
+      <div class="mb-3">
+        <label class="form-label">Học viên</label>
+        <select name="user_id" class="form-select" required>
+          <option value="">-- Chọn học viên --</option>
+          {% for u in students %}
+          <option value="{{ u.id }}">{{ u.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Lớp học</label>
+        <select name="class_id" class="form-select" required>
+          <option value="">-- Chọn lớp học --</option>
+          {% for c in classes %}
+          <option value="{{ c.id }}">{{ c.class_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Loại ghi danh</label>
+        <select name="enrollment_type" class="form-select">
+          <option value="official">Chính thức</option>
+          <option value="elective">Tự chọn</option>
+        </select>
+      </div>
+
+      <div class="text-end mt-4">
+        <a href="/admin/enrollments/manage" class="btn btn-secondary">
+          <i class="bi bi-arrow-left-circle"></i> Quay lại
+        </a>
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-save2"></i> Ghi danh
+        </button>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Trang chủ - E-Learning Academy{% endblock %}
+
+{% block content %}
+<section class="hero-section text-center" style="background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%); padding:5rem 1rem 4rem;">
+  <div class="container">
+    <h1 data-aos="fade-down" class="fw-bold" style="font-size:2.7rem; color:#1e3a8a;">
+      Học tập mọi lúc, mọi nơi 🌍
+    </h1>
+    <p data-aos="fade-down" data-aos-delay="200" class="text-muted mt-3" style="max-width:650px; margin:0 auto;">
+      Khám phá hàng trăm khóa học chất lượng cao từ các giảng viên hàng đầu — phát triển kỹ năng và nghề nghiệp của bạn.
+    </p>
+
+    <div data-aos="zoom-in" data-aos-delay="300" class="mt-5">
+      <img src="{{ url_for('static', path='images/e-learning-banner.png') }}"
+           alt="E-Learning Banner"
+           class="img-fluid rounded-4 shadow-lg"
+           style="max-width:880px;">
+    </div>
+
+    <div class="mt-4" data-aos="fade-up" data-aos-delay="400">
+      <a href="/auth/login" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm">🚀 Bắt đầu ngay</a>
+    </div>
+  </div>
+</section>
+
+<section class="features py-5" style="background:#fff; border-radius:2rem 2rem 0 0; box-shadow:0 -4px 15px rgba(0,0,0,0.05); margin-top:5rem;">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-5" style="color:#1e3a8a;">Vì sao chọn E-Learning?</h2>
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
+          <div style="font-size:2.5rem; color:#2563eb;">📚</div>
+          <h5 class="fw-semibold mt-3">Kho khóa học phong phú</h5>
+          <p class="text-muted small">
+            Từ lập trình, thiết kế, marketing đến kỹ năng mềm – bạn sẽ tìm thấy mọi thứ ở đây.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
+          <div style="font-size:2.5rem; color:#2563eb;">💬</div>
+          <h5 class="fw-semibold mt-3">Tương tác trực tiếp</h5>
+          <p class="text-muted small">
+            Thảo luận cùng giảng viên và học viên qua lớp học ảo, bài tập và phản hồi chi tiết.
+          </p>
+        </div>
+      </div>
+
+      <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
+          <div style="font-size:2.5rem; color:#2563eb;">🏅</div>
+          <h5 class="fw-semibold mt-3">Chứng nhận chất lượng</h5>
+          <p class="text-muted small">
+            Hoàn thành khóa học để nhận chứng chỉ xác nhận năng lực và chuyên môn của bạn.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

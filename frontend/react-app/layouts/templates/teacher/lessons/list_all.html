@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📚 Danh sách tất cả bài học</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background: #f7f9fc;
+      font-family: "Segoe UI", "Inter", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .navbar {
+      background: linear-gradient(90deg, #0062ff, #003087);
+    }
+    .navbar-brand, .nav-link {
+      color: #fff !important;
+      font-weight: 500;
+    }
+    .nav-link.active {
+      border-bottom: 2px solid #ffc107;
+    }
+    .container {
+      margin-top: 40px;
+      flex: 1;
+    }
+    .table th {
+      background: #e9f0ff;
+    }
+    .table-hover tbody tr:hover {
+      background-color: #eef6ff;
+    }
+    footer {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+    }
+    .btn {
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+    .stat-card {
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      text-align: center;
+    }
+    .stat-card h5 {
+      color: #666;
+      font-size: 15px;
+    }
+    .stat-card h3 {
+      font-weight: bold;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/teacher/dashboard">
+        <i class="bi bi-mortarboard"></i> Cổng Giáo viên
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="/teacher/dashboard">🏠 Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/teacher/lessons/list_all">📚 Bài học</a></li>
+          <li class="nav-item"><a class="nav-link" href="/teacher/courses/list">📘 Khóa học</a></li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link" href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Nội dung chính -->
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+      <div>
+        <h3 class="fw-bold text-primary mb-1">📚 Danh sách tất cả bài học</h3>
+        <p class="text-muted mb-0">Bao gồm toàn bộ bài học trong các khóa học bạn đang giảng dạy.</p>
+      </div>
+      <div>
+        <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại Dashboard
+        </a>
+      </div>
+    </div>
+
+    {% if lessons %}
+    <!-- Thống kê -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="stat-card">
+          <h5>Tổng số bài học</h5>
+          <h3 class="text-primary">{{ lessons|length }}</h3>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <h5>Đã xuất bản</h5>
+          <h3 class="text-success">
+            {{ lessons|selectattr("is_published", "equalto", True)|list|length }}
+          </h3>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card">
+          <h5>Bản nháp</h5>
+          <h3 class="text-secondary">
+            {{ lessons|selectattr("is_published", "equalto", False)|list|length }}
+          </h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bảng dữ liệu -->
+    <div class="table-responsive shadow-sm rounded bg-white">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+          <tr>
+            <th>#</th>
+            <th>Tên bài học</th>
+            <th>Module</th>
+            <th>Khóa học</th>
+            <th>Loại nội dung</th>
+            <th>Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for l in lessons %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ l.title or "(Không tiêu đề)" }}</td>
+            <td>{{ l.module.module_name if l.module else "—" }}</td>
+            <td>{{ l.module.course.course_name if l.module and l.module.course else "—" }}</td>
+            <td>
+              {% if l.content_type == 'video' %}
+                🎬 Video
+              {% elif l.content_type == 'document' %}
+                📄 Tài liệu
+              {% else %}
+                🧩 Khác
+              {% endif %}
+            </td>
+            <td>
+              {% if l.is_published %}
+                <span class="badge bg-success">Công khai</span>
+              {% else %}
+                <span class="badge bg-secondary">Nháp</span>
+              {% endif %}
+            </td>
+            <td>{{ l.created_at.strftime("%d/%m/%Y") if l.created_at else "—" }}</td>
+            <td class="text-center">
+              <a href="/teacher/lessons/edit/{{ l.id }}" class="btn btn-sm btn-outline-warning me-1">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="/teacher/lessons/delete/{{ l.id }}" style="display:inline;">
+                <button class="btn btn-sm btn-outline-danger" title="Xóa bài học"
+                        onclick="return confirm('Bạn có chắc muốn xóa bài học này?')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info mt-4 shadow-sm text-center py-4">
+      <i class="bi bi-info-circle fs-4"></i>
+      <p class="mt-2 mb-0">Hiện chưa có bài học nào. Hãy tạo bài học trong các module!</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <footer>
+    <p>© 2025 E-Learning System | Trang quản lý bài học giáo viên</p>
+  </footer>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

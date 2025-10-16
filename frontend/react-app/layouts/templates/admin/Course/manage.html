@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>📚 Quản lý khóa học</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-5">
+    <h2 class="text-primary mb-4">
+      <i class="bi bi-mortarboard"></i> Danh sách khóa học
+    </h2>
+
+    <a href="/admin/Course/create" class="btn btn-success mb-3">
+      <i class="bi bi-plus-circle"></i> Thêm khóa học mới
+    </a>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <table class="table table-bordered table-hover align-middle">
+          <thead class="table-primary text-center">
+            <tr>
+              <th>#</th>
+              <th>Mã khóa học</th>
+              <th>Tên khóa học</th>
+              <th>Tín chỉ</th>
+              <th>Giảng viên</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for course in courses %}
+            <tr>
+              <td class="text-center">{{ loop.index }}</td>
+              <td>{{ course.course_code }}</td>
+              <td>{{ course.course_name }}</td>
+              <td class="text-center">{{ course.credit_hours }}</td>
+              <td>{{ course.teacher.full_name if course.teacher else 'Chưa phân công' }}</td>
+              <td class="text-center">
+                {% if course.status == 'published' %}
+                  <span class="badge bg-success">Công khai</span>
+                {% elif course.status == 'draft' %}
+                  <span class="badge bg-secondary">Bản nháp</span>
+                {% elif course.status == 'archived' %}
+                  <span class="badge bg-dark">Lưu trữ</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">Không xác định</span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a href="/admin/Course/edit/{{ course.id }}" class="btn btn-sm btn-outline-primary">✏️</a>
+                <a href="/admin/Course/delete/{{ course.id }}" class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Bạn có chắc muốn xóa khóa học này không?');">🗑️</a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+                <span>Chưa có khóa học nào.</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <a href="/admin/dashboard" class="btn btn-secondary mt-3">↩️ Quay lại</a>
+  </div>
+</body>
+</html>
+
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f9fafb;
+    color: #333;
+  }
+
+  h2 {
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .btn {
+    font-weight: 600;
+    transition: all 0.25s ease;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
+  }
+
+  .btn-secondary {
+    background: linear-gradient(45deg, #6c757d, #5a6268);
+    border: none;
+    color: white;
+  }
+
+  .btn-success {
+    background: linear-gradient(45deg, #198754, #28a745);
+    border: none;
+    color: white;
+  }
+
+  .card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .table th {
+    background-color: #0d6efd;
+    color: white;
+    text-align: center;
+  }
+
+  .table td {
+    vertical-align: middle;
+    text-align: center;
+  }
+
+  .text-muted {
+    color: #6c757d !important;
+  }
+</style>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tạo Báo Cáo Mới</title>
+</head>
+<body>
+    <h1>Tạo Báo Cáo Mới</h1>
+    <form method="post" action="/admin/report/generate-report">
+        <label for="report_type">Chọn loại báo cáo:</label>
+        <select name="report_type" id="report_type">
+            <option value="course_report">Báo Cáo Khóa Học</option>
+            <option value="class_report">Báo Cáo Lớp Học</option>
+            <option value="student_report">Báo Cáo Sinh Viên</option>
+            <!-- Thêm các loại báo cáo khác nếu cần -->
+        </select>
+        <br><br>
+        <button type="submit">Tạo Báo Cáo</button>
+    </form>
+    <br>
+    <a href="/admin/report/manage-reports">Trở lại Quản Lý Báo Cáo</a>
+</body>
+</html>

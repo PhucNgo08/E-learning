@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>📤 Upload tài liệu</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    body { background: #f7f9fc; font-family: "Inter", "Segoe UI", sans-serif; }
+    .container { max-width: 840px; margin-top: 40px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="bg-white p-4 rounded shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="mb-0">📤 Upload tài liệu khóa học</h3>
+      <div>
+        <a class="btn btn-outline-secondary" href="/teacher/materials/list">
+          <i class="bi bi-folder"></i> Danh sách
+        </a>
+      </div>
+    </div>
+
+    <form method="post" action="/teacher/materials/upload" enctype="multipart/form-data">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">📘 Khóa học</label>
+          <select name="course_id" class="form-select" required>
+            <option value="">-- Chọn khóa học --</option>
+            {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.course_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">🏷️ Loại tài liệu</label>
+          <select name="material_type" class="form-select">
+            <option value="slide">Slide</option>
+            <option value="assignment">Bài tập</option>
+            <option value="syllabus">Đề cương</option>
+            <option value="reference">Tài liệu tham khảo</option>
+            <option value="code">Mã nguồn</option>
+            <option value="textbook">Giáo trình</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">📝 Tiêu đề</label>
+          <input type="text" class="form-control" name="title" placeholder="VD: Slide Chương 1" required />
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">📄 Mô tả (tuỳ chọn)</label>
+          <textarea class="form-control" name="description" rows="3" placeholder="Mô tả ngắn gọn về tài liệu..."></textarea>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">📎 Chọn file</label>
+          <input type="file" class="form-control" name="file" required />
+          <div class="form-text">Hỗ trợ mọi loại tệp — PDF, PPTX, DOCX, ZIP, MP4, v.v.</div>
+        </div>
+
+        <div class="col-12 mt-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-cloud-upload"></i> Tải lên
+          </button>
+          <a href="/teacher/materials/list" class="btn btn-link">Huỷ</a>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+</body>
+</html>

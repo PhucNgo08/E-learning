@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo bản sao lưu</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center min-vh-100">
+<div class="card shadow p-4" style="max-width:500px;width:100%;">
+  <h3 class="text-center mb-3">🧱 Tạo bản sao lưu mới</h3>
+  <form method="post" action="/admin/backups/create">
+    <div class="mb-3">
+      <label class="form-label">Loại backup</label>
+      <select class="form-select" name="backup_type">
+        <option value="full">Full</option>
+        <option value="incremental">Incremental</option>
+      </select>
+    </div>
+    <div class="text-end">
+      <a href="/admin/backups/manage" class="btn btn-secondary">← Hủy</a>
+      <button type="submit" class="btn btn-success">💾 Tạo backup</button>
+    </div>
+  </form>
+</div>
+</body>
+</html>

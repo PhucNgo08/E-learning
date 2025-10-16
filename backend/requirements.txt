@@ -1,0 +1,33 @@
+anyio==4.9.0
+click==8.2.0
+colorama==0.4.6
+fastapi>=0.103.0        # ✅ Tương thích với pydantic>=2.0
+h11==0.16.0
+httptools==0.6.4
+idna==3.10
+jinja2==3.1.2
+MarkupSafe==3.0.2
+python-dotenv==1.1.1
+python-multipart==0.0.6
+
+typing-extensions==4.14.0
+uvicorn==0.35.0
+watchfiles==1.1.0
+websockets==15.0.1
+passlib[bcrypt]
+pydantic[email]>=2.1
+pydantic-settings>=2.0
+alembic
+pandas
+Flask==2.1.1
+SQLAlchemy==1.4.31
+Alembic==1.7.6
+pymysql==1.0.2
+python-jose==3.3.0  # Thêm phiên bản phù hợp của python-jose
+starlette
+
+PyJWT==2.6.0
+email-validator
+requests
+ fastapi-mail
+python-slugify

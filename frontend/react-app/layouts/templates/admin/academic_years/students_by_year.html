@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>🎓 Sinh viên năm {{ year.year_name }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-primary">🎓 Sinh viên - {{ year.year_name }}</h3>
+    <a href="/admin/academic_years/list" class="btn btn-outline-secondary">⬅ Quay lại</a>
+  </div>
+  
+  <table class="table table-hover bg-white border">
+    <thead class="table-info">
+      <tr>
+        <th>MSSV</th>
+        <th>Họ tên</th>
+        <th>Email</th>
+        <th>Ngành học</th>
+        <th>Trạng thái</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td>{{ s.mssv }}</td>
+        <td>{{ s.full_name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.major.major_name if s.major else "Chưa xác định" }}</td>
+        <td>{{ s.status }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not students %}
+    <div class="alert alert-warning text-center mt-3">
+      Không có sinh viên nào trong năm học này.
+    </div>
+  {% endif %}
+</div>
+</body>
+</html>
