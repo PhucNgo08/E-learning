@@ -1,0 +1,294 @@
+/* =====================================================
+👨‍🏫 TEACHER DASHBOARD - PREMIUM RESPONSIVE DESIGN
+Author: E-Learning Team (2025)
+===================================================== */
+
+/* === BASE FONT === */
+body {
+  font-family: "Inter", "Poppins", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #1e293b;
+  letter-spacing: 0.2px;
+}
+
+/* === ANIMATIONS === */
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =====================================================
+🎯 HERO SECTION
+===================================================== */
+.teacher-hero {
+  background: linear-gradient(135deg, #2563eb, #1e40af, #00b4d8);
+  background-size: 300% 300%;
+  animation: gradientMove 10s ease infinite;
+  color: #fff;
+  border-radius: 24px;
+  padding: 60px 45px;
+  margin-bottom: 50px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.teacher-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 85% 20%, rgba(255,255,255,0.25), transparent 65%);
+  pointer-events: none;
+}
+
+.welcome-text h2 {
+  font-weight: 800;
+  font-size: 2rem;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.25);
+  animation: fadeUp 0.8s ease;
+}
+.welcome-text p {
+  opacity: 0.95;
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 8px;
+  animation: fadeUp 1s ease;
+}
+
+.welcome-text .btn {
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-radius: 10px;
+  padding: 10px 18px;
+  transition: all 0.25s ease;
+  animation: fadeUp 1.2s ease;
+}
+.welcome-text .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.teacher-avatar img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 0 25px rgba(24, 24, 24, 0.35);
+  transition: transform 0.4s ease, box-shadow 0.3s ease;
+}
+.teacher-avatar img:hover {
+  transform: scale(1.08) rotate(4deg);
+  box-shadow: 0 0 35px rgba(255,255,255,0.45);
+}
+
+/* =====================================================
+📊 STATISTIC CARDS
+===================================================== */
+.stat-card {
+  border-radius: 18px;
+  padding: 28px 25px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.25);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  overflow: hidden;
+  animation: fadeUp 1s ease;
+}
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+.stat-card h3 {
+  font-weight: 800;
+  font-size: 2.1rem;
+  margin-bottom: 3px;
+}
+.stat-card p {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #ffffff;       /* ✅ Thêm dòng này để chữ trắng rõ */
+  opacity: 1;           /* ✅ Bỏ mờ, cho hiển thị trắng rõ */
+}
+
+
+.gradient-blue {
+  background: linear-gradient(145deg, #007bff, #0056d8);
+}
+.gradient-green {
+  background: linear-gradient(145deg, #16a34a, #22c55e);
+}
+.gradient-gold {
+  background: linear-gradient(145deg, #facc15, #f59e0b);
+}
+
+.stat-card i {
+  opacity: 0.9;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.2));
+}
+
+/* =====================================================
+📈 CHART AREA
+===================================================== */
+.chart-card {
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 30px;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.06);
+  transition: all 0.3s ease;
+  animation: fadeUp 1s ease;
+}
+.chart-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.chart-card h5 {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #1e3a8a;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+canvas {
+  border-radius: 12px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+/* =====================================================
+🗓️ ACTIVITY BOX
+===================================================== */
+.activity-box {
+  background: linear-gradient(145deg, #ffffff, #f3f6fd);
+  border-radius: 20px;
+  padding: 28px 32px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeUp 1.2s ease;
+}
+.activity-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.08);
+}
+.activity-box h5 {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: #a8b2cc;
+}
+.activity-box ul {
+  margin: 16px 0 0;
+  padding-left: 22px;
+  list-style-type: "🔥 ";
+  line-height: 1.8;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+/* =====================================================
+🌙 DARK MODE SUPPORT
+===================================================== */
+body.dark-mode .teacher-hero {
+  background: linear-gradient(135deg, #0f172a, #1e293b, #334155);
+  box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+}
+body.dark-mode .welcome-text h2 {
+  color: #f8fafc;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+body.dark-mode .welcome-text p {
+  color: #cbd5e1;
+}
+body.dark-mode .stat-card {
+  text-shadow: none;
+  box-shadow: 0 0 15px rgba(255,255,255,0.05);
+}
+body.dark-mode .gradient-blue {
+  background: linear-gradient(145deg, #1e3a8a, #3b82f6);
+}
+body.dark-mode .gradient-green {
+  background: linear-gradient(145deg, #166534, #22c55e);
+}
+body.dark-mode .gradient-gold {
+  background: linear-gradient(145deg, #854d0e, #facc15);
+}
+body.dark-mode .chart-card {
+  background: rgba(15,23,42,0.9);
+  color: #f8fafc;
+  box-shadow: 0 0 12px rgba(255,255,255,0.05);
+}
+body.dark-mode .chart-card h5 {
+  color: #60a5fa;
+}
+body.dark-mode .activity-box {
+  background: rgba(30,41,59,0.92);
+  color: #e2e8f0;
+  box-shadow: 0 0 12px rgba(255,255,255,0.05);
+}
+body.dark-mode .activity-box ul {
+  color: #cbd5e1;
+}
+
+/* =====================================================
+📱 RESPONSIVE DESIGN
+===================================================== */
+@media (max-width: 992px) {
+  .teacher-hero {
+    flex-direction: column;
+    text-align: center;
+    padding: 40px 25px;
+  }
+  .teacher-avatar img {
+    margin-top: 25px;
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 576px) {
+  .teacher-hero {
+    padding: 30px 20px;
+    border-radius: 18px;
+  }
+  .welcome-text h2 {
+    font-size: 1.4rem;
+  }
+ .welcome-text p {
+  opacity: 0.95;
+  font-size: 0.96rem;
+  font-weight: 500;
+  color: rgba(228, 214, 214, 0.9);  /* 🎨 CHỖ NÀY CHÍNH LÀ MÀU CHỮ */
+  margin-bottom: 8px;
+  animation: fadeUp 1s ease;
+}
+
+  .stat-card {
+    padding: 22px;
+  }
+}
+/* === FORCE WHITE TEXT IN STAT CARDS === */
+.stat-card h3,
+.stat-card p,
+.stat-card i {
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+/* === CUSTOM COLOR FOR "Cập nhật" TEXT === */
+.teacher-hero .text-muted {
+  color: rgba(255, 255, 255, 0.9) !important;  /* 🌕 Màu trắng mờ sáng */
+  font-weight: 500;
+}

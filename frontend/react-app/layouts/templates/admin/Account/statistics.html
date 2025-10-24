@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>📊 Thống kê người dùng</title>
+
+  <!-- Bootstrap & Chart.js -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background-color: #f8f9fc;
+      font-family: "Inter", sans-serif;
+    }
+    h3 {
+      font-weight: 700;
+      color: #0d6efd;
+    }
+    .card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    }
+    .info-card {
+      transition: 0.25s ease;
+    }
+    .info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+    .table th {
+      background-color: #e9effd;
+    }
+    .chart-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .chart-box {
+      flex: 1 1 48%;
+    }
+    .btn-export {
+      background: linear-gradient(90deg, #007bff, #00b4d8);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+    .btn-export:hover {
+      background: linear-gradient(90deg, #0056d2, #0096c7);
+    }
+  </style>
+</head>
+
+<body class="p-4">
+  <div class="container">
+    <!-- 🔷 Header -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+      <h3 class="mb-2"><i class="bi bi-bar-chart-line"></i> Thống kê người dùng</h3>
+      <div class="d-flex gap-2">
+        <a href="/admin/Account/manage-users" class="btn btn-outline-primary">
+          <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+        </a>
+        <a href="/admin/Account/export-users" class="btn btn-export">
+          <i class="bi bi-file-earmark-spreadsheet"></i> Tải Excel
+        </a>
+      </div>
+    </div>
+
+    <!-- 🟦 Tổng quan -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card text-center info-card p-3">
+          <h4 class="fw-bold">{{ stats.total_users }}</h4>
+          <p class="text-muted mb-0">👥 Tổng người dùng</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center info-card p-3">
+          <h4 class="fw-bold text-success">{{ stats.by_status.get('active', 0) }}</h4>
+          <p class="text-muted mb-0">✅ Đang hoạt động</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card text-center info-card p-3">
+          <h4 class="fw-bold text-danger">{{ stats.by_status.get('inactive', 0) }}</h4>
+          <p class="text-muted mb-0">⛔ Đã khóa</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📊 Biểu đồ -->
+    <div class="chart-container mb-4">
+      <div class="card p-3 chart-box">
+        <h5 class="fw-semibold mb-3"><i class="bi bi-diagram-3"></i> Phân bố vai trò</h5>
+        <canvas id="roleChart" height="120"></canvas>
+      </div>
+
+      <div class="card p-3 chart-box">
+        <h5 class="fw-semibold mb-3"><i class="bi bi-activity"></i> Trạng thái tài khoản</h5>
+        <canvas id="statusChart" height="120"></canvas>
+      </div>
+    </div>
+
+    <!-- 🕓 5 người đăng nhập gần nhất -->
+    <div class="card p-3 mb-4">
+      <h5 class="fw-semibold mb-3"><i class="bi bi-clock-history"></i> 5 người đăng nhập gần nhất</h5>
+      {% if stats.recent_login %}
+      <table class="table table-striped align-middle">
+        <thead class="table-light">
+          <tr><th>Họ và tên</th><th>Thời gian đăng nhập</th></tr>
+        </thead>
+        <tbody>
+          {% for r in stats.recent_login %}
+          <tr>
+            <td><i class="bi bi-person-circle text-primary me-1"></i>{{ r.name }}</td>
+            <td><i class="bi bi-clock text-secondary me-1"></i>{{ r.time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="text-muted">Chưa có người dùng nào đăng nhập gần đây.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 📈 Chart.js Script -->
+  <script>
+    // Parse dữ liệu JSON từ Jinja (tránh lỗi VSCode parser)
+    const roleLabels = JSON.parse('{{ stats.by_role.keys() | list | tojson | safe }}');
+    const roleValues = JSON.parse('{{ stats.by_role.values() | list | tojson | safe }}');
+    const statusLabels = JSON.parse('{{ stats.by_status.keys() | list | tojson | safe }}');
+    const statusValues = JSON.parse('{{ stats.by_status.values() | list | tojson | safe }}');
+
+    // 🎓 Biểu đồ vai trò
+    new Chart(document.getElementById("roleChart"), {
+      type: "bar",
+      data: {
+        labels: roleLabels,
+        datasets: [{
+          label: "Số lượng người dùng",
+          data: roleValues,
+          backgroundColor: [
+            "rgba(0, 123, 255, 0.8)",
+            "rgba(40, 167, 69, 0.8)",
+            "rgba(255, 193, 7, 0.8)",
+            "rgba(23, 162, 184, 0.8)",
+            "rgba(111, 66, 193, 0.8)"
+          ],
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: { backgroundColor: "#212529" }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+
+    // ⚙️ Biểu đồ trạng thái
+    new Chart(document.getElementById("statusChart"), {
+      type: "doughnut",
+      data: {
+        labels: statusLabels,
+        datasets: [{
+          data: statusValues,
+          backgroundColor: ["#28a745", "#dc3545"],
+          hoverOffset: 10
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: "bottom" },
+          tooltip: { backgroundColor: "#212529" }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

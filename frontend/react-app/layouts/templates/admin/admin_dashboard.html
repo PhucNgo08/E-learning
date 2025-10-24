@@ -2,257 +2,55 @@
 {% block title %}📊 Bảng điều khiển quản trị{% endblock %}
 
 {% block content %}
-<style>
-  body {
-    background: linear-gradient(135deg, #f8faff, #eef2ff);
-    font-family: "Inter", "Segoe UI", sans-serif;
-  }
-  .dashboard-header {
-    background: linear-gradient(90deg, #007bff, #0056d6);
-    color: white;
-    border-radius: 12px;
-    padding: 40px 25px;
-    margin-bottom: 40px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  }
-  .dashboard-header h2 {
-    font-weight: 700;
-  }
-  .dashboard-header p {
-    font-size: 1.05rem;
-    opacity: 0.95;
-  }
-  .card {
-    border: none;
-    border-radius: 16px;
-    transition: all 0.3s ease;
-  }
-  .card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.12);
-  }
-  .card-body {
-    padding: 25px 20px;
-  }
-  .card-title {
-    font-weight: 600;
-    margin-top: 5px;
-  }
-  .card-body p {
-    font-size: 0.95rem;
-    color: #6c757d;
-  }
-  .btn {
-    border-radius: 10px;
-    font-weight: 500;
-    transition: 0.25s;
-  }
-  .btn:hover {
-    opacity: 0.9;
-  }
-  .row.g-4 {
-    row-gap: 30px;
-  }
-.text-gradient {
-  background: linear-gradient(45deg, #007bff, #00d4ff);
-  background-clip: text;              /* ✅ Thêm dòng này */
-  -webkit-background-clip: text;      /* Giữ lại cho Chrome/Safari */
-  -webkit-text-fill-color: transparent;
-}
-
-</style>
+<!-- 🔗 Liên kết file CSS riêng -->
+<link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin_dashboard.css">
 
 <div class="container mt-4">
   <!-- 🎯 Header -->
   <div class="dashboard-header text-center">
     <h2>👋 Xin chào, {{ username or "Quản trị viên" }}!</h2>
-    <p>Chào mừng bạn đến với <strong>Hệ thống quản trị E-Learning</strong>.<br>
-       Hãy chọn một danh mục bên dưới để bắt đầu quản lý.</p>
+    <p>
+      Chào mừng bạn đến với <strong>Hệ thống quản trị E-Learning</strong>.<br>
+      Hãy chọn một danh mục bên dưới để bắt đầu quản lý.
+    </p>
   </div>
 
   <!-- ====== DANH MỤC QUẢN LÝ ====== -->
   <div class="row g-4">
+    {% set items = [
+      {"icon": "👤", "color": "success", "title": "Quản lý Tài khoản", "desc": "Thêm, chỉnh sửa và phân quyền người dùng.", "link": "/admin/Account/manage-users"},
+      {"icon": "🏷️", "color": "info", "title": "Quản lý Khoa", "desc": "Thêm, chỉnh sửa, sắp xếp và xem danh sách khoa.", "link": "/admin/CourseCategory/manage"},
+      {"icon": "📘", "color": "primary", "title": "Quản lý Khóa học", "desc": "Tạo, cập nhật và tổ chức nội dung giảng dạy.", "link": "/admin/Course/manage"},
+      {"icon": "🎓", "color": "primary", "title": "Quản lý Ngành học", "desc": "Thêm, sửa hoặc xóa các ngành đào tạo.", "link": "/admin/majors/list"},
+      {"icon": "👨‍🏫", "color": "info", "title": "Quản lý Giảng viên", "desc": "Danh sách, ngành dạy và thông tin khoa.", "link": "/admin/teachers/list"},
+      {"icon": "📅", "color": "secondary", "title": "Quản lý Năm học", "desc": "Tạo, chỉnh sửa và xem danh sách năm học.", "link": "/admin/academic_years/list"},
+      {"icon": "🏫", "color": "warning", "title": "Quản lý Lớp học", "desc": "Thêm mới, chỉnh sửa hoặc xóa lớp học.", "link": "/admin/Class/manage"},
+      {"icon": "🧍‍♂️", "color": "info", "title": "Quản lý Ghi danh", "desc": "Theo dõi, duyệt và cập nhật đơn ghi danh học viên.", "link": "/admin/enrollments/manage"},
+      {"icon": "🧮", "color": "primary", "title": "Quản lý Kỳ thi", "desc": "Tạo và tổ chức các kỳ thi chính thức.", "link": "/admin/exams/manage"},
+      {"icon": "📈", "color": "info", "title": "Báo cáo & Thống kê", "desc": "Thống kê học viên, giảng viên và tiến trình học tập.", "link": "/admin/reports/manage"},
+      {"icon": "🧾", "color": "primary", "title": "Quản lý Bài tập", "desc": "Tạo, sửa, và quản lý các bài tập của khóa học.", "link": "/admin/assignment/list"},
+      {"icon": "📂", "color": "success", "title": "Quản lý Tài liệu", "desc": "Upload và quản lý tài liệu khóa học.", "link": "/admin/course-material/list"},
+      {"icon": "🧠", "color": "warning", "title": "Mẫu Quiz", "desc": "Tạo và chỉnh sửa các mẫu quiz để sinh tự động câu hỏi.", "link": "/admin/quiz-template/list"},
+      {"icon": "📝", "color": "warning", "title": "Đánh giá Khóa học", "desc": "Xem và duyệt phản hồi, chấm điểm giảng viên.", "link": "/admin/reviews/manage"},
+      {"icon": "⚙️", "color": "dark", "title": "Cấu hình Hệ thống", "desc": "Quản lý logo, API key, email, giao diện hệ thống.", "link": "/admin/settings/manage"},
+      {"icon": "💾", "color": "dark", "title": "Quản lý Sao lưu", "desc": "Tự động sao lưu dữ liệu và tải file backup.", "link": "/admin/backups/manage"},
+      {"icon": "📦", "color": "secondary", "title": "Sắp xếp Module", "desc": "Thay đổi thứ tự module trong khóa học.", "link": "/admin/modules/reorder"}
+    ] %}
 
-    <!-- 👤 Quản lý tài khoản -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-success">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-success">👤</div>
-          <h5 class="card-title text-success">Quản lý Tài khoản</h5>
-          <p>Thêm, chỉnh sửa và phân quyền người dùng.</p>
-          <a href="/admin/Account/manage-users" class="btn btn-success w-100">Vào quản lý</a>
+    {% for item in items %}
+      <div class="col-md-4 col-sm-6">
+        <div class="card border-{{ item.color }} shadow-sm h-100">
+          <div class="card-body text-center">
+            <div class="fs-2 mb-2 text-{{ item.color }}">{{ item.icon }}</div>
+            <h5 class="card-title text-{{ item.color }}">{{ item.title }}</h5>
+            <p>{{ item.desc }}</p>
+            <a href="{{ item.link }}" class="btn btn-{{ item.color }} w-100 text-white">
+              <i class="bi bi-arrow-right-circle"></i> Truy cập
+            </a>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- 🏷️ Danh mục khóa học -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-info">🏷️</div>
-          <h5 class="card-title text-info">Quản lý Khoa</h5>
-          <p>Thêm, chỉnh sửa, sắp xếp và xem danh sách khoa.</p>
-          <a href="/admin/CourseCategory/manage" class="btn btn-info w-100 text-white">Quản lý KHoa</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 📘 Khóa học -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-primary">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-primary">📘</div>
-          <h5 class="card-title text-primary">Quản lý Khóa học</h5>
-          <p>Tạo, cập nhật và tổ chức nội dung giảng dạy.</p>
-          <a href="/admin/Course/manage" class="btn btn-primary w-100 text-white">Quản lý khóa học</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🎓 Ngành học -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-primary">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-primary">🎓</div>
-          <h5 class="card-title text-primary">Quản lý Ngành học</h5>
-          <p>Thêm, sửa hoặc xóa các ngành đào tạo.</p>
-          <a href="/admin/majors/list" class="btn btn-primary w-100 text-white">Quản lý ngành học</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🏛️ Khoa
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-indigo">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-gradient">🏛️</div>
-          <h5 class="card-title text-gradient">Quản lý Khoa</h5>
-          <p>Thêm, chỉnh sửa, sắp xếp và xem danh sách khoa.</p>
-          <a href="/admin/faculty/list" class="btn btn-outline-primary w-100">Xem danh sách</a>
-        </div>
-      </div>
-    </div> -->
-
-    <!-- 👨‍🏫 Giảng viên -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-info">👨‍🏫</div>
-          <h5 class="card-title text-info">Quản lý Giảng viên</h5>
-          <p>Danh sách, ngành dạy và thông tin khoa.</p>
-          <a href="/admin/teachers/list" class="btn btn-info w-100 text-white">Xem giảng viên</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 📅 Năm học -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-secondary">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-secondary">📅</div>
-          <h5 class="card-title text-secondary">Quản lý Năm học</h5>
-          <p>Tạo, chỉnh sửa và xem danh sách năm học.</p>
-          <a href="/admin/academic_years/list" class="btn btn-secondary w-100 text-white">Quản lý năm học</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🏫 Lớp học -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-warning">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-warning">🏫</div>
-          <h5 class="card-title text-warning">Quản lý Lớp học</h5>
-          <p>Thêm mới, chỉnh sửa hoặc xóa lớp học.</p>
-          <a href="/admin/Class/manage" class="btn btn-warning w-100 text-white">Quản lý lớp học</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🧍‍♂️ Ghi danh -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-info">🧍‍♂️</div>
-          <h5 class="card-title text-info">Quản lý Ghi danh</h5>
-          <p>Theo dõi, duyệt và cập nhật đơn ghi danh học viên.</p>
-          <a href="/admin/enrollments/manage" class="btn btn-info w-100 text-white">Quản lý ghi danh</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- ⚙️ Cấu hình -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-dark">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-dark">⚙️</div>
-          <h5 class="card-title text-dark">Cấu hình Hệ thống</h5>
-          <p>Quản lý logo, API key, email, giao diện hệ thống.</p>
-          <a href="/admin/settings/manage" class="btn btn-dark w-100 text-white">Cấu hình</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 💾 Sao lưu -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-dark">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-dark">💾</div>
-          <h5 class="card-title text-dark">Quản lý Sao lưu</h5>
-          <p>Tự động sao lưu dữ liệu và tải file backup.</p>
-          <a href="/admin/backups/manage" class="btn btn-dark w-100 text-white">Quản lý sao lưu</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 📝 Đánh giá -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-warning">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-warning">📝</div>
-          <h5 class="card-title text-warning">Đánh giá Khóa học</h5>
-          <p>Xem và duyệt phản hồi, chấm điểm giảng viên.</p>
-          <a href="/admin/reviews/manage" class="btn btn-warning w-100 text-white">Quản lý đánh giá</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🧠 Quiz -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-danger">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-danger">🧠</div>
-          <h5 class="card-title text-danger">Quản lý Quiz</h5>
-          <p>Tạo, chỉnh sửa và sinh quiz từ ngân hàng câu hỏi.</p>
-          <a href="/admin/quiz/manage" class="btn btn-danger w-100 text-white">Quản lý Quiz</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 🧮 Kỳ thi -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-primary">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-primary">🧮</div>
-          <h5 class="card-title text-primary">Quản lý Kỳ thi</h5>
-          <p>Tạo và tổ chức các kỳ thi chính thức.</p>
-          <a href="/admin/exams/manage" class="btn btn-primary w-100 text-white">Quản lý Kỳ thi</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- 📈 Báo cáo -->
-    <div class="col-md-4 col-sm-6">
-      <div class="card border-info">
-        <div class="card-body text-center">
-          <div class="fs-2 mb-2 text-info">📈</div>
-          <h5 class="card-title text-info">Báo cáo & Thống kê</h5>
-          <p>Thống kê học viên, giảng viên và tiến trình học tập.</p>
-          <a href="/admin/reports/manage" class="btn btn-info w-100 text-white">Xem Báo cáo</a>
-        </div>
-      </div>
-    </div>
-
+    {% endfor %}
   </div>
 </div>
 {% endblock %}

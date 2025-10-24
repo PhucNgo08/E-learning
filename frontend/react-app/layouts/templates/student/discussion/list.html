@@ -1,0 +1,29 @@
+{% extends "student/layout_student.html" %}
+{% block title %}💬 Thảo luận lớp học{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3"><i class="bi bi-chat-dots"></i> Thảo luận</h4>
+
+  <div class="mb-3 text-end">
+    <a href="/student/discussion/create" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle"></i> Tạo chủ đề</a>
+  </div>
+
+  {% if discussions %}
+  <div class="list-group shadow-sm">
+    {% for d in discussions %}
+    <a href="/student/discussion/{{ d.id }}" class="list-group-item list-group-item-action">
+      <div class="d-flex justify-content-between">
+        <h6 class="fw-bold text-dark">{{ d.title }}</h6>
+        <small class="text-muted">{{ d.created_at.strftime('%d/%m/%Y') }}</small>
+      </div>
+      <p class="text-muted small mb-1">{{ d.author_name }}</p>
+      <small class="text-secondary">{{ d.reply_count or 0 }} phản hồi</small>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">Chưa có chủ đề nào.</div>
+  {% endif %}
+</div>
+{% endblock %}

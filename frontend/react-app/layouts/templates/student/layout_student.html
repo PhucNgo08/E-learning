@@ -5,131 +5,192 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}🎓 Bảng điều khiển sinh viên{% endblock %}</title>
 
-  <!-- Bootstrap & Icons -->
+  <!-- 🔹 Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
+  <!-- 🎨 Student Custom CSS -->
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student.css" />
+
   <style>
-    body {
-      background-color: #f3f6fd;
-      font-family: "Inter", sans-serif;
-      color: #1e293b;
-      margin: 0;
-      overflow-x: hidden;
-    }
-
-    /* Sidebar */
-    .sidebar {
-      background: linear-gradient(180deg, #1e40af, #3b82f6);
-      color: white;
-      min-height: 100vh;
-      padding: 1.5rem 1rem;
-    }
-
-    .sidebar h4 {
-      font-weight: 700;
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .sidebar a {
-      display: block;
-      color: #e0e7ff;
-      text-decoration: none;
-      padding: 0.6rem 1rem;
-      border-radius: 6px;
-      margin-bottom: 0.3rem;
-      transition: 0.25s;
-    }
-
-    .sidebar a:hover {
-      background-color: rgba(255, 255, 255, 0.2);
-    }
-
-    .sidebar a.active {
-      background-color: #ffffff;
-      color: #1e3a8a;
-      font-weight: 600;
-    }
-
-    /* Header */
-    header {
-      background: white;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      padding: 1rem 1.5rem;
-      position: sticky;
+    /* Thanh kéo để resize sidebar */
+    .resize-handle {
+      position: absolute;
       top: 0;
-      z-index: 1000;
+      right: 0;
+      width: 6px;
+      height: 100%;
+      cursor: ew-resize;
+      background: transparent;
+      transition: background 0.3s ease;
     }
-
-    /* Main content */
-    .content {
-      padding: 2rem;
-    }
-
-    /* Footer */
-    footer {
-      background-color: #f1f5f9;
-      text-align: center;
-      padding: 1rem;
-      color: #64748b;
-      margin-top: 50px;
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 992px) {
-      .sidebar {
-        min-height: auto;
-      }
+    .resize-handle:hover {
+      background: rgba(255, 255, 255, 0.2);
     }
   </style>
 </head>
 
 <body>
-  <div class="container-fluid p-0">
-    <div class="row g-0">
-      <!-- Sidebar -->
-      <nav class="col-lg-3 col-xl-2 sidebar">
-        <h4><i class="bi bi-mortarboard"></i> Sinh viên</h4>
-        {% block sidebar_links %}
+  <div class="layout-container d-flex">
+
+    <!-- 🌐 SIDEBAR -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-header text-center position-relative">
+        <img src="{{ url_for('static', path='/images/fox-logo.png') }}"
+             alt="Logo" class="rounded-circle mb-2 shadow-sm" width="70" />
+        <h6 class="text-white mb-0">E-Learning</h6>
+        <small class="text-light opacity-75">Sinh viên</small>
+
+        <!-- 🔹 Nút thu gọn sidebar -->
+        <button id="toggleSidebar" class="toggle-btn" title="Thu gọn menu">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+      </div>
+
+      <!-- 🔹 Sidebar navigation -->
+      <nav class="sidebar-nav">
         <a href="/student/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
-          <i class="bi bi-speedometer2"></i> Bảng điều khiển
+          <i class="bi bi-speedometer2"></i> <span>Tổng quan</span>
         </a>
-        <a href="/student/courses" class="{% if active_page == 'courses' %}active{% endif %}">
-          <i class="bi bi-journal-bookmark"></i> Khóa học
+        <a href="/student/course" class="{% if active_page == 'courses' %}active{% endif %}">
+          <i class="bi bi-journal-bookmark"></i> <span>Khóa học</span>
         </a>
-        <a href="/student/assignments" class="{% if active_page == 'assignments' %}active{% endif %}">
-          <i class="bi bi-clipboard-check"></i> Bài tập
+        <a href="/student/quiz" class="{% if active_page == 'quiz' %}active{% endif %}">
+          <i class="bi bi-clipboard-check"></i> <span>Bài kiểm tra</span>
+        </a>
+        <a href="/student/assignment" class="{% if active_page == 'assignment' %}active{% endif %}">
+          <i class="bi bi-file-earmark-text"></i> <span>Bài tập</span>
+        </a>
+        <a href="/student/discussion" class="{% if active_page == 'discussion' %}active{% endif %}">
+          <i class="bi bi-chat-dots"></i> <span>Thảo luận</span>
+        </a>
+        <a href="/student/material" class="{% if active_page == 'material' %}active{% endif %}">
+          <i class="bi bi-journal-richtext"></i> <span>Tài liệu</span>
+        </a>
+        <a href="/student/message" class="{% if active_page == 'message' %}active{% endif %}">
+          <i class="bi bi-envelope"></i> <span>Tin nhắn</span>
+        </a>
+        <a href="/student/notifications" class="{% if active_page == 'notifications' %}active{% endif %}">
+          <i class="bi bi-bell"></i> <span>Thông báo</span>
+        </a>
+        <a href="/student/review" class="{% if active_page == 'review' %}active{% endif %}">
+          <i class="bi bi-star"></i> <span>Đánh giá</span>
+        </a>
+        <a href="/student/schedule" class="{% if active_page == 'schedule' %}active{% endif %}">
+          <i class="bi bi-calendar3"></i> <span>Lịch học</span>
         </a>
         <a href="/student/profile" class="{% if active_page == 'profile' %}active{% endif %}">
-          <i class="bi bi-person"></i> Hồ sơ
+          <i class="bi bi-person"></i> <span>Hồ sơ cá nhân</span>
         </a>
-       <ul class="navbar-nav ms-auto">
-        <li class="nav-item"><a class="nav-link text-white" href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>
-      </ul>
-        
-        {% endblock %}
       </nav>
 
-      <!-- Main content -->
-      <main class="col-lg-9 col-xl-10">
-        <header class="d-flex justify-content-between align-items-center">
-          <h5 class="fw-bold text-primary mb-0">{% block header_title %}Trang sinh viên{% endblock %}</h5>
-          <span class="small text-secondary">{% if username %}👋 Xin chào, {{ username }}{% endif %}</span>
-        </header>
+      <!-- 🔻 Logout -->
+      <a href="/auth/logout" class="logout-link">
+        <i class="bi bi-box-arrow-right"></i> <span>Đăng xuất</span>
+      </a>
 
-        <div class="content">
-          {% block content %}{% endblock %}
+      <!-- 🧱 Thanh kéo -->
+      <div id="resizeHandle" class="resize-handle"></div>
+    </aside>
+
+    <!-- 🔹 Mũi tên nổi khi sidebar ẩn -->
+    <button id="openSidebarBtn" class="sidebar-arrow-toggle" title="Mở menu">
+      <i class="bi bi-chevron-right"></i>
+    </button>
+
+    <!-- 🔹 MAIN CONTENT -->
+    <div class="main-content flex-grow-1">
+      <!-- 🌟 HEADER -->
+      <header class="topbar d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-mortarboard text-primary fs-4"></i>
+          <h5 class="fw-bold text-primary mb-0">
+            {% block header_title %}Bảng điều khiển học tập{% endblock %}
+          </h5>
         </div>
 
-        <footer>
-          © {{ current_year if current_year else 2025 }} E-Learning System
-        </footer>
-      </main>
+        <!-- 🔧 Header actions -->
+        <div class="d-flex align-items-center gap-3">
+          <a href="/student/notifications" title="Thông báo"><i class="bi bi-bell fs-5 text-secondary"></i></a>
+          <a href="/student/message" title="Tin nhắn"><i class="bi bi-envelope fs-5 text-secondary"></i></a>
+
+          {% if username %}
+          <span class="small text-secondary">👋 Xin chào, <strong>{{ username }}</strong></span>
+          {% endif %}
+
+          <!-- 🌗 Dark mode toggle -->
+          <button id="toggleMode" class="btn btn-sm btn-outline-primary rounded-circle" title="Chế độ tối">
+            <i class="bi bi-moon-fill"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- ⚙️ MAIN CONTENT BLOCK -->
+      {% block content %}{% endblock %}
+
+      <!-- 📘 FOOTER -->
+      <footer class="text-center py-3 text-secondary small border-top bg-light mt-4">
+        © {{ current_year if current_year else 2025 }} E-Learning Platform | Student Panel
+      </footer>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
+  <!-- ⚙️ JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const toggleBtn = document.getElementById("toggleSidebar");
+    const openSidebarBtn = document.getElementById("openSidebarBtn");
+    const resizeHandle = document.getElementById("resizeHandle");
+    const darkBtn = document.getElementById("toggleMode");
+
+    // 🌙 Dark mode toggle
+    darkBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      darkBtn.innerHTML = document.body.classList.contains("dark-mode")
+        ? '<i class="bi bi-sun-fill"></i>'
+        : '<i class="bi bi-moon-fill"></i>';
+    });
+
+    // 🧩 Thu gọn sidebar
+    toggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      const icon = toggleBtn.querySelector("i");
+      icon.classList.toggle("bi-chevron-right");
+      icon.classList.toggle("bi-chevron-left");
+    });
+
+    // 🖱 Kéo sidebar (ẩn nếu quá nhỏ)
+    let isResizing = false, startX = 0, startWidth = 0;
+    resizeHandle.addEventListener("mousedown", (e) => {
+      isResizing = true;
+      startX = e.clientX;
+      startWidth = sidebar.offsetWidth;
+      document.body.style.cursor = "ew-resize";
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isResizing) return;
+      const newWidth = startWidth + (e.clientX - startX);
+      if (newWidth < 60) {
+        sidebar.classList.add("hidden");
+        openSidebarBtn.classList.add("show");
+      } else if (newWidth >= 80 && newWidth <= 400) {
+        sidebar.style.width = newWidth + "px";
+      }
+    });
+
+    window.addEventListener("mouseup", () => {
+      isResizing = false;
+      document.body.style.cursor = "default";
+    });
+
+    // 🔹 Mở lại sidebar bằng mũi tên
+    openSidebarBtn.addEventListener("click", () => {
+      sidebar.classList.remove("hidden");
+      openSidebarBtn.classList.remove("show");
+      sidebar.style.width = "250px";
+    });
+  </script>
 </body>
 </html>

@@ -9,27 +9,30 @@ from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.course_review import CourseReview
 from datetime import datetime
-from pathlib import Path
 
-# ==============================
-# 🧭 Cấu hình Template
-# ==============================
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+# ============================================================
+# 🧭 Cấu hình Template (trỏ đến thư mục /templates cha)
+# ============================================================
 templates = Jinja2Templates(
     directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
 )
 
+# ============================================================
+# 🚀 Khởi tạo Router
+# ============================================================
 router = APIRouter(
     prefix="/teacher",
     tags=["Teacher Dashboard"]
 )
 
-# ==============================
+# ============================================================
 # 📊 Trang Dashboard Giáo viên
-# ==============================
+# ============================================================
 @router.get("/dashboard", response_class=HTMLResponse)
 def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
-    """Trang tổng quan của giáo viên — hiển thị thông tin khóa học, bài học và đánh giá."""
+    """
+    Trang tổng quan của giáo viên — hiển thị thống kê khóa học, bài học, đánh giá.
+    """
 
     # ✅ Lấy thông tin từ session
     user_id = request.session.get("user_id")
@@ -47,7 +50,9 @@ def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
             {"request": request, "error": "Không tìm thấy giáo viên!"}
         )
 
-    # ==== Thống kê cơ bản ====
+    # ============================================================
+    # 📚 Thống kê cơ bản
+    # ============================================================
     courses = db.query(Course).filter(Course.teacher_id == teacher.id).all()
     total_courses = len(courses)
 
@@ -66,7 +71,9 @@ def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
         .count()
     )
 
-    # ==== Dữ liệu hiển thị ====
+    # ============================================================
+    # 🕒 Dữ liệu hiển thị
+    # ============================================================
     recent_courses = (
         db.query(Course)
         .filter(Course.teacher_id == teacher.id)
@@ -84,18 +91,23 @@ def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
         .all()
     )
 
-    # ✅ Chuẩn bị dữ liệu cho biểu đồ
+    # ============================================================
+    # 📈 Dữ liệu cho biểu đồ Chart.js
+    # ============================================================
     courses_json = [
         {
             "course_name": c.course_name,
             "course_code": c.course_code,
             "status": c.status,
+            "lesson_count": len(c.modules) if hasattr(c, "modules") else 0,
             "created_at": c.created_at.strftime("%Y-%m-%d") if c.created_at else None,
         }
         for c in recent_courses
     ]
 
-    # ✅ Render template
+    # ============================================================
+    # 🧾 Render Template
+    # ============================================================
     return templates.TemplateResponse(
         "teacher/dashboard.html",
         {
@@ -106,7 +118,7 @@ def teacher_dashboard(request: Request, db: Session = Depends(get_db)):
             "total_reviews": total_reviews,
             "recent_courses": recent_courses,
             "recent_reviews": recent_reviews,
-            "courses_json": courses_json,  # Dữ liệu cho Chart.js
+            "courses_json": courses_json,
             "now": datetime.now(),
         },
     )

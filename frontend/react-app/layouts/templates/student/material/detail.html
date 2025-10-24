@@ -1,0 +1,10 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📄 {{ material.title }}{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+<h5>{{ material.title }}</h5>
+<p class="text-muted small">Loại: {{ material.material_type|capitalize }} • Dung lượng: {{ material.file_size|default('-') }}</p>
+<p>{{ material.description }}</p>
+<a class="btn btn-primary" href="{{ url_for('student_material_download', material_id=material.id) }}"><i class="bi bi-download"></i> Tải xuống</a>
+</div></div>
+{% endblock %}

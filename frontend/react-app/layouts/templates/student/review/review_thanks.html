@@ -1,0 +1,8 @@
+{% extends "student/layout_student.html" %}
+{% block title %}Cảm ơn{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+<div class="display-6">🙏 Cảm ơn phản hồi của bạn!</div>
+<a class="btn btn-primary mt-3" href="{{ url_for('student_enrolled_courses') }}">Về trang khóa học</a>
+</div>
+{% endblock %}

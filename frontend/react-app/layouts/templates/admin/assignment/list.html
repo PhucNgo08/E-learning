@@ -1,0 +1,135 @@
+{% extends "admin/layout_admin.html" %}
+{% block title %}📋 Danh sách bài tập{% endblock %}
+
+{% block content %}
+<style>
+  .card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+  }
+  .table th {
+    background: #0d6efd;
+    color: white;
+  }
+  .btn-sm {
+    margin: 0 2px;
+  }
+  .back-btn {
+    background: linear-gradient(90deg, #6c757d, #495057);
+    color: white;
+  }
+  .back-btn:hover {
+    background: linear-gradient(90deg, #495057, #343a40);
+    color: white;
+  }
+</style>
+
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary fw-bold mb-0">📋 Danh sách bài tập</h3>
+    <div>
+      <a href="/admin/dashboard" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-house-door"></i> Trang chủ
+      </a>
+      <a href="/admin/assignment/create" class="btn btn-success ms-2">
+        <i class="bi bi-plus-circle"></i> Tạo bài tập
+      </a>
+      <a href="/admin/assignment/stats" class="btn btn-primary ms-2">
+        <i class="bi bi-bar-chart"></i> Thống kê
+      </a>
+    </div>
+  </div>
+
+  <!-- Thống kê tổng quan -->
+  <div class="row mb-4 text-center">
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Tổng bài tập</h6>
+          <h3 class="text-primary fw-bold">{{ stats.total_assignments }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Lượt nộp</h6>
+          <h3 class="text-success fw-bold">{{ stats.total_submissions }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Đã chấm</h6>
+          <h3 class="text-info fw-bold">{{ stats.graded_submissions }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h6 class="text-muted">Điểm TB</h6>
+          <h3 class="text-warning fw-bold">{{ stats.average_grade }}</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bảng danh sách bài tập -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <table class="table table-hover align-middle text-center">
+        <thead>
+          <tr>
+            <th>Tiêu đề</th>
+            <th>Mô tả</th>
+            <th>Khóa học</th>
+            <th>Ngày tạo</th>
+            <th>Hạn nộp</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assignments %}
+            <tr>
+              <td class="fw-semibold text-start">{{ a.title }}</td>
+              <td>{{ a.description or "Không có" }}</td>
+              <td>{{ a.course.course_name if a.course else "Không xác định" }}</td>
+              <td>{{ a.created_at.strftime('%d/%m/%Y') if a.created_at else '-' }}</td>
+              <td>{{ a.due_date.strftime('%d/%m/%Y') if a.due_date else '-' }}</td>
+              <td>
+                <a href="/admin/assignment/edit/{{ a.id }}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <a href="/admin/assignment/delete/{{ a.id }}" class="btn btn-sm btn-danger" title="Xóa bài tập">
+                  <i class="bi bi-trash3"></i>
+                </a>
+                <a href="/admin/assignment/manage/{{ a.course_id }}" class="btn btn-sm btn-info" title="Thống kê khóa học">
+                  <i class="bi bi-bar-chart-line"></i>
+                </a>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-3">
+                <i class="bi bi-emoji-frown"></i> Không có bài tập nào.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="text-center mt-4 text-secondary small">
+    © {{ current_year }} E-Learning Admin Panel
+  </div>
+</div>
+{% endblock %}

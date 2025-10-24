@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>🔁 Sắp xếp module / bài học</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="p-4 bg-light">
+  <div class="container">
+    <!-- 🔙 Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="text-primary m-0"><i class="bi bi-list-ol"></i> Sắp xếp module / bài học</h4>
+      <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
+    </div>
+
+    <p class="text-muted">Kéo thả để thay đổi thứ tự module:</p>
+
+    <!-- Danh sách module -->
+    <ul id="moduleList" class="list-group shadow-sm">
+      {% for m in modules %}
+        <li class="list-group-item">
+          <i class="bi bi-arrows-move me-2 text-secondary"></i>
+          {{ m.module_number }}. {{ m.title }}
+        </li>
+      {% endfor %}
+    </ul>
+
+    <!-- Nút lưu -->
+    <button class="btn btn-success mt-4 w-100 shadow-sm">
+      <i class="bi bi-save"></i> Lưu thứ tự mới
+    </button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script>
+    new Sortable(document.getElementById("moduleList"), {
+      animation: 150,
+      ghostClass: "bg-light"
+    });
+  </script>
+</body>
+</html>

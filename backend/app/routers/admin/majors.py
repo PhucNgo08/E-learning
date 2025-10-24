@@ -3,9 +3,11 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
-from app.services import major_service
-from app.services.course_category_service import get_all_categories  # 👈 thêm dòng này
+from app.services.admin import major_service, course_category_service
 
+# ==============================
+# 🧭 Template config
+# ==============================
 templates = Jinja2Templates(
     directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/majors"
 )
@@ -20,8 +22,12 @@ router = APIRouter(
 # =========================================================
 @router.get("/list", response_class=HTMLResponse)
 def list_majors(request: Request, db: Session = Depends(get_db)):
+    """Hiển thị danh sách ngành học."""
     majors = major_service.get_all_majors(db)
-    return templates.TemplateResponse("list.html", {"request": request, "majors": majors})
+    return templates.TemplateResponse(
+        "list.html",
+        {"request": request, "majors": majors}
+    )
 
 
 # =========================================================
@@ -29,12 +35,15 @@ def list_majors(request: Request, db: Session = Depends(get_db)):
 # =========================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_major_form(request: Request, db: Session = Depends(get_db)):
+    """Hiển thị form tạo ngành học."""
     majors = major_service.get_all_majors(db)
-    categories = get_all_categories(db)  # ✅ lấy danh sách khoa từ bảng course_categories
+    categories = course_category_service.get_all_course_categories(db)
     return templates.TemplateResponse(
         "create.html",
         {"request": request, "majors": majors, "categories": categories}
     )
+
+
 @router.post("/create")
 def create_major(
     major_code: str = Form(...),
@@ -42,11 +51,21 @@ def create_major(
     faculty_name: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    """Xử lý thêm ngành học mới."""
     try:
         major_service.create_major(db, major_code, major_name, faculty_name)
+        print(f"✅ [Tạo ngành học] {major_name}")
         return RedirectResponse(url="/admin/majors/list", status_code=303)
     except RuntimeError as e:
-        return HTMLResponse(f"<h3 style='color:red;text-align:center;margin-top:40px;'>⚠️ {e}</h3>", status_code=400)
+        return HTMLResponse(
+            f"<h3 style='color:red;text-align:center;margin-top:40px;'>⚠️ {e}</h3>",
+            status_code=400
+        )
+    except Exception as e:
+        return HTMLResponse(
+            f"<pre>Lỗi không xác định: {e}</pre>",
+            status_code=500
+        )
 
 
 # =========================================================
@@ -54,10 +73,14 @@ def create_major(
 # =========================================================
 @router.get("/edit/{major_id}", response_class=HTMLResponse)
 def edit_major_form(request: Request, major_id: str, db: Session = Depends(get_db)):
+    """Hiển thị form chỉnh sửa ngành học."""
     major = major_service.get_major_by_id(db, major_id)
     if not major:
         raise HTTPException(status_code=404, detail="Không tìm thấy ngành học.")
-    return templates.TemplateResponse("edit.html", {"request": request, "major": major})
+    return templates.TemplateResponse(
+        "edit.html",
+        {"request": request, "major": major}
+    )
 
 
 @router.post("/edit/{major_id}")
@@ -69,9 +92,13 @@ def update_major(
     is_active: bool = Form(False),
     db: Session = Depends(get_db)
 ):
-    updated = major_service.update_major(db, major_id, major_code, major_name, faculty_name, is_active)
+    """Xử lý cập nhật ngành học."""
+    updated = major_service.update_major(
+        db, major_id, major_code, major_name, faculty_name, is_active
+    )
     if not updated:
         raise HTTPException(status_code=404, detail="Không tìm thấy ngành học để cập nhật.")
+    print(f"✏️ [Cập nhật ngành học] {major_name}")
     return RedirectResponse(url="/admin/majors/list", status_code=303)
 
 
@@ -80,15 +107,21 @@ def update_major(
 # =========================================================
 @router.get("/delete/{major_id}", response_class=HTMLResponse)
 def delete_major_form(request: Request, major_id: str, db: Session = Depends(get_db)):
+    """Hiển thị form xác nhận xóa ngành học."""
     major = major_service.get_major_by_id(db, major_id)
     if not major:
         raise HTTPException(status_code=404, detail="Không tìm thấy ngành học.")
-    return templates.TemplateResponse("delete.html", {"request": request, "major": major})
+    return templates.TemplateResponse(
+        "delete.html",
+        {"request": request, "major": major}
+    )
 
 
 @router.post("/delete/{major_id}")
 def delete_major(major_id: str, db: Session = Depends(get_db)):
+    """Xử lý xóa ngành học."""
     success = major_service.delete_major(db, major_id)
     if not success:
         raise HTTPException(status_code=404, detail="Không tìm thấy ngành học để xóa.")
+    print(f"🗑️ [Xóa ngành học] ID: {major_id}")
     return RedirectResponse(url="/admin/majors/list", status_code=303)

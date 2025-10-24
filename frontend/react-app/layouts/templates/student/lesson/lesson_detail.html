@@ -1,0 +1,13 @@
+{% extends "student/layout_student.html" %}
+{% block title %}🔍 {{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="container py-3">
+  <h4 class="fw-bold text-primary mb-2">🔍 Chi tiết bài học</h4>
+  <p><strong>Mã:</strong> {{ lesson.id }}</p>
+  <p><strong>Tiêu đề:</strong> {{ lesson.title }}</p>
+  <p><strong>Mô tả:</strong> {{ lesson.description }}</p>
+  <p><strong>Loại nội dung:</strong> {{ lesson.content_type }}</p>
+  <p><strong>Thời lượng:</strong> {{ lesson.duration_minutes }} phút</p>
+  <p><strong>Ngày tạo:</strong> {{ lesson.created_at.strftime('%d/%m/%Y') }}</p>
+</div>
+{% endblock %}

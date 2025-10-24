@@ -1,0 +1,91 @@
+body {
+  background: radial-gradient(circle at top left, #f8faff 0%, #eef2ff 100%);
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+/* 🎯 Header */
+.dashboard-header {
+  background: linear-gradient(90deg, #007bff, #0056d6);
+  color: white;
+  border-radius: 14px;
+  padding: 45px 30px;
+  margin-bottom: 50px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.4s ease;
+}
+.dashboard-header:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+.dashboard-header h2 {
+  font-weight: 700;
+}
+.dashboard-header p {
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+/* 💎 Cards */
+.card {
+  border: none;
+  border-radius: 18px;
+  transition: all 0.35s ease;
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -80px;
+  width: 60px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: skewX(-25deg);
+  transition: 0.75s;
+}
+.card:hover::before {
+  left: 130%;
+}
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.15);
+}
+.card-body {
+  padding: 30px 20px;
+}
+.card-title {
+  font-weight: 700;
+  margin-top: 10px;
+  letter-spacing: 0.3px;
+}
+.card-body p {
+  font-size: 0.93rem;
+  color: #6c757d;
+  margin-bottom: 15px;
+}
+
+/* ✨ Button style */
+.btn {
+  border-radius: 10px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+/* 📱 Responsive grid spacing */
+.row.g-4 {
+  row-gap: 32px;
+}
+
+/* 🩵 Gradient text */
+.text-gradient {
+  background: linear-gradient(45deg, #007bff, #00d4ff);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

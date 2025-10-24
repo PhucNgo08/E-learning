@@ -1,0 +1,16 @@
+{% extends "student/layout_student.html" %}
+{% block title %}⚙️ Cài đặt thông báo{% endblock %}
+{% block content %}
+<h5 class="mb-3">⚙️ Cài đặt thông báo</h5>
+<form method="post">
+<div class="form-check mb-2">
+<input class="form-check-input" type="checkbox" name="email_enabled" id="e1" {% if settings.email_enabled %}checked{% endif %}>
+<label for="e1" class="form-check-label">Nhận email</label>
+</div>
+<div class="form-check mb-2">
+<input class="form-check-input" type="checkbox" name="push_enabled" id="e2" {% if settings.push_enabled %}checked{% endif %}>
+<label for="e2" class="form-check-label">Thông báo đẩy</label>
+</div>
+<button class="btn btn-primary">Lưu</button>
+</form>
+{% endblock %}

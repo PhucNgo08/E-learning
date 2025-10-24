@@ -1,0 +1,17 @@
+{% extends "student/layout_student.html" %}
+{% block title %}✍️ Bài viết mới{% endblock %}
+{% block content %}
+<h5 class="mb-3">✍️ Tạo chủ đề mới</h5>
+<form method="post">
+<div class="mb-3">
+<label class="form-label">Tiêu đề</label>
+<input class="form-control" name="title" required>
+</div>
+<div class="mb-3">
+<label class="form-label">Nội dung</label>
+<textarea class="form-control" name="content" rows="6" required></textarea>
+</div>
+<button class="btn btn-primary">Đăng</button>
+<a class="btn btn-outline-secondary" href="{{ url_for('student_discussion_list') }}">Hủy</a>
+</form>
+{% endblock %}

@@ -1,0 +1,100 @@
+/* =====================================================
+🎓 STUDENT DASHBOARD PRO DESIGN
+Author: DTT Group - Style like Teacher Panel
+===================================================== */
+
+/* --- Welcome Card --- */
+.dashboard-card {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+  color: #fff;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+.dashboard-card h5 {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.dashboard-card p {
+  opacity: 0.95;
+}
+.dashboard-card .btn {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  font-weight: 500;
+  margin-top: 1rem;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+.dashboard-card .btn:hover {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+/* --- Statistics Boxes --- */
+.stat-box {
+  border-radius: 18px;
+  padding: 1.5rem;
+  color: #fff;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+.stat-box i {
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 10px;
+}
+.stat-box.blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.stat-box.green { background: linear-gradient(135deg, #059669, #10b981); }
+.stat-box.yellow { background: linear-gradient(135deg, #d97706, #fbbf24); }
+.stat-box:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- Course Cards --- */
+.course-card {
+  border: none;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+.course-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+}
+.course-card h6 {
+  color: #1e3a8a;
+  font-weight: 600;
+}
+.course-card .btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* --- Alert --- */
+.alert-info {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+}
+
+/* --- Dark Mode --- */
+body.dark-mode .dashboard-card {
+  background: linear-gradient(135deg, #1e3a8a, #1e40af);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+}
+body.dark-mode .stat-box {
+  color: #e0f2fe;
+}
+body.dark-mode .course-card {
+  background: #1e293b;
+  color: #e2e8f0;
+}

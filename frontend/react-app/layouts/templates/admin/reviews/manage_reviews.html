@@ -14,21 +14,48 @@
       background-color: #f7f9fc;
       font-family: "Segoe UI", "Inter", sans-serif;
     }
+
     .container {
       margin-top: 40px;
       background-color: white;
-      border-radius: 10px;
+      border-radius: 12px;
       padding: 30px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
     }
+
     h3 {
-      font-weight: 600;
+      font-weight: 700;
+      color: #0d6efd;
     }
+
     .table thead {
-      background-color: #212529;
+      background: linear-gradient(90deg, #007bff, #003087);
       color: white;
     }
+
     .badge {
+      font-size: 0.9rem;
+      border-radius: 8px;
+    }
+
+    .summary-card {
+      background: #f8faff;
+      border: 1px solid #e3e8ef;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-card h4 {
+      color: #0d6efd;
+      font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #6b7280;
       font-size: 0.9rem;
     }
   </style>
@@ -36,17 +63,43 @@
 <body>
 
 <div class="container">
-  <h3 class="mb-4 text-warning fw-bold">
-    📝 Quản lý Đánh giá Khóa học
-  </h3>
-  <p class="text-muted">
-    Xem, duyệt và xóa phản hồi của học viên về các khóa học trong hệ thống.
-  </p>
+  <!-- Tiêu đề -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+    <div>
+      <h3 class="fw-bold"><i class="bi bi-chat-square-text"></i> Quản lý Đánh giá Khóa học</h3>
+      <p class="text-muted mb-0">Theo dõi phản hồi và mức độ hài lòng của học viên.</p>
+    </div>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <!-- Thống kê tổng quan -->
+  <div class="row g-3 mb-4 text-center">
+    <div class="col-md-4">
+      <div class="summary-card">
+        <h4>{{ total_reviews or 0 }}</h4>
+        <p class="text-muted mb-0">Tổng số đánh giá</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card">
+        <h4>⭐ {{ avg_rating or 0 }}</h4>
+        <p class="text-muted mb-0">Điểm trung bình</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="summary-card">
+        <h4>{{ recent_count or 0 }}</h4>
+        <p class="text-muted mb-0">Đánh giá mới trong tháng</p>
+      </div>
+    </div>
+  </div>
 
   <!-- Bảng danh sách đánh giá -->
-  <div class="table-responsive mt-4">
-    <table class="table table-striped table-bordered align-middle">
-      <thead class="table-dark text-center">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle text-center">
+      <thead>
         <tr>
           <th>#</th>
           <th>Khóa học</th>
@@ -54,36 +107,24 @@
           <th>Điểm</th>
           <th>Nhận xét</th>
           <th>Ngày tạo</th>
-          <th>Thao tác</th>
         </tr>
       </thead>
       <tbody>
         {% for review in reviews %}
         <tr>
-          <td class="text-center">{{ loop.index }}</td>
+          <td>{{ loop.index }}</td>
           <td>{{ review.course.title if review.course else "—" }}</td>
           <td>{{ review.user.username if review.user else "—" }}</td>
-          <td class="text-center">
+          <td>
             <span class="badge bg-warning text-dark">⭐ {{ review.rating }}</span>
           </td>
-          <td>{{ review.comment or "—" }}</td>
-          <td class="text-center">
-            {{ review.created_at.strftime("%Y-%m-%d %H:%M") if review.created_at else "—" }}
-          </td>
-          <td class="text-center">
-            <a href="/admin/reviews/edit/{{ review.id }}" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-pencil"></i>
-            </a>
-            <a href="/admin/reviews/delete/{{ review.id }}" class="btn btn-sm btn-outline-danger"
-               onclick="return confirm('Bạn có chắc chắn muốn xóa đánh giá này không?')">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
+          <td class="text-start">{{ review.comment or "—" }}</td>
+          <td>{{ review.created_at.strftime("%d/%m/%Y %H:%M") if review.created_at else "—" }}</td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="7" class="text-center text-muted py-3">
-            Chưa có đánh giá nào trong hệ thống.
+          <td colspan="6" class="text-muted py-3">
+            <i class="bi bi-info-circle"></i> Chưa có đánh giá nào trong hệ thống.
           </td>
         </tr>
         {% endfor %}
@@ -91,12 +132,7 @@
     </table>
   </div>
 
-  <!-- Nút quay lại -->
-  <div class="mt-4 text-center">
-    <a href="/admin/dashboard" class="btn btn-secondary">
-      ⬅️ Quay lại Bảng điều khiển
-    </a>
-  </div>
+  <footer>© {{ current_year }} Hệ thống E-Learning — Quản lý đánh giá</footer>
 </div>
 
 <!-- Bootstrap JS -->

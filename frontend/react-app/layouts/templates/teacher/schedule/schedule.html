@@ -1,0 +1,47 @@
+
+{% block title %}🗓️ Lịch giảng dạy{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h3 class="fw-bold text-primary mb-4">
+    <i class="bi bi-calendar-week"></i> Lịch giảng dạy trong tuần
+  </h3>
+
+  <table class="table table-hover table-bordered shadow-sm align-middle">
+    <thead class="table-primary text-center">
+      <tr>
+        <th>Thứ</th>
+        <th>Tên khóa học</th>
+        <th>Lớp học phần</th>
+        <th>Thời gian</th>
+        <th>Phòng học</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in schedule %}
+      <tr class="text-center">
+        <td class="fw-semibold">
+          {% if item.day_of_week == 'monday' %}Thứ 2
+          {% elif item.day_of_week == 'tuesday' %}Thứ 3
+          {% elif item.day_of_week == 'wednesday' %}Thứ 4
+          {% elif item.day_of_week == 'thursday' %}Thứ 5
+          {% elif item.day_of_week == 'friday' %}Thứ 6
+          {% elif item.day_of_week == 'saturday' %}Thứ 7
+          {% else %}Chủ nhật{% endif %}
+        </td>
+        <td class="text-start">{{ item.course_name }}</td>
+        <td>{{ item.section_name or "-" }}</td>
+        <td>{{ item.start_time }} - {{ item.end_time }}</td>
+        <td>{{ item.room_number or "Chưa xác định" }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="text-center text-muted py-3">
+          Không có lịch dạy nào trong tuần này.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

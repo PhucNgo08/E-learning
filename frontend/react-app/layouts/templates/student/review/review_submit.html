@@ -1,0 +1,6 @@
+{% extends "student/layout_student.html" %}
+{% block title %}Gửi đánh giá{% endblock %}
+{% block content %}
+<div class="alert alert-success">Cảm ơn bạn! Đánh giá đã được gửi và chờ duyệt.</div>
+<a class="btn btn-primary" href="{{ url_for('student_course_detail', course_id=course.id) }}">Quay lại khóa học</a>
+{% endblock %}

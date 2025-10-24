@@ -9,7 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.models.user import User
-from app.services.password_service import verify_password
+from app.services.common.password_service import verify_password
+
 
 # ==============================
 # ⚙️ Cấu hình router & template

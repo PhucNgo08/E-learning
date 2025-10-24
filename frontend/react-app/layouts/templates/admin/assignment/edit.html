@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>✏️ Chỉnh sửa bài tập</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+  <div class="container">
+    <h3 class="text-primary fw-bold mb-4">✏️ Chỉnh sửa bài tập</h3>
+    <form method="post" action="/admin/assignment/edit/{{ assignment.id }}">
+      <div class="mb-3">
+        <label class="form-label">Tiêu đề</label>
+        <input type="text" name="title" class="form-control" value="{{ assignment.title }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Mô tả</label>
+        <textarea name="description" class="form-control">{{ assignment.description }}</textarea>
+      </div>
+      <button type="submit" class="btn btn-warning">💾 Lưu thay đổi</button>
+      <a href="/admin/assignment/list" class="btn btn-secondary">⬅️ Quay lại</a>
+    </form>
+  </div>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{% extends "student/layout_student.html" %}
+{% block title %}🗓️ Lịch học và kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3"><i class="bi bi-calendar3"></i> Lịch học & Kiểm tra</h4>
+
+  {% if schedules %}
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-primary text-center">
+      <tr>
+        <th>#</th>
+        <th>Môn học</th>
+        <th>Ngày</th>
+        <th>Giờ</th>
+        <th>Loại</th>
+        <th>Phòng</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in schedules %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ s.course_name }}</td>
+        <td>{{ s.date.strftime('%d/%m/%Y') }}</td>
+        <td>{{ s.time }}</td>
+        <td>
+          {% if s.type == 'exam' %}
+            <span class="badge bg-danger">Thi</span>
+          {% else %}
+            <span class="badge bg-success">Học</span>
+          {% endif %}
+        </td>
+        <td>{{ s.room or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-info"><i class="bi bi-info-circle"></i> Không có lịch học hoặc kiểm tra.</div>
+  {% endif %}
+</div>
+{% endblock %}

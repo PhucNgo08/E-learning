@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>🧩 Cài đặt hệ thống</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    function validateForm() {
+      const key = document.getElementById("setting_key").value.trim();
+      const val = document.getElementById("setting_value").value.trim();
+      if (!key || !val) {
+        alert("Vui lòng nhập đầy đủ thông tin!");
+        return false;
+      }
+      return true;
+    }
+  </script>
+</head>
+<body class="p-4 bg-light">
+  <h4 class="text-primary mb-3">🧩 Cài đặt hệ thống</h4>
+  <form method="post" onsubmit="return validateForm()">
+    <div class="mb-3">
+      <label>Mã cấu hình</label>
+      <input id="setting_key" name="setting_key" class="form-control" required>
+    </div>
+    <div class="mb-3">
+      <label>Giá trị</label>
+      <textarea id="setting_value" name="setting_value" class="form-control" required></textarea>
+    </div>
+    <button class="btn btn-success">💾 Lưu thay đổi</button>
+  </form>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>⭐ Quản lý đánh giá khóa học</title>
+
+  <!-- Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #f0f4ff, #f8f9fc);
+      min-height: 100vh;
+    }
+
+    .card {
+      border-radius: 15px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    .header-bar {
+      background: #0d6efd;
+      color: white;
+      border-radius: 12px;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+    }
+
+    .header-bar h3 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    .back-btn {
+      background-color: #ffc107;
+      border: none;
+      color: #000;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+
+    .back-btn:hover {
+      background-color: #ffcd39;
+      color: #000;
+    }
+  </style>
+</head>
+
+<body class="p-4">
+
+  <div class="container">
+
+    <!-- 🌟 Header -->
+    <div class="header-bar">
+      <h3><i class="bi bi-star-fill me-2"></i> Quản lý đánh giá khóa học</h3>
+      <a href="/teacher/dashboard" class="btn back-btn">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại trang chính
+      </a>
+    </div>
+
+    <!-- 📊 Thống kê tổng quan -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3">
+          <h6 class="text-muted">⭐ Điểm trung bình</h6>
+          <h2 class="text-warning fw-bold">{{ avg_rating or 0 }}/5</h2>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3">
+          <h6 class="text-muted">💬 Số lượt đánh giá</h6>
+          <h2 class="text-primary fw-bold">{{ total_reviews or 0 }}</h2>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3">
+          <h6 class="text-muted">🏆 Khóa học nổi bật</h6>
+          <h5 class="fw-bold text-success">
+            {{ top_course.course_name if top_course else 'Chưa có dữ liệu' }}
+          </h5>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📈 Biểu đồ -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <h6 class="mb-3 text-secondary"><i class="bi bi-bar-chart-line"></i> Phân bố điểm đánh giá (tổng hợp)</h6>
+        <canvas id="ratingChart" height="100"></canvas>
+      </div>
+    </div>
+
+    <!-- 📋 Danh sách đánh giá -->
+    <div class="card shadow-sm mb-5">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="text-secondary"><i class="bi bi-list-ul"></i> Danh sách chi tiết đánh giá</h6>
+          <form class="d-flex" method="get">
+            <select name="course_id" class="form-select me-2">
+              <option value="">-- Lọc theo khóa học --</option>
+              {% for c in courses %}
+                <option value="{{ c.id }}">{{ c.course_name }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-outline-primary" type="submit">
+              <i class="bi bi-funnel"></i> Lọc
+            </button>
+          </form>
+        </div>
+
+        {% if reviews %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead class="table-primary">
+              <tr>
+                <th>Khóa học</th>
+                <th>Học viên</th>
+                <th>⭐ Nội dung</th>
+                <th>⭐ Giảng viên</th>
+                <th>⭐ Hỗ trợ</th>
+                <th>⭐ Trung bình</th>
+                <th>Bình luận</th>
+                <th>Ngày</th>
+                <th class="text-center">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in reviews %}
+              <tr>
+                <td>{{ r.course.course_name }}</td>
+                <td>{{ r.user.full_name }}</td>
+                <td>{{ r.rating_content or '-' }}</td>
+                <td>{{ r.rating_teacher or '-' }}</td>
+                <td>{{ r.rating_support or '-' }}</td>
+                <td>
+                  <span class="badge bg-warning text-dark">
+                    {{ "%.1f"|format(r.overall_rating or 0) }}
+                  </span>
+                </td>
+                <td>{{ r.comment or '-' }}</td>
+                <td>{{ r.created_at.strftime('%d/%m/%Y') }}</td>
+                <td class="text-center">
+                  <form method="post" action="/teacher/reviews/delete/{{ r.id }}" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');">
+                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+          <div class="alert alert-warning text-center py-4">
+            <i class="bi bi-exclamation-circle"></i> Chưa có đánh giá nào.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 📊 Biểu đồ Chart.js -->
+  <script>
+    const ctx = document.getElementById('ratingChart');
+    const ratingData = JSON.parse('{{ rating_distribution | tojson | safe }}');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['⭐1', '⭐2', '⭐3', '⭐4', '⭐5'],
+        datasets: [{
+          label: 'Số lượt đánh giá',
+          data: ratingData,
+          backgroundColor: ['#dc3545','#fd7e14','#ffc107','#0d6efd','#198754']
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -12,8 +12,8 @@ class CourseReview(Base):
 
     id = Column(String(36), primary_key=True, default=uuid_str)
     course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)  # Người viết đánh giá
-    moderated_by = Column(String(36), ForeignKey("users.id"))  # Người duyệt đánh giá (admin)
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    moderated_by = Column(String(36), ForeignKey("users.id"))
 
     rating_content = Column(Integer)
     rating_teacher = Column(Integer)
@@ -34,8 +34,22 @@ class CourseReview(Base):
 
     # === Quan hệ ORM ===
     course = relationship("Course", back_populates="reviews")
-    user = relationship("User", foreign_keys=[user_id], back_populates="course_reviews")  # ✅ rõ ràng
-    moderator = relationship("User", foreign_keys=[moderated_by])  # ✅ không cần back_populates vì 1 chiều
+
+    # 🔹 Người viết đánh giá
+    user = relationship(
+        "User",
+        foreign_keys=[user_id],
+        back_populates="course_reviews",
+        overlaps="moderated_reviews"
+    )
+
+    # 🔹 Người duyệt đánh giá (admin)
+    moderator = relationship(
+        "User",
+        foreign_keys=[moderated_by],
+        back_populates="moderated_reviews",
+        overlaps="course_reviews"
+    )
 
     def __repr__(self):
         return f"<CourseReview(user_id={self.user_id}, rating={self.overall_rating}, status={self.status})>"

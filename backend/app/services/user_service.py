@@ -1,18 +1,9 @@
-import hashlib
 import uuid
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
 from app.models.security_setting import SecuritySetting
-
-
-# =====================================================
-# 🔒 Mã hóa mật khẩu
-# =====================================================
-def hash_password(password: str) -> str:
-    """Mã hóa mật khẩu bằng SHA256"""
-    return hashlib.sha256(password.encode("utf-8")).hexdigest()
-
+from app.services.common.password_service import get_password_hash  # ✅ Dùng bcrypt hash chuẩn
 
 # =====================================================
 # ➕ Tạo người dùng
@@ -25,23 +16,39 @@ def create_user(
     role: str,
     db: Session,
     academic_year_id: str = None,
-    major_id: str = None
+    major_id: str = None,
+    mssv: str = None   # ✅ Thêm MSSV
 ):
-    """Tạo mới người dùng (cho phép tạo admin, teacher, student, TA)"""
+    """
+    Tạo mới người dùng (cho phép tạo admin, teacher, student, TA).
+    Nếu không nhập mật khẩu → đặt mặc định là "123456".
+    """
     try:
-        # Kiểm tra trùng username/email
+        # --- Kiểm tra trùng username/email ---
         if db.query(User).filter(User.username == username).first():
-            raise ValueError("Tên đăng nhập đã tồn tại.")
+            raise ValueError("❌ Tên đăng nhập đã tồn tại.")
         if db.query(User).filter(User.email == email).first():
-            raise ValueError("Email đã tồn tại.")
+            raise ValueError("❌ Email đã tồn tại.")
+
+        # --- Xử lý mật khẩu mặc định ---
+        if not password or password.strip() == "":
+            password = "123456"
+
+        # --- Gán MSSV mặc định nếu là student ---
+        if role == "student" and not mssv:
+            mssv = username
+
+        # --- Hash mật khẩu bằng bcrypt ---
+        hashed_password = get_password_hash(password)
 
         new_user = User(
             id=str(uuid.uuid4()),
             username=username,
             email=email,
-            password_hash=hash_password(password),
+            password_hash=hashed_password,
             full_name=full_name,
             role=role or "student",
+            mssv=mssv,
             academic_year_id=academic_year_id or None,
             major_id=major_id or None,
             status="active"
@@ -51,9 +58,10 @@ def create_user(
         db.commit()
         db.refresh(new_user)
 
-        # Tạo security mặc định
+        # --- Tạo security mặc định ---
         db.add(SecuritySetting(user_id=new_user.id))
         db.commit()
+
         return new_user
 
     except SQLAlchemyError as e:
@@ -89,13 +97,15 @@ def update_user(
     role: str,
     db: Session,
     academic_year_id: str = None,
-    major_id: str = None
+    major_id: str = None,
+    mssv: str = None   # ✅ Thêm MSSV khi cập nhật
 ):
-    """Cập nhật thông tin người dùng"""
+    """Cập nhật thông tin người dùng (Admin cập nhật)."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
 
+    # --- Kiểm tra trùng username/email ---
     if db.query(User).filter(User.username == username, User.id != user_id).first():
         raise ValueError("Tên đăng nhập đã được sử dụng.")
     if db.query(User).filter(User.email == email, User.id != user_id).first():
@@ -107,9 +117,11 @@ def update_user(
     user.role = role
     user.academic_year_id = academic_year_id or None
     user.major_id = major_id or None
+    user.mssv = mssv or user.mssv
 
-    if password.strip():
-        user.password_hash = hash_password(password)
+    # --- Nếu nhập mật khẩu mới → hash lại ---
+    if password and password.strip() != "":
+        user.password_hash = get_password_hash(password)
 
     try:
         db.commit()
@@ -124,7 +136,7 @@ def update_user(
 # 🚫 Vô hiệu hóa tài khoản
 # =====================================================
 def deactivate_user(user_id: str, db: Session):
-    """Vô hiệu hóa tài khoản"""
+    """Vô hiệu hóa tài khoản."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
@@ -144,7 +156,7 @@ def deactivate_user(user_id: str, db: Session):
 # 🔄 Khôi phục tài khoản
 # =====================================================
 def restore_user(user_id: str, db: Session):
-    """Khôi phục tài khoản"""
+    """Khôi phục tài khoản."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")

@@ -1,4 +1,6 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer
+from sqlalchemy import (
+    Column, String, Text, DateTime, ForeignKey, Integer, DECIMAL, Enum
+)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database.connection import Base
@@ -13,17 +15,39 @@ class Assignment(Base):
     __tablename__ = "assignments"
 
     id = Column(String(36), primary_key=True, default=uuid_str)
+
+    # Thông tin chính
     title = Column(String(255), nullable=False)
     description = Column(Text)
-    course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
-    due_date = Column(DateTime, nullable=True)
-    max_score = Column(Integer, default=100)
 
+    # Liên kết
+    course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
+    module_id = Column(String(36), ForeignKey("modules.id"), nullable=True)
+    teacher_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+
+    # Cấu hình nộp bài
+    submission_type = Column(Enum("individual", "group", name="submission_type_enum"), default="individual")
+    allowed_file_types = Column(String(200))  # ví dụ: "pdf,docx,zip"
+    max_files = Column(Integer, default=5)
+    max_file_size_mb = Column(Integer, default=50)
+
+    # Thời gian và điểm
+    start_date = Column(DateTime, default=datetime.utcnow)
+    due_date = Column(DateTime, nullable=False)
+    allow_late_submission = Column(Integer, default=0)  # 0 = không cho nộp trễ
+    late_penalty_percent = Column(DECIMAL(5, 2), default=0)
+    total_points = Column(DECIMAL(5, 2), default=10)
+    grading_criteria = Column(Text)
+
+    # Hệ thống
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 🔗 Quan hệ với Course
+    # 🔗 Quan hệ
     course = relationship("Course", back_populates="assignments")
+    module = relationship("Module", back_populates="assignments")
+    teacher = relationship("User", back_populates="assignments_created")
+    submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete")
 
     def __repr__(self):
         return f"<Assignment(title='{self.title}', course_id='{self.course_id}')>"

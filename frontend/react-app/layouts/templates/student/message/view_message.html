@@ -1,0 +1,16 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📧 Xem thư{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+<div class="d-flex justify-content-between">
+<div>
+<div class="fw-semibold">{{ message.subject }}</div>
+<div class="small text-muted">Từ {{ message.sender_name }} • {{ message.sent_at }}</div>
+</div>
+<a class="btn btn-outline-primary" href="{{ url_for('student_message_compose', reply_to=message.id) }}">Trả lời</a>
+</div>
+<hr>
+<div>{{ message.body|safe }}</div>
+</div></div>
+<a class="btn btn-outline-secondary mt-3" href="{{ url_for('student_message_inbox') }}">Quay lại</a>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "student/layout_student.html" %}
+{% block title %}⭐ Đánh giá khóa học{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3"><i class="bi bi-star"></i> Đánh giá khóa học</h4>
+
+  <form method="post" action="/student/review/submit/{{ course.id }}">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Chọn số sao:</label>
+      <select class="form-select" name="rating">
+        <option value="5">⭐⭐⭐⭐⭐ Tuyệt vời</option>
+        <option value="4">⭐⭐⭐⭐ Tốt</option>
+        <option value="3">⭐⭐⭐ Trung bình</option>
+        <option value="2">⭐⭐ Kém</option>
+        <option value="1">⭐ Tệ</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Nhận xét của bạn:</label>
+      <textarea class="form-control" name="comment" rows="4" placeholder="Viết nhận xét..."></textarea>
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-success"><i class="bi bi-send"></i> Gửi đánh giá</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

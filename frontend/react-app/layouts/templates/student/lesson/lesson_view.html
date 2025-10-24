@@ -1,0 +1,44 @@
+{% extends "student/layout_student.html" %}
+{% block title %}🎥 {{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="container py-3">
+
+  <a href="{{ url_for('student_lesson_module', module_id=lesson.module_id) }}"
+     class="btn btn-outline-secondary btn-sm mb-3">
+    <i class="bi bi-arrow-left-circle"></i> Quay lại module
+  </a>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <h4 class="fw-bold text-primary mb-1">
+        Bài {{ lesson.lesson_number }}: {{ lesson.title }}
+      </h4>
+      <p class="text-muted mb-3">{{ lesson.description or "Không có mô tả cho bài học này." }}</p>
+
+      {% if lesson.content_type == 'video' and lesson.video_url %}
+      <div class="ratio ratio-16x9 mb-3">
+        <iframe src="{{ lesson.video_url }}" allowfullscreen></iframe>
+      </div>
+      {% elif lesson.document_url %}
+      <a href="{{ lesson.document_url }}" class="btn btn-outline-primary" target="_blank">
+        <i class="bi bi-file-earmark-text"></i> Xem tài liệu
+      </a>
+      {% else %}
+      <div class="alert alert-info"><i class="bi bi-info-circle"></i> Nội dung chưa được cập nhật.</div>
+      {% endif %}
+
+      <div class="d-flex gap-2 mt-4">
+        <form method="post" action="{{ url_for('student_lesson_mark_complete', lesson_id=lesson.id) }}">
+          <button class="btn btn-success">
+            <i class="bi bi-check2-circle"></i> Đánh dấu hoàn thành
+          </button>
+        </form>
+        <a href="{{ url_for('student_lesson_notes', lesson_id=lesson.id) }}" class="btn btn-outline-primary">
+          <i class="bi bi-journal-text"></i> Ghi chú
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

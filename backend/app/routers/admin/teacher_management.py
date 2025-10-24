@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.models.user import User
 from app.schemas.UserCreate import UserCreate
-from app.services import teacher_service
+from app.services.admin import teacher_service
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 

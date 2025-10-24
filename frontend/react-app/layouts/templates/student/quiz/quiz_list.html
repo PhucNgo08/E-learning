@@ -1,0 +1,69 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📋 Danh sách bài kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3">
+    <i class="bi bi-list-check"></i> Danh sách bài kiểm tra
+  </h4>
+
+  {% if quizzes %}
+    <div class="row">
+      {% for quiz in quizzes %}
+      <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+          <div class="card-body">
+            <!-- Tiêu đề -->
+            <h5 class="fw-bold text-dark mb-1">
+              <i class="bi bi-mortarboard text-primary"></i> {{ quiz.title }}
+            </h5>
+
+            <!-- Mô tả -->
+            <p class="text-muted small mb-2">
+              {{ quiz.description or "Không có mô tả." }}
+            </p>
+
+            <!-- Thông tin chính -->
+            <ul class="list-unstyled small text-secondary mb-3">
+              <li><i class="bi bi-graph-up"></i> Độ khó: <strong>{{ quiz.difficulty_level|capitalize }}</strong></li>
+              <li><i class="bi bi-clock-history"></i> Giới hạn: <strong>{{ quiz.time_limit_minutes or 0 }} phút</strong></li>
+              <li><i class="bi bi-flag"></i> Điểm đạt: <strong>{{ quiz.passing_score or 60 }}%</strong></li>
+              <li><i class="bi bi-repeat"></i> Số lần làm: <strong>{{ quiz.max_attempts or 1 }}</strong></li>
+              {% if quiz.available_from or quiz.available_to %}
+                <li>
+                  <i class="bi bi-calendar-event"></i> 
+                  Thời gian: 
+                  <strong>
+                    {% if quiz.available_from %}
+                      {{ quiz.available_from.strftime('%d/%m/%Y') }}
+                    {% else %}
+                      Bất kỳ
+                    {% endif %}
+                    →
+                    {% if quiz.available_to %}
+                      {{ quiz.available_to.strftime('%d/%m/%Y') }}
+                    {% else %}
+                      Không giới hạn
+                    {% endif %}
+                  </strong>
+                </li>
+              {% endif %}
+            </ul>
+
+            <!-- Nút làm bài -->
+            <a href="{{ url_for('student_quiz_attempt', quiz_id=quiz.id) }}"
+               class="btn btn-primary btn-sm w-100 fw-semibold shadow-sm">
+              <i class="bi bi-pencil-square"></i> Làm bài ngay
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> Hiện chưa có bài kiểm tra nào khả dụng.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

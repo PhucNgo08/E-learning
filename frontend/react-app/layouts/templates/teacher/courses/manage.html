@@ -2,51 +2,40 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚙️ Quản lý khóa học & bài học</title>
+  <title>📘 Chi tiết khóa học - {{ course.course_name }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
     body {
       background: #f5f8ff;
       font-family: "Inter", "Segoe UI", sans-serif;
+      color: #333;
     }
-
-    /* Navbar */
     .navbar {
       background: linear-gradient(90deg, #0056d2, #003087);
     }
     .navbar-brand, .btn-outline-light {
-      color: #fff !important;
       font-weight: 500;
+      color: #fff !important;
     }
-
-    /* Card */
     .card {
       border: none;
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-      transition: all 0.2s ease-in-out;
-      cursor: pointer;
     }
-    .card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    .accordion-button:not(.collapsed) {
+      background: #e9f0ff;
+      color: #003087;
+      box-shadow: none;
     }
-
-    .card-header {
-      background: linear-gradient(90deg, #0056d2, #003087);
-      color: #fff;
-      border-top-left-radius: 12px;
-      border-top-right-radius: 12px;
+    .list-group-item {
+      border: none;
+      border-bottom: 1px solid #eee;
+      transition: background 0.2s ease;
     }
-
-    .lesson-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .list-group-item:hover {
+      background: #f8f9fa;
     }
-
     footer {
       background: #003087;
       color: #fff;
@@ -54,114 +43,92 @@
       padding: 15px 0;
       margin-top: 50px;
     }
-
-    .btn-action {
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .btn-action i {
-      font-size: 16px;
-    }
   </style>
 </head>
-
 <body>
-  <!-- Navbar -->
+  <!-- Thanh điều hướng -->
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container">
       <a class="navbar-brand fw-bold" href="/teacher/dashboard">
-        <i class="bi bi-mortarboard-fill"></i> E-Learning - Giáo viên
+        <i class="bi bi-mortarboard-fill"></i> E-Learning | Giáo viên
       </a>
-      <div class="d-flex gap-2">
-        <button class="btn btn-outline-light" onclick="history.back()">
-          <i class="bi bi-arrow-left"></i> Quay lại
-        </button>
-        <a href="/teacher/courses/create" class="btn btn-warning text-dark fw-semibold">
-          <i class="bi bi-plus-circle"></i> Tạo khóa học mới
-        </a>
-      </div>
+      <a href="/teacher/courses/list" class="btn btn-outline-light">
+        <i class="bi bi-arrow-left"></i> Quay lại danh sách
+      </a>
     </div>
   </nav>
 
-  <!-- Main -->
+  <!-- Thông tin khóa học -->
   <div class="container py-5">
-    <h3 class="fw-bold text-primary mb-4">⚙️ Quản lý khóa học & bài học</h3>
+    <div class="card mb-4">
+      <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}" 
+           onerror="this.onerror=null;this.src='/uploads/course_thumbnails/default-course.png';"
+           class="card-img-top" 
+           alt="{{ course.course_name }}"
+           style="height:220px;object-fit:cover;border-top-left-radius:14px;border-top-right-radius:14px;">
+      <div class="card-body">
+        <h3 class="fw-bold text-primary">{{ course.course_name }}</h3>
+        <p class="text-muted">{{ course.description or "Chưa có mô tả cho khóa học này." }}</p>
+        <p class="mb-0">
+          <strong>Tín chỉ:</strong> {{ course.credit_hours or 3 }} |
+          <strong>Trạng thái:</strong> 
+          {% if course.status == 'published' %}
+            <span class="badge bg-success">Đã xuất bản</span>
+          {% elif course.status == 'draft' %}
+            <span class="badge bg-warning text-dark">Nháp</span>
+          {% else %}
+            <span class="badge bg-secondary">Lưu trữ</span>
+          {% endif %}
+          |
+          <strong>Môn học:</strong> {{ course.subject or "Không rõ" }}
+        </p>
+      </div>
+    </div>
 
-    {% if courses %}
-      <div class="row g-4">
-        {% for c in courses %}
-        <div class="col-md-4 col-sm-6">
-          <div class="card h-100" onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <div>
-                <h5 class="mb-0">{{ c.course_name }}</h5>
-                <small class="text-light opacity-75">{{ c.subject or "Không rõ môn học" }}</small>
-              </div>
-              <div class="d-flex gap-1">
-                <a href="/teacher/courses/edit/{{ c.id }}" class="btn btn-light btn-sm" title="Sửa khóa học">
-                  <i class="bi bi-pencil"></i>
-                </a>
-                <form method="post" action="/teacher/courses/delete/{{ c.id }}" 
-                      class="d-inline" onsubmit="return confirm('Xóa khóa học này?');">
-                  <button class="btn btn-danger btn-sm" title="Xóa khóa học">
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </form>
-              </div>
-            </div>
+    <!-- Danh sách module và bài học -->
+    <h5 class="fw-bold text-primary mb-3">
+      <i class="bi bi-layers"></i> Danh sách Module &amp; Bài học
+    </h5>
 
-            <div class="card-body">
-              {% if c.modules %}
-                <div class="accordion" id="accordion{{ c.id }}">
-                  {% for m in c.modules %}
-                  <div class="accordion-item mb-2">
-                    <h2 class="accordion-header" id="heading{{ m.id }}">
-                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        data-bs-target="#collapse{{ m.id }}" aria-expanded="false" aria-controls="collapse{{ m.id }}">
-                        <i class="bi bi-layers me-2 text-secondary"></i>
-                        {{ m.title }}
-                      </button>
-                    </h2>
-                    <div id="collapse{{ m.id }}" class="accordion-collapse collapse" aria-labelledby="heading{{ m.id }}"
-                      data-bs-parent="#accordion{{ c.id }}">
-                      <div class="accordion-body">
-                        {% if m.lessons %}
-                          <ul class="list-group list-group-flush">
-                            {% for l in m.lessons %}
-                              <li class="list-group-item lesson-item">
-                                <span><i class="bi bi-play-circle text-primary"></i> {{ l.title }}</span>
-                                <div>
-                                  <a href="/teacher/lessons/edit/{{ l.id }}" 
-                                     class="btn btn-outline-primary btn-action" title="Sửa bài học">
-                                    <i class="bi bi-pencil"></i>
-                                  </a>
-                                </div>
-                              </li>
-                            {% endfor %}
-                          </ul>
-                        {% else %}
-                          <p class="text-muted mb-2">Chưa có bài học trong module này.</p>
-                        {% endif %}
-                        <a href="/teacher/lessons/create/{{ m.id }}" class="btn btn-sm btn-outline-success mt-3">
-                          <i class="bi bi-plus-circle"></i> Thêm bài học
-                        </a>
-                      </div>
+    {% if modules %}
+      <div class="accordion" id="modulesAccordion">
+        {% for m in modules %}
+        <div class="accordion-item mb-2">
+          <h2 class="accordion-header" id="heading{{ m.id }}">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#collapse{{ m.id }}" aria-expanded="false" aria-controls="collapse{{ m.id }}">
+              {{ m.module_number }}. {{ m.title }}
+            </button>
+          </h2>
+          <div id="collapse{{ m.id }}" class="accordion-collapse collapse"
+               aria-labelledby="heading{{ m.id }}" data-bs-parent="#modulesAccordion">
+            <div class="accordion-body">
+              {% if m.lessons %}
+                <ul class="list-group list-group-flush">
+                  {% for l in m.lessons %}
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                      <i class="bi bi-play-circle text-primary"></i> {{ l.lesson_number }}. {{ l.title }}
+                    </span>
+                    <div class="d-flex gap-2">
+                      <a href="/teacher/lessons/edit/{{ l.id }}" class="btn btn-sm btn-outline-success" title="Chỉnh sửa bài học">
+                        <i class="bi bi-pencil"></i>
+                      </a>
+                      <form method="post" action="/teacher/lessons/delete/{{ l.id }}"
+                            onsubmit="return confirm('Bạn có chắc chắn muốn xóa bài học này không?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Xóa bài học">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </form>
                     </div>
-                  </div>
+                  </li>
                   {% endfor %}
-                </div>
+                </ul>
               {% else %}
-                <div class="alert alert-light border text-muted mb-0">
-                  Chưa có module nào cho khóa học này.
-                </div>
+                <div class="text-muted fst-italic">Chưa có bài học nào trong module này.</div>
               {% endif %}
-              <a href="/teacher/modules/create/{{ c.id }}" class="btn btn-outline-primary btn-sm mt-3">
-                <i class="bi bi-folder-plus"></i> Thêm module mới
+              <a href="/teacher/lessons/create/{{ m.id }}" class="btn btn-sm btn-outline-primary mt-3">
+                <i class="bi bi-plus-circle"></i> Thêm bài học mới
               </a>
             </div>
           </div>
@@ -169,14 +136,14 @@
         {% endfor %}
       </div>
     {% else %}
-      <div class="alert alert-info text-center shadow-sm mt-4">
-        <i class="bi bi-info-circle"></i> Hiện chưa có khóa học nào được tạo.
+      <div class="alert alert-info mt-3 text-center">
+        <i class="bi bi-info-circle"></i> Hiện khóa học này chưa có module nào.
       </div>
     {% endif %}
   </div>
 
   <footer>
-    © {{ now.year }} E-Learning Platform | Giáo viên: {{ teacher.full_name if teacher else "" }}
+    © {{ now.year }} E-Learning Platform | Giáo viên: {{ course.teacher.full_name if course.teacher else "Ẩn danh" }}
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

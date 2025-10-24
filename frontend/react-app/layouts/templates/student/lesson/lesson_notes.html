@@ -1,0 +1,32 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📝 Ghi chú: {{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="container py-3">
+
+  <h5 class="fw-bold text-primary mb-3">📝 Ghi chú cho bài: {{ lesson.title }}</h5>
+
+  <form method="post">
+    <textarea name="content" class="form-control" rows="6" placeholder="Nhập ghi chú...">{{ note.content if note else '' }}</textarea>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary"><i class="bi bi-save"></i> Lưu</button>
+      <a href="{{ url_for('student_lesson_view', lesson_id=lesson.id) }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại
+      </a>
+    </div>
+  </form>
+
+  <hr>
+  <h6 class="mb-2 fw-semibold">📚 Lịch sử ghi chú</h6>
+  <ul class="list-group">
+    {% for n in notes %}
+    <li class="list-group-item">
+      <div class="small text-muted">{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+      <div>{{ n.content }}</div>
+    </li>
+    {% else %}
+    <li class="list-group-item text-muted text-center">Chưa có ghi chú.</li>
+    {% endfor %}
+  </ul>
+
+</div>
+{% endblock %}

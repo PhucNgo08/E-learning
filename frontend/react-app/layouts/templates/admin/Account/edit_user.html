@@ -1,47 +1,13 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>✏️ Chỉnh sửa người dùng</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background: #f3f6fd;
-      font-family: "Inter", sans-serif;
-    }
-    .page-header {
-      background: linear-gradient(135deg, #0061ff, #60efff);
-      color: white;
-      border-radius: 12px;
-      padding: 25px 30px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-      margin-bottom: 30px;
-    }
-    .form-card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-      padding: 25px;
-      max-width: 800px;
-      margin: auto;
-    }
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #64748b;
-      font-size: 0.9rem;
-    }
-  </style>
-</head>
-<body>
+{% extends "admin/layout_admin.html" %}
+{% block title %}✏️ Chỉnh sửa người dùng{% endblock %}
 
+{% block content %}
 <div class="container py-4">
+  <!-- 🧭 Header -->
   <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
     <div>
       <h3 class="fw-bold mb-1"><i class="bi bi-pencil-square"></i> Chỉnh sửa người dùng</h3>
-      <p class="mb-0">Cập nhật thông tin tài khoản người dùng trong hệ thống.</p>
+      <p class="mb-0 text-light">Cập nhật thông tin tài khoản trong hệ thống.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
       <a href="/admin/dashboard" class="btn btn-light">
@@ -53,7 +19,8 @@
     </div>
   </div>
 
-  <div class="form-card">
+  <!-- 🧾 Form -->
+  <div class="form-card bg-white p-4 rounded shadow-sm mt-4">
     {% if error %}
       <div class="alert alert-danger text-center">{{ error }}</div>
     {% endif %}
@@ -62,38 +29,52 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label fw-semibold">Tên đăng nhập</label>
-          <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+          <input type="text" name="username" class="form-control" value="{{ user.username }}" required />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Email</label>
-          <input type="email" name="email" class="form-control" value="{{ user.email }}" required>
+          <input type="email" name="email" class="form-control" value="{{ user.email }}" required />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Mật khẩu mới (để trống nếu giữ nguyên)</label>
-          <input type="password" name="password" class="form-control">
+          <input type="password" name="password" class="form-control" />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Họ và tên</label>
-          <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+          <input type="text" name="full_name" class="form-control" value="{{ user.full_name }}" required />
         </div>
 
+        <!-- Vai trò -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">Vai trò</label>
-          <select name="role" class="form-select" required>
-            <option value="student" {% if user.role == 'student' %}selected{% endif %}>Sinh viên</option>
-            <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>Giáo viên</option>
-            <option value="teaching_assistant" {% if user.role == 'teaching_assistant' %}selected{% endif %}>Trợ giảng</option>
-            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+          <select name="role" id="role" class="form-select" required>
+            <option value="student" {% if user.role == 'student' %}selected{% endif %}>🎓 Sinh viên</option>
+            <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>👩‍🏫 Giáo viên</option>
+            <option value="teaching_assistant" {% if user.role == 'teaching_assistant' %}selected{% endif %}>🧑‍💼 Trợ giảng</option>
+            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>🛡️ Quản trị viên</option>
           </select>
         </div>
 
+        <!-- MSSV (chỉ hiển thị khi là sinh viên) -->
+        <div class="col-md-6" id="mssv-container" style="display: none;">
+          <label class="form-label fw-semibold">Mã số sinh viên (MSSV)</label>
+          <input
+            type="text"
+            name="mssv"
+            id="mssv"
+            class="form-control"
+            value="{{ user.mssv or '' }}"
+            placeholder="VD: 2380600001"
+          />
+        </div>
+
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Năm học</label>
+          <label class="form-label fw-semibold">Khóa học</label>
           <select name="academic_year_id" class="form-select">
-            <option value="">-- Chọn năm học --</option>
+            <option value="">-- Chọn khóa học --</option>
             {% for year in academic_years %}
               <option value="{{ year.id }}" {% if user.academic_year_id == year.id %}selected{% endif %}>
                 {{ year.year_name }}
@@ -115,7 +96,7 @@
         </div>
       </div>
 
-      <hr class="my-4">
+      <hr class="my-4" />
 
       <div class="d-flex justify-content-between">
         <a href="/admin/Account/manage-users" class="btn btn-outline-secondary">
@@ -128,10 +109,29 @@
     </form>
   </div>
 
-  <footer>
-    <p>© {{ current_year }} Hệ thống E-Learning — Chỉnh sửa người dùng</p>
+  <footer class="text-center mt-4 text-muted small">
+    © {{ current_year }} Hệ thống E-Learning — Chỉnh sửa người dùng
   </footer>
 </div>
 
-</body>
-</html>
+<!-- ✅ Script ẩn/hiện ô MSSV -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const roleSelect = document.getElementById("role");
+    const mssvContainer = document.getElementById("mssv-container");
+    const mssvInput = document.getElementById("mssv");
+
+    function toggleMSSV() {
+      if (roleSelect.value === "student") {
+        mssvContainer.style.display = "block";
+      } else {
+        mssvContainer.style.display = "none";
+        mssvInput.value = "";
+      }
+    }
+
+    roleSelect.addEventListener("change", toggleMSSV);
+    toggleMSSV(); // chạy khi load trang
+  });
+</script>
+{% endblock %}

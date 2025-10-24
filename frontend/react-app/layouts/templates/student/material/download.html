@@ -1,0 +1,8 @@
+{% extends "student/layout_student.html" %}
+{% block title %}⬇️ Tải tài liệu{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+<p>Đang tải <strong>{{ material.title }}</strong>… Nếu trình duyệt không tự tải, nhấn nút bên dưới.</p>
+<a class="btn btn-primary" href="{{ material.file_url }}">Tải ngay</a>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📚 Danh sách bài tập{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3"><i class="bi bi-clipboard-check"></i> Bài tập của tôi</h4>
+
+  {% if assignments %}
+  <table class="table table-bordered table-hover align-middle">
+    <thead class="table-primary text-center">
+      <tr>
+        <th>#</th>
+        <th>Tên bài tập</th>
+        <th>Môn học</th>
+        <th>Hạn nộp</th>
+        <th>Trạng thái</th>
+        <th>Thao tác</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in assignments %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ a.title }}</td>
+        <td>{{ a.course_name }}</td>
+        <td>{{ a.deadline.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>
+          {% if a.is_submitted %}
+            <span class="badge bg-success">Đã nộp</span>
+          {% else %}
+            <span class="badge bg-warning text-dark">Chưa nộp</span>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          <a href="/student/assignment/{{ a.id }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-info"><i class="bi bi-info-circle"></i> Chưa có bài tập nào.</div>
+  {% endif %}
+</div>
+{% endblock %}

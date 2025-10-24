@@ -1,0 +1,92 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📈 Tiến độ: {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <!-- 🔙 Nút quay lại -->
+  <div class="mb-3">
+    <a href="{{ url_for('student_course_detail', course_id=course.id) }}"
+       class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại khóa học
+    </a>
+  </div>
+
+  <!-- 📊 Thông tin tổng quan tiến độ -->
+  <div class="card mb-3 shadow-sm border-0">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <div>
+          <div class="fw-semibold fs-5 text-primary">{{ course.course_name }}</div>
+          <div class="text-muted small">
+            {{ progress.completed_lessons }}/{{ progress.total_lessons }} bài học hoàn thành
+          </div>
+        </div>
+        <div style="min-width:240px;">
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar" data-width="{{ progress.percent or 0 }}"></div>
+          </div>
+          <div class="small text-muted mt-1 text-end">
+            {{ progress.percent or 0 }}%
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 📚 Danh sách module & bài học -->
+  <div class="card shadow-sm border-0">
+    <div class="card-header bg-light fw-semibold">
+      <i class="bi bi-journal-bookmark"></i> Nội dung khóa học
+    </div>
+    <div class="list-group list-group-flush">
+      {% for m in modules %}
+      <div class="list-group-item">
+        <div class="fw-semibold mb-2 text-dark">
+          Module {{ m.module_number }}: {{ m.title }}
+        </div>
+        <div class="mt-2">
+          {% for l in m.lessons %}
+          <a class="btn btn-sm {% if l.completed %}btn-success{% else %}btn-outline-secondary{% endif %} me-1 mb-1"
+             href="{{ url_for('student_lesson_view', lesson_id=l.id) }}">  {# ✅ Sửa từ student_lesson_detail -> student_lesson_view #}
+            {{ l.lesson_number }}. {{ l.title }}
+          </a>
+          {% else %}
+          <span class="text-muted small">Chưa có bài học trong module này.</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="list-group-item text-center text-muted py-3">
+        <i class="bi bi-info-circle"></i> Chưa có module nào được thêm.
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<!-- ✅ Script tự động set width cho progress-bar -->
+<script>
+  document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
+    const w = el.dataset.width || 0;
+    el.style.width = w + '%';
+  });
+</script>
+
+<!-- 🌈 Style bổ sung -->
+<style>
+  .card { border-radius: 10px; }
+  .progress-bar {
+    background: linear-gradient(90deg, #0d6efd, #6ec1ff);
+    transition: width 0.5s ease;
+  }
+  .btn-success {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+  }
+  .btn-outline-secondary:hover {
+    background-color: #e9ecef;
+  }
+</style>
+{% endblock %}

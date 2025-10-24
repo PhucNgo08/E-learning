@@ -1,0 +1,132 @@
+{% extends "student/layout_student.html" %}
+{% block title %}📘 {{ course.course_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+
+  <!-- 🔙 Nút quay lại -->
+  <div class="mb-3">
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- 🧭 Thông tin khóa học -->
+    <div class="col-lg-8">
+      <div class="card shadow-sm">
+        <img src="{{ course.thumbnail_url or '/static/img/course-default.jpg' }}"
+             class="card-img-top"
+             alt="thumbnail"
+             style="object-fit: cover; height: 250px;">
+        <div class="card-body">
+          <h3 class="fw-bold mb-1">{{ course.course_name }}</h3>
+          <p class="text-muted mb-2">
+            <i class="bi bi-hash"></i> Mã: {{ course.course_code }} • 
+            👨‍🏫 GV: {{ teacher.full_name if teacher else 'Đang cập nhật' }}
+          </p>
+          <p>{{ course.description or "Không có mô tả cho khóa học này." }}</p>
+        </div>
+      </div>
+
+      <!-- 📂 Module -->
+      <div class="card mt-4 shadow-sm">
+        <div class="card-header fw-semibold bg-light">
+          <i class="bi bi-journal-bookmark"></i> Nội dung khóa học
+        </div>
+        <div class="list-group list-group-flush">
+          {% for m in modules %}
+          <div class="list-group-item d-flex justify-content-between align-items-start flex-wrap">
+            <div>
+              <div class="fw-semibold">
+                <i class="bi bi-folder2-open text-primary"></i>
+                Module {{ m.module_number }}: {{ m.title }}
+              </div>
+              <div class="text-muted small">{{ m.description or "Không có mô tả" }}</div>
+            </div>
+            <a class="btn btn-outline-primary btn-sm mt-2 mt-md-0"
+               href="{{ url_for('student_lesson_module', module_id=m.id) }}">
+              <i class="bi bi-play-circle"></i> Xem bài học
+            </a>
+          </div>
+          {% else %}
+          <div class="list-group-item text-muted text-center">Chưa có module nào được thêm.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- 🎓 Thông tin bên phải -->
+    <div class="col-lg-4">
+      <div class="card shadow-sm mb-3">
+        <div class="card-body">
+          {% if enrolled %}
+          <div class="alert alert-success small py-2 mb-3">
+            <i class="bi bi-check-circle"></i> Bạn đã đăng ký khóa học này.
+          </div>
+
+          <!-- 🟢 Nút tiếp tục học -->
+          <a href="{{ url_for('student_course_progress', course_id=course.id) }}"
+             class="btn btn-success w-100 mb-2">
+            <i class="bi bi-play-circle"></i> Tiếp tục học
+          </a>
+
+          <!-- ⭐ Nút xem đánh giá khóa học -->
+          <a href="{{ url_for('student_course_feedback', course_id=course.id) }}"
+             class="btn btn-outline-warning w-100">
+            <i class="bi bi-star-half"></i> Xem đánh giá khóa học
+          </a>
+
+          {% else %}
+          <!-- 🔵 Nút đăng ký -->
+          <form method="post" action="{{ url_for('student_course_enroll', course_id=course.id) }}">
+            <button class="btn btn-primary w-100">
+              <i class="bi bi-plus-circle"></i> Đăng ký khóa học
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 📊 Thông tin khóa học -->
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="fw-semibold mb-2">📊 Thông tin khóa học</div>
+          <ul class="list-unstyled small mb-0">
+            <li><i class="bi bi-calendar-event"></i> Học kỳ: {{ course.semester or '—' }}</li>
+            <li><i class="bi bi-people"></i> Sĩ số tối đa: {{ course.max_students or '—' }}</li>
+            <li><i class="bi bi-person-check"></i> Đã đăng ký: {{ course.current_students or 0 }}</li>
+            <li><i class="bi bi-clock-history"></i> Thời gian: {{ course.start_date or '—' }} → {{ course.end_date or '—' }}</li>
+            <li><i class="bi bi-award"></i> Trạng thái: 
+              <span class="badge bg-{{ 'success' if enrolled else 'secondary' }}">
+                {{ 'Đã ghi danh' if enrolled else 'Chưa đăng ký' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🎨 Custom CSS -->
+<style>
+  .card { border: none; border-radius: 10px; }
+  .list-group-item {
+    border-left: 3px solid transparent;
+    transition: 0.2s;
+  }
+  .list-group-item:hover {
+    background-color: #f8faff;
+    border-left: 3px solid #0d6efd;
+  }
+  .btn-outline-warning {
+    border-color: #ffc107;
+    color: #d99000;
+  }
+  .btn-outline-warning:hover {
+    background-color: #ffc107;
+    color: #212529;
+  }
+</style>
+{% endblock %}

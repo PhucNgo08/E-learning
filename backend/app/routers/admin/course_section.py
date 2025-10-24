@@ -7,12 +7,13 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
-from app.services.course_section_service import (
+from app.services.admin.course_section_service import (
     create_section,
     update_section,
     delete_section,
     get_all_sections,
 )
+
 from app.models.course import Course
 from app.models.course_section import CourseSection
 
