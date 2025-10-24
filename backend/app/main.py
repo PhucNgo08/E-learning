@@ -17,7 +17,7 @@ from app.database.connection import Base, engine
 app = FastAPI(
     title="E-Learning Platform",
     version="1.2.0",
-    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (bản nâng cấp log đầy đủ & kiểm tra thư mục chi tiết)"
+    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (bản đa nền tảng & tự động cấu hình)"
 )
 
 # =====================================================
@@ -41,9 +41,14 @@ app.add_middleware(
 )
 
 # =====================================================
-# 📁 TEMPLATE & STATIC FILES
+# 📁 CẤU HÌNH ĐƯỜNG DẪN TỰ ĐỘNG (TƯƠNG THÍCH MỌI MÁY)
 # =====================================================
-FRONTEND_DIR = Path(r"D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app")
+# Lấy thư mục gốc dự án (gồm backend + frontend)
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# FRONTEND & BACKEND PATHS
+FRONTEND_DIR = BASE_DIR / "frontend" / "react-app"
+BACKEND_DIR = BASE_DIR / "backend" / "app"
 
 # --- STATIC CHUNG ---
 ROOT_STATIC_DIR = FRONTEND_DIR / "static"
@@ -69,9 +74,7 @@ for name in ["admin", "teacher", "student"]:
     static_dir.mkdir(parents=True, exist_ok=True)
     app.mount(f"/static/{name}", StaticFiles(directory=str(static_dir)), name=f"{name}_static")
 
-# =====================================================
-# 🎨 MOUNT THƯ MỤC LAYOUT STYLES
-# =====================================================
+# --- LAYOUT STYLES ---
 LAYOUT_STYLES_DIR = FRONTEND_DIR / "layouts" / "styles"
 if LAYOUT_STYLES_DIR.exists():
     app.mount(
@@ -83,10 +86,8 @@ if LAYOUT_STYLES_DIR.exists():
 else:
     print(f"⚠️ Layout styles folder không tồn tại: {LAYOUT_STYLES_DIR}")
 
-# =====================================================
-# 📦 UPLOADS (BACKEND/APP/UPLOADS)
-# =====================================================
-UPLOADS_BASE = Path(r"D:/KhoaHoctructuyen/KHoaHocOnline/backend/app/uploads")
+# --- UPLOADS ---
+UPLOADS_BASE = BACKEND_DIR / "uploads"
 UPLOADS_BASE.mkdir(parents=True, exist_ok=True)
 
 UPLOAD_DIRS = {
@@ -218,7 +219,7 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Lỗi khởi tạo database: {e}")
 
-    # --- KIỂM TRA THƯ MỤC CHI TIẾT ---
+    # --- KIỂM TRA THƯ MỤC ---
     print("\n📁 KIỂM TRA TEMPLATE & STATIC:")
     dirs = [
         ("Admin Templates", ADMIN_TEMPLATE_DIR),
@@ -235,14 +236,11 @@ async def startup_event():
     for name, path in dirs:
         exists = os.path.exists(path)
         status = "✅ OK" if exists else "❌ Thiếu"
-        count_info = ""
-        if exists:
-            try:
-                items = len([f for f in os.listdir(path) if not f.startswith('.')])
-                count_info = f"({items} mục)"
-            except Exception:
-                count_info = ""
-        print(f"   • {name:<20}: {path} → {status} {count_info}")
+        try:
+            count = len([f for f in os.listdir(path)]) if exists else 0
+        except Exception:
+            count = 0
+        print(f"   • {name:<20}: {path} → {status} ({count} mục)")
 
     # --- THỐNG KÊ ROUTES ---
     print("\n📦 ROUTES ĐÃ ĐĂNG KÝ:")
@@ -288,4 +286,3 @@ def healthz():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
-
