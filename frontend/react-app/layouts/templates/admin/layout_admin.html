@@ -5,267 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}Bảng điều khiển quản trị{% endblock %}</title>
 
+  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <style>
-    :root {
-      --sidebar-bg: linear-gradient(180deg, #0062ff, #003087);
-      --sidebar-text: #ffffff;
-      --content-bg: #f4f6fb;
-      --content-text: #212529;
-      --card-bg: rgba(255, 255, 255, 0.85);
-      --toggle-bg: #ffffff;
-      --active-border: #ffc107;
-      --header-bg: rgba(255, 255, 255, 0.95);
-    }
-
-    body.dark-mode {
-      --sidebar-bg: linear-gradient(180deg, #141a26, #0c0f16);
-      --sidebar-text: #e4e6eb;
-      --content-bg: #0f141b;
-      --content-text: #e8e8e8;
-      --card-bg: rgba(30, 36, 50, 0.8);
-      --toggle-bg: #1f2634;
-      --active-border: #ffcc00;
-      --header-bg: rgba(30, 36, 50, 0.95);
-    }
-
-    body {
-      margin: 0;
-      font-family: "Inter", "Segoe UI", sans-serif;
-      background-color: var(--content-bg);
-      color: var(--content-text);
-      display: flex;
-      overflow-x: hidden;
-      transition: all 0.3s ease;
-    }
-
-    /* ===== SIDEBAR ===== */
-    #sidebar {
-      width: 250px;
-      height: 100vh;
-      position: fixed;
-      top: 0;
-      left: 0;
-      background: var(--sidebar-bg);
-      color: var(--sidebar-text);
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.55s cubic-bezier(0.25, 1.5, 0.5, 1), opacity 0.4s ease;
-      box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
-      z-index: 999;
-      overflow: hidden;
-    }
-
-    #sidebar.hidden {
-      transform: translateX(-100%);
-      opacity: 0;
-    }
-
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 22px 10px;
-      font-size: 1.2rem;
-      font-weight: 700;
-      transition: opacity 0.3s ease;
-    }
-
-    #sidebar a {
-      color: var(--sidebar-text);
-      text-decoration: none;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.95rem;
-      border-left: 4px solid transparent;
-      transition: all 0.3s ease;
-      white-space: nowrap;
-    }
-
-    #sidebar a i {
-      font-size: 1.1rem;
-      min-width: 25px;
-      text-align: center;
-    }
-
-    #sidebar a:hover,
-    #sidebar a.active {
-      background-color: rgba(255, 255, 255, 0.1);
-      border-left: 4px solid var(--active-border);
-      color: #fff;
-      transform: translateX(3px);
-    }
-
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 15px 20px;
-      font-size: 0.9rem;
-      border-top: 1px solid rgba(255, 255, 255, 0.2);
-      text-align: center;
-    }
-
-    .sidebar-footer a {
-      color: #ffc107;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    /* ===== HEADER ===== */
-    header.admin-header {
-      position: fixed;
-      top: 0;
-      left: 250px;
-      right: 0;
-      height: 65px;
-      background-color: var(--header-bg);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 25px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      transition: all 0.4s ease;
-      z-index: 900;
-      backdrop-filter: blur(6px);
-    }
-
-    #sidebar.hidden ~ header.admin-header {
-      left: 0;
-    }
-
-    .admin-header .nav-icons i {
-      font-size: 1.3rem;
-      margin-left: 20px;
-      cursor: pointer;
-      color: var(--content-text);
-      transition: color 0.2s ease;
-    }
-
-    .admin-header .nav-icons i:hover {
-      color: #007bff;
-    }
-
-    .admin-header .avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      overflow: hidden;
-    }
-
-    /* ===== CONTENT ===== */
-    #content {
-      margin-left: 250px;
-      margin-top: 75px;
-      flex-grow: 1;
-      padding: 40px;
-      transition: all 0.55s cubic-bezier(0.25, 1.5, 0.5, 1);
-      position: relative;
-      background-image: url("/static/images/rog-bg.png");
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
-    }
-
-    #sidebar.hidden ~ #content {
-      margin-left: 0;
-    }
-
-    #content::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.55);
-      backdrop-filter: blur(6px);
-      z-index: 0;
-    }
-
-    body.dark-mode #content::before {
-      background: rgba(0, 0, 0, 0.55);
-    }
-
-    #content > * {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* === NÚT 3 GẠCH (NỔI NGOÀI GÓC MÀN HÌNH) === */
-    .toggle-btn {
-      position: fixed;
-      top: 22px;
-      left: 22px;
-      z-index: 2001;
-      width: 56px;
-      height: 56px;
-      border: none;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, #ffffff 0%, #dfe7ff 100%);
-      color: #0046d8;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.8rem;
-      cursor: pointer;
-      box-shadow:
-        0 4px 14px rgba(0, 64, 255, 0.35),
-        inset 0 -2px 6px rgba(0, 0, 0, 0.15),
-        0 0 0 3px rgba(255, 255, 255, 0.4);
-      transition: all 0.35s ease;
-      backdrop-filter: blur(8px);
-    }
-
-    .toggle-btn:hover {
-      transform: rotate(12deg) scale(1.1);
-      box-shadow:
-        0 6px 20px rgba(0, 102, 255, 0.55),
-        0 0 15px rgba(0, 153, 255, 0.45);
-      background: radial-gradient(circle at 40% 40%, #ffffff 0%, #eaf1ff 100%);
-    }
-
-    .toggle-btn.rotate i {
-      transform: rotate(90deg);
-      transition: transform 0.4s ease;
-    }
-
-    body.dark-mode .toggle-btn {
-      background: radial-gradient(circle at 30% 30%, #1b2233 0%, #0d111b 100%);
-      color: #77b0ff;
-      box-shadow:
-        0 3px 12px rgba(0, 0, 0, 0.7),
-        0 0 0 3px rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark-mode .toggle-btn:hover {
-      transform: rotate(-15deg) scale(1.1);
-      color: #ffd43b;
-      box-shadow:
-        0 6px 18px rgba(255, 204, 0, 0.45),
-        0 0 12px rgba(255, 204, 0, 0.35);
-      background: radial-gradient(circle at 40% 40%, #2a3245 0%, #161c27 100%);
-    }
-
-    @media (max-width: 992px) {
-      #sidebar { width: 100%; height: auto; position: relative; }
-      #content { margin-left: 0; padding: 25px; }
-    }
-  </style>
+  <!-- Admin Layout CSS -->
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin.css" />
 </head>
 
 <body>
+  <!-- === SIDEBAR === -->
   <nav id="sidebar">
     <div class="sidebar-header">
-      🎓 <span>E-Learning Admin</span>
+      <img src="{{ url_for('static', path='images/fox-logo.png') }}" alt="Logo" />
+      <span>E-Learning Admin</span>
     </div>
 
-    <a href="/admin/dashboard"><i class="bi bi-speedometer2"></i> <span>Trang chủ</span></a>
-    <a href="/admin/Account/manage-users"><i class="bi bi-people-fill"></i> <span>Người dùng</span></a>
-    <a href="/admin/Course/manage"><i class="bi bi-book-half"></i> <span>Khóa học</span></a>
-    <a href="/admin/majors/list"><i class="bi bi-mortarboard-fill"></i> <span>Ngành học</span></a>
-    <a href="/admin/academic_years/list"><i class="bi bi-calendar3"></i> <span>Năm học</span></a>
-    <a href="/admin/settings/manage"><i class="bi bi-gear-fill"></i> <span>Cấu hình</span></a>
+    <a href="/admin/dashboard"><i class="bi bi-speedometer2"></i> Trang chủ</a>
+    <a href="/admin/Account/manage-users"><i class="bi bi-people-fill"></i> Người dùng</a>
+    <a href="/admin/Course/manage"><i class="bi bi-book-half"></i> Khóa học</a>
+    <a href="/admin/majors/list"><i class="bi bi-mortarboard-fill"></i> Ngành học</a>
+    <a href="/admin/academic_years/list"><i class="bi bi-calendar3"></i> Năm học</a>
+    <a href="/admin/settings/manage"><i class="bi bi-gear-fill"></i> Cấu hình</a>
 
     <div class="sidebar-footer">
       👋 Xin chào, <strong>{{ username or "Admin" }}</strong><br />
@@ -273,46 +34,41 @@
     </div>
   </nav>
 
+  <!-- === HEADER === -->
   <header class="admin-header">
     <div class="nav-icons ms-auto">
       <i class="bi bi-bell"></i>
       <i class="bi bi-envelope"></i>
       <div class="avatar">
-        <img src="/static/images/fox-logo.png" alt="Admin" width="40" />
+        <img src="{{ url_for('static', path='images/fox-logo.png') }}" alt="Admin Avatar" />
       </div>
     </div>
   </header>
 
+  <!-- === TOGGLE BUTTONS === -->
   <button class="toggle-btn" id="toggleSidebar"><i class="bi bi-list"></i></button>
   <button class="mode-toggle" id="toggleMode"><i class="bi bi-moon-fill"></i></button>
 
+  <!-- === CONTENT === -->
   <main id="content">
     {% block content %}{% endblock %}
   </main>
 
+  <!-- === JS === -->
   <script>
     const sidebar = document.getElementById("sidebar");
     const toggleBtn = document.getElementById("toggleSidebar");
     const modeToggle = document.getElementById("toggleMode");
-    let hidden = false;
 
-    toggleBtn.addEventListener("click", () => {
-      toggleBtn.classList.toggle("rotate");
-      sidebar.classList.toggle("hidden");
-      hidden = !hidden;
-    });
+    toggleBtn.addEventListener("click", () => sidebar.classList.toggle("hidden"));
 
     const setDarkMode = (isDark) => {
       document.body.classList.toggle("dark-mode", isDark);
-      modeToggle.innerHTML = isDark
-        ? '<i class="bi bi-sun-fill"></i>'
-        : '<i class="bi bi-moon-fill"></i>';
+      modeToggle.innerHTML = isDark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-fill"></i>';
       localStorage.setItem("darkMode", isDark);
     };
-    modeToggle.addEventListener("click", () => {
-      const isDark = !document.body.classList.contains("dark-mode");
-      setDarkMode(isDark);
-    });
+
+    modeToggle.addEventListener("click", () => setDarkMode(!document.body.classList.contains("dark-mode")));
     if (localStorage.getItem("darkMode") === "true") setDarkMode(true);
   </script>
 </body>

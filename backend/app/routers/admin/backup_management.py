@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
-from app.services.backup_management_service import (
+from app.services.admin.backup_management_service import (
     get_all_backups,
     create_backup,
     delete_backup

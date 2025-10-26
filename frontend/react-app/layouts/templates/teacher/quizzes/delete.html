@@ -1,0 +1,25 @@
+{% extends "layout_teacher.html" %}
+{% block title %}🗑️ Xóa Quiz{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card border-danger shadow-sm">
+    <div class="card-header bg-danger text-white fw-bold">
+      <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa Quiz
+    </div>
+    <div class="card-body">
+      <p>Bạn có chắc chắn muốn xóa <strong class="text-danger">{{ quiz.title }}</strong> khỏi hệ thống không?</p>
+      <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}">
+        <div class="text-end">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Hủy
+          </a>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Xóa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

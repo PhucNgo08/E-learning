@@ -1,0 +1,122 @@
+{% extends "layout_student.html" %}
+{% block title %}📨 Xem tin nhắn{% endblock %}
+
+{% block content %}
+<style>
+  .message-container {
+    max-width: 750px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    transition: 0.3s;
+  }
+
+  .message-container:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .message-header {
+    border-bottom: 1px solid #e9ecef;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .message-body {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  .attachment-box {
+    border: 1px dashed #d0d7de;
+    border-radius: 10px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    margin-top: 1rem;
+  }
+
+  .attachment-box i {
+    font-size: 1.2rem;
+    color: #0d6efd;
+  }
+
+  /* 🔙 Floating back button */
+  .fab-back {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  .fab-back:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #495057, #343a40);
+    text-decoration: none;
+  }
+</style>
+
+<div class="container py-4">
+  <div class="message-container">
+    <!-- 🔹 Header -->
+    <div class="message-header">
+      <h4 class="fw-bold text-primary mb-3">
+        <i class="bi bi-envelope-open"></i> Chi tiết tin nhắn
+      </h4>
+
+      <p class="mb-1">
+        <strong>👤 Người gửi:</strong>
+        {{ message.sender.full_name if message.sender else "Người gửi ẩn danh" }}
+      </p>
+      <p class="mb-1">
+        <strong>🎯 Người nhận:</strong>
+        {{ message.receiver.full_name if message.receiver else "Không xác định" }}
+      </p>
+      <p class="text-muted small mb-0">
+        <i class="bi bi-clock"></i>
+        {{ message.sent_at.strftime("%d/%m/%Y %H:%M") if message.sent_at else "" }}
+      </p>
+    </div>
+
+    <!-- 🔹 Nội dung -->
+    <div class="message-body">
+      {{ message.content }}
+    </div>
+
+    <!-- 📎 File đính kèm -->
+    {% if message.attachment_url %}
+    <div class="attachment-box">
+      <div class="d-flex align-items-center justify-content-between">
+        <div>
+          <i class="bi bi-paperclip me-2"></i>
+          <strong>{{ message.attachment_name }}</strong>
+          <small class="text-muted">({{ message.attachment_size }})</small>
+        </div>
+        <a href="/{{ message.attachment_url }}" 
+           class="btn btn-sm btn-outline-primary" 
+           download title="Tải xuống tệp">
+          <i class="bi bi-download"></i> Tải xuống
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 🔙 Nút quay lại -->
+<a href="/student/message/" class="fab-back" title="Quay lại hộp thư đến">
+  <i class="bi bi-arrow-left"></i>
+</a>
+{% endblock %}

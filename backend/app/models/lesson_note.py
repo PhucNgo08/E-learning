@@ -4,8 +4,8 @@ from app.database.connection import Base
 from datetime import datetime
 import uuid
 
-
 def uuid_str():
+    """Tạo chuỗi UUID mặc định"""
     return str(uuid.uuid4())
 
 
@@ -20,6 +20,7 @@ class LessonNote(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    # 🔗 Quan hệ ORM
     user = relationship("User", backref="lesson_notes")
     lesson = relationship("Lesson", backref="lesson_notes")
 

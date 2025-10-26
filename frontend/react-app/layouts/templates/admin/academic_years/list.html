@@ -1,44 +1,38 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>📘 Danh sách năm học</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background: linear-gradient(135deg, #eef2f7, #e3edff);
-      font-family: "Segoe UI", "Inter", sans-serif;
-      color: #333;
-      min-height: 100vh;
-    }
-    .container { max-width: 1150px; }
-    .card {
-      border: none;
-      border-radius: 15px;
-      overflow: hidden;
-    }
-    .card-header {
-      background: linear-gradient(90deg, #0066ff, #0048b5);
-      color: white;
-      padding: 20px 25px;
-    }
-    .card-header h4 { font-weight: 600; letter-spacing: 0.5px; }
-    .btn { border-radius: 8px; font-weight: 500; transition: 0.2s; }
-    .btn:hover { transform: translateY(-1px); }
-    .table-hover tbody tr:hover { background-color: #f0f6ff; transition: 0.2s; }
-    .badge { font-size: 0.9rem; }
-    footer {
-      margin-top: 40px;
-      font-size: 0.9rem;
-      color: #777;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
+{% extends "admin/layout_admin.html" %}
+{% block title %}📘 Danh sách năm học{% endblock %}
 
-<div class="container mt-5">
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #eef2f7, #e3edff);
+    font-family: "Segoe UI", "Inter", sans-serif;
+    color: #333;
+  }
+  .container { max-width: 1150px; }
+  .card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+  .card-header {
+    background: linear-gradient(90deg, #0066ff, #0048b5);
+    color: white;
+    padding: 20px 25px;
+  }
+  .card-header h4 { font-weight: 600; letter-spacing: 0.5px; }
+  .btn { border-radius: 8px; font-weight: 500; transition: 0.2s; }
+  .btn:hover { transform: translateY(-1px); }
+  .table-hover tbody tr:hover { background-color: #f0f6ff; transition: 0.2s; }
+  .badge { font-size: 0.9rem; }
+  footer {
+    margin-top: 40px;
+    font-size: 0.9rem;
+    color: #777;
+    text-align: center;
+  }
+</style>
+
+<div class="container mt-4">
   <div class="card shadow-lg">
     <div class="card-header d-flex justify-content-between align-items-center">
       <h4 class="mb-0">
@@ -95,7 +89,7 @@
                        onclick="return confirm('Bạn có chắc muốn xóa năm học {{ y.year_name }}?')">
                       <i class="bi bi-trash"></i> Xóa
                     </a>
-                    <a href="/admin/academic_years/{{ y.id }}/students" class="btn btn-sm btn-outline-info">
+                    <a href="/admin/academic_years/{{ y.id }}/students" class="btn btn-sm btn-outline-info shadow-sm">
                       👥 Sinh viên
                     </a>
                   </div>
@@ -116,9 +110,7 @@
   </div>
 
   <footer class="mt-5">
-    <p>© {{ current_year }} E-Learning Admin Dashboard — Thiết kế bởi Bootstrap 5</p>
+    <p>© {{ current_year }} E-Learning Admin Dashboard — Danh sách năm học</p>
   </footer>
 </div>
-
-</body>
-</html>
+{% endblock %}

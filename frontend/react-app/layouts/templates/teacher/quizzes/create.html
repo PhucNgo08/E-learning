@@ -1,0 +1,50 @@
+{% extends "layout_teacher.html" %}
+{% block title %}➕ Tạo Quiz mới{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+  <h4 class="fw-bold text-primary mb-4">➕ Tạo Quiz mới</h4>
+
+  <form method="post" action="/teacher/quizzes/create">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Chọn khóa học</label>
+      <select name="course_id" class="form-select" required>
+        <option value="">— Chọn khóa học —</option>
+        {% for course in courses %}
+        <option value="{{ course.id }}">{{ course.course_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Tên Quiz</label>
+      <input type="text" name="title" class="form-control" required>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Mô tả</label>
+      <textarea name="description" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-semibold">Thời lượng (phút)</label>
+        <input type="number" name="duration_minutes" class="form-control" value="30" min="1" required>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label fw-semibold">Tổng điểm</label>
+        <input type="number" name="total_marks" class="form-control" value="10" min="1" required>
+      </div>
+    </div>
+
+    <div class="text-end">
+      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-circle"></i> Tạo Quiz
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}

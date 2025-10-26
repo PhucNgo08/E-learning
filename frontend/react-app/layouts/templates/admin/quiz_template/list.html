@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧠 Danh sách Mẫu Quiz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8faff;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      color: #1e293b;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .page-header h3 {
+      font-weight: 700;
+      color: #0056d2;
+    }
+    .search-bar {
+      width: 280px;
+    }
+    .table thead {
+      background: linear-gradient(90deg, #007bff, #003087);
+      color: #fff;
+    }
+    .card {
+      border-radius: 14px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border: none;
+    }
+    footer {
+      text-align: center;
+      color: #64748b;
+      margin-top: 25px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div class="d-flex align-items-center gap-2">
+        <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
+          <i class="bi bi-arrow-left"></i> Trang chính
+        </a>
+        <h3>🧠 Danh sách Mẫu Quiz</h3>
+      </div>
+
+      <input type="text" id="searchInput" class="form-control form-control-sm search-bar" placeholder="🔍 Tìm mẫu quiz...">
+    </div>
+
+    <!-- Table -->
+    <div class="card p-3">
+      {% if templates %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle text-center" id="quizTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tên mẫu</th>
+              <th>Mô tả</th>
+              <th>Ngày tạo</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in templates %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td class="text-start fw-semibold text-primary">
+                <i class="bi bi-file-earmark-text"></i> {{ t.name }}
+              </td>
+              <td class="text-muted text-start">{{ t.description or "Không có mô tả" }}</td>
+              <td>{{ t.created_at.strftime('%d/%m/%Y') if t.created_at else '—' }}</td>
+              <td>
+                <a href="/admin/quiz-template/report/{{ t.id }}" class="btn btn-sm btn-outline-info" title="Xem báo cáo">
+                  <i class="bi bi-bar-chart-line"></i> Báo cáo
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center py-4 mb-0">
+        <i class="bi bi-info-circle"></i> Chưa có mẫu quiz nào trong hệ thống.
+      </div>
+      {% endif %}
+    </div>
+
+    <footer>© {{ current_year }} Hệ thống E-Learning — Quản lý Quiz Template</footer>
+  </div>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // 🔍 Lọc quiz template
+    const searchInput = document.getElementById("searchInput");
+    const rows = document.querySelectorAll("#quizTable tbody tr");
+    searchInput.addEventListener("input", () => {
+      const keyword = searchInput.value.toLowerCase();
+      rows.forEach(row => {
+        const name = row.cells[1].innerText.toLowerCase();
+        const desc = row.cells[2].innerText.toLowerCase();
+        row.style.display = (name.includes(keyword) || desc.includes(keyword)) ? "" : "none";
+      });
+    });
+  </script>
+</body>
+</html>

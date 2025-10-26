@@ -1,0 +1,10 @@
+{% extends "layout_student.html" %}
+{% block title %}🧾 {{ assignment.title }}{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+<h5>{{ assignment.title }}</h5>
+<div class="text-muted small">Hạn nộp: {{ assignment.due_date }} • Điểm tối đa: {{ assignment.total_points }}</div>
+<p class="mt-2">{{ assignment.description }}</p>
+<a class="btn btn-primary" href="{{ url_for('student_assignment_submit', assignment_id=assignment.id) }}">Nộp bài</a>
+</div></div>
+{% endblock %}

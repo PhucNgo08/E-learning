@@ -1,0 +1,129 @@
+{% extends "layout_student.html" %}
+{% block title %}🎓 Khóa học của tôi{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+  <!-- 🌟 Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-primary mb-0">
+        <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
+      </h3>
+      <small class="text-muted">Xem và tiếp tục các khóa học bạn đã đăng ký</small>
+    </div>
+
+    <!-- 🔙 Nút quay lại -->
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
+    </a>
+  </div>
+
+  <!-- 🎨 Custom CSS -->
+  <style>
+    .table-hover tbody tr:hover {
+      background-color: #f9fbff !important;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .progress {
+      height: 8px;
+      background-color: #e9ecef;
+    }
+    .progress-bar {
+      transition: width 0.6s ease;
+      border-radius: 4px;
+    }
+    .course-name a {
+      font-weight: 600;
+      color: #0d6efd;
+      text-decoration: none;
+    }
+    .course-name a:hover {
+      text-decoration: underline;
+    }
+    .btn-outline-secondary {
+      border-color: #dee2e6;
+      color: #495057;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #f8f9fa;
+      color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    @media (max-width: 768px) {
+      .table thead { display: none; }
+      .table tbody td { display: block; width: 100%; border: none; }
+      .table tbody tr { margin-bottom: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-radius: 10px; padding: 8px; }
+      .table tbody td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        display: block;
+        margin-bottom: 4px;
+        color: #6c757d;
+      }
+    }
+  </style>
+
+  <!-- 📋 Table -->
+  <div class="table-responsive">
+    <table class="table table-hover align-middle bg-white shadow-sm rounded overflow-hidden">
+      <thead class="table-light">
+        <tr>
+          <th>Khóa học</th>
+          <th>Giảng viên</th>
+          <th>Tiến độ</th>
+          <th class="text-end">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in enrollments %}
+        <tr>
+          <td data-label="Khóa học">
+            <div class="course-name mb-1">
+              <a href="{{ url_for('student_course_detail', course_id=item.course.id) }}">
+                {{ item.course.course_name }}
+              </a>
+            </div>
+            <div class="small text-muted">{{ item.course.course_code or "—" }}</div>
+          </td>
+
+          <td data-label="Giảng viên">
+            {{ item.course.teacher.full_name if item.course.teacher else "—" }}
+          </td>
+
+          <td data-label="Tiến độ">
+            <div class="progress">
+              <div class="progress-bar bg-success" data-width="{{ item.progress_percent or 0 }}"></div>
+            </div>
+            <div class="small text-muted mt-1">
+              {{ item.completed_lessons }}/{{ item.total_lessons }} bài ({{ item.progress_percent or 0 }}%)
+            </div>
+          </td>
+
+          <td class="text-end" data-label="Hành động">
+            <a class="btn btn-sm btn-outline-primary"
+               href="{{ url_for('student_course_progress', course_id=item.course.id) }}">
+              <i class="bi bi-play-circle"></i> Tiếp tục học
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="4" class="text-center text-muted py-4">
+            <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ✅ Auto progress animation -->
+<script>
+  document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
+    const width = el.dataset.width || 0;
+    setTimeout(() => { el.style.width = width + '%'; }, 200);
+  });
+</script>
+{% endblock %}

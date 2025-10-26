@@ -1,0 +1,41 @@
+{% extends "layout_student.html" %}
+{% block title %}📄 Chi tiết tài liệu{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+  <!-- 🔹 Tiêu đề và nút quay lại -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-journal-text"></i> Chi tiết tài liệu
+    </h4>
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại
+    </a>
+  </div>
+
+  <!-- 🔹 Thông tin tài liệu -->
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h5 class="fw-bold text-dark mb-3">{{ material.title }}</h5>
+      <p class="text-muted mb-3">{{ material.description or "Không có mô tả" }}</p>
+
+      <ul class="list-unstyled small mb-3">
+        <li><strong>Loại tài liệu:</strong> {{ material.material_type|capitalize }}</li>
+        <li><strong>Định dạng:</strong> {{ material.file_format or "Không xác định" }}</li>
+        <li><strong>Kích thước:</strong> {{ (material.file_size / 1024 / 1024)|round(2) }} MB</li>
+        <li><strong>Lượt tải xuống:</strong> {{ material.download_count or 0 }}</li>
+        <li><strong>Ngày đăng:</strong> {{ material.created_at.strftime('%d/%m/%Y %H:%M') if material.created_at else "Không rõ" }}</li>
+      </ul>
+
+      <a href="{{ material.file_url }}" target="_blank" class="btn btn-primary me-2">
+        <i class="bi bi-box-arrow-up-right"></i> Mở tài liệu
+      </a>
+      <a href="/student/material/download/{{ material.id }}" class="btn btn-outline-success">
+        <i class="bi bi-download"></i> Tải xuống
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

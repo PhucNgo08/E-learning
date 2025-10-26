@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
-from app.services import academic_year_service
+from app.services.admin import academic_year_service
 from pathlib import Path
 from app.models.user import User
 from app.models.academic_year import AcademicYear
@@ -13,8 +13,9 @@ import traceback
 # ==============================
 # 🧭 Cấu hình template
 # ==============================
+# ✅ Trỏ đến thư mục gốc templates để có thể extends layout_admin.html
 templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/academic_years"
+    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
 )
 
 # ==============================
@@ -34,7 +35,7 @@ def list_academic_years(request: Request, db: Session = Depends(get_db)):
     try:
         years = academic_year_service.get_all_academic_years(db)
         return templates.TemplateResponse(
-            "list.html",
+            "admin/academic_years/list.html",
             {"request": request, "years": years, "current_year": datetime.now().year}
         )
     except Exception:
@@ -48,7 +49,7 @@ def list_academic_years(request: Request, db: Session = Depends(get_db)):
 def create_form(request: Request):
     """Hiển thị form tạo năm học mới."""
     return templates.TemplateResponse(
-        "create.html",
+        "admin/academic_years/create.html",
         {"request": request, "current_year": datetime.now().year}
     )
 
@@ -76,7 +77,7 @@ def create_academic_year(
     except ValueError as e:
         # ⚠️ Hiển thị lỗi thân thiện (ví dụ trùng mã)
         return templates.TemplateResponse(
-            "create.html",
+            "admin/academic_years/create.html",
             {
                 "request": request,
                 "error": str(e),
@@ -98,7 +99,7 @@ def edit_form(request: Request, year_id: str, db: Session = Depends(get_db)):
     if not year:
         raise HTTPException(status_code=404, detail="Không tìm thấy năm học.")
     return templates.TemplateResponse(
-        "edit.html",
+        "admin/academic_years/edit.html",
         {"request": request, "year": year, "current_year": datetime.now().year}
     )
 
@@ -135,7 +136,7 @@ def update_academic_year(
     except ValueError as e:
         year = academic_year_service.get_academic_year_by_id(db, year_id)
         return templates.TemplateResponse(
-            "edit.html",
+            "admin/academic_years/edit.html",
             {
                 "request": request,
                 "year": year,
@@ -186,8 +187,13 @@ def students_by_year(request: Request, year_id: str, db: Session = Depends(get_d
         print(f"👥 Năm học: {year.year_name} — Số sinh viên: {len(students)}")
 
         return templates.TemplateResponse(
-            "students_by_year.html",
-            {"request": request, "year": year, "students": students, "current_year": datetime.now().year}
+            "admin/academic_years/students_by_year.html",
+            {
+                "request": request,
+                "year": year,
+                "students": students,
+                "current_year": datetime.now().year
+            }
         )
     except Exception:
         print("\n❌ LỖI HIỂN THỊ SINH VIÊN THEO NĂM HỌC:\n", traceback.format_exc())

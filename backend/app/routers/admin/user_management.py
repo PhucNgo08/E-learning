@@ -1,22 +1,24 @@
-from fastapi import APIRouter, Request, Form, Depends, HTTPException
+from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pathlib import Path
-from fastapi.templating import Jinja2Templates
 
 # Import services và models
 from app.database.connection import get_db
 from app.services import user_service
 from app.models.academic_year import AcademicYear
 from app.models.major import Major
+from app.services.admin.user_statistics_service import get_user_statistics  # ✅ Thống kê người dùng
 
 # ==============================
 # 📁 Cấu hình template
 # ==============================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+# ⚙️ Trỏ đến thư mục gốc templates để có thể extends layout_admin.html
 templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/Account"
+    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
 )
 
 # ==============================
@@ -35,7 +37,7 @@ def manage_users(request: Request, db: Session = Depends(get_db)):
     """Hiển thị danh sách tất cả người dùng"""
     users = user_service.get_all_users(db)
     return templates.TemplateResponse(
-        "list_users.html",
+        "admin/Account/list_users.html",
         {
             "request": request,
             "users": users,
@@ -52,7 +54,7 @@ def add_user_form(request: Request, db: Session = Depends(get_db)):
     academic_years = db.query(AcademicYear).order_by(AcademicYear.start_year).all()
     majors = db.query(Major).order_by(Major.major_name).all()
     return templates.TemplateResponse(
-        "add_user.html",
+        "admin/Account/add_user.html",
         {
             "request": request,
             "academic_years": academic_years,
@@ -60,6 +62,7 @@ def add_user_form(request: Request, db: Session = Depends(get_db)):
             "current_year": datetime.now().year
         }
     )
+
 
 @user_router.post("/add-user")
 def add_user(
@@ -71,11 +74,11 @@ def add_user(
     role: str = Form(...),
     academic_year_id: str = Form(None),
     major_id: str = Form(None),
+    mssv: str = Form(None),  # ✅ Thêm MSSV
     db: Session = Depends(get_db),
 ):
     """Xử lý POST tạo người dùng"""
     try:
-        # ✅ Cho phép tạo admin
         user_service.create_user(
             username=username,
             email=email,
@@ -84,14 +87,15 @@ def add_user(
             role=role,
             db=db,
             academic_year_id=academic_year_id,
-            major_id=major_id
+            major_id=major_id,
+            mssv=mssv  # ✅ Gửi MSSV xuống service
         )
         return RedirectResponse("/admin/Account/manage-users", status_code=303)
     except Exception as e:
         academic_years = db.query(AcademicYear).order_by(AcademicYear.start_year).all()
         majors = db.query(Major).order_by(Major.major_name).all()
         return templates.TemplateResponse(
-            "add_user.html",
+            "admin/Account/add_user.html",
             {
                 "request": request,
                 "error": str(e),
@@ -116,7 +120,7 @@ def edit_user_form(request: Request, user_id: str, db: Session = Depends(get_db)
     majors = db.query(Major).order_by(Major.major_name).all()
 
     return templates.TemplateResponse(
-        "edit_user.html",
+        "admin/Account/edit_user.html",
         {
             "request": request,
             "user": user,
@@ -125,6 +129,7 @@ def edit_user_form(request: Request, user_id: str, db: Session = Depends(get_db)
             "current_year": datetime.now().year
         }
     )
+
 
 @user_router.post("/edit-user/{user_id}")
 def edit_user(
@@ -137,6 +142,7 @@ def edit_user(
     role: str = Form(...),
     academic_year_id: str = Form(None),
     major_id: str = Form(None),
+    mssv: str = Form(None),  # ✅ Cho phép cập nhật MSSV
     db: Session = Depends(get_db),
 ):
     """Cập nhật thông tin người dùng"""
@@ -150,7 +156,8 @@ def edit_user(
             role=role,
             db=db,
             academic_year_id=academic_year_id,
-            major_id=major_id
+            major_id=major_id,
+            mssv=mssv  # ✅ Gửi MSSV xuống service
         )
         return RedirectResponse("/admin/Account/manage-users", status_code=303)
     except Exception as e:
@@ -158,7 +165,7 @@ def edit_user(
         academic_years = db.query(AcademicYear).order_by(AcademicYear.start_year).all()
         majors = db.query(Major).order_by(Major.major_name).all()
         return templates.TemplateResponse(
-            "edit_user.html",
+            "admin/Account/edit_user.html",
             {
                 "request": request,
                 "user": user,
@@ -193,3 +200,23 @@ def restore_user(user_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"❌ Lỗi khôi phục user: {e}")
     return RedirectResponse("/admin/Account/manage-users", status_code=303)
+
+# =========================================================
+# 📊 6️⃣ Thống kê người dùng
+# =========================================================
+@user_router.get("/statistics", response_class=HTMLResponse)
+def user_statistics(request: Request, db: Session = Depends(get_db)):
+    """Trang thống kê người dùng theo vai trò, trạng thái và hoạt động"""
+    try:
+        stats = get_user_statistics(db)
+        return templates.TemplateResponse(
+            "admin/Account/statistics.html",
+            {
+                "request": request,
+                "stats": stats,
+                "current_year": datetime.now().year
+            }
+        )
+    except Exception as e:
+        print(f"❌ Lỗi khi lấy thống kê người dùng: {e}")
+        return HTMLResponse(f"<pre>Lỗi: {e}</pre>", status_code=500)

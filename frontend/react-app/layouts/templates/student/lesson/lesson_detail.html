@@ -1,0 +1,17 @@
+{% extends "layout_student.html" %}
+{% block title %}📘 {{ lesson.title }}{% endblock %}
+{% block content %}
+<div class="container py-4 fade-in">
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      <h3 class="fw-bold text-primary">{{ lesson.title }}</h3>
+      <p class="text-muted small mb-3">
+        🕒 {{ lesson.duration_minutes or 0 }} phút • {{ lesson.content_type|capitalize }}
+      </p>
+      <div class="lesson-content">
+        {{ lesson.content | safe }}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

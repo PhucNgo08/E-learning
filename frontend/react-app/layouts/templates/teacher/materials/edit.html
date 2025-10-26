@@ -1,0 +1,52 @@
+{% extends "layout_teacher.html" %}
+{% block title %}✏️ Sửa tài liệu{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="bg-white p-4 rounded shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="fw-bold text-primary">
+        <i class="bi bi-pencil-square"></i> Chỉnh sửa tài liệu
+      </h3>
+      <a href="/teacher/materials/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+      </a>
+    </div>
+
+    <form method="post" action="/teacher/materials/edit/{{ material.id }}" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label">📝 Tiêu đề</label>
+        <input type="text" name="title" class="form-control" value="{{ material.title }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">📄 Mô tả</label>
+        <textarea name="description" class="form-control" rows="3">{{ material.description or '' }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">📎 Tệp hiện tại</label><br>
+        {% if material.file_url %}
+          <a href="{{ material.file_url }}" target="_blank" class="text-decoration-none">
+            <i class="bi bi-file-earmark-text"></i> {{ material.file_name }}
+          </a>
+        {% else %}
+          <span class="text-muted">Chưa có tệp đính kèm</span>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">📂 Thay tệp mới (tuỳ chọn)</label>
+        <input type="file" name="file" class="form-control">
+        <div class="form-text text-muted">Để trống nếu không muốn thay đổi file.</div>
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-save"></i> Lưu thay đổi
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

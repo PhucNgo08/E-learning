@@ -1,57 +1,204 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>{% block title %}👨‍🏫 Bảng điều khiển giảng viên{% endblock %}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}🎓 E-Learning – Giáo viên{% endblock %}</title>
 
-  {% block extra_head %}{% endblock %}
+  <!-- 🌐 Bootstrap & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <style>
-    body {
-      background-color: #f3f6fd;
-      font-family: "Segoe UI", "Inter", sans-serif;
-    }
-    header {
-      background: linear-gradient(135deg, #0d6efd, #003087);
-      color: white;
-      padding: 12px 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    footer {
-      background: #e9ecef;
-      color: #6c757d;
-      padding: 10px;
-      text-align: center;
-      margin-top: 50px;
-    }
-  </style>
+  <!-- 🎨 Custom CSS -->
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/teacher.css" />
 </head>
 
 <body>
-  <header class="d-flex justify-content-between align-items-center">
-    <h4 class="m-0">👨‍🏫 Khu vực giảng viên</h4>
-    <div>
-      <a href="/teacher/dashboard" class="btn btn-light btn-sm me-2">
-        <i class="bi bi-house-door"></i> Trang chủ
+  <!-- 🧭 SIDEBAR -->
+  <nav id="sidebar" class="teacher-sidebar">
+    <div class="sidebar-header text-center py-4">
+      <!-- 🖼️ Avatar có thể click để đổi -->
+      <form id="sidebarAvatarForm" action="/teacher/profile/upload-avatar" method="post" enctype="multipart/form-data">
+        <div class="avatar-wrapper position-relative d-inline-block mx-auto">
+          <img
+            src="{{ request.session.get('user_avatar', '/uploads/avatars/default-avatar.png') }}"
+            onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';"
+            id="sidebarAvatarImg"
+            class="sidebar-avatar rounded-circle shadow-sm border border-2 border-light"
+            alt="Ảnh đại diện"
+            title="Nhấn để đổi ảnh đại diện"
+            style="width: 95px; height: 95px; object-fit: cover; cursor: pointer;"
+          />
+          <span class="camera-icon position-absolute bottom-0 end-0 bg-primary text-white rounded-circle p-1 shadow"
+                style="font-size: 0.75rem;">
+            <i class="bi bi-camera-fill"></i>
+          </span>
+        </div>
+        <input type="file" name="avatar_file" id="sidebarAvatarInput" accept="image/*" hidden />
+      </form>
+
+      <span class="fw-semibold d-block mt-2 text-white">
+        {{ request.session.get('user_full_name', 'Giáo viên E-Learning') }}
+      </span>
+      <small class="text-light opacity-75">Giáo viên</small>
+    </div>
+
+    <!-- 🧩 MENU -->
+    <div class="sidebar-inner">
+      <a href="/teacher/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-speedometer2"></i> Bảng điều khiển
       </a>
-      <a href="/auth/logout" class="btn btn-outline-light btn-sm">
+      <a href="/teacher/courses" class="{% if active_page == 'courses' %}active{% endif %}">
+        <i class="bi bi-journal-bookmark"></i> Khóa học
+      </a>
+      <a href="/teacher/modules" class="{% if active_page == 'modules' %}active{% endif %}">
+        <i class="bi bi-easel"></i> Chương học
+      </a>
+      <a href="/teacher/assignments" class="{% if active_page == 'assignments' %}active{% endif %}">
+        <i class="bi bi-journal-check"></i> Bài tập
+      </a>
+      <a href="/teacher/quizzes" class="{% if active_page == 'quiz' %}active{% endif %}">
+        <i class="bi bi-question-circle"></i> Trắc nghiệm
+      </a>
+      <a href="/teacher/materials" class="{% if active_page == 'materials' %}active{% endif %}">
+        <i class="bi bi-folder2-open"></i> Tài liệu
+      </a>
+      <a href="/teacher/reviews" class="{% if active_page == 'reviews' %}active{% endif %}">
+        <i class="bi bi-star"></i> Đánh giá
+      </a>
+      <a href="/teacher/message" class="{% if active_page == 'messages' %}active{% endif %}">
+        <i class="bi bi-envelope"></i> Tin nhắn
+      </a>
+      <a href="/teacher/schedule" class="{% if active_page == 'schedule' %}active{% endif %}">
+        <i class="bi bi-calendar3"></i> Lịch giảng dạy
+      </a>
+      <a href="/teacher/statistics" class="{% if active_page == 'statistics' %}active{% endif %}">
+          <i class="bi bi-bar-chart-line"></i> Thống kê
+      </a>
+      <a href="/teacher/profile" class="{% if active_page == 'profile' %}active{% endif %}">
+        <i class="bi bi-person-circle"></i> Hồ sơ cá nhân
+      </a>
+      <a href="/auth/logout" class="logout-link">
         <i class="bi bi-box-arrow-right"></i> Đăng xuất
       </a>
     </div>
+
+    <!-- 🦶 FOOTER -->
+    <div class="sidebar-footer text-center py-3 small text-white-50">
+      © {{ now.year }} E-Learning Platform
+    </div>
+  </nav>
+
+  <!-- 🌫 Overlay -->
+  <div id="sidebar-overlay"></div>
+
+  <!-- 🌟 HEADER -->
+  <header class="teacher-header d-flex justify-content-end align-items-center p-3">
+    <div class="nav-icons">
+      <a href="/teacher/notifications" title="Thông báo" class="me-3 text-white"><i class="bi bi-bell"></i></a>
+      <a href="/teacher/messages" title="Tin nhắn" class="me-3 text-white"><i class="bi bi-envelope"></i></a>
+
+      <!-- 👤 Dropdown Hồ sơ -->
+      <div class="dropdown profile-dropdown">
+        <button class="btn bg-transparent border-0 dropdown-toggle text-white d-flex align-items-center"
+                id="profileMenu" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-person-circle fs-5"></i>
+          <i class="bi bi-caret-down-fill ms-1 text-primary small caret-icon"></i>
+        </button>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-2"
+            aria-labelledby="profileMenu">
+          <li>
+            <a class="dropdown-item" href="/teacher/profile">
+              <i class="bi bi-person-badge me-2 text-primary"></i> Hồ sơ cá nhân
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item" href="/teacher/profile/change-password">
+              <i class="bi bi-key me-2 text-warning"></i> Đổi mật khẩu
+            </a>
+          </li>
+          <li><hr class="dropdown-divider" /></li>
+          <li>
+            <a class="dropdown-item text-danger fw-semibold" href="/auth/logout">
+              <i class="bi bi-box-arrow-right me-2"></i> Đăng xuất
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
   </header>
 
-  <main class="container mt-4">
-    {% block content %}{% endblock %}
-  </main>
+  <!-- ⚙️ Nút 3 gạch + Dark Mode -->
+  <button id="toggleSidebarBtn" class="toggle-btn" title="Ẩn/Hiện menu">
+    <i class="bi bi-list"></i>
+  </button>
 
-  <footer>
-    &copy; {{ now.year if now else 2025 }} E-Learning Platform — Teacher Dashboard
-  </footer>
+  <button id="toggleModeBtn" class="mode-toggle" title="Đổi giao diện sáng/tối">
+    <i class="bi bi-moon-fill"></i>
+  </button>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  {% block extra_scripts %}{% endblock %}
+  <!-- 📦 CONTENT -->
+  <main id="content">{% block content %}{% endblock %}</main>
+
+  <!-- 🦶 FOOTER -->
+  <footer>© {{ now.year }} E-Learning Platform | Teacher Panel</footer>
+
+  <!-- ✅ Bootstrap Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- ⚙️ Sidebar + Dark Mode + Avatar -->
+  <script>
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("sidebar-overlay");
+    const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
+    const toggleModeBtn = document.getElementById("toggleModeBtn");
+
+    // Sidebar toggle
+    toggleSidebarBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("show");
+      overlay.classList.toggle("active");
+    });
+    overlay.addEventListener("click", () => {
+      sidebar.classList.remove("show");
+      overlay.classList.remove("active");
+    });
+
+    // Dark mode
+    const setDarkMode = (on) => {
+      document.body.classList.toggle("dark-mode", on);
+      toggleModeBtn.innerHTML = on
+        ? '<i class="bi bi-sun-fill"></i>'
+        : '<i class="bi bi-moon-fill"></i>';
+      localStorage.setItem("darkMode", on);
+    };
+    toggleModeBtn.addEventListener("click", () =>
+      setDarkMode(!document.body.classList.contains("dark-mode"))
+    );
+    if (localStorage.getItem("darkMode") === "true") setDarkMode(true);
+
+    // Dropdown caret animation
+    document.addEventListener("shown.bs.dropdown", (e) => {
+      const icon = e.target.querySelector(".caret-icon");
+      if (icon) icon.classList.add("rotate");
+    });
+    document.addEventListener("hidden.bs.dropdown", (e) => {
+      const icon = e.target.querySelector(".caret-icon");
+      if (icon) icon.classList.remove("rotate");
+    });
+
+    // Avatar upload
+    document.addEventListener("DOMContentLoaded", () => {
+      const avatarImg = document.getElementById("sidebarAvatarImg");
+      const avatarInput = document.getElementById("sidebarAvatarInput");
+      const form = document.getElementById("sidebarAvatarForm");
+      if (avatarImg && avatarInput && form) {
+        avatarImg.addEventListener("click", () => avatarInput.click());
+        avatarInput.addEventListener("change", () => {
+          if (avatarInput.files.length > 0) form.submit();
+        });
+      }
+    });
+  </script>
 </body>
 </html>

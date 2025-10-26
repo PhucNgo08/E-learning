@@ -1,102 +1,44 @@
-{% extends "student/layout_student.html" %}
+{% extends "layout_student.html" %}
 
 {% block title %}🎓 Bảng điều khiển Sinh viên{% endblock %}
 {% block header_title %}Bảng điều khiển học tập{% endblock %}
 
-{% block sidebar_links %}
-  <a href="/student/dashboard" class="{% if active_page == 'dashboard' %}active{% endif %}">
-    <i class="bi bi-speedometer2"></i> Tổng quan
-  </a>
-  <a href="/student/courses" class="{% if active_page == 'courses' %}active{% endif %}">
-    <i class="bi bi-journal-bookmark"></i> Khóa học
-  </a>
-  <a href="/student/exams" class="{% if active_page == 'exams' %}active{% endif %}">
-    <i class="bi bi-clipboard-check"></i> Bài kiểm tra
-  </a>
-  <a href="/student/profile" class="{% if active_page == 'profile' %}active{% endif %}">
-    <i class="bi bi-person-circle"></i> Hồ sơ cá nhân
-  </a>
-{% endblock %}
-
 {% block content %}
-<style>
-  .dashboard-card {
-    border-radius: 12px;
-    transition: all 0.25s ease;
-  }
-  .dashboard-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
-  }
-  .course-card {
-    border: none;
-    border-radius: 12px;
-    transition: 0.25s;
-  }
-  .course-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.15);
-  }
-  .course-card h6 {
-    font-weight: 600;
-    color: #1e3a8a;
-  }
-  .stat-box {
-    background: linear-gradient(135deg, #2563eb, #60a5fa);
-    color: white;
-    border-radius: 10px;
-    padding: 1.2rem;
-    text-align: center;
-  }
-  .stat-box i {
-    font-size: 1.6rem;
-    margin-bottom: 5px;
-  }
-  .logout-btn {
-    position: absolute;
-    top: 15px;
-    right: 25px;
-  }
-</style>
-
-<div class="position-relative">
-  <a href="/auth/logout" class="btn btn-outline-danger logout-btn">
-    <i class="bi bi-box-arrow-right"></i> Đăng xuất
-  </a>
-
-  <div class="mb-4">
+<div class="dashboard-container fade-in">
+  <!-- Tiêu đề -->
+  <div class="mb-4 reveal">
     <h2 class="fw-bold text-primary mb-1">🎓 Bảng điều khiển sinh viên</h2>
-    <p class="text-muted mb-0">Xem tiến độ học tập, khoá học và bài kiểm tra của bạn.</p>
+    <p class="text-muted mb-0">Theo dõi tiến độ, khóa học và bài kiểm tra của bạn.</p>
   </div>
 
-  <div class="card shadow-sm border-0 p-4 mb-4 dashboard-card">
-    <h5 class="fw-semibold mb-2">👋 Xin chào, <span class="text-primary">{{ username or "Sinh viên" }}</span>!</h5>
-    <p class="text-secondary">
-      Chào mừng bạn quay trở lại hệ thống học trực tuyến E-Learning.<br>
-      Hãy chọn khoá học để bắt đầu hành trình học tập của mình nhé!
-    </p>
+  <!-- Thẻ chào mừng -->
+  <div class="dashboard-card shadow-sm mb-4 reveal">
+    <h5 class="fw-semibold mb-2">
+      👋 Xin chào, <span class="text-primary">{{ username or "Sinh viên" }}</span>!
+    </h5>
+    <p class="text-secondary mb-0">Chào mừng bạn quay lại hệ thống E-Learning.</p>
   </div>
 
   <!-- Thống kê -->
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="stat-box shadow-sm">
+    <div class="col-md-4 reveal" data-delay="0.1">
+      <div class="stat-box">
         <i class="bi bi-journal-text"></i>
-        <h5 class="fw-bold mb-0">{{ enrolled_courses|length if enrolled_courses else 0 }}</h5>
+        <h5>{{ enrolled_courses|length if enrolled_courses else 0 }}</h5>
         <p class="mb-0 small">Khóa học đã ghi danh</p>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-box shadow-sm" style="background: linear-gradient(135deg, #059669, #34d399);">
+    <div class="col-md-4 reveal" data-delay="0.2">
+      <div class="stat-box" style="background:linear-gradient(135deg,#059669,#34d399);">
         <i class="bi bi-clipboard-check"></i>
-        <h5 class="fw-bold mb-0">{{ assignments|length if assignments else 0 }}</h5>
+        <h5>{{ assignments|length if assignments else 0 }}</h5>
         <p class="mb-0 small">Bài tập & kiểm tra</p>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="stat-box shadow-sm" style="background: linear-gradient(135deg, #d97706, #facc15);">
+    <div class="col-md-4 reveal" data-delay="0.3">
+      <div class="stat-box" style="background:linear-gradient(135deg,#d97706,#facc15);">
         <i class="bi bi-trophy"></i>
-        <h5 class="fw-bold mb-0">0</h5>
+        <h5>0</h5>
         <p class="mb-0 small">Thành tích đạt được</p>
       </div>
     </div>
@@ -104,17 +46,27 @@
 
   <!-- Danh sách khóa học -->
   {% if enrolled_courses %}
-  <h5 class="fw-semibold mb-3 text-secondary">📘 Khóa học của bạn</h5>
+  <h5 class="fw-semibold mb-3 text-secondary reveal">📘 Khóa học của bạn</h5>
   <div class="row">
     {% for course in enrolled_courses %}
-      <div class="col-md-6 col-lg-4 mb-4">
+      {% set progress = course.progress or 0 %}
+      <div class="col-md-6 col-lg-4 mb-4 reveal" data-delay="{{ loop.index * 0.08 }}">
         <div class="card course-card shadow-sm h-100">
+          {% if course.thumbnail_url %}
+            <img src="{{ course.thumbnail_url }}" class="card-img-top" alt="Course Thumbnail" />
+          {% endif %}
           <div class="card-body d-flex flex-column justify-content-between">
             <div>
-              <h6 class="fw-bold">{{ course.title }}</h6>
-              <p class="text-muted small">{{ course.description[:100] }}...</p>
+              <h6 class="fw-bold">{{ course.course_name or course.title }}</h6>
+              <p class="text-muted small mb-1">
+                {{ course.description[:100] if course.description else "Không có mô tả." }}...
+              </p>
+              <div class="progress">
+                <div class="progress-bar" role="progressbar" data-progress="{{ progress }}"></div>
+              </div>
+              <p class="small mt-1 text-muted">Tiến độ: {{ progress }}%</p>
             </div>
-            <a href="/student/lesson/module/{{ course.id }}" class="btn btn-sm btn-outline-primary mt-3">
+            <a href="/student/lesson/module" class="btn btn-sm btn-outline-primary mt-3">
               <i class="bi bi-play-circle"></i> Vào học
             </a>
           </div>
@@ -123,9 +75,35 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="alert alert-info text-center shadow-sm">
+  <div class="alert alert-info text-center shadow-sm reveal">
     <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
   </div>
   {% endif %}
 </div>
+
+<script>
+  // Thanh tiến độ động
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll('.progress-bar').forEach(bar => {
+      const p = bar.dataset.progress || 0;
+      bar.style.transition = 'width 1.2s ease-out';
+      setTimeout(() => bar.style.width = p + '%', 200);
+    });
+  });
+
+  // Hiệu ứng scroll reveal
+  const revealElements = document.querySelectorAll('.reveal');
+  const revealOnScroll = () => {
+    const windowHeight = window.innerHeight;
+    revealElements.forEach(el => {
+      const top = el.getBoundingClientRect().top;
+      if (top < windowHeight - 80) {
+        const delay = el.dataset.delay ? parseFloat(el.dataset.delay) * 1000 : 0;
+        setTimeout(() => el.classList.add('visible'), delay);
+      }
+    });
+  };
+  window.addEventListener('scroll', revealOnScroll);
+  window.addEventListener('load', revealOnScroll);
+</script>
 {% endblock %}

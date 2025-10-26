@@ -1,0 +1,38 @@
+{% extends "layout_student.html" %}
+{% block title %}📝 Ghi chú bài học{% endblock %}
+{% block content %}
+<div class="container py-4 fade-in">
+  <h4 class="fw-bold text-primary mb-3">
+    📝 Ghi chú cho bài: {{ lesson.title }}
+  </h4>
+
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+      <form method="post">
+        <div class="mb-3">
+          <textarea name="content" class="form-control" rows="5" placeholder="Nhập ghi chú của bạn..." required>{{ note.content if note else '' }}</textarea>
+        </div>
+        <button class="btn btn-primary">
+          <i class="bi bi-save"></i> Lưu ghi chú
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <h6 class="fw-semibold mb-3 text-secondary">🕓 Lịch sử ghi chú</h6>
+  {% if notes %}
+  <ul class="list-group">
+    {% for n in notes %}
+    <li class="list-group-item">
+      <p class="mb-1">{{ n.content }}</p>
+      <small class="text-muted">⏰ {{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="alert alert-info text-center">
+    <i class="bi bi-info-circle"></i> Bạn chưa có ghi chú nào.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

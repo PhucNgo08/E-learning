@@ -1,0 +1,15 @@
+{% extends "layout_student.html" %}
+{% block title %}✅ Kết quả bài tập{% endblock %}
+{% block content %}
+<div class="card"><div class="card-body">
+<h5 class="mb-1">{{ assignment.title }}</h5>
+<div class="text-muted mb-2">Đã nộp lúc {{ submission.submission_time }}</div>
+{% if submission.grade is not none %}
+<div class="display-6">{{ submission.grade }}/{{ assignment.total_points }}</div>
+<div class="mt-2"><strong>Nhận xét:</strong> {{ submission.feedback or '—' }}</div>
+{% else %}
+<div class="alert alert-info">Bài của bạn đang chờ chấm.</div>
+{% endif %}
+<a class="btn btn-outline-primary mt-3" href="{{ url_for('student_assignment_list') }}">Quay lại danh sách</a>
+</div></div>
+{% endblock %}

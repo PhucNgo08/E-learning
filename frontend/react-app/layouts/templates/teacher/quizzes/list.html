@@ -1,0 +1,63 @@
+{% extends "layout_teacher.html" %}
+{% block title %}📘 Danh sách Quiz của bạn{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary">
+      📘 Danh sách Quiz của bạn
+    </h4>
+    <a href="/teacher/quizzes/create" class="btn btn-success btn-sm">
+      <i class="bi bi-plus-circle"></i> Tạo Quiz mới
+    </a>
+  </div>
+
+  {% if quizzes %}
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-primary">
+        <tr>
+          <th>#</th>
+          <th>Tên Quiz</th>
+          <th>Khóa học</th>
+          <th>Thời lượng</th>
+          <th>Tổng điểm</th>
+          <th>Ngày tạo</th>
+          <th class="text-center">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for quiz in quizzes %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="fw-semibold">{{ quiz.title }}</td>
+          <td>{{ quiz.course.course_name if quiz.course else "—" }}</td>
+          <td>{{ quiz.duration_minutes }} phút</td>
+          <td>{{ quiz.total_marks }}</td>
+          <td>{{ quiz.created_at|datetime }}</td>
+          <td class="text-center">
+            <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-info btn-sm">
+              <i class="bi bi-eye"></i>
+            </a>
+            <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+            <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}" style="display:inline-block;">
+              <button type="submit" class="btn btn-outline-danger btn-sm"
+                onclick="return confirm('Bạn có chắc muốn xóa quiz này không?');">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center mt-4">
+    <i class="bi bi-info-circle"></i> Bạn chưa tạo quiz nào.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

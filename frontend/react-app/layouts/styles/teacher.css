@@ -1,20 +1,339 @@
+/* =====================================================
+🎓 TEACHER LAYOUT - FULL RESPONSIVE + DARK MODE
+Author: E-Learning Team (2025)
+===================================================== */
+
+/* === THEME COLORS === */
+:root {
+  --sidebar-bg: linear-gradient(180deg, #007bff, #0046b8);
+  --sidebar-text: #ffffff;
+  --content-bg: #f3f7ff;
+  --content-text: #1e1e2f;
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --active-border: #ffc107;
+  --avatar-border: 3px solid #fff;
+}
+
+body.dark-mode {
+  --sidebar-bg: linear-gradient(180deg, #111827, #0c1018);
+  --sidebar-text: #e4e6eb;
+  --content-bg: #0f141d;
+  --content-text: #e9ecef;
+  --header-bg: rgba(20, 24, 35, 0.9);
+  --avatar-border: 3px solid #444;
+}
+
+/* === BASE === */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #fff;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: var(--content-bg);
+  color: var(--content-text);
+  margin: 0;
+  overflow-x: hidden;
+  transition: all 0.3s ease;
+  min-height: 100vh;
 }
 
-header {
-    background-color: #28a745;
-    color: white;
-    padding: 10px;
+/* ================================
+🧭 SIDEBAR
+================================ */
+#sidebar {
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  transition: transform 0.35s ease;
+  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.2);
+  border-top-right-radius: 14px;
+}
+#sidebar.hidden { transform: translateX(-100%); }
+
+.sidebar-header {
+  text-align: center;
+  padding: 25px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 
-header nav a {
-    color: white;
-    padding: 10px;
-    text-decoration: none;
+.sidebar-header img {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--avatar-border);
+  background: #fff;
+  margin-bottom: 10px;
+}
+.sidebar-header span {
+  font-weight: 600;
+  display: block;
+  font-size: 1rem;
 }
 
-main {
+#sidebar a {
+  color: var(--sidebar-text);
+  text-decoration: none;
+  padding: 13px 22px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-left: 4px solid transparent;
+  transition: all 0.25s ease;
+  font-size: 0.95rem;
+}
+#sidebar a:hover,
+#sidebar a.active {
+  background: rgba(255,255,255,0.15);
+  border-left: 4px solid var(--active-border);
+  transform: translateX(3px);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  text-align: center;
+  padding: 18px 10px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.07);
+  font-size: 0.9rem;
+}
+.sidebar-footer img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: var(--avatar-border);
+  margin-bottom: 6px;
+}
+.sidebar-footer a {
+  color: #ffc107;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* ================================
+👨‍🏫 HEADER
+================================ */
+header.teacher-header {
+  position: fixed;
+  top: 0;
+  left: 250px;
+  right: 0;
+  height: 70px;
+  background: var(--header-bg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 25px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  z-index: 900;
+  border-bottom-left-radius: 14px;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(8px);
+}
+#sidebar.hidden ~ header.teacher-header { left: 0; }
+
+.nav-icons i {
+  font-size: 1.3rem;
+  margin-left: 20px;
+  color: var(--content-text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.nav-icons i:hover { color: #007bff; }
+
+/* ================================
+📦 CONTENT
+================================ */
+#content {
+  background: #fff;
+  margin: 90px 25px 40px 275px;
+  border-radius: 20px;
+  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+  padding: 35px;
+  transition: margin 0.4s ease, width 0.4s ease;
+  overflow-x: hidden;
+}
+#sidebar.hidden ~ #content {
+  margin-left: 25px;
+  width: calc(100% - 50px);
+}
+#sidebar.show ~ #content {
+  margin-left: 25px;
+  width: calc(100% - 50px);
+}
+
+/* ================================
+⚙️ BUTTONS
+================================ */
+.toggle-btn, .mode-toggle {
+  position: fixed;
+  top: 18px;
+  z-index: 2001;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn {
+  left: 15px;
+  background: white;
+  color: #0046d8;
+  box-shadow: 0 3px 10px rgba(0, 64, 255, 0.25);
+}
+.toggle-btn:hover { transform: rotate(10deg) scale(1.05); }
+
+.mode-toggle {
+  right: 15px;
+  background: var(--header-bg);
+  color: #ffb700;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+.mode-toggle:hover { transform: rotate(-10deg) scale(1.05); }
+
+body.dark-mode .mode-toggle { color: #ffe47a; }
+
+/* ================================
+📱 MOBILE RESPONSIVE
+================================ */
+
+/* Overlay nền mờ khi mở sidebar */
+#sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+#sidebar.show ~ #sidebar-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* --- Tablet & Mobile --- */
+@media (max-width: 992px) {
+  #sidebar {
+    width: 280px;
+    height: 100%;
+    transform: translateX(-100%);
+    transition: transform 0.35s ease;
+  }
+
+  #sidebar.show { transform: translateX(0); }
+
+  header.teacher-header {
+    left: 0;
+    height: 65px;
+    padding: 0 15px;
+  }
+
+  #content {
+    margin: 85px 15px 30px 15px;
+    padding: 25px;
+    width: calc(100% - 30px);
+  }
+
+  .toggle-btn {
+    width: 42px;
+    height: 42px;
+    top: 12px;
+    left: 12px;
+  }
+
+  .mode-toggle {
+    width: 42px;
+    height: 42px;
+    right: 12px;
+    top: 12px;
+  }
+}
+
+/* --- Small Phones --- */
+@media (max-width: 576px) {
+  .sidebar-header img {
+    width: 55px;
+    height: 55px;
+  }
+
+  #sidebar a {
+    font-size: 0.9rem;
+    padding: 10px 16px;
+  }
+
+  #content {
     padding: 20px;
+    margin: 80px 10px 25px 10px;
+  }
+}
+
+/* ================================
+🦶 FOOTER
+================================ */
+footer {
+  text-align: center;
+  padding: 15px;
+  color: var(--content-text);
+  opacity: 0.8;
+  font-size: 0.9rem;
+  background: transparent;
+}
+
+/* ================================
+✨ SCROLL SMOOTH + FIX GẮN MENU
+================================ */
+html { scroll-behavior: smooth; }
+body::-webkit-scrollbar { width: 8px; }
+body::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+body.dark-mode::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+}
+
+/* ================================
+🧩 DROPDOWN FIX (ẩn/hiện chuẩn Bootstrap)
+================================ */
+.teacher-header,
+.nav-icons,
+.profile-dropdown {
+  overflow: visible !important;
+}
+
+.dropdown-menu {
+  position: absolute !important;
+  z-index: 9999 !important;
+  transform: translate3d(-40px, 40px, 0) !important;
+  /* Không ép display hay opacity */
+}
+
+.dropdown-menu.show {
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* 🎯 Hiệu ứng xoay caret khi mở dropdown */
+.caret-icon {
+  transition: transform 0.3s ease;
+}
+
+.caret-icon.rotate {
+  transform: rotate(180deg);
 }

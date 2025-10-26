@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>➕ Tạo bài tập mới</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+<body class="bg-light p-4">
+
+  <div class="container bg-white p-4 rounded shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h4>➕ Tạo bài tập mới</h4>
+      <a href="/teacher/assignments/list" class="btn btn-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+      </a>
+    </div>
+
+    <form method="post">
+
+      <!-- Chọn khóa học -->
+      <div class="mb-3">
+        <label class="form-label">Chọn khóa học</label>
+        <select name="course_id" class="form-select" required>
+          <option value="">-- Chọn khóa học --</option>
+          {% for c in courses %}
+            <option value="{{ c.id }}">{{ c.course_code }} - {{ c.course_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Chọn module -->
+      <div class="mb-3">
+        <label class="form-label">Chọn Module (tùy chọn)</label>
+        <select name="module_id" class="form-select">
+          <option value="">-- Không chọn module --</option>
+          {% for m in modules %}
+            <option value="{{ m.id }}">{{ m.module_number }}. {{ m.title }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Tiêu đề -->
+      <div class="mb-3">
+        <label class="form-label">Tiêu đề bài tập</label>
+        <input type="text" name="title" class="form-control" required>
+      </div>
+
+      <!-- Mô tả -->
+      <div class="mb-3">
+        <label class="form-label">Mô tả</label>
+        <textarea name="description" class="form-control" rows="4"></textarea>
+      </div>
+
+      <!-- Hạn nộp -->
+      <div class="mb-3">
+        <label class="form-label">Hạn nộp</label>
+        <input type="datetime-local" name="due_date" class="form-control" required>
+      </div>
+
+      <div class="text-end">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-save2"></i> Lưu bài tập
+        </button>
+      </div>
+    </form>
+  </div>
+
+</body>
+</html>

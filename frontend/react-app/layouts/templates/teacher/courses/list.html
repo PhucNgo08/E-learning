@@ -18,7 +18,7 @@
       flex-direction: column;
     }
 
-    /* Navbar */
+    /* Thanh điều hướng */
     .navbar {
       background: linear-gradient(90deg, #0056d2, #003087);
     }
@@ -36,7 +36,7 @@
       color: #003087 !important;
     }
 
-    /* Card */
+    /* Thẻ khóa học */
     .card {
       border: none;
       border-radius: 14px;
@@ -60,7 +60,7 @@
       transform: scale(1.05);
     }
 
-    /* Badge trạng thái */
+    /* Nhãn trạng thái */
     .badge-status {
       position: absolute;
       top: 12px;
@@ -84,7 +84,7 @@
       color: #555;
     }
 
-    /* Footer */
+    /* Chân trang */
     footer {
       margin-top: auto;
       background: #003087;
@@ -97,7 +97,7 @@
 </head>
 
 <body>
-  <!-- Navbar -->
+  <!-- Thanh điều hướng -->
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container">
       <a class="navbar-brand" href="/teacher/dashboard">
@@ -105,24 +105,24 @@
       </a>
       <div class="d-flex gap-2">
         <a href="/teacher/dashboard" class="btn btn-outline-light">
-          <i class="bi bi-arrow-left"></i> Quay lại
+          <i class="bi bi-arrow-left"></i> Quay lại trang chính
         </a>
         <a href="/teacher/courses/create" class="btn btn-warning fw-semibold text-dark">
-          <i class="bi bi-plus-circle"></i> Tạo khóa học
+          <i class="bi bi-plus-circle"></i> Tạo khóa học mới
         </a>
       </div>
     </div>
   </nav>
 
-  <!-- Main -->
+  <!-- Nội dung chính -->
   <main class="container py-5">
     <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
       <div>
         <h3 class="fw-bold text-primary mb-1">
-          <i class="bi bi-journal-bookmark"></i> Khóa học của tôi
+          <i class="bi bi-journal-bookmark"></i> Danh sách khóa học của tôi
         </h3>
         <p class="text-muted mb-0">
-          Tổng quan các khóa học mà bạn đang phụ trách giảng dạy.
+          Đây là toàn bộ các khóa học mà bạn đang phụ trách giảng dạy.
         </p>
       </div>
     </div>
@@ -140,17 +140,20 @@
                  alt="{{ c.course_name }}">
 
             <!-- Trạng thái -->
-            <span class="badge-status {{ c.status }}">{{ c.status or 'draft' }}</span>
+            <span class="badge-status {{ c.status }}">
+              {% if c.status == 'published' %}Đã xuất bản{% elif c.status == 'draft' %}Bản nháp{% elif c.status == 'archived' %}Đã lưu trữ{% else %}Không xác định{% endif %}
+            </span>
 
             <div class="card-body">
               <h5 class="card-title text-truncate">{{ c.course_name }}</h5>
               <p class="card-text text-truncate" title="{{ c.description }}">
-                {{ c.description or 'Chưa có mô tả chi tiết.' }}
+                {{ c.description or 'Chưa có mô tả cho khóa học này.' }}
               </p>
+
               <div class="d-flex justify-content-between align-items-center mt-3">
                 <span class="text-muted small">
                   <i class="bi bi-bar-chart-fill text-primary"></i>
-                  {{ c.difficulty_level or 'Beginner' }}
+                  {{ c.difficulty_level or 'Cơ bản' }}
                 </span>
                 <span class="text-muted small">
                   <i class="bi bi-clock-history"></i>
@@ -163,12 +166,12 @@
               <a href="/teacher/modules/list/{{ c.id }}" class="btn btn-outline-primary btn-sm" title="Quản lý module">
                 <i class="bi bi-layers"></i>
               </a>
-              <a href="/teacher/courses/edit/{{ c.id }}" class="btn btn-outline-success btn-sm" title="Chỉnh sửa">
+              <a href="/teacher/courses/edit/{{ c.id }}" class="btn btn-outline-success btn-sm" title="Chỉnh sửa khóa học">
                 <i class="bi bi-pencil"></i>
               </a>
               <form method="post" action="/teacher/courses/delete/{{ c.id }}"
-                    onsubmit="return confirm('Xác nhận xóa khóa học này?');">
-                <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa">
+                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa khóa học này không?');">
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa khóa học">
                   <i class="bi bi-trash"></i>
                 </button>
               </form>
@@ -179,13 +182,13 @@
       </div>
     {% else %}
       <div class="alert alert-info text-center shadow-sm mt-5">
-        <i class="bi bi-info-circle"></i> Hiện bạn chưa tạo khóa học nào.
+        <i class="bi bi-info-circle"></i> Bạn chưa tạo khóa học nào.
       </div>
     {% endif %}
   </main>
 
   <footer>
-    © {{ now.year }} E-Learning Platform | Giáo viên: {{ teacher.full_name if teacher else 'Ẩn danh' }}
+    © {{ now.year }} Nền tảng E-Learning | Giáo viên: {{ teacher.full_name if teacher else 'Ẩn danh' }}
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

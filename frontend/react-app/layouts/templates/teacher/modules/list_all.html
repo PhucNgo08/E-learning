@@ -1,0 +1,54 @@
+{% extends "layout_teacher.html" %}
+{% block title %}📘 Tất cả module của bạn{% endblock %}
+
+{% block content %}
+<div class="container mt-3">
+  <h4 class="fw-bold text-primary mb-3">📘 Danh sách toàn bộ module</h4>
+
+  {% if modules %}
+  <div class="table-responsive shadow-sm rounded">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-primary">
+        <tr>
+          <th>Khóa học</th>
+          <th>#</th>
+          <th>Tên Module</th>
+          <th>Mô tả</th>
+          <th>Trạng thái</th>
+          <th class="text-center">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for module in modules %}
+        <tr>
+          <td>{{ module.course.course_name }}</td>
+          <td>{{ module.module_number }}</td>
+          <td class="fw-semibold">{{ module.title }}</td>
+          <td>{{ module.description or "—" }}</td>
+          <td>
+            {% if module.is_published %}
+            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Đã đăng</span>
+            {% else %}
+            <span class="badge bg-secondary"><i class="bi bi-eye-slash"></i> Nháp</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            <a href="/teacher/modules/edit/{{ module.id }}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-pencil-square"></i>
+            </a>
+            <a href="/teacher/modules/delete/{{ module.id }}" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center mt-4">
+    <i class="bi bi-info-circle"></i> Bạn chưa tạo module nào.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

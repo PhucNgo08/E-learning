@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>📘 Lớp học của tôi</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+
+  <style>
+    body {
+      background: linear-gradient(180deg, #f0f4ff, #e6ecff);
+      font-family: "Inter", "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      background: #fff;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .page-header h3 {
+      color: #003087;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.07);
+      transition: all 0.2s ease-in-out;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-outline-primary {
+      border-radius: 50px;
+    }
+
+    .btn-outline-secondary {
+      border-radius: 50px;
+    }
+
+    table th {
+      background-color: #003087 !important;
+      color: white !important;
+      vertical-align: middle;
+    }
+
+    table tbody tr:hover {
+      background-color: #f8faff;
+    }
+
+    .footer-actions {
+      margin-top: 2rem;
+      text-align: right;
+    }
+  </style>
+</head>
+<body class="p-4">
+  <div class="container">
+
+    <!-- 🔹 Tiêu đề trang -->
+    <div class="page-header">
+      <h3><i class="bi bi-collection"></i> Lớp học do tôi phụ trách</h3>
+      <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại
+      </a>
+    </div>
+
+    <!-- 🔹 Bảng danh sách lớp -->
+    <div class="card p-3">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle text-center mb-0">
+          <thead>
+            <tr>
+              <th>Mã lớp</th>
+              <th>Tên lớp</th>
+              <th>Trạng thái</th>
+              <th>Sĩ số</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cls in classes %}
+            <tr>
+              <td><strong>{{ cls.class_code }}</strong></td>
+              <td class="text-start">{{ cls.class_name }}</td>
+              <td>
+                {% if cls.status == 'active' %}
+                  <span class="badge bg-success">Đang học</span>
+                {% elif cls.status == 'open_for_enrollment' %}
+                  <span class="badge bg-info text-dark">Đang tuyển sinh</span>
+                {% elif cls.status == 'completed' %}
+                  <span class="badge bg-secondary">Hoàn thành</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">{{ cls.status }}</span>
+                {% endif %}
+              </td>
+              <td>{{ cls.current_students }}/{{ cls.max_students }}</td>
+              <td>
+                <a href="/teacher/classes/students/{{ cls.id }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-people-fill"></i> Học viên
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">
+                <i class="bi bi-emoji-frown"></i> Chưa có lớp học nào được giao phụ trách.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 🔹 Footer hành động -->
+    <div class="footer-actions">
+     
+     
+    </div>
+
+  </div>
+</body>
+</html>

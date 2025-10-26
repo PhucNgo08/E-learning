@@ -1,0 +1,14 @@
+{% extends "layout_student.html" %}
+{% block title %}✅ Gửi đánh giá{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center">
+  <div class="alert alert-success shadow-sm p-4">
+    <h4 class="fw-bold mb-2">🎉 Cảm ơn bạn đã gửi đánh giá!</h4>
+    <p class="mb-3 text-muted">Phản hồi của bạn sẽ được kiểm duyệt trước khi hiển thị.</p>
+    <a href="{{ url_for('student_course_detail', course_id=course.id) }}" class="btn btn-primary">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại khóa học
+    </a>
+  </div>
+</div>
+{% endblock %}

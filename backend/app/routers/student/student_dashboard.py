@@ -1,70 +1,183 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+"""
+==========================================================
+🎓 ROUTER: Student - Dashboard
+Hiển thị bảng điều khiển chính của sinh viên:
+- Khóa học đã ghi danh
+- Tiến độ học tập
+- Bài học gần đây
+- Thông báo
+==========================================================
+"""
+
+from fastapi import APIRouter, Depends, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from datetime import datetime, timedelta
 
+# ✅ Import cấu hình template
+from app.config.template_config import templates
+
+# ✅ Import database & models
 from app.database.connection import get_db
-from app.models import Course, Enrollment, Assignment
-from app.dependencies import get_current_user_id
+from app.models.user import User
+from app.models.course import Course
+from app.models.module import Module
+from app.models.enrollment import Enrollment
+from app.models.lesson_progress import LessonProgress
+from app.models.lesson import Lesson
+from app.models.assignment_submission import AssignmentSubmission
+from app.models.quiz_attempt import QuizAttempt
 
-# ==============================
-# ⚙️ Khởi tạo Router & Template
-# ==============================
-router = APIRouter(prefix="/student", tags=["Student Dashboard"])
-
-# ⚠️ Quan trọng: trỏ đến thư mục templates GỐC
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
-)
+# ======================================================
+# ⚙️ Cấu hình Router
+# ======================================================
+router = APIRouter(prefix="/student", tags=["Student - Dashboard"])
 
 
-# ==============================
+# ======================================================
 # 🎓 Trang Dashboard Sinh viên
-# ==============================
+# ======================================================
 @router.get("/dashboard", response_class=HTMLResponse)
-async def get_student_dashboard(
-    request: Request,
-    db: Session = Depends(get_db),
-    user_id: str = Depends(get_current_user_id)
-):
+async def get_student_dashboard(request: Request, db: Session = Depends(get_db)):
     """
-    Hiển thị bảng điều khiển chính của sinh viên.
-    Bao gồm danh sách khóa học đã đăng ký và bài tập tương ứng.
+    Hiển thị bảng điều khiển chính của sinh viên:
+    - Các khóa học đã ghi danh
+    - Tiến độ học tập
+    - Bài học gần đây
+    - Thông báo
     """
 
     # 🧩 Kiểm tra đăng nhập
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+
+    # 🚫 Nếu chưa login → redirect về trang login
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Vui lòng đăng nhập để truy cập bảng điều khiển."
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    # ⚠️ Nếu role khác 'student' → clear session & về login
+    if role != "student":
+        request.session.clear()
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    # 🔹 Lấy thông tin sinh viên
+    student = db.query(User).filter(User.id == user_id).first()
+    if not student:
+        request.session.clear()
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+
+    try:
+        # ======================================================
+        # 📘 Lấy danh sách khóa học sinh viên đã ghi danh
+        # ======================================================
+        enrolled_courses = (
+            db.query(Course)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(Enrollment.user_id == student.id)
+            .all()
         )
 
-    # 📘 Lấy danh sách khóa học mà sinh viên đã ghi danh
-    enrolled_courses = (
-        db.query(Course)
-        .join(Enrollment, Enrollment.course_id == Course.id)
-        .filter(Enrollment.user_id == user_id)
-        .all()
-    )
+        # ======================================================
+        # 📊 Tiến độ học tập
+        # ======================================================
+        completed_lessons = (
+            db.query(LessonProgress)
+            .filter(
+                LessonProgress.user_id == student.id,
+                LessonProgress.progress_status == "completed",
+            )
+            .count()
+        )
 
-    # 📚 Lấy danh sách bài tập (Assignments) thuộc các khóa học đó
-    course_ids = [c.id for c in enrolled_courses] if enrolled_courses else []
-    assignments = (
-        db.query(Assignment)
-        .filter(Assignment.course_id.in_(course_ids))
-        .all()
-        if course_ids else []
-    )
+        total_lessons = (
+            db.query(Lesson)
+            .join(Module, Lesson.module_id == Module.id)
+            .join(Course, Module.course_id == Course.id)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(Enrollment.user_id == student.id)
+            .count()
+        )
 
-    # 🧭 Gửi dữ liệu sang template Dashboard
-    return templates.TemplateResponse(
-        "student/dashboard.html",  # ✅ Đúng path template
-        {
-            "request": request,
-            "username": request.session.get("username"),  # 👤 Tên người dùng đăng nhập
-            "active_page": "dashboard",                   # 🔖 Đánh dấu trang hiện tại trong sidebar
-            "enrolled_courses": enrolled_courses,         # 📘 Danh sách khóa học đã đăng ký
-            "assignments": assignments,                   # 📝 Danh sách bài tập
-            "message": "Bạn chưa đăng ký khóa học nào." if not enrolled_courses else None
-        },
-    )
+        progress_percent = round((completed_lessons / total_lessons) * 100, 1) if total_lessons > 0 else 0
+        progress_stats = {
+            "completed": completed_lessons,
+            "total": total_lessons,
+            "percent": progress_percent,
+        }
+
+        # ======================================================
+        # 📝 Tổng số bài tập đã nộp
+        # ======================================================
+        total_assignments = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.student_id == student.id)  # ✅ ĐÃ SỬA
+            .count()
+        )
+
+        # ======================================================
+        # 🧠 Tổng số quiz đã làm
+        # ======================================================
+        total_quizzes = (
+            db.query(QuizAttempt)
+            .filter(QuizAttempt.user_id == student.id)
+            .count()
+        )
+
+        # ======================================================
+        # 🕒 Bài học gần đây
+        # ======================================================
+        recent_lessons = (
+            db.query(Lesson)
+            .join(Module, Lesson.module_id == Module.id)
+            .join(Course, Module.course_id == Course.id)
+            .join(Enrollment, Enrollment.course_id == Course.id)
+            .filter(Enrollment.user_id == student.id)
+            .order_by(Lesson.created_at.desc())
+            .limit(5)
+            .all()
+        )
+
+        # ======================================================
+        # 🔔 Dummy Thông báo (sẽ thay bằng bảng notifications sau)
+        # ======================================================
+        notifications = [
+            {"icon": "bi bi-bell-fill text-warning", "text": "📘 Bạn có bài tập mới cần nộp trong tuần này."},
+            {"icon": "bi bi-award text-success", "text": "🏆 Khóa học Python cơ bản của bạn đã đạt 80% tiến độ."},
+            {"icon": "bi bi-chat-dots text-info", "text": "💬 Giảng viên đã phản hồi bình luận của bạn."},
+        ]
+
+        # 🧩 Log debug
+        print(
+            f"📊 [STUDENT DASHBOARD] {student.full_name} — "
+            f"{len(enrolled_courses)} khóa học, "
+            f"{completed_lessons}/{total_lessons} bài học ({progress_percent}%)"
+        )
+
+        # ======================================================
+        # 🧾 Render template
+        # ======================================================
+        return templates["student"].TemplateResponse(
+            "dashboard.html",
+            {
+                "request": request,
+                "student": student,
+                "enrolled_courses": enrolled_courses,
+                "progress_stats": progress_stats,
+                "recent_lessons": recent_lessons,
+                "notifications": notifications,
+                "total_assignments": total_assignments,
+                "total_quizzes": total_quizzes,
+                "active_page": "dashboard",
+                "now": datetime.utcnow() + timedelta(hours=7),
+            },
+        )
+
+    except Exception as e:
+        print(f"💥 [ERROR] Lỗi khi tải dashboard sinh viên: {e}")
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {
+                "request": request,
+                "message": f"Không thể tải trang Dashboard. Chi tiết lỗi: {e}",
+            },
+        )

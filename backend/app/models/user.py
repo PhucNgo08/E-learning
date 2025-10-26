@@ -1,12 +1,15 @@
-from sqlalchemy import Column, String, Integer, Date, Enum, ForeignKey, DateTime
+from sqlalchemy import (
+    Column, String, Integer, Date, DateTime, Text, Enum, ForeignKey
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database.connection import Base
 import enum
 import uuid
 
-
-# ===== Enums =====
+# ============================================
+# 🧩 ENUM DEFINITIONS
+# ============================================
 class GenderEnum(str, enum.Enum):
     male = "male"
     female = "female"
@@ -29,26 +32,28 @@ class StatusEnum(str, enum.Enum):
     pending_enrollment = "pending_enrollment"
 
 
-# ===== User Model =====
+# ============================================
+# 🧩 USER MODEL
+# ============================================
 class User(Base):
     __tablename__ = "users"
 
+    # ===== Basic Info =====
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(100), nullable=False)
 
-    # ===== Thông tin học vụ =====
+    # ===== Academic Info =====
     mssv = Column(String(20), unique=True)
     academic_year_id = Column(String(36), ForeignKey("academic_years.id"), nullable=True)
     major_id = Column(String(36), ForeignKey("majors.id"), nullable=True)
 
-    # ===== Quan hệ ORM =====
     academic_year = relationship("AcademicYear", back_populates="users")
     major = relationship("Major", back_populates="users")
 
-    # ✅ Quan hệ ngược lại với Class (giáo viên chủ nhiệm)
+    # ===== Relationship with Class =====
     homeroom_classes = relationship(
         "Class",
         back_populates="homeroom_teacher",
@@ -56,7 +61,7 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # ✅ Quan hệ 1-1 với SecuritySetting
+    # ===== Security Setting =====
     security_setting = relationship(
         "SecuritySetting",
         back_populates="user",
@@ -64,38 +69,108 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-    # ===== Thông tin cá nhân =====
+    # ===== Personal Info =====
     phone = Column(String(20))
     avatar_url = Column(String(500))
     date_of_birth = Column(Date)
     gender = Column(Enum(GenderEnum))
 
-    # ===== Vai trò và trạng thái =====
+    # ===== Role & Status =====
     role = Column(Enum(RoleEnum), default=RoleEnum.student)
     status = Column(Enum(StatusEnum), default=StatusEnum.active)
 
-    # ===== Thống kê học tập =====
+    # ===== Learning Stats =====
     points = Column(Integer, default=0)
     level = Column(Integer, default=1)
     last_login = Column(DateTime)
     login_count = Column(Integer, default=0)
     total_learning_time = Column(Integer, default=0)
 
-    # ===== Thời gian tạo / cập nhật =====
+    # ===== Assignment Tracking =====
+    total_assignments_submitted = Column(Integer, default=0)
+    total_assignments_graded = Column(Integer, default=0)
+    total_assignments_created = Column(Integer, default=0)
+
+    # ===== Timestamp =====
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
 
-    # ===== Quan hệ mở rộng =====
-    courses_taught = relationship("Course", back_populates="teacher", foreign_keys="Course.teacher_id")
+    # ============================================
+    # 🔗 RELATIONSHIPS (đã fix cảnh báo overlaps)
+    # ============================================
 
+    # === Course Management ===
+    courses_taught = relationship(
+        "Course",
+        back_populates="teacher",
+        foreign_keys="Course.teacher_id"
+    )
+
+    # === Course Reviews ===
     course_reviews = relationship(
         "CourseReview",
         back_populates="user",
         foreign_keys="CourseReview.user_id",
-        cascade="all, delete-orphan"
+        overlaps="moderated_reviews"
     )
 
-    enrollments = relationship("Enrollment", back_populates="user", cascade="all, delete-orphan")
+    moderated_reviews = relationship(
+        "CourseReview",
+        back_populates="moderator",
+        foreign_keys="CourseReview.moderated_by",
+        overlaps="course_reviews"
+    )
 
+    # === Enrollment ===
+    enrollments = relationship(
+        "Enrollment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="Enrollment.user_id"
+    )
+
+    # === Assignments ===
+    assignments_created = relationship(
+        "Assignment",
+        back_populates="teacher",
+        foreign_keys="Assignment.teacher_id"
+    )
+
+    assignment_submissions = relationship(
+        "AssignmentSubmission",
+        back_populates="student",
+        foreign_keys="AssignmentSubmission.student_id"
+    )
+
+    assignment_groups_led = relationship(
+        "AssignmentGroup",
+        back_populates="leader",
+        foreign_keys="AssignmentGroup.leader_id"
+    )
+
+    # === Quiz Attempts ===
+    quiz_attempts = relationship(
+        "QuizAttempt",
+        back_populates="user",
+        foreign_keys="QuizAttempt.user_id",
+        overlaps="graded_quiz_attempts"
+    )
+
+    graded_quiz_attempts = relationship(
+        "QuizAttempt",
+        back_populates="graded_by_user",
+        foreign_keys="QuizAttempt.graded_by",
+        overlaps="quiz_attempts"
+    )
+    # === Discussions ===
+    discussions = relationship(
+    "Discussion",
+    back_populates="user",
+    cascade="all, delete"
+    )
+
+    # ============================================
+    # 🧾 Representation
+    # ============================================
     def __repr__(self):
         return f"<User(username='{self.username}', role='{self.role}', status='{self.status}')>"

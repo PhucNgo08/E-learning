@@ -1,0 +1,59 @@
+{% extends "layout_teacher.html" %}
+{% block title %}📨 Xem tin nhắn{% endblock %}
+
+{% block content %}
+<style>
+  .message-container {
+    max-width: 750px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+  }
+  .attachment-box {
+    border: 1px dashed #d0d7de;
+    border-radius: 10px;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    margin-top: 1rem;
+  }
+</style>
+
+<div class="container py-4">
+  <div class="message-container">
+    <h4 class="fw-bold text-primary mb-3">
+      <i class="bi bi-envelope-open"></i> Chi tiết tin nhắn
+    </h4>
+
+    <p><strong>👤 Người gửi:</strong> {{ message.sender.full_name if message.sender else "Người gửi ẩn danh" }}</p>
+    <p><strong>🎯 Người nhận:</strong> {{ message.receiver.full_name if message.receiver else "Không xác định" }}</p>
+    <p class="text-muted small">
+      <i class="bi bi-clock"></i>
+      {{ message.sent_at.strftime("%d/%m/%Y %H:%M") if message.sent_at else "" }}
+    </p>
+
+    <hr>
+    <div style="white-space: pre-wrap;">{{ message.content }}</div>
+
+    {% if message.attachment_url %}
+    <div class="attachment-box mt-4">
+      <i class="bi bi-paperclip"></i>
+      <strong>{{ message.attachment_name }}</strong>
+      <small class="text-muted">({{ message.attachment_size }})</small>
+      <div class="mt-2">
+        <a href="/{{ message.attachment_url }}" class="btn btn-sm btn-outline-primary" download>
+          <i class="bi bi-download"></i> Tải xuống
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="/teacher/message/" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại hộp thư đến
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "layout_student.html" %}
+{% block title %}📤 Nộp bài: {{ assignment.title }}{% endblock %}
+{% block content %}
+<h5 class="mb-3">📤 Nộp bài</h5>
+<form method="post" enctype="multipart/form-data">
+<div class="mb-3">
+<label class="form-label">Ghi chú</label>
+<textarea class="form-control" name="submission_text" rows="4" placeholder="Ghi chú cho giảng viên (tuỳ chọn)"></textarea>
+</div>
+<div class="mb-3">
+<label class="form-label">Tệp đính kèm</label>
+<input class="form-control" type="file" name="files" multiple>
+<div class="form-text">Cho phép: {{ assignment.allowed_file_types or 'pdf, docx, zip' }} • Tối đa {{ assignment.max_files or 5 }} tệp</div>
+</div>
+<button class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Nộp</button>
+<a class="btn btn-outline-secondary" href="{{ url_for('student_assignment_detail', assignment_id=assignment.id) }}">Hủy</a>
+</form>
+{% endblock %}

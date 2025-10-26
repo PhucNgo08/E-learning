@@ -1,0 +1,41 @@
+{% extends "layout_student.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-primary">{{ page_title }}</h3>
+    {% if course_id %}
+      <a href="{{ url_for('create_discussion_page', course_id=course_id) }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Tạo thảo luận mới
+      </a>
+    {% else %}
+      <a href="{{ url_for('create_general_discussion') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Tạo thảo luận chung
+      </a>
+    {% endif %}
+  </div>
+
+  {% if discussions %}
+    <div class="list-group shadow-sm">
+      {% for d in discussions %}
+      <a href="{{ url_for('discussion_detail', discussion_id=d.id) }}"
+         class="list-group-item list-group-item-action flex-column align-items-start">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1 fw-semibold text-dark">
+            {{ d.user.full_name if d.user else "Ẩn danh" }}
+          </h5>
+          <small class="text-muted">{{ d.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+        </div>
+        <p class="mb-1 text-secondary">{{ d.content[:200] }}{% if d.content|length > 200 %}...{% endif %}</p>
+        {% if not course_id %}
+          <small class="text-primary">📘 {{ d.course.course_name if d.course else "Không rõ khóa học" }}</small>
+        {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center">💬 Chưa có bài thảo luận nào.</div>
+  {% endif %}
+</div>
+{% endblock %}

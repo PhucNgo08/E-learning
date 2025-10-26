@@ -3,12 +3,12 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
-from app.services.course_category_service import (
-    create_category,
-    update_category,
-    delete_category,
-    get_all_categories,
-    get_category_by_id,
+from app.services.admin.course_category_service import (
+    create_course_category,
+    update_course_category,
+    delete_course_category,
+    get_all_course_categories,
+    get_course_category_by_id,
 )
 
 # ===============================
@@ -25,10 +25,9 @@ templates = Jinja2Templates(
 # ===============================
 @category_router.get("/CourseCategory/manage", response_class=HTMLResponse)
 async def manage_categories(request: Request, db: Session = Depends(get_db)):
-    categories = get_all_categories(db)
+    categories = get_all_course_categories(db)
     context = {"request": request, "categories": categories, "active_page": "course_category"}
     return templates.TemplateResponse("admin/CourseCategory/manage_categories.html", context)
-
 
 # ===============================
 # ➕ 2. Trang thêm danh mục
@@ -48,22 +47,21 @@ async def add_category(
     db: Session = Depends(get_db),
 ):
     try:
-        create_category(category_name, description, db)
+        create_course_category(category_name, description, db)
         return RedirectResponse(url="/admin/CourseCategory/manage", status_code=303)
     except RuntimeError as e:
         return HTMLResponse(
             f"<h3 style='color:red; text-align:center; margin-top:40px;'>⚠️ {e}</h3>"
             f"<p style='text-align:center;'><a href='/admin/CourseCategory/create'>← Quay lại</a></p>",
-            status_code=400
+            status_code=400,
         )
-
 
 # ===============================
 # ✏️ 3. Trang chỉnh sửa danh mục
 # ===============================
 @category_router.get("/CourseCategory/edit/{category_id}", response_class=HTMLResponse)
 async def edit_category_page(category_id: str, request: Request, db: Session = Depends(get_db)):
-    category = get_category_by_id(category_id, db)
+    category = get_course_category_by_id(category_id, db)
     if not category:
         raise HTTPException(status_code=404, detail="Danh mục không tồn tại.")
     return templates.TemplateResponse(
@@ -80,22 +78,21 @@ async def edit_category_action(
     db: Session = Depends(get_db),
 ):
     try:
-        update_category(category_id, category_name, description, db)
+        update_course_category(category_id, category_name, description, db)
         return RedirectResponse(url="/admin/CourseCategory/manage", status_code=303)
     except RuntimeError as e:
         return HTMLResponse(
             f"<h3 style='color:red; text-align:center; margin-top:40px;'>⚠️ {e}</h3>"
             f"<p style='text-align:center;'><a href='/admin/CourseCategory/edit/{category_id}'>← Quay lại</a></p>",
-            status_code=400
+            status_code=400,
         )
-
 
 # ===============================
 # ❌ 4. Trang xác nhận & xóa danh mục
 # ===============================
 @category_router.get("/CourseCategory/delete-confirm/{category_id}", response_class=HTMLResponse)
 async def delete_category_page(category_id: str, request: Request, db: Session = Depends(get_db)):
-    category = get_category_by_id(category_id, db)
+    category = get_course_category_by_id(category_id, db)
     if not category:
         raise HTTPException(status_code=404, detail="Danh mục không tồn tại.")
     return templates.TemplateResponse(
@@ -107,11 +104,11 @@ async def delete_category_page(category_id: str, request: Request, db: Session =
 @category_router.post("/CourseCategory/delete/{category_id}")
 async def delete_category_action(category_id: str, db: Session = Depends(get_db)):
     try:
-        delete_category(category_id, db)
+        delete_course_category(category_id, db)
         return RedirectResponse(url="/admin/CourseCategory/manage", status_code=303)
     except RuntimeError as e:
         return HTMLResponse(
             f"<h3 style='color:red; text-align:center; margin-top:40px;'>⚠️ {e}</h3>"
             f"<p style='text-align:center;'><a href='/admin/CourseCategory/manage'>← Quay lại</a></p>",
-            status_code=400
+            status_code=400,
         )

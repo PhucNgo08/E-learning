@@ -1,0 +1,81 @@
+{% extends "layout_student.html" %}
+{% block title %}🕓 Lịch sử làm bài{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h4 class="fw-bold text-primary mb-3">
+    <i class="bi bi-clock-history"></i> Lịch sử làm bài kiểm tra
+  </h4>
+
+  {% if history %}
+  <div class="table-responsive shadow-sm">
+    <table class="table table-hover align-middle">
+      <thead class="table-primary">
+        <tr class="text-center">
+          <th>#</th>
+          <th>Bài kiểm tra</th>
+          <th>Điểm</th>
+          <th>Số câu đúng</th>
+          <th>Ngày nộp</th>
+          <th>Trạng thái</th>
+          <th>Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for attempt in history %}
+        <tr class="text-center">
+          <td>{{ loop.index }}</td>
+
+          <!-- 📘 Tên quiz -->
+          <td>
+            {% if attempt.quiz and attempt.quiz.title %}
+              {{ attempt.quiz.title }}
+            {% else %}
+              <span class="text-muted fst-italic">Quiz ID: {{ attempt.quiz_id }}</span>
+            {% endif %}
+          </td>
+
+          <!-- 📊 Điểm -->
+          <td>
+            <span class="fw-bold {% if attempt.score >= 80 %}text-success{% elif attempt.score >= 50 %}text-warning{% else %}text-danger{% endif %}">
+              {{ attempt.score or 0 }}%
+            </span>
+          </td>
+
+          <!-- ✅ Số câu đúng -->
+          <td>{{ attempt.correct_answers or 0 }}/{{ attempt.total_questions or 0 }}</td>
+
+          <!-- ⏰ Thời gian -->
+          <td>{{ attempt.submitted_at.strftime('%d/%m/%Y %H:%M') if attempt.submitted_at else '-' }}</td>
+
+          <!-- 📋 Trạng thái -->
+          <td>
+            {% if attempt.status == 'graded' %}
+              <span class="badge bg-success"><i class="bi bi-check-circle"></i> Đã chấm</span>
+            {% elif attempt.status == 'submitted' %}
+              <span class="badge bg-info text-dark"><i class="bi bi-hourglass-split"></i> Đã nộp</span>
+            {% else %}
+              <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> {{ attempt.status or 'Chưa rõ' }}</span>
+            {% endif %}
+          </td>
+
+          <!-- 👁️ Nút xem -->
+          <td>
+            <a href="/student/quiz/result/{{ attempt.id }}" 
+               class="btn btn-sm btn-outline-primary"
+               title="Xem chi tiết kết quả">
+              <i class="bi bi-eye"></i> Xem
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div class="alert alert-info shadow-sm">
+      <i class="bi bi-info-circle"></i> Bạn chưa làm bài kiểm tra nào.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

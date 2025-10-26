@@ -2,50 +2,51 @@ from fastapi import (
     APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
-from pathlib import Path
-
 from app.database.connection import get_db
 from app.models.course import Course
-from app.models.user import User
 from app.models.module import Module
 from app.models.lesson import Lesson
-from app.services import course_service  # ✅ Dùng chung cho admin & teacher
+from app.models.user import User
+from app.services import course_service
+from app.dependencies.auth import get_current_teacher
+from app.config.template_config import get_template_by_path
 
 
-# ==============================
-# 🧭 Template Configuration
-# ==============================
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
+# =====================================================
+# 🚀 Router
+# =====================================================
+router = APIRouter(
+    prefix="/teacher/courses",
+    tags=["Teacher - Courses"]
 )
 
-# ==============================
-# 🚀 Router
-# ==============================
-router = APIRouter(prefix="/teacher/courses", tags=["Teacher - Courses"])
+
+# =====================================================
+# 🧭 0️⃣ Redirect gốc → /list
+# =====================================================
+@router.get("/", include_in_schema=False)
+def redirect_root_to_list():
+    return RedirectResponse("/teacher/courses/list", status_code=303)
 
 
 # =====================================================
 # 📋 1️⃣ Danh sách khóa học của giáo viên
 # =====================================================
 @router.get("/list", response_class=HTMLResponse)
-def list_courses(request: Request, db: Session = Depends(get_db)):
-    """Hiển thị danh sách các khóa học do giáo viên tạo."""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
+def list_courses(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    """Hiển thị danh sách khóa học của giáo viên."""
+    teacher = current_teacher
+    courses = course_service.get_all_courses(db, teacher.id, role="teacher")
 
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    teacher = db.query(User).filter(User.id == user_id).first()
-    courses = course_service.get_all_courses(db, user_id, role="teacher")
-
+    templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
-        "teacher/courses/list.html",
+        "courses/list.html",
         {"request": request, "teacher": teacher, "courses": courses, "now": datetime.now()},
     )
 
@@ -54,18 +55,22 @@ def list_courses(request: Request, db: Session = Depends(get_db)):
 # ➕ 2️⃣ Tạo khóa học
 # =====================================================
 @router.get("/create", response_class=HTMLResponse)
-def page_create(request: Request):
-    """Hiển thị form tạo khóa học mới."""
-    if request.session.get("role") != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    return templates.TemplateResponse("teacher/courses/create.html", {"request": request})
+def page_create(
+    request: Request,
+    current_teacher=Depends(get_current_teacher)
+):
+    """Hiển thị form tạo khóa học."""
+    templates = get_template_by_path(str(request.url.path))
+    return templates.TemplateResponse(
+        "courses/create.html", {"request": request, "teacher_name": current_teacher.full_name}
+    )
 
 
 @router.post("/create")
 async def create_course(
     request: Request,
     db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
     course_name: str = Form(...),
     description: str = Form(""),
     credit_hours: int = Form(3),
@@ -73,13 +78,10 @@ async def create_course(
     grade_level: int | None = Form(None),
     thumbnail: UploadFile | None = File(None),
 ):
-    """Tạo khóa học mới (giáo viên)."""
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
-
+    """Xử lý tạo khóa học."""
+    teacher_id = current_teacher.id
     result = await course_service.create_course(
-        db, user_id, course_name, description,
+        db, teacher_id, course_name, description,
         credit_hours, subject, grade_level, thumbnail,
         role="teacher"
     )
@@ -87,33 +89,35 @@ async def create_course(
     if isinstance(result, dict) and "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    return RedirectResponse(url="/teacher/courses/list", status_code=303)
+    return RedirectResponse("/teacher/courses/list", status_code=303)
 
 
 # =====================================================
-# ✏️ 3️⃣ Chỉnh sửa khóa học
+# ✏️ 3️⃣ Sửa khóa học
 # =====================================================
 @router.get("/edit/{course_id}", response_class=HTMLResponse)
-def page_edit(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Trang chỉnh sửa khóa học."""
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    course = course_service.get_course_owned(db, user_id, course_id, role="teacher")
+def page_edit(
+    course_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    teacher_id = current_teacher.id
+    course = course_service.get_course_owned(db, teacher_id, course_id, role="teacher")
     if not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học hoặc không có quyền.")
 
+    templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
-        "teacher/courses/edit.html", {"request": request, "course": course}
+        "courses/edit.html", {"request": request, "course": course}
     )
 
 
 @router.post("/edit/{course_id}")
 async def edit_course(
     course_id: str,
-    request: Request,
     db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
     course_name: str = Form(...),
     description: str = Form(""),
     credit_hours: int = Form(3),
@@ -122,56 +126,50 @@ async def edit_course(
     grade_level: int | None = Form(None),
     thumbnail: UploadFile | None = File(None),
 ):
-    """Cập nhật thông tin khóa học."""
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
-
+    teacher_id = current_teacher.id
     result = await course_service.update_course(
-        db, user_id, course_id,
+        db, teacher_id, course_id,
         course_name, description, credit_hours,
         status_str, subject, grade_level, thumbnail,
         role="teacher"
     )
-
     if isinstance(result, dict) and "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    return RedirectResponse(url="/teacher/courses/list", status_code=303)
+    return RedirectResponse("/teacher/courses/list", status_code=303)
 
 
 # =====================================================
 # ❌ 4️⃣ Xóa khóa học
 # =====================================================
 @router.post("/delete/{course_id}")
-def delete_course(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Xóa khóa học của giáo viên."""
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    ok = course_service.delete_course(db, user_id, course_id, role="teacher")
+def delete_course(
+    course_id: str,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    teacher_id = current_teacher.id
+    ok = course_service.delete_course(db, teacher_id, course_id, role="teacher")
     if not ok:
         raise HTTPException(status_code=404, detail="Không tìm thấy hoặc không có quyền xóa khóa học.")
 
-    return RedirectResponse(url="/teacher/courses/list", status_code=303)
+    return RedirectResponse("/teacher/courses/list", status_code=303)
 
 
 # =====================================================
 # 📘 5️⃣ Chi tiết khóa học
 # =====================================================
 @router.get("/detail/{course_id}", response_class=HTMLResponse)
-def course_detail(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Hiển thị chi tiết khóa học & module."""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    course = course_service.get_course_owned(db, user_id, course_id, role="teacher")
+def course_detail(
+    course_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    teacher_id = current_teacher.id
+    course = course_service.get_course_owned(db, teacher_id, course_id, role="teacher")
     if not course:
-        raise HTTPException(status_code=404, detail="Không tìm thấy khóa học hoặc không có quyền.")
+        raise HTTPException(status_code=404, detail="Không tìm thấy khóa học.")
 
     modules = (
         db.query(Module)
@@ -179,7 +177,6 @@ def course_detail(course_id: str, request: Request, db: Session = Depends(get_db
         .order_by(Module.module_number.asc())
         .all()
     )
-
     for m in modules:
         m.lessons = (
             db.query(Lesson)
@@ -188,26 +185,25 @@ def course_detail(course_id: str, request: Request, db: Session = Depends(get_db
             .all()
         )
 
+    templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
-        "teacher/courses/detail.html",
-        {"request": request, "course": course, "modules": modules, "now": datetime.now()},
+        "courses/detail.html",
+        {"request": request, "course": course, "modules": modules, "teacher_name": current_teacher.full_name},
     )
 
 
 # =====================================================
-# 🧩 6️⃣ Gộp quản lý khóa học + module + bài học
+# 🧩 6️⃣ Trang quản lý tổng hợp (course + module + lesson)
 # =====================================================
 @router.get("/manage", response_class=HTMLResponse)
-def manage_courses(request: Request, db: Session = Depends(get_db)):
-    """Hiển thị toàn bộ khóa học cùng module và bài học của giáo viên."""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    teacher = db.query(User).filter(User.id == user_id).first()
-    courses = course_service.get_all_courses(db, user_id, role="teacher")
+def manage_courses(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    teacher_id = current_teacher.id
+    teacher = current_teacher
+    courses = course_service.get_all_courses(db, teacher_id, role="teacher")
 
     for c in courses:
         modules = (
@@ -217,16 +213,16 @@ def manage_courses(request: Request, db: Session = Depends(get_db)):
             .all()
         )
         for m in modules:
-            lessons = (
+            m.lessons = (
                 db.query(Lesson)
                 .filter(Lesson.module_id == m.id)
                 .order_by(Lesson.lesson_number.asc())
                 .all()
             )
-            m.lessons = lessons
         c.modules = modules
 
+    templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
-        "teacher/courses/manage.html",
+        "courses/manage.html",
         {"request": request, "teacher": teacher, "courses": courses, "now": datetime.now()},
     )

@@ -32,6 +32,10 @@ class Lesson(Base):
     is_preview = Column(Integer, default=0)    # ✅ TINYINT trong MySQL
     is_published = Column(Integer, default=0)  # ✅ TINYINT trong MySQL
 
+    # 🕒 Thời gian học (dùng cho lịch giảng dạy)
+    start_time = Column(DateTime, nullable=True)
+    end_time = Column(DateTime, nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -39,4 +43,4 @@ class Lesson(Base):
     module = relationship("Module", back_populates="lessons")
 
     def __repr__(self):
-        return f"<Lesson(id={self.id}, title={self.title}, content_type={self.content_type})>"
+        return f"<Lesson(id={self.id}, title={self.title}, start={self.start_time}, end={self.end_time})>"

@@ -1,0 +1,150 @@
+{% extends "layout_student.html" %}
+{% block title %}✉️ Soạn tin nhắn{% endblock %}
+
+{% block content %}
+<style>
+  /* 🌈 Giao diện container */
+  .compose-container {
+    max-width: 720px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    transition: all 0.3s ease;
+  }
+
+  .compose-container:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .form-control {
+    border-radius: 10px;
+    transition: 0.3s;
+  }
+
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.25);
+  }
+
+  /* 📎 Upload box */
+  .file-upload {
+    border: 2px dashed #d0d7de;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    color: #6c757d;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .file-upload:hover {
+    border-color: #0d6efd;
+    background: #f8f9fa;
+    color: #0d6efd;
+  }
+
+  /* ✨ Floating back button */
+  .fab-back {
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    transition: all 0.3s ease;
+    z-index: 1000;
+  }
+
+  .fab-back:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #495057, #343a40);
+    text-decoration: none;
+  }
+</style>
+
+<div class="container py-4">
+  <div class="compose-container">
+    <h4 class="fw-bold text-primary mb-3">
+      <i class="bi bi-pencil-square"></i> Soạn tin nhắn mới
+    </h4>
+    <p class="text-muted small mb-4">
+      Nhập địa chỉ email hoặc ID người nhận, soạn nội dung và đính kèm tệp nếu cần.
+    </p>
+
+    <!-- ⚙️ Form gửi tin nhắn -->
+    <form method="post" action="/student/message/compose" enctype="multipart/form-data">
+      <!-- Người nhận -->
+      <div class="mb-3">
+        <label for="receiver_id" class="form-label fw-semibold">
+          👤 Người nhận (Email hoặc ID)
+        </label>
+        <input
+          type="text"
+          class="form-control"
+          id="receiver_id"
+          name="receiver_id"
+          placeholder="Ví dụ: nguyenvana@email.com hoặc UUID"
+          required
+        />
+      </div>
+
+      <!-- Nội dung -->
+      <div class="mb-3">
+        <label for="content" class="form-label fw-semibold">💬 Nội dung tin nhắn</label>
+        <textarea
+          class="form-control"
+          id="content"
+          name="content"
+          rows="6"
+          placeholder="Nhập nội dung bạn muốn gửi..."
+          required
+        ></textarea>
+      </div>
+
+      <!-- Đính kèm file -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold">📎 Đính kèm tệp (tùy chọn)</label>
+        <div class="file-upload" onclick="document.getElementById('file_input').click()">
+          <i class="bi bi-cloud-arrow-up fs-3 d-block mb-2"></i>
+          <span id="file_label">Chọn tệp hoặc kéo thả vào đây</span>
+        </div>
+        <input type="file" id="file_input" name="attachment" class="d-none" onchange="showFileName(this)">
+      </div>
+
+      <!-- Nút gửi -->
+      <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-send-fill"></i> Gửi tin nhắn
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 🔙 Nút nổi quay lại hộp thư đến -->
+<a href="/student/message/" class="fab-back" title="Quay lại hộp thư đến">
+  <i class="bi bi-arrow-left"></i>
+</a>
+
+<!-- 📜 Script preview file -->
+<script>
+function showFileName(input) {
+  const fileLabel = document.getElementById('file_label');
+  if (input.files.length > 0) {
+    const file = input.files[0];
+    fileLabel.innerHTML = `<strong>${file.name}</strong> (${(file.size / 1024).toFixed(1)} KB)`;
+  } else {
+    fileLabel.textContent = "Chọn tệp hoặc kéo thả vào đây";
+  }
+}
+</script>
+{% endblock %}
