@@ -5,9 +5,8 @@ from datetime import datetime
 from pathlib import Path
 import uuid, shutil, os
 
-# 📁 Thư mục lưu file upload
-UPLOAD_DIR = Path("uploads/materials")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# ✅ Dùng cấu hình chuẩn trong app.config.paths
+from app.config.paths import UPLOAD_MATERIALS
 
 # ==========================================================
 # 📋 1️⃣ Lấy danh sách tất cả tài liệu
@@ -16,6 +15,7 @@ def get_all(db: Session):
     """Trả về toàn bộ tài liệu khóa học."""
     return db.query(CourseMaterial).order_by(CourseMaterial.created_at.desc()).all()
 
+
 # ==========================================================
 # 🔍 2️⃣ Lấy thông tin 1 tài liệu theo ID
 # ==========================================================
@@ -23,37 +23,35 @@ def get_by_id(db: Session, material_id: str):
     """Lấy thông tin tài liệu theo ID."""
     return db.query(CourseMaterial).filter(CourseMaterial.id == material_id).first()
 
+
 # ==========================================================
-# ➕ 3️⃣ Tạo mới tài liệu (đã thêm created_by)
+# ➕ 3️⃣ Tạo mới tài liệu
 # ==========================================================
 async def create_material(db: Session, title, description, course_id, file, created_by: str):
-    """Tạo tài liệu mới và lưu file upload vào thư mục tĩnh."""
+    """Tạo tài liệu mới và lưu file upload vào thư mục uploads/materials."""
     if not created_by:
         raise ValueError("Thiếu thông tin người tạo (created_by).")
 
-    # Đảm bảo thư mục tồn tại
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
     # 🔒 Tạo tên file an toàn
-    unique_name = f"{uuid.uuid4()}_{file.filename}"
-    file_path = UPLOAD_DIR / unique_name
+    unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
+    file_path = UPLOAD_MATERIALS / unique_name
 
-    # Lưu file upload
+    # Lưu file vật lý
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Ghi dữ liệu vào DB
+    # Ghi vào DB
     new_file = CourseMaterial(
         id=str(uuid.uuid4()),
         course_id=course_id,
-        title=title,
-        description=description,
+        title=title.strip(),
+        description=description.strip() if description else None,
         file_name=unique_name,
-        file_url=f"/static/uploads/materials/{unique_name}",
+        file_url=f"/uploads/materials/{unique_name}",   # ✅ CHUẨN URL
         file_size=file_path.stat().st_size,
         file_format=file.filename.split(".")[-1].upper() if "." in file.filename else None,
         material_type="slide",
-        created_by=created_by,  # ✅ quan trọng
+        created_by=created_by,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
@@ -62,6 +60,7 @@ async def create_material(db: Session, title, description, course_id, file, crea
     db.commit()
     db.refresh(new_file)
     return new_file
+
 
 # ==========================================================
 # ✏️ 4️⃣ Cập nhật tài liệu
@@ -72,27 +71,28 @@ async def update_material(db: Session, material_id, title, description, file):
     if not material:
         return None
 
-    material.title = title
-    material.description = description
+    material.title = title.strip()
+    material.description = description.strip() if description else None
 
     if file:
-        # Lưu file mới với tên duy nhất
-        unique_name = f"{uuid.uuid4()}_{file.filename}"
-        file_path = UPLOAD_DIR / unique_name
+        # Lưu file mới
+        unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
+        file_path = UPLOAD_MATERIALS / unique_name
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Xóa file cũ nếu có
+        # Xóa file cũ
         try:
-            old_path = Path("backend/static/uploads/materials") / Path(material.file_name)
+            old_path = UPLOAD_MATERIALS / material.file_name
             if old_path.exists():
                 old_path.unlink()
         except Exception as e:
             print(f"⚠️ Không thể xóa file cũ: {e}")
 
-        # Cập nhật thông tin file
+        # Cập nhật thông tin mới
         material.file_name = unique_name
-        material.file_url = f"/static/uploads/materials/{unique_name}"
+        material.file_url = f"/uploads/materials/{unique_name}"
         material.file_size = file_path.stat().st_size
         material.file_format = file.filename.split(".")[-1].upper() if "." in file.filename else None
 
@@ -101,18 +101,19 @@ async def update_material(db: Session, material_id, title, description, file):
     db.refresh(material)
     return material
 
+
 # ==========================================================
 # 🗑️ 5️⃣ Xóa tài liệu
 # ==========================================================
 def delete_material(db: Session, material_id):
-    """Xóa tài liệu khỏi cơ sở dữ liệu và xóa file vật lý (nếu có)."""
+    """Xóa tài liệu khỏi cơ sở dữ liệu và xóa file vật lý."""
     material = get_by_id(db, material_id)
     if not material:
         return None
 
     # Xóa file vật lý nếu tồn tại
     try:
-        file_path = Path(material.file_url.replace("/static", "backend/static"))
+        file_path = UPLOAD_MATERIALS / material.file_name
         if file_path.exists():
             file_path.unlink()
     except Exception as e:
@@ -122,17 +123,19 @@ def delete_material(db: Session, material_id):
     db.commit()
     return True
 
+
 # ==========================================================
-# 📘 6️⃣ Lấy danh sách tất cả khóa học (cho dropdown form)
+# 📘 6️⃣ Lấy danh sách tất cả khóa học
 # ==========================================================
 def get_all_courses(db: Session):
-    """Lấy danh sách tất cả khóa học còn hoạt động để hiển thị trong form tạo tài liệu."""
+    """Lấy danh sách tất cả khóa học còn hoạt động để hiển thị trong form."""
     return (
         db.query(Course)
         .filter(Course.status != "archived")
         .order_by(Course.course_name.asc())
         .all()
     )
+
 
 # ==========================================================
 # 📊 7️⃣ Thống kê tổng quan

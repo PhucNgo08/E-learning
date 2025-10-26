@@ -15,22 +15,29 @@ UPLOAD_COURSE_THUMBNAILS = UPLOADS_BASE / "course_thumbnails"   # Ảnh khóa h�
 UPLOAD_AVATARS = UPLOADS_BASE / "avatars"                       # Ảnh đại diện
 UPLOAD_MATERIALS = UPLOADS_BASE / "materials"                   # Tài liệu khóa học
 UPLOAD_VIDEOS = UPLOADS_BASE / "videos"                         # Video bài học
-UPLOAD_MESSAGES = UPLOADS_BASE / "messages"                     # File đính kèm tin nhắn (nếu có)
-
-# === 🔧 Tự động tạo nếu chưa tồn tại
-for path in [
-    UPLOADS_BASE,
-    UPLOAD_COURSE_THUMBNAILS,
-    UPLOAD_AVATARS,
-    UPLOAD_MATERIALS,
-    UPLOAD_VIDEOS,
-    UPLOAD_MESSAGES
-]:
-    path.mkdir(parents=True, exist_ok=True)
+UPLOAD_MESSAGES = UPLOADS_BASE / "messages"                     # File đính kèm tin nhắn
 
 # === 🧭 Đường dẫn public tương ứng (frontend)
 PUBLIC_PATH = "/uploads"
 
-# ✅ Ví dụ:
-#   - Upload thật: app/uploads/avatars/avatar123.png
-#   - Public URL:  /uploads/avatars/avatar123.png
+# ✅ Hàm kiểm tra thư mục tồn tại
+def verify_upload_paths():
+    paths = [
+        UPLOADS_BASE,
+        UPLOAD_COURSE_THUMBNAILS,
+        UPLOAD_AVATARS,
+        UPLOAD_MATERIALS,
+        UPLOAD_VIDEOS,
+        UPLOAD_MESSAGES
+    ]
+    missing = [str(p) for p in paths if not p.exists()]
+    if missing:
+        print("⚠️ Các thư mục sau chưa tồn tại:")
+        for p in missing:
+            print("  -", p)
+    else:
+        print("✅ Tất cả các thư mục upload đều tồn tại.")
+
+# Gọi hàm này khi khởi động ứng dụng (chỉ kiểm tra, không tạo thêm)
+if __name__ == "__main__":
+    verify_upload_paths()

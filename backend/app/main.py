@@ -12,14 +12,13 @@ from sqlalchemy import inspect
 from app.database.connection import Base, engine
 from app.config.paths import UPLOADS_BASE  # ✅ dùng config chuẩn
 
-
 # =====================================================
 # 🚀 KHỞI TẠO ỨNG DỤNG
 # =====================================================
 app = FastAPI(
     title="E-Learning Platform",
-    version="1.2.1",
-    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (bản sửa lỗi session redirect)"
+    version="1.2.3",
+    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (không tự tạo thư mục)"
 )
 
 # =====================================================
@@ -32,7 +31,7 @@ app.add_middleware(
     max_age=60 * 60 * 24 * 7,  # cookie sống 7 ngày
     same_site="lax",
     https_only=False,
-    path="/",  # ✅ cookie áp dụng toàn hệ thống
+    path="/",
 )
 
 app.add_middleware(
@@ -44,86 +43,69 @@ app.add_middleware(
 )
 
 # =====================================================
-# 📁 TEMPLATE & STATIC FILES
+# 📁 CẤU HÌNH ĐƯỜNG DẪN FRONTEND
 # =====================================================
-FRONTEND_DIR = Path(r"D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app")
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR.parent / "frontend" / "react-app"
 
 ROOT_STATIC_DIR = FRONTEND_DIR / "static"
-ROOT_STATIC_DIR.mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(ROOT_STATIC_DIR)), name="static")
-
 ROOT_TEMPLATE_DIR = FRONTEND_DIR / "layouts" / "templates"
-templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR))
-
-ADMIN_TEMPLATE_DIR = ROOT_TEMPLATE_DIR / "admin"
-TEACHER_TEMPLATE_DIR = ROOT_TEMPLATE_DIR / "teacher"
-STUDENT_TEMPLATE_DIR = ROOT_TEMPLATE_DIR / "student"
-
-admin_templates = Jinja2Templates(directory=str(ADMIN_TEMPLATE_DIR))
-teacher_templates = Jinja2Templates(directory=str(TEACHER_TEMPLATE_DIR))
-student_templates = Jinja2Templates(directory=str(STUDENT_TEMPLATE_DIR))
-
-# === STATIC PHÂN NHÁNH (admin / teacher / student) ===
-for name in ["admin", "teacher", "student"]:
-    static_dir = ROOT_STATIC_DIR / name
-    static_dir.mkdir(parents=True, exist_ok=True)
-    app.mount(f"/static/{name}", StaticFiles(directory=str(static_dir)), name=f"{name}_static")
-
-# =====================================================
-# 🎨 LAYOUT STYLES (CSS)
-# =====================================================
 LAYOUT_STYLES_DIR = FRONTEND_DIR / "layouts" / "styles"
-if LAYOUT_STYLES_DIR.exists():
-    app.mount(
-        "/frontend/react-app/layouts/styles",
-        StaticFiles(directory=str(LAYOUT_STYLES_DIR)),
-        name="layout_styles"
-    )
-    print(f"✅ Mounted layout styles: {LAYOUT_STYLES_DIR}")
+
+def safe_mount(path: Path, mount_url: str, name: str):
+    """Chỉ mount static nếu thư mục tồn tại, không tự tạo."""
+    if path.exists():
+        app.mount(mount_url, StaticFiles(directory=str(path)), name=name)
+        print(f"✅ Mounted {name}: {path}")
+    else:
+        print(f"⚠️ Bỏ qua {name}: {path} (không tồn tại)")
+
+# =====================================================
+# 🌐 STATIC & TEMPLATE
+# =====================================================
+safe_mount(ROOT_STATIC_DIR, "/static", "static")
+safe_mount(LAYOUT_STYLES_DIR, "/frontend/react-app/layouts/styles", "layout_styles")
+
+if ROOT_TEMPLATE_DIR.exists():
+    templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR))
+    admin_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "admin"))
+    teacher_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "teacher"))
+    student_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "student"))
 else:
-    print(f"⚠️ Layout styles folder không tồn tại: {LAYOUT_STYLES_DIR}")
+    templates = None
+    print(f"⚠️ Thư mục templates không tồn tại: {ROOT_TEMPLATE_DIR}")
 
 # =====================================================
-# 📦 UPLOADS (BACKEND/APP/UPLOADS)
+# 📦 UPLOADS (KHÔNG TỰ TẠO)
 # =====================================================
-app.mount("/uploads", StaticFiles(directory=str(UPLOADS_BASE)), name="uploads")
-
-print("\n✅ ĐÃ CẤU HÌNH UPLOADS:")
-for folder in os.listdir(UPLOADS_BASE):
-    print(f"   • {folder:<20}: {UPLOADS_BASE / folder}")
+if UPLOADS_BASE.exists():
+    app.mount("/uploads", StaticFiles(directory=str(UPLOADS_BASE)), name="uploads")
+    print("\n✅ ĐÃ CẤU HÌNH UPLOADS:")
+    for folder in os.listdir(UPLOADS_BASE):
+        print(f"   • {folder:<20}: {UPLOADS_BASE / folder}")
+else:
+    print(f"⚠️ Thư mục uploads chưa tồn tại: {UPLOADS_BASE}")
 
 # =====================================================
-# 🖼️ ẢNH FALLBACK CHO AVATAR MẶC ĐỊNH
+# 🖼️ ẢNH AVATAR (FALLBACK)
 # =====================================================
 DEFAULT_AVATAR_PATH = UPLOADS_BASE / "avatars" / "default-avatar.png"
 
-# 🔧 Nếu file không tồn tại → tự tạo ảnh mặc định
-if not DEFAULT_AVATAR_PATH.exists():
-    try:
-        from PIL import Image, ImageDraw
-        DEFAULT_AVATAR_PATH.parent.mkdir(parents=True, exist_ok=True)
-        img = Image.new("RGB", (256, 256), color=(240, 240, 240))
-        draw = ImageDraw.Draw(img)
-        draw.ellipse((70, 40, 190, 160), fill=(200, 200, 200))
-        draw.rectangle((100, 160, 160, 240), fill=(200, 200, 200))
-        img.save(DEFAULT_AVATAR_PATH)
-        print(f"🖼️ Đã tạo avatar mặc định: {DEFAULT_AVATAR_PATH}")
-    except Exception as e:
-        print(f"⚠️ Không thể tạo avatar mặc định: {e}")
-
-# ✅ Route phục vụ avatar (có fallback)
 @app.get("/uploads/avatars/{filename}")
 async def serve_avatar(filename: str):
     avatar_path = UPLOADS_BASE / "avatars" / filename
     if not avatar_path.exists():
-        return FileResponse(DEFAULT_AVATAR_PATH)
+        if DEFAULT_AVATAR_PATH.exists():
+            return FileResponse(DEFAULT_AVATAR_PATH)
+        return HTMLResponse("❌ Avatar not found", status_code=404)
     return FileResponse(avatar_path)
 
 # =====================================================
 # 🌍 BIẾN TOÀN CỤC TEMPLATE
 # =====================================================
-for env in (templates.env, admin_templates.env, teacher_templates.env, student_templates.env):
-    env.globals.update(now=datetime.now)
+if templates:
+    for env in (templates.env, admin_templates.env, teacher_templates.env, student_templates.env):
+        env.globals.update(now=datetime.now)
 
 # =====================================================
 # 🧭 IMPORT ROUTER
@@ -187,18 +169,16 @@ from app.routers.student.message_student import router as student_message_router
 # =====================================================
 for routers in [
     [login_router, register_router, logout_router, forgot_router],
-    
+
     [dashboard_router, user_router, course_router, section_router, category_router,
      class_router, enrollment_router, backup_router, exam_router, report_router,
      review_router, majors_router, academic_year_router, settings_router, teacher_router,
      assignment.router, course_material.router, quiz_template.router, quiz.router, module_reorder.router],
 
-
     [teacher_dashboard_router, teacher_course_router, teacher_module_router, teacher_lesson_router,
      teacher_material_router, teacher_profile_router, teacher_review_router, teacher_class_router,
      teacher_schedule_router, teacher_statistics_router, teacher_assignment_router, teacher_message_router,
      teacher_quiz_router, teacher_notifications_router],
-
 
     [student_dashboard_router, student_profile_router, student_course_router, student_lesson_router,
      student_quiz_router, student_assignment_router, student_material_router, student_discussion_router,
@@ -225,19 +205,17 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Lỗi khởi tạo database: {e}")
 
-    print("\n📁 KIỂM TRA TEMPLATE & STATIC:")
+    # ✅ Kiểm tra tồn tại thư mục chính
     dirs = [
-        ("Admin Templates", ADMIN_TEMPLATE_DIR),
-        ("Teacher Templates", TEACHER_TEMPLATE_DIR),
-        ("Student Templates", STUDENT_TEMPLATE_DIR),
+        ("Admin Templates", ROOT_TEMPLATE_DIR / "admin"),
+        ("Teacher Templates", ROOT_TEMPLATE_DIR / "teacher"),
+        ("Student Templates", ROOT_TEMPLATE_DIR / "student"),
         ("Root Templates", ROOT_TEMPLATE_DIR),
         ("Layout Styles", LAYOUT_STYLES_DIR),
         ("Root Static", ROOT_STATIC_DIR),
-        ("Admin Static", ROOT_STATIC_DIR / "admin"),
-        ("Teacher Static", ROOT_STATIC_DIR / "teacher"),
-        ("Student Static", ROOT_STATIC_DIR / "student"),
         ("Uploads", UPLOADS_BASE),
     ]
+    print("\n📁 KIỂM TRA TEMPLATE & STATIC:")
     for name, path in dirs:
         exists = os.path.exists(path)
         status = "✅ OK" if exists else "❌ Thiếu"
@@ -247,9 +225,8 @@ async def startup_event():
                 items = len([f for f in os.listdir(path) if not f.startswith('.')])
                 count_info = f"({items} mục)"
             except Exception:
-                count_info = ""
+                pass
         print(f"   • {name:<20}: {path} → {status} {count_info}")
-
     print("=" * 85)
 
 # =====================================================
@@ -257,10 +234,11 @@ async def startup_event():
 # =====================================================
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    if not templates:
+        return HTMLResponse("<h3>❌ Template chưa được cấu hình đúng.</h3>", status_code=500)
     try:
         return templates.TemplateResponse("home.html", {"request": request})
     except Exception:
-        print("\n❌ LỖI TRANG CHỦ:\n", traceback.format_exc())
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
 
 # =====================================================

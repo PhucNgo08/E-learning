@@ -13,17 +13,33 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 # ✅ ROOT_TEMPLATE_DIR: chứa toàn bộ template HTML
 ROOT_TEMPLATE_DIR = BASE_DIR / "frontend" / "react-app" / "layouts" / "templates"
 
+
 # ==========================================================
-# 🧩 DEBUG THÔNG TIN ĐƯỜNG DẪN (chỉ in 1 lần)
+# 🧩 HÀM LOG & KIỂM TRA THƯ MỤC TEMPLATE
 # ==========================================================
-if not os.environ.get("TEMPLATE_LOGGED"):
-    os.environ["TEMPLATE_LOGGED"] = "1"
+def log_template_config():
     print("=" * 90)
     print("📁 [TEMPLATE CONFIG] Root template dir:", ROOT_TEMPLATE_DIR)
     print("📂 Template directory exists:", ROOT_TEMPLATE_DIR.exists())
     print("📂 Exists student/course/list.html:",
           (ROOT_TEMPLATE_DIR / "student" / "course" / "list.html").exists())
+
+    # 🧩 Kiểm tra các thư mục con bắt buộc
+    EXPECTED_DIRS = ["admin", "teacher", "student", "auth"]
+    missing_dirs = [d for d in EXPECTED_DIRS if not (ROOT_TEMPLATE_DIR / d).exists()]
+
+    if missing_dirs:
+        print("⚠️ Thiếu các thư mục template con:", ", ".join(missing_dirs))
+    else:
+        print("✅ Tất cả thư mục template con đầy đủ:", ", ".join(EXPECTED_DIRS))
     print("=" * 90)
+
+
+# ✅ In log chỉ 1 lần (tránh spam khi reload)
+if not os.environ.get("TEMPLATE_LOGGED"):
+    os.environ["TEMPLATE_LOGGED"] = "1"
+    log_template_config()
+
 
 # ==========================================================
 # 🧱 KHỞI TẠO TEMPLATE CHO TỪNG NHÓM (Admin / Teacher / Student / Auth / Root)
@@ -35,6 +51,7 @@ templates = {
     "auth": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "auth")),
     "root": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR)),  # cho trang index
 }
+
 
 # ==========================================================
 # 🌟 BIẾN TOÀN CỤC DÙNG CHUNG
@@ -50,6 +67,7 @@ for name, tpl in templates.items():
         "company": "Online Education Team",
         "base_url": "/",
     })
+
 
 # ==========================================================
 # 🧮 FILTER DÙNG CHUNG
@@ -72,10 +90,19 @@ def datetime_fmt(value: datetime):
     return (value + timedelta(hours=7)).strftime("%H:%M - %d/%m/%Y")
 
 
+def date_short(value: datetime):
+    """Định dạng ngày ngắn gọn (dd/mm/yyyy)."""
+    if not value:
+        return ""
+    return (value + timedelta(hours=7)).strftime("%d/%m/%Y")
+
+
 # Đăng ký filter cho tất cả template
 for tpl in templates.values():
     tpl.env.filters["filesize"] = filesize_fmt
     tpl.env.filters["datetime"] = datetime_fmt
+    tpl.env.filters["date_short"] = date_short
+
 
 # ==========================================================
 # 🧭 HÀM TIỆN LỢI: TỰ CHỌN TEMPLATE THEO PREFIX ROUTE

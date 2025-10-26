@@ -4,7 +4,6 @@
 Xử lý tài liệu khóa học cho giáo viên (upload, sửa, xóa)
 ==========================================================
 """
-
 from sqlalchemy.orm import Session
 from app.models.course_material import CourseMaterial
 from app.models.course import Course
@@ -12,19 +11,14 @@ from datetime import datetime
 from pathlib import Path
 import uuid, shutil, os
 
-
-# ======================================================
-# ⚙️ Cấu hình thư mục upload
-# ======================================================
-UPLOAD_DIR = Path("static/uploads/materials")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# ✅ Dùng đường dẫn chuẩn
+from app.config.paths import UPLOAD_MATERIALS
 
 
 # ======================================================
 # 📋 1️⃣ Lấy danh sách tài liệu của giáo viên
 # ======================================================
 def get_all(db: Session, teacher_id: str):
-    """Trả về tất cả tài liệu của giáo viên."""
     return (
         db.query(CourseMaterial)
         .join(Course, CourseMaterial.course_id == Course.id)
@@ -38,7 +32,6 @@ def get_all(db: Session, teacher_id: str):
 # 🔍 2️⃣ Lấy thông tin 1 tài liệu theo ID
 # ======================================================
 def get_by_id(db: Session, teacher_id: str, material_id: str):
-    """Lấy tài liệu thuộc khóa học của giáo viên."""
     return (
         db.query(CourseMaterial)
         .join(Course, CourseMaterial.course_id == Course.id)
@@ -54,7 +47,6 @@ def get_by_id(db: Session, teacher_id: str, material_id: str):
 # ➕ 3️⃣ Tạo tài liệu mới
 # ======================================================
 async def create_material(db: Session, title, description, course_id, file, created_by: str):
-    """Tạo tài liệu mới cho giáo viên."""
     if not created_by:
         return {"error": "Thiếu thông tin người tạo (created_by)."}
 
@@ -67,24 +59,21 @@ async def create_material(db: Session, title, description, course_id, file, crea
         return {"error": "❌ Bạn không có quyền thêm tài liệu cho khóa học này."}
 
     try:
-        # 🔒 Tên file an toàn
         unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
-        file_path = UPLOAD_DIR / unique_name
+        file_path = UPLOAD_MATERIALS / unique_name
 
-        # Lưu file vật lý
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Ghi dữ liệu vào DB
         new_file = CourseMaterial(
             id=str(uuid.uuid4()),
             course_id=course_id,
             title=title.strip(),
             description=description.strip() if description else None,
             file_name=unique_name,
-            file_url=f"/{file_path.as_posix()}",
+            file_url=f"/uploads/materials/{unique_name}",  # ✅ đúng
             file_size=file_path.stat().st_size,
-            file_format=file.filename.split(".")[-1].lower() if "." in file.filename else None,
+            file_format=file.filename.split(".")[-1].lower(),
             material_type="slide",
             created_by=created_by,
             is_public=True,
@@ -108,7 +97,6 @@ async def create_material(db: Session, title, description, course_id, file, crea
 # ✏️ 4️⃣ Cập nhật tài liệu
 # ======================================================
 async def update_material(db: Session, teacher_id: str, material_id, title, description, file=None):
-    """Cập nhật tài liệu của giáo viên."""
     material = get_by_id(db, teacher_id, material_id)
     if not material:
         return {"error": "❌ Không tìm thấy hoặc không có quyền sửa tài liệu này."}
@@ -117,23 +105,21 @@ async def update_material(db: Session, teacher_id: str, material_id, title, desc
     material.description = description.strip() if description else None
 
     if file:
-        # Upload file mới
         unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
-        file_path = UPLOAD_DIR / unique_name
+        file_path = UPLOAD_MATERIALS / unique_name
+
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        # Xóa file cũ
         try:
-            old_path = Path(material.file_url.strip("/"))
+            old_path = UPLOAD_MATERIALS / material.file_name
             if old_path.exists():
                 old_path.unlink()
         except Exception as e:
             print(f"⚠️ Không thể xóa file cũ: {e}")
 
-        # Cập nhật metadata
         material.file_name = unique_name
-        material.file_url = f"/{file_path.as_posix()}"
+        material.file_url = f"/uploads/materials/{unique_name}"
         material.file_size = file_path.stat().st_size
         material.file_format = file.filename.split(".")[-1].lower()
 
@@ -147,15 +133,14 @@ async def update_material(db: Session, teacher_id: str, material_id, title, desc
 # 🗑️ 5️⃣ Xóa tài liệu
 # ======================================================
 def delete_material(db: Session, teacher_id: str, material_id: str):
-    """Xóa tài liệu của giáo viên (DB + file vật lý)."""
     material = get_by_id(db, teacher_id, material_id)
     if not material:
         return {"error": "❌ Không tìm thấy hoặc không có quyền xóa tài liệu này."}
 
     try:
-        file_path = Path(material.file_url.strip("/"))
+        file_path = UPLOAD_MATERIALS / material.file_name
         if file_path.exists():
-            os.remove(file_path)
+            file_path.unlink()
         db.delete(material)
         db.commit()
         return {"success": True, "message": f"✅ Đã xóa tài liệu: {material.title}"}
@@ -168,7 +153,6 @@ def delete_material(db: Session, teacher_id: str, material_id: str):
 # 📘 6️⃣ Lấy danh sách khóa học của giáo viên
 # ======================================================
 def get_courses_by_teacher(db: Session, teacher_id: str):
-    """Lấy các khóa học mà giáo viên đang phụ trách."""
     return (
         db.query(Course)
         .filter(Course.teacher_id == teacher_id, Course.status != "archived")
@@ -181,7 +165,6 @@ def get_courses_by_teacher(db: Session, teacher_id: str):
 # 📊 7️⃣ Thống kê nhanh
 # ======================================================
 def get_statistics(db: Session, teacher_id: str):
-    """Thống kê tài liệu của giáo viên."""
     total = (
         db.query(CourseMaterial)
         .join(Course, CourseMaterial.course_id == Course.id)
