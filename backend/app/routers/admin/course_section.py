@@ -4,7 +4,6 @@
 
 from fastapi import APIRouter, HTTPException, Form, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.services.admin.course_section_service import (
@@ -13,45 +12,49 @@ from app.services.admin.course_section_service import (
     delete_section,
     get_all_sections,
 )
-
 from app.models.course import Course
 from app.models.course_section import CourseSection
 
-# ==============================================================
-# ⚙️ Router & Templates
-# ==============================================================
-section_router = APIRouter(prefix="/admin", tags=["Course Section Management"])
+# ✅ Import template config dùng chung
+from app.config.template_config import get_template_by_path
 
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/Sections"
+# ==============================================================
+# ⚙️ Router
+# ==============================================================
+section_router = APIRouter(
+    prefix="/admin/sections",
+    tags=["Admin - Course Section Management"]
 )
 
 # ==============================================================
-# 📋 Danh sách học phần
+# 📋 1️⃣ Danh sách học phần
 # ==============================================================
-@section_router.get("/sections/manage", response_class=HTMLResponse)
+@section_router.get("/manage", response_class=HTMLResponse)
 async def manage_sections(request: Request, db: Session = Depends(get_db)):
+    """Hiển thị danh sách tất cả học phần"""
+    tpl = get_template_by_path(request.url.path)
     sections = get_all_sections(db)
-    return templates.TemplateResponse(
-        "manage.html",
+    return tpl.TemplateResponse(
+        "Sections/manage.html",
         {"request": request, "sections": sections},
     )
 
 # ==============================================================
-# ➕ Form thêm học phần (GET)
+# ➕ 2️⃣ Form thêm học phần (GET)
 # ==============================================================
-@section_router.get("/sections/create", response_class=HTMLResponse)
+@section_router.get("/create", response_class=HTMLResponse)
 async def create_section_form(request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     courses = db.query(Course).all()
-    return templates.TemplateResponse(
-        "create.html",
+    return tpl.TemplateResponse(
+        "Sections/create.html",
         {"request": request, "courses": courses},
     )
 
 # ==============================================================
-# 💾 Xử lý thêm học phần (POST)
+# 💾 3️⃣ Xử lý thêm học phần (POST)
 # ==============================================================
-@section_router.post("/sections/create")
+@section_router.post("/create")
 async def add_section(
     section_code: str = Form(...),
     section_name: str = Form(...),
@@ -61,8 +64,9 @@ async def add_section(
     schedule_info: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    """Thêm học phần mới"""
     try:
-        new_section = create_section(
+        create_section(
             section_code=section_code,
             section_name=section_name,
             course_id=course_id,
@@ -77,23 +81,24 @@ async def add_section(
         raise HTTPException(status_code=500, detail=f"Lỗi khi tạo học phần: {e}")
 
 # ==============================================================
-# ✏️ Form chỉnh sửa học phần
+# ✏️ 4️⃣ Form chỉnh sửa học phần
 # ==============================================================
-@section_router.get("/sections/edit/{section_id}", response_class=HTMLResponse)
+@section_router.get("/edit/{section_id}", response_class=HTMLResponse)
 async def edit_section_form(request: Request, section_id: str, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     section = db.query(CourseSection).filter(CourseSection.id == section_id).first()
     if not section:
         raise HTTPException(status_code=404, detail="Không tìm thấy học phần.")
     courses = db.query(Course).all()
-    return templates.TemplateResponse(
-        "edit.html",
+    return tpl.TemplateResponse(
+        "Sections/edit.html",
         {"request": request, "section": section, "courses": courses},
     )
 
 # ==============================================================
-# 🔄 Xử lý cập nhật học phần (POST)
+# 🔄 5️⃣ Xử lý cập nhật học phần (POST)
 # ==============================================================
-@section_router.post("/sections/edit/{section_id}")
+@section_router.post("/edit/{section_id}")
 async def edit_section(
     section_id: str,
     section_code: str = Form(...),
@@ -104,6 +109,7 @@ async def edit_section(
     schedule_info: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    """Cập nhật học phần"""
     try:
         update_section(
             section_id=section_id,
@@ -121,10 +127,11 @@ async def edit_section(
         raise HTTPException(status_code=500, detail=f"Lỗi khi cập nhật học phần: {e}")
 
 # ==============================================================
-# ❌ Xóa học phần
+# ❌ 6️⃣ Xóa học phần
 # ==============================================================
-@section_router.get("/sections/delete/{section_id}")
+@section_router.get("/delete/{section_id}")
 async def delete_section_route(section_id: str, db: Session = Depends(get_db)):
+    """Xóa học phần"""
     try:
         delete_section(section_id, db)
         return RedirectResponse(url="/admin/sections/manage", status_code=303)

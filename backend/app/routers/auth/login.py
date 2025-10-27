@@ -9,7 +9,6 @@ import hashlib
 import logging
 import traceback
 from typing import Optional
-
 from fastapi import APIRouter, Request, Form, Depends, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
@@ -26,18 +25,18 @@ from app.config.template_config import templates
 # ⚙️ Cấu hình Router & Logger
 # ==========================================================
 login_router = APIRouter(prefix="/auth", tags=["Auth - Login"])
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("auth_login")
+logger.setLevel(logging.INFO)
 
 
 # ==========================================================
-# 🧩 HÀM XÁC THỰC NGƯỜI DÙNG
+# 🧩 XÁC THỰC NGƯỜI DÙNG
 # ==========================================================
 def authenticate_user(db: Session, username: str, password: str):
     """
-    ✅ Xác thực người dùng:
-    - Hỗ trợ hash cũ SHA256 và hash mới bcrypt
-    - Trả về đối tượng User nếu đúng, hoặc "username"/"password" nếu sai
+    ✅ Hỗ trợ hash cũ SHA256 & hash mới bcrypt.
+    Trả về đối tượng User nếu đúng,
+    hoặc chuỗi "username"/"password" nếu sai.
     """
     try:
         user = db.query(User).filter(User.username == username).first()
@@ -45,15 +44,13 @@ def authenticate_user(db: Session, username: str, password: str):
             return "username"
 
         hashed_pw = user.password_hash or ""
+        # bcrypt hash
         if hashed_pw.startswith("$2b$") or hashed_pw.startswith("$2a$"):
             valid = verify_password(password, hashed_pw)
         else:
             valid = hashlib.sha256(password.encode("utf-8")).hexdigest() == hashed_pw
 
-        if not valid:
-            return "password"
-
-        return user
+        return user if valid else "password"
 
     except Exception as e:
         logger.error(f"💥 Lỗi xác thực người dùng: {e}")
@@ -62,35 +59,28 @@ def authenticate_user(db: Session, username: str, password: str):
 
 
 # ==========================================================
-# 📄 GET /auth/login — Hiển thị form đăng nhập
+# 🪪 GET /auth/login — Hiển thị form đăng nhập
 # ==========================================================
 @login_router.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request, error: Optional[str] = None):
-    """
-    Hiển thị form đăng nhập.
-    Nếu người dùng đã có session hợp lệ → chuyển hướng đến dashboard.
-    """
-    user_id = request.session.get("user_id")
+    """Hiển thị form đăng nhập hoặc redirect nếu đã có session hợp lệ."""
     role = request.session.get("role")
 
-    # ✅ Nếu đã đăng nhập rồi, chuyển đến dashboard tương ứng
-    if user_id and role:
-        if role == "admin":
-            return RedirectResponse(url="/admin/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-        elif role == "teacher":
-            return RedirectResponse(url="/teacher/dashboard", status_code=status.HTTP_303_SEE_OTHER)
-        elif role == "student":
-            return RedirectResponse(url="/student/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    if role == "admin":
+        return RedirectResponse("/admin/dashboard", status_code=303)
+    if role == "teacher":
+        return RedirectResponse("/teacher/dashboard", status_code=303)
+    if role == "student":
+        return RedirectResponse("/student/dashboard", status_code=303)
 
-    # 🧩 Nếu chưa login thì hiển thị form đăng nhập
     return templates["auth"].TemplateResponse(
         "login.html",
-        {"request": request, "error": error},
+        {"request": request, "error": error, "page_title": "🔑 Đăng nhập"},
     )
 
 
 # ==========================================================
-# 🔑 POST /auth/login — Xử lý đăng nhập
+# 🔐 POST /auth/login — Xử lý đăng nhập
 # ==========================================================
 @login_router.post("/login", response_class=HTMLResponse)
 async def login_submit(
@@ -99,63 +89,51 @@ async def login_submit(
     username: str = Form(...),
     password: str = Form(...),
 ):
-    """
-    Xử lý đăng nhập:
-    - Kiểm tra username/password
-    - Lưu session: user_id, username, role
-    - Chuyển hướng đến dashboard phù hợp
-    """
-    logger.info(f"🔐 Đăng nhập: {username}")
+    """Kiểm tra username/password và ghi session."""
+    logger.info(f"🔐 Đăng nhập thử: {username}")
 
     auth_result = authenticate_user(db, username, password)
 
-    # ❌ Sai username
     if auth_result == "username":
         return templates["auth"].TemplateResponse(
             "login.html",
-            {"request": request, "error": "Tên đăng nhập không tồn tại."},
+            {"request": request, "error": "❌ Tên đăng nhập không tồn tại."},
         )
 
-    # ❌ Sai mật khẩu
     if auth_result == "password":
         return templates["auth"].TemplateResponse(
             "login.html",
-            {"request": request, "error": "Mật khẩu không đúng."},
+            {"request": request, "error": "⚠️ Mật khẩu không đúng."},
         )
 
-    # ✅ Đăng nhập thành công
     if isinstance(auth_result, User):
         user = auth_result
 
-        # Xóa session cũ
+        # ✅ Clear session cũ
         request.session.clear()
 
-        # 🧠 Ghi session mới
-        request.session["user_id"] = str(user.id)
-        request.session["username"] = user.username
-        request.session["role"] = (
-            user.role.value if hasattr(user.role, "value") else str(user.role)
-        )
+        # ✅ Tạo session mới
+        request.session.update({
+            "user_id": str(user.id),
+            "username": user.username,
+            "role": getattr(user.role, "value", str(user.role)),
+        })
 
-        logger.info(f"🎯 Session mới: {dict(request.session)}")
+        logger.info(f"🎯 Đăng nhập thành công: {user.username} ({user.role})")
 
-        # 🚀 Điều hướng theo vai trò
-        role = request.session.get("role")
-        if role == "admin":
-            redirect_url = "/admin/dashboard"
-        elif role == "teacher":
-            redirect_url = "/teacher/dashboard"
-        elif role == "student":
-            redirect_url = "/student/dashboard"
-        else:
-            redirect_url = "/"
+        # 🚀 Chuyển hướng theo role
+        redirect_map = {
+            "admin": "/admin/dashboard",
+            "teacher": "/teacher/dashboard",
+            "student": "/student/dashboard",
+        }
+        return RedirectResponse(redirect_map.get(user.role, "/"), status_code=303)
 
-        return RedirectResponse(url=redirect_url, status_code=status.HTTP_303_SEE_OTHER)
-
-    # 💥 Lỗi không xác định
+    # 💥 Nếu đến đây là có lỗi ngoài ý muốn
+    logger.error("Lỗi xác thực ngoài ý muốn.")
     return templates["auth"].TemplateResponse(
         "login.html",
-        {"request": request, "error": "Đã xảy ra lỗi không xác định. Vui lòng thử lại."},
+        {"request": request, "error": "⚠️ Có lỗi hệ thống, vui lòng thử lại."},
     )
 
 
@@ -164,9 +142,8 @@ async def login_submit(
 # ==========================================================
 @login_router.get("/logout")
 async def logout(request: Request):
-    """Xóa session và đưa người dùng về trang đăng nhập"""
+    """Xóa session và quay lại trang đăng nhập."""
     username = request.session.get("username", "Unknown")
     logger.info(f"🚪 Đăng xuất: {username}")
-
     request.session.clear()
-    return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse("/auth/login", status_code=303)

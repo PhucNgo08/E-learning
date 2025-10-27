@@ -1,65 +1,89 @@
-anyio==4.9.0
-click==8.2.0
-colorama==0.4.6
-fastapi>=0.103.0        # ✅ Tương thích với pydantic>=2.0
-h11==0.16.0
-httptools==0.6.4
-idna==3.10
-jinja2==3.1.2
-MarkupSafe==3.0.2
-python-dotenv==1.1.1
-python-multipart==0.0.6
+# === Core FastAPI Framework ===
+fastapi>=0.117.0
+uvicorn[standard]>=0.30.0
+starlette>=0.48.0
+SQLAlchemy>=1.4.31
+pymysql>=1.0.2
+alembic>=1.7.6
 
-typing-extensions==4.14.0
-uvicorn==0.35.0
-watchfiles==1.1.0
-websockets==15.0.1
-passlib[bcrypt]
+# === Template & Static Files ===
+jinja2>=3.1.2
+aiofiles>=24.1.0
+python-multipart>=0.0.6
+MarkupSafe>=3.0.2
+
+# === Security & Authentication ===
+passlib[bcrypt]>=1.7.4
+python-jose[cryptography]>=3.3.0
+itsdangerous>=2.2.0
+PyJWT>=2.6.0
+bcrypt>=3.2.0
+cryptography>=45.0.3
+email-validator>=2.2.0
+
+# === Environment & Validation ===
 pydantic[email]>=2.1
-pydantic-settings>=2.0
-alembic
-pandas
-Flask==2.1.1
-SQLAlchemy==1.4.31
-Alembic==1.7.6
-pymysql==1.0.2
-python-jose==3.3.0  # Thêm phiên bản phù hợp của python-jose
-starlette
+pydantic-settings>=2.10.1
+python-dotenv>=1.1.1
+typing-extensions>=4.14.0
+python-dateutil>=2.9.0
 
-PyJWT==2.6.0
-email-validator
-requests
- fastapi-mail
-python-slugify
-python-multipart
-itsdangerous
-bcrypt
-email-validator
-sqlalchemy-utils
-Faker
-gunicorn
-redis
-celery
-flower
-kombu
+# === Mail & Notifications ===
+fastapi-mail>=1.5.0
+aiosmtplib>=3.0.2
 
-uvloop
-dnspython
-fastapi-pagination
-fastapi-cache2
-fastapi-users[sqlalchemy2,passwordless]
-httpx
-pytz    
-Pillow
-python-crontab
-cloudinary
-redis asyncio
-rq
-fastapi-background-tasks
-APScheduler
-fastapi-contrib
-fastapi-plugins
-sqlmodel
-tabulate
-uvicorn[standard]
-fastapi-jwt-auth
+# === Task Queue & Background Jobs ===
+celery>=5.4.0
+redis>=5.1.1
+flower>=2.0.1
+kombu>=5.4.2
+rq>=1.15.1
+fastapi-background-tasks>=0.0.3
+APScheduler>=3.10.4
+
+# === Utils & Reports ===
+pandas>=2.3.1
+openpyxl>=3.1.5
+pytz>=2025.2
+tabulate>=0.9.0
+Faker>=25.0.0
+python-slugify>=8.0.4
+requests>=2.32.3
+cloudinary>=1.40.0
+python-crontab>=3.0.0
+
+# === Realtime & Networking ===
+httptools>=0.6.4
+websockets>=15.0.1
+uvloop>=0.19.0
+anyio>=4.9.0
+watchfiles>=1.1.0
+dnspython>=2.7.0
+idna>=3.10
+colorama>=0.4.6
+click>=8.2.0
+
+# === FastAPI Extensions ===
+fastapi-users[sqlalchemy2,passwordless]>=12.1.2
+fastapi-cache2>=0.2.1
+fastapi-pagination>=0.12.24
+fastapi-plugins>=0.11.1
+fastapi-jwt-auth>=0.6.0
+
+# === Optional Admin & Visualization (Giữ nếu dùng Flask dashboard riêng) ===
+gunicorn>=22.0.0
+matplotlib>=3.9.1
+
+# === Development & Testing ===
+pytest>=7.4.0
+pytest-asyncio>=0.20.3
+httpx>=0.24.1
+pytest-cov>=4.1.0
+black>=23.9.1
+isort>=5.12.0
+flake8>=6.1.0
+mypy>=1.3.0
+pre-commit>=3.4.0
+bandit>=1.7.5
+tox>=4.12.3
+coverage>=7.3.3

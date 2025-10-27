@@ -3,7 +3,6 @@
 # ============================================================
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
 import traceback
@@ -23,14 +22,12 @@ from app.services.admin.class_management_service import (
     get_class_by_id
 )
 
-# ============================================================
-# ⚙️ Cấu hình Router & Template
-# ============================================================
-# 🔧 Chỉnh lại path để template có thể extends layout_admin.html
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
-)
+# ✅ Import cấu hình template chung
+from app.config.template_config import get_template_by_path
 
+# ============================================================
+# ⚙️ Cấu hình Router
+# ============================================================
 class_router = APIRouter(
     prefix="/admin/Class",
     tags=["Admin - Class Management"]
@@ -43,9 +40,10 @@ class_router = APIRouter(
 def manage_classes(request: Request, db: Session = Depends(get_db)):
     """Hiển thị danh sách lớp học."""
     try:
+        tpl = get_template_by_path(request.url.path)
         classes = get_all_classes(db)
-        return templates.TemplateResponse(
-            "admin/Class/manage.html",
+        return tpl.TemplateResponse(
+            "Class/manage.html",
             {"request": request, "classes": classes}
         )
     except Exception as e:
@@ -58,11 +56,12 @@ def manage_classes(request: Request, db: Session = Depends(get_db)):
 @class_router.get("/create", response_class=HTMLResponse)
 def create_class_form(request: Request, db: Session = Depends(get_db)):
     """Hiển thị form tạo lớp học."""
+    tpl = get_template_by_path(request.url.path)
     majors = db.query(Major).all()
     academic_years = db.query(AcademicYear).all()
     teachers = db.query(User).filter(User.role == "teacher").all()
-    return templates.TemplateResponse(
-        "admin/Class/create.html",
+    return tpl.TemplateResponse(
+        "Class/create.html",
         {
             "request": request,
             "majors": majors,
@@ -116,14 +115,15 @@ def add_class(
 @class_router.get("/edit/{class_id}", response_class=HTMLResponse)
 def edit_class_form(request: Request, class_id: str, db: Session = Depends(get_db)):
     """Hiển thị form chỉnh sửa lớp học."""
+    tpl = get_template_by_path(request.url.path)
     clazz = get_class_by_id(class_id, db)
     if not clazz:
         raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
     majors = db.query(Major).all()
     academic_years = db.query(AcademicYear).all()
     teachers = db.query(User).filter(User.role == "teacher").all()
-    return templates.TemplateResponse(
-        "admin/Class/edit.html",
+    return tpl.TemplateResponse(
+        "Class/edit.html",
         {
             "request": request,
             "cls": clazz,
@@ -175,11 +175,12 @@ def edit_class(
 @class_router.get("/delete/{class_id}", response_class=HTMLResponse)
 def delete_class_form(request: Request, class_id: str, db: Session = Depends(get_db)):
     """Hiển thị trang xác nhận xóa lớp học."""
+    tpl = get_template_by_path(request.url.path)
     clazz = get_class_by_id(class_id, db)
     if not clazz:
         raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
-    return templates.TemplateResponse(
-        "admin/Class/delete.html",
+    return tpl.TemplateResponse(
+        "Class/delete.html",
         {"request": request, "cls": clazz}
     )
 
@@ -196,7 +197,3 @@ def remove_class(class_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Lỗi khi xóa lớp học: {str(e)}")
-
-# ============================================================
-# ✅ Kết thúc module class_management.py
-# ============================================================

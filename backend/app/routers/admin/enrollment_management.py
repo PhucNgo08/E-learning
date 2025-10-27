@@ -1,42 +1,49 @@
 from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from datetime import datetime
+import uuid
+
 from app.database.connection import get_db
 from app.models.enrollment import Enrollment
 from app.models.user import User
 from app.models.classes import Class
-from datetime import datetime
-import uuid
 
-# === Cấu hình router & template ===
-enrollment_router = APIRouter(prefix="/admin/enrollments", tags=["Admin - Enrollment Management"])
-templates = Jinja2Templates(directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/enrollments")
+# ✅ Dùng template config chung
+from app.config.template_config import get_template_by_path
+
+# ============================================================
+# 🚀 Cấu hình router
+# ============================================================
+enrollment_router = APIRouter(
+    prefix="/admin/enrollments",
+    tags=["Admin - Enrollment Management"]
+)
 
 # ============================================================
 # 📋 1️⃣ Danh sách ghi danh
 # ============================================================
 @enrollment_router.get("/manage", response_class=HTMLResponse)
 def manage_enrollments(request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     enrollments = db.query(Enrollment).all()
-    return templates.TemplateResponse(
-        "manage.html",
-        {"request": request, "enrollments": enrollments}
+    return tpl.TemplateResponse(
+        "enrollments/manage.html",
+        {"request": request, "enrollments": enrollments, "page_title": "📘 Quản lý ghi danh"}
     )
-
 
 # ============================================================
 # ➕ 2️⃣ Form thêm ghi danh
 # ============================================================
 @enrollment_router.get("/create", response_class=HTMLResponse)
 def create_enrollment_form(request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     students = db.query(User).filter(User.role == "student").all()
     classes = db.query(Class).all()
-    return templates.TemplateResponse(
-        "create.html",
-        {"request": request, "students": students, "classes": classes}
+    return tpl.TemplateResponse(
+        "enrollments/create.html",
+        {"request": request, "students": students, "classes": classes, "page_title": "➕ Ghi danh học viên"}
     )
-
 
 # ============================================================
 # 💾 3️⃣ Xử lý thêm ghi danh
@@ -49,9 +56,13 @@ def add_enrollment(
     db: Session = Depends(get_db)
 ):
     try:
-        existing = db.query(Enrollment).filter(Enrollment.user_id == user_id, Enrollment.class_id == class_id).first()
+        existing = db.query(Enrollment).filter(
+            Enrollment.user_id == user_id,
+            Enrollment.class_id == class_id
+        ).first()
         if existing:
             raise HTTPException(status_code=400, detail="Học viên đã được ghi danh vào lớp này.")
+
         new_enrollment = Enrollment(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -67,12 +78,15 @@ def add_enrollment(
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Lỗi khi ghi danh: {str(e)}")
 
-
 # ============================================================
 # ✏️ 4️⃣ Cập nhật trạng thái ghi danh
 # ============================================================
 @enrollment_router.post("/update/{enrollment_id}")
-def update_enrollment(enrollment_id: str, new_status: str = Form(...), db: Session = Depends(get_db)):
+def update_enrollment(
+    enrollment_id: str,
+    new_status: str = Form(...),
+    db: Session = Depends(get_db)
+):
     enrollment = db.query(Enrollment).filter(Enrollment.id == enrollment_id).first()
     if not enrollment:
         raise HTTPException(status_code=404, detail="Không tìm thấy ghi danh.")
@@ -84,7 +98,6 @@ def update_enrollment(enrollment_id: str, new_status: str = Form(...), db: Sessi
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Lỗi cập nhật: {str(e)}")
-
 
 # ============================================================
 # ❌ 5️⃣ Xóa ghi danh

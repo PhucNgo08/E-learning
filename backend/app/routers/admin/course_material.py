@@ -1,17 +1,17 @@
-from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
+from fastapi import (
+    APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
+)
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.services.admin import course_material_service
 
-# ==========================================================
-# 🧭 Cấu hình template (dùng layout tổng admin)
-# ==========================================================
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates"
-)
+# ✅ Dùng cấu hình template chung
+from app.config.template_config import get_template_by_path
 
+# ==========================================================
+# 🚀 Router (Admin - Course Materials)
+# ==========================================================
 router = APIRouter(
     prefix="/admin/course-material",
     tags=["Admin - Course Materials"]
@@ -22,10 +22,11 @@ router = APIRouter(
 # ==========================================================
 @router.get("/list", response_class=HTMLResponse)
 def list_materials(request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     materials = course_material_service.get_all(db)
     total = len(materials)
-    return templates.TemplateResponse(
-        "admin/course_material/list.html",
+    return tpl.TemplateResponse(
+        "course_material/list.html",
         {
             "request": request,
             "materials": materials,
@@ -40,9 +41,10 @@ def list_materials(request: Request, db: Session = Depends(get_db)):
 # ==========================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_material_form(request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     courses = course_material_service.get_all_courses(db)
-    return templates.TemplateResponse(
-        "admin/course_material/create.html",
+    return tpl.TemplateResponse(
+        "course_material/create.html",
         {
             "request": request,
             "courses": courses,
@@ -64,17 +66,15 @@ async def create_material(
     try:
         # ✅ Lấy ID người tạo (admin đang đăng nhập)
         user_id = request.session.get("user_id") or "system"
-
         await course_material_service.create_material(
             db=db,
             title=title,
             description=description,
             course_id=course_id,
             file=file,
-            created_by=user_id,  # ✅ cần thiết
+            created_by=user_id,
         )
         return RedirectResponse(url="/admin/course-material/list", status_code=303)
-
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Lỗi khi tạo tài liệu: {e}")
 
@@ -83,12 +83,13 @@ async def create_material(
 # ==========================================================
 @router.get("/edit/{material_id}", response_class=HTMLResponse)
 def edit_form(material_id: str, request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     material = course_material_service.get_by_id(db, material_id)
     courses = course_material_service.get_all_courses(db)
     if not material:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu.")
-    return templates.TemplateResponse(
-        "admin/course_material/edit.html",
+    return tpl.TemplateResponse(
+        "course_material/edit.html",
         {
             "request": request,
             "material": material,
@@ -115,11 +116,12 @@ async def update_material(
 # ==========================================================
 @router.get("/delete/{material_id}", response_class=HTMLResponse)
 def confirm_delete(material_id: str, request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
     material = course_material_service.get_by_id(db, material_id)
     if not material:
         raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu.")
-    return templates.TemplateResponse(
-        "admin/course_material/delete.html",
+    return tpl.TemplateResponse(
+        "course_material/delete.html",
         {
             "request": request,
             "material": material,

@@ -2,7 +2,6 @@ from fastapi import (
     APIRouter, Request, Depends, Form, UploadFile, File, HTTPException, Query
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime
 from pathlib import Path
@@ -14,12 +13,8 @@ from app.models.course import Course
 from app.models.user import User
 from app.services import course_service
 
-# =====================================================
-# 🧭 Template Config
-# =====================================================
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/Course"
-)
+# ✅ Import template config dùng chung
+from app.config.template_config import get_template_by_path
 
 # =====================================================
 # 🚀 Router (Admin - Course Management)
@@ -36,8 +31,8 @@ course_router = APIRouter(
 async def manage_courses(
     request: Request,
     db: Session = Depends(get_db),
-    q: str = Query(None, description="Từ khóa tìm kiếm (tên hoặc mã khóa học)"),
-    status: str = Query(None, description="Trạng thái khóa học"),
+    q: str = Query(None, description="Từ khóa tìm kiếm"),
+    status: str = Query(None),
     teacher_id: str = Query(None),
     major_id: str = Query(None),
     year_id: str = Query(None),
@@ -45,55 +40,38 @@ async def manage_courses(
     per_page: int = 10
 ):
     """Hiển thị danh sách khóa học có hỗ trợ lọc và phân trang."""
+    tpl = get_template_by_path(request.url.path)
     user_id = request.session.get("user_id")
     role = request.session.get("role")
-
     if not user_id or role != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    # 🧭 Câu truy vấn cơ bản
     query = db.query(Course).join(User, Course.teacher_id == User.id, isouter=True)
 
-    # 🔍 Lọc theo từ khóa
     if q:
         query = query.filter(
             (Course.course_name.ilike(f"%{q}%")) |
             (Course.course_code.ilike(f"%{q}%"))
         )
-
-    # ⚙️ Lọc theo trạng thái
     if status:
         query = query.filter(Course.status == status)
-
-    # 👩‍🏫 Lọc theo giảng viên
     if teacher_id:
         query = query.filter(Course.teacher_id == teacher_id)
-
-    # 🏫 Lọc theo chuyên ngành
     if major_id:
         query = query.filter(Course.major_id == major_id)
-
-    # 📆 Lọc theo năm học
     if year_id:
         query = query.filter(Course.academic_year_id == year_id)
 
-    # 📊 Phân trang
     total = query.count()
     total_pages = (total + per_page - 1) // per_page
-    courses = (
-        query.order_by(Course.created_at.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-        .all()
-    )
+    courses = query.order_by(Course.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
 
-    # Dữ liệu dropdown
     teachers = db.query(User).filter(User.role == "teacher").all()
     majors = db.query(Major).all()
     years = db.query(AcademicYear).all()
 
-    return templates.TemplateResponse(
-        "manage.html",
+    return tpl.TemplateResponse(
+        "Course/manage.html",
         {
             "request": request,
             "courses": courses,
@@ -113,13 +91,12 @@ async def manage_courses(
         },
     )
 
-
 # =====================================================
-# ➕ 2️⃣ Trang tạo khóa học (GET)
+# ➕ 2️⃣ Trang tạo khóa học
 # =====================================================
 @course_router.get("/create", response_class=HTMLResponse)
 async def create_page(request: Request, db: Session = Depends(get_db)):
-    """Trang thêm khóa học mới."""
+    tpl = get_template_by_path(request.url.path)
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
@@ -127,8 +104,8 @@ async def create_page(request: Request, db: Session = Depends(get_db)):
     years = db.query(AcademicYear).all()
     majors = db.query(Major).all()
 
-    return templates.TemplateResponse(
-        "create.html",
+    return tpl.TemplateResponse(
+        "Course/create.html",
         {
             "request": request,
             "teachers": teachers,
@@ -138,9 +115,8 @@ async def create_page(request: Request, db: Session = Depends(get_db)):
         },
     )
 
-
 # =====================================================
-# 💾 3️⃣ Xử lý tạo khóa học (POST)
+# 💾 3️⃣ Tạo khóa học (POST)
 # =====================================================
 @course_router.post("/create")
 async def create_course(
@@ -158,7 +134,6 @@ async def create_course(
     end_date: str | None = Form(None),
     thumbnail: UploadFile | None = File(None),
 ):
-    """Tạo khóa học mới (admin có thể chọn giáo viên)."""
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
@@ -179,25 +154,19 @@ async def create_course(
         raise HTTPException(status_code=400, detail=result["error"])
 
     teacher = db.query(User).filter(User.id == teacher_id).first()
-    teacher_name = teacher.full_name if teacher else "Chưa phân công"
-    print(f"✅ [ADMIN] Tạo khóa học: {course_name} (Giảng viên: {teacher_name})")
-
+    print(f"✅ [ADMIN] Tạo khóa học: {course_name} ({teacher.full_name if teacher else 'Chưa phân công'})")
     return RedirectResponse(url="/admin/Course/manage", status_code=303)
 
-
 # =====================================================
-# ✏️ 4️⃣ Trang chỉnh sửa khóa học (GET)
+# ✏️ 4️⃣ Chỉnh sửa khóa học
 # =====================================================
 @course_router.get("/edit/{course_id}", response_class=HTMLResponse)
 async def page_edit(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Hiển thị form chỉnh sửa khóa học."""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "admin":
+    tpl = get_template_by_path(request.url.path)
+    if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    course = course_service.get_course_owned(db, user_id, course_id, role="admin")
+    course = course_service.get_course_owned(db, request.session.get("user_id"), course_id, role="admin")
     if not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học.")
 
@@ -205,8 +174,8 @@ async def page_edit(course_id: str, request: Request, db: Session = Depends(get_
     years = db.query(AcademicYear).all()
     majors = db.query(Major).all()
 
-    return templates.TemplateResponse(
-        "edit.html",
+    return tpl.TemplateResponse(
+        "Course/edit.html",
         {
             "request": request,
             "course": course,
@@ -217,9 +186,8 @@ async def page_edit(course_id: str, request: Request, db: Session = Depends(get_
         },
     )
 
-
 # =====================================================
-# 💾 5️⃣ Cập nhật khóa học (POST)
+# 💾 5️⃣ Cập nhật khóa học
 # =====================================================
 @course_router.post("/edit/{course_id}")
 async def update_course_action(
@@ -235,7 +203,6 @@ async def update_course_action(
     teacher_id: str | None = Form(None),
     thumbnail: UploadFile | None = File(None),
 ):
-    """Cập nhật thông tin khóa học (admin)."""
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
@@ -257,50 +224,39 @@ async def update_course_action(
     if isinstance(result, dict) and "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
-    teacher = db.query(User).filter(User.id == teacher_id).first()
-    teacher_name = teacher.full_name if teacher else "Chưa phân công"
-    print(f"✏️ [ADMIN] Cập nhật khóa học: {course_name} (Giảng viên: {teacher_name})")
-
+    print(f"✏️ [ADMIN] Cập nhật khóa học: {course_name}")
     return RedirectResponse(url="/admin/Course/manage", status_code=303)
-
 
 # =====================================================
 # ❌ 6️⃣ Xóa khóa học
 # =====================================================
 @course_router.post("/delete/{course_id}")
 async def delete_course(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Xóa khóa học (admin)."""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "admin":
+    if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
-    ok = course_service.delete_course(db, user_id, course_id, role="admin")
+    ok = course_service.delete_course(db, request.session.get("user_id"), course_id, role="admin")
     if not ok:
         raise HTTPException(status_code=404, detail="Không thể xóa khóa học.")
-
     print(f"🗑️ [ADMIN] Xóa khóa học ID: {course_id}")
     return RedirectResponse(url="/admin/Course/manage", status_code=303)
-
 
 # =====================================================
 # 📘 7️⃣ Xem chi tiết khóa học
 # =====================================================
 @course_router.get("/detail/{course_id}", response_class=HTMLResponse)
 async def course_detail(course_id: str, request: Request, db: Session = Depends(get_db)):
-    """Hiển thị chi tiết khóa học."""
+    tpl = get_template_by_path(request.url.path)
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học.")
-
     teacher = db.query(User).filter(User.id == course.teacher_id).first()
 
-    return templates.TemplateResponse(
-        "detail.html",
+    return tpl.TemplateResponse(
+        "Course/detail.html",
         {
             "request": request,
             "course": course,
@@ -310,13 +266,12 @@ async def course_detail(course_id: str, request: Request, db: Session = Depends(
         },
     )
 
-
 # =====================================================
 # 📊 8️⃣ Tổng quan khóa học
 # =====================================================
 @course_router.get("/overview", response_class=HTMLResponse)
 async def course_overview(request: Request, db: Session = Depends(get_db)):
-    """Trang tổng quan các khóa học."""
+    tpl = get_template_by_path(request.url.path)
     if request.session.get("role") != "admin":
         return RedirectResponse(url="/auth/login", status_code=303)
 
@@ -325,8 +280,8 @@ async def course_overview(request: Request, db: Session = Depends(get_db)):
     total_students = db.query(User).filter(User.role == "student").count()
     latest_course = db.query(Course).order_by(Course.created_at.desc()).first()
 
-    return templates.TemplateResponse(
-        "overview.html",
+    return tpl.TemplateResponse(
+        "Course/overview.html",
         {
             "request": request,
             "course": latest_course,

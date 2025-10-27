@@ -1,21 +1,16 @@
 from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.services.admin import system_setting_service
-from pathlib import Path
 import traceback
+
+# ✅ Import hệ thống template config dùng chung
+from app.config.template_config import get_template_by_path
 
 # ============================================================
 # ⚙️ Router: Cấu hình hệ thống (System Settings)
 # ============================================================
-
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
-
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/settings"
-)
 router = APIRouter(
     prefix="/admin/settings",
     tags=["Admin - System Settings"]
@@ -29,10 +24,11 @@ def manage_settings(request: Request, db: Session = Depends(get_db)):
     """
     Trang hiển thị danh sách tất cả các cài đặt hệ thống.
     """
+    tpl = get_template_by_path(request.url.path)
     try:
         settings = system_setting_service.get_all_settings(db)
-        return templates.TemplateResponse(
-            "manage.html",
+        return tpl.TemplateResponse(
+            "settings/manage.html",
             {
                 "request": request,
                 "settings": settings,
@@ -108,11 +104,12 @@ def settings_validate(request: Request, key: str, db: Session = Depends(get_db))
     API kiểm tra nhanh key cấu hình đã tồn tại hay chưa.
     Trả về template nhỏ dùng cho AJAX.
     """
+    tpl = get_template_by_path(request.url.path)
     try:
         setting = system_setting_service.get_setting_by_key(db, key)
         setting_exists = setting is not None
-        return templates.TemplateResponse(
-            "settings_validate.html",
+        return tpl.TemplateResponse(
+            "settings/settings_validate.html",
             {
                 "request": request,
                 "key": key,

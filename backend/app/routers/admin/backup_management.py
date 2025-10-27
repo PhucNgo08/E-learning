@@ -1,23 +1,21 @@
-from fastapi import (
-    APIRouter, Request, Form, Depends, HTTPException
-)
+from fastapi import APIRouter, Request, Form, Depends, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from pathlib import Path
+import traceback
+
+# ==============================
+# 🧩 Import database & services
+# ==============================
 from app.database.connection import get_db
 from app.services.admin.backup_management_service import (
     get_all_backups,
     create_backup,
     delete_backup
 )
-from pathlib import Path
 
-# ==============================
-# 🧭 Cấu hình template
-# ==============================
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/admin/backups"
-)
+# ✅ Dùng template config chung
+from app.config.template_config import get_template_by_path
 
 # ==============================
 # 🚀 Khởi tạo router
@@ -32,29 +30,27 @@ backup_router = APIRouter(
 # =========================================================
 @backup_router.get("/manage", response_class=HTMLResponse)
 def manage_backups(request: Request, db: Session = Depends(get_db)):
-    """
-    Hiển thị danh sách tất cả các bản sao lưu.
-    """
+    """Hiển thị danh sách tất cả các bản sao lưu."""
     try:
+        tpl = get_template_by_path(request.url.path)
         backups = get_all_backups(db)
-        return templates.TemplateResponse(
-            "manage_backups.html",
+        return tpl.TemplateResponse(
+            "backups/manage_backups.html",
             {"request": request, "backups": backups}
         )
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi khi truy vấn backup: {str(e)}")
-
+    except Exception:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="Lỗi khi truy vấn danh sách backup.")
 
 # =========================================================
 # ➕ 2️⃣ Form tạo backup
 # =========================================================
 @backup_router.get("/create", response_class=HTMLResponse)
 def create_backup_form(request: Request):
-    """
-    Hiển thị form tạo bản sao lưu mới.
-    """
-    return templates.TemplateResponse(
-        "create_backup.html",
+    """Hiển thị form tạo bản sao lưu mới."""
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "backups/create_backup.html",
         {"request": request}
     )
 
@@ -67,15 +63,10 @@ def handle_create_backup(
     backup_type: str = Form("full"),
     db: Session = Depends(get_db)
 ):
-    """
-    Xử lý tạo backup (ghi vào DB và file vật lý).
-    """
+    """Tạo bản sao lưu mới."""
     try:
         create_backup(database_name, backup_type, db)
-        return RedirectResponse(
-            url="/admin/backups/manage",
-            status_code=303
-        )
+        return RedirectResponse(url="/admin/backups/manage", status_code=303)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi tạo backup: {str(e)}")
 
@@ -84,9 +75,7 @@ def handle_create_backup(
 # =========================================================
 @backup_router.get("/download/{backup_id}")
 def download_backup(backup_id: str, db: Session = Depends(get_db)):
-    """
-    Cho phép tải file backup nếu tồn tại.
-    """
+    """Tải file sao lưu."""
     from app.models.backup_history import BackupHistory
     backup = db.query(BackupHistory).filter(BackupHistory.id == backup_id).first()
     if not backup:
@@ -106,22 +95,16 @@ def download_backup(backup_id: str, db: Session = Depends(get_db)):
 # ❌ 5️⃣ Xác nhận xóa backup
 # =========================================================
 @backup_router.get("/delete/{backup_id}", response_class=HTMLResponse)
-def confirm_delete(
-    request: Request,
-    backup_id: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Hiển thị trang xác nhận xóa bản sao lưu.
-    """
+def confirm_delete(request: Request, backup_id: str, db: Session = Depends(get_db)):
+    """Hiển thị trang xác nhận xóa bản sao lưu."""
     from app.models.backup_history import BackupHistory
     backup = db.query(BackupHistory).filter(BackupHistory.id == backup_id).first()
-
     if not backup:
         raise HTTPException(status_code=404, detail="Không tìm thấy bản sao lưu.")
 
-    return templates.TemplateResponse(
-        "delete_backup.html",
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "backups/delete_backup.html",
         {"request": request, "backup": backup}
     )
 
@@ -130,15 +113,9 @@ def confirm_delete(
 # =========================================================
 @backup_router.post("/delete/{backup_id}")
 def handle_delete_backup(backup_id: str, db: Session = Depends(get_db)):
-    """
-    Xóa bản sao lưu khỏi cơ sở dữ liệu và xóa file vật lý nếu có.
-    """
+    """Xóa bản sao lưu."""
     try:
         delete_backup(backup_id, db)
-        return RedirectResponse(
-            url="/admin/backups/manage",
-            status_code=303
-        )
+        return RedirectResponse(url="/admin/backups/manage", status_code=303)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi xóa backup: {str(e)}")
-# ============================================================
