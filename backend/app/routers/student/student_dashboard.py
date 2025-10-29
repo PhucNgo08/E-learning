@@ -28,6 +28,7 @@ from app.models.lesson import Lesson
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.quiz_attempt import QuizAttempt
 
+
 # ======================================================
 # ⚙️ Cấu hình Router
 # ======================================================
@@ -55,7 +56,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
     if not user_id:
         return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    # ⚠️ Nếu role khác 'student' → clear session & về login
+    # 🚫 Nếu role khác student → logout
     if role != "student":
         request.session.clear()
         return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
@@ -68,7 +69,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
 
     try:
         # ======================================================
-        # 📘 Lấy danh sách khóa học sinh viên đã ghi danh
+        # 📘 1️⃣ Lấy danh sách khóa học sinh viên đã ghi danh
         # ======================================================
         enrolled_courses = (
             db.query(Course)
@@ -78,7 +79,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         )
 
         # ======================================================
-        # 📊 Tiến độ học tập
+        # 📊 2️⃣ Tiến độ học tập
         # ======================================================
         completed_lessons = (
             db.query(LessonProgress)
@@ -99,6 +100,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         )
 
         progress_percent = round((completed_lessons / total_lessons) * 100, 1) if total_lessons > 0 else 0
+
         progress_stats = {
             "completed": completed_lessons,
             "total": total_lessons,
@@ -106,16 +108,16 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         }
 
         # ======================================================
-        # 📝 Tổng số bài tập đã nộp
+        # 📝 3️⃣ Tổng số bài tập đã nộp
         # ======================================================
         total_assignments = (
             db.query(AssignmentSubmission)
-            .filter(AssignmentSubmission.student_id == student.id)  # ✅ ĐÃ SỬA
+            .filter(AssignmentSubmission.student_id == student.id)
             .count()
         )
 
         # ======================================================
-        # 🧠 Tổng số quiz đã làm
+        # 🧠 4️⃣ Tổng số quiz đã làm
         # ======================================================
         total_quizzes = (
             db.query(QuizAttempt)
@@ -124,7 +126,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         )
 
         # ======================================================
-        # 🕒 Bài học gần đây
+        # 🕒 5️⃣ Bài học gần đây
         # ======================================================
         recent_lessons = (
             db.query(Lesson)
@@ -138,7 +140,7 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         )
 
         # ======================================================
-        # 🔔 Dummy Thông báo (sẽ thay bằng bảng notifications sau)
+        # 🔔 6️⃣ Dummy Thông báo
         # ======================================================
         notifications = [
             {"icon": "bi bi-bell-fill text-warning", "text": "📘 Bạn có bài tập mới cần nộp trong tuần này."},
@@ -146,7 +148,16 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
             {"icon": "bi bi-chat-dots text-info", "text": "💬 Giảng viên đã phản hồi bình luận của bạn."},
         ]
 
-        # 🧩 Log debug
+        # ======================================================
+        # 🖼️ 7️⃣ Lấy avatar (ưu tiên từ session)
+        # ======================================================
+        avatar_url = (
+            request.session.get("user_avatar")
+            or student.avatar_url
+            or "/static/img/default_avatar.png"
+        )
+
+        # 🧾 Log debug
         print(
             f"📊 [STUDENT DASHBOARD] {student.full_name} — "
             f"{len(enrolled_courses)} khóa học, "
@@ -154,13 +165,14 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
         )
 
         # ======================================================
-        # 🧾 Render template
+        # 🧾 8️⃣ Render template
         # ======================================================
         return templates["student"].TemplateResponse(
             "dashboard.html",
             {
                 "request": request,
-                "student": student,
+                "user": student,  # ✅ Dùng cho layout_student.html
+                "avatar_url": avatar_url,
                 "enrolled_courses": enrolled_courses,
                 "progress_stats": progress_stats,
                 "recent_lessons": recent_lessons,
@@ -179,5 +191,6 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
             {
                 "request": request,
                 "message": f"Không thể tải trang Dashboard. Chi tiết lỗi: {e}",
+                "now": datetime.utcnow() + timedelta(hours=7),
             },
         )

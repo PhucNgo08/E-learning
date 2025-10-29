@@ -5,22 +5,26 @@ Xử lý chức năng quên mật khẩu & gửi email đặt lại
 ==========================================================
 """
 
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
+from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 import traceback
 
 # ✅ Import cấu hình template
 from app.config.template_config import get_template_by_path
-# ✅ Import database & service
-from app import services, database
+# ✅ Import database
+from app.database.connection import get_db
+# ✅ Import service đúng cách
+from app.services import user_service
 # ✅ Import tiện ích gửi mail và token reset
 from app.routers.auth.utils import send_reset_email, generate_reset_token
+
 
 # ============================================================
 # 🚀 Router khởi tạo
 # ============================================================
 router = APIRouter(prefix="/auth", tags=["Auth - Forgot Password"])
+
 
 # ============================================================
 # 🧭 1️⃣ Trang nhập email khôi phục mật khẩu
@@ -32,7 +36,7 @@ async def forgot_password_page(request: Request):
     """
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
-        "forgot_password.html",   # ✅ KHÔNG cần "auth/"
+        "forgot_password.html",
         {"request": request, "page_title": "🔑 Quên mật khẩu"}
     )
 
@@ -44,7 +48,7 @@ async def forgot_password_page(request: Request):
 async def forgot_password(
     request: Request,
     email: str = Form(...),
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(get_db)
 ):
     """
     Xử lý gửi email đặt lại mật khẩu.
@@ -52,8 +56,8 @@ async def forgot_password(
     tpl = get_template_by_path(request.url.path)
 
     try:
-        # 🔍 Kiểm tra email có tồn tại
-        user = services.get_user_by_email(email, db)
+        # 🔍 Kiểm tra email có tồn tại trong hệ thống
+        user = user_service.get_user_by_email(email, db)  # ✅ Gọi đúng service
         if not user:
             return tpl.TemplateResponse(
                 "forgot_password.html",

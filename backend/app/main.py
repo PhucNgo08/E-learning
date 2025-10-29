@@ -115,6 +115,7 @@ from app.routers.auth.login import login_router
 from app.routers.auth.register import register_router
 from app.routers.auth.logout import logout_router
 from app.routers.auth.forgot_password import router as forgot_router
+from app.routers.auth.reset_password import router as reset_router  
 
 # --- ADMIN ---
 from app.routers.admin.dashboard import dashboard_router
@@ -168,7 +169,7 @@ from app.routers.student.message_student import router as student_message_router
 # 🔗 ĐĂNG KÝ ROUTER
 # =====================================================
 for routers in [
-    [login_router, register_router, logout_router, forgot_router],
+    [login_router, register_router, logout_router, forgot_router, reset_router],
 
     [dashboard_router, user_router, course_router, section_router, category_router,
      class_router, enrollment_router, backup_router, exam_router, report_router,

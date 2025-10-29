@@ -1,91 +1,280 @@
 /* =====================================================
-🎓 STUDENT DASHBOARD STYLES - 2025 Version
+🎓 STUDENT DASHBOARD - v1.8 NeoSync Final Edition
+Author: Lương Hồng Tiền - E-Learning UI Team
+Updated: 2025-10
 ===================================================== */
 
+:root {
+  --card-size: 120px;
+  --thumb-size: 50px;
+  --transition: all 0.4s ease;
+  --content-bg: #f9fafb;
+  --text: #111827;
+  --card-bg: #ffffff;
+}
+
+/* === GLOBAL === */
 body {
-  background: #f9fafb;
+  background: var(--content-bg);
+  color: var(--text);
   font-family: "Inter", "Segoe UI", sans-serif;
+  transition: var(--transition);
 }
-
-/* === Container Scroll === */
 .dashboard-container {
-  overflow-y: auto;
-  max-height: calc(100vh - 120px);
-  padding: 1rem;
+  padding: 1.6rem 1.5rem 3rem 1.5rem;
+  animation: fadeIn 0.6s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* === Hero Section === */
-.student-hero {
-  background: linear-gradient(135deg, #ffffff, #f3f4f6);
+/* === WELCOME CARD === */
+.welcome-card {
+  background: var(--card-bg);
   border-radius: 16px;
-  transition: all 0.3s ease;
+  padding: 1.2rem 1.5rem;
+  border-left: 5px solid #0d6efd;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
 }
-.student-hero:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+.welcome-card::before {
+  content: "";
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle at 30% 30%, rgba(13, 110, 253, 0.1), transparent 60%);
+  transform: rotate(25deg);
+  transition: 0.6s;
+}
+.welcome-card:hover::before { transform: rotate(45deg) scale(1.1); opacity: 0.9; }
+.welcome-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(13, 110, 253, 0.25);
 }
 
-/* === Avatar Glow === */
-.avatar-glow {
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-}
-
-/* === Statistic Cards === */
+/* === STAT CARDS === */
 .stat-card {
-  border-radius: 16px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  text-align: center;
+  border-radius: 18px;
+  color: #fff;
+  padding: 1.6rem 1.2rem;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  background-size: 200% 200%;
+  animation: gradient-move 6s ease infinite;
+}
+@keyframes gradient-move {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 .stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-6px) rotateX(5deg) rotateY(-3deg) scale(1.04);
+  box-shadow: 0 10px 30px rgba(13, 110, 253, 0.3), 0 0 10px rgba(13, 110, 253, 0.2);
+}
+.gradient-blue { background: linear-gradient(135deg, #2563eb, #3b82f6); }
+.gradient-green { background: linear-gradient(135deg, #16a34a, #22c55e); }
+.gradient-gold { background: linear-gradient(135deg, #eab308, #facc15); color: #212529; }
+.stat-card i {
+  display: block;
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+  opacity: 0.9;
 }
 
-/* Gradient backgrounds */
-.gradient-blue {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
+/* === COURSES GRID === */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  justify-content: center;
+  perspective: 1000px;
+  background: rgba(255,255,255,0.6);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: inset 0 0 12px rgba(13,110,253,0.05);
+  backdrop-filter: blur(4px);
+  transition: all 0.4s ease;
 }
-.gradient-green {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-}
-.gradient-gold {
-  background: linear-gradient(135deg, #eab308, #facc15);
+body.dark-mode .courses-grid {
+  background: rgba(31,41,55,0.6);
+  box-shadow: inset 0 0 12px rgba(13,110,253,0.1);
 }
 
-/* === Course Cards === */
-.course-card {
-  background: #fff;
-  border-radius: 14px;
+/* === COURSE CARD === */
+.course-card-mini {
+  background: var(--card-bg);
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  transition: all 0.3s ease;
+  position: relative;
+  transition: var(--transition);
+  transform-style: preserve-3d;
 }
-.course-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+.course-card-mini:hover {
+  transform: rotateY(6deg) rotateX(-4deg) scale(1.06);
+  box-shadow: 0 10px 25px rgba(13, 110, 253, 0.3);
 }
+.course-card-mini::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 20%, rgba(13, 110, 253, 0.1), transparent 70%);
+  opacity: 0;
+  transition: 0.5s ease;
+}
+.course-card-mini:hover::after {
+  opacity: 1;
+  animation: glow-pulse 2.5s infinite alternate;
+}
+@keyframes glow-pulse {
+  0% { box-shadow: 0 0 5px rgba(13, 110, 253, 0.3); }
+  100% { box-shadow: 0 0 15px rgba(13, 110, 253, 0.6); }
+}
+
+/* === COURSE CONTENT === */
 .course-thumb {
   width: 100%;
-  height: 140px;
+  height: var(--thumb-size);
   object-fit: cover;
-  border-bottom: 3px solid #e5e7eb;
+  border-bottom: 2px solid #e5e7eb;
+  border-radius: 12px 12px 0 0;
+  transition: transform 0.4s ease, filter 0.4s ease;
+}
+.course-card-mini:hover .course-thumb {
+  transform: scale(1.05);
+  filter: brightness(1.08);
+}
+.course-card-mini h6 {
+  font-size: 0.75rem;
+  margin-top: 6px;
+  color: var(--text);
+  line-height: 1.2em;
+  height: 2.3em;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* === Progress Bar === */
+/* === PROGRESS BAR === */
 .progress {
-  background-color: #e5e7eb;
-  border-radius: 10px;
+  height: 4px;
+  margin: 4px 10px;
+  background: #e5e7eb;
+  border-radius: 6px;
   overflow: hidden;
 }
 .progress-bar {
-  transition: width 0.6s ease-in-out;
+  background: linear-gradient(90deg, #0d6efd, #3b82f6);
+  width: 0;
+  transition: width 1s ease-out;
+  animation: breathe 2.5s ease-in-out infinite alternate;
+}
+@keyframes breathe {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.3); }
 }
 
-/* === Responsive === */
+/* === ZOOM CONTROLS === */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.zoom-btn {
+  border: 1px solid #0d6efd;
+  background: transparent;
+  color: #0d6efd;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.zoom-btn:hover {
+  background: #0d6efd;
+  color: white;
+  box-shadow: 0 0 12px rgba(13, 110, 253, 0.6), inset 0 0 5px rgba(255,255,255,0.3);
+  transform: translateY(-2px) scale(1.1);
+}
+.zoom-level {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0d6efd;
+  min-width: 42px;
+  text-align: center;
+}
+
+/* === GLOW REVEAL === */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.9s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === HEADER TITLE HIGHLIGHT === */
+h2.fw-bold.text-primary {
+  background: linear-gradient(90deg, #0d6efd, #60a5fa);
+  -webkit-background-clip: text;
+  background-clip: text; /* ✅ thêm dòng này để hết cảnh báo */
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 2px 12px rgba(13, 110, 253, 0.15);
+}
+
+
+/* === BUTTON GLOW === */
+.btn-outline-primary:hover {
+  background: #0d6efd;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(13, 110, 253, 0.5);
+}
+
+/* === SCROLLBAR === */
+body::-webkit-scrollbar { width: 10px; }
+body::-webkit-scrollbar-thumb {
+  background: rgba(13,110,253,0.4);
+  border-radius: 10px;
+}
+body::-webkit-scrollbar-thumb:hover {
+  background: rgba(13,110,253,0.6);
+}
+
+/* === DARK MODE === */
+body.dark-mode {
+  --content-bg: #111827;
+  --card-bg: #1f2937;
+  --text: #f3f4f6;
+}
+body.dark-mode .stat-card.gradient-blue {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+}
+body.dark-mode .stat-card.gradient-green {
+  background: linear-gradient(135deg, #065f46, #16a34a);
+}
+body.dark-mode .stat-card.gradient-gold {
+  background: linear-gradient(135deg, #854d0e, #ca8a04);
+  color: #fef9c3;
+}
+body.dark-mode .course-card-mini {
+  box-shadow: 0 3px 12px rgba(255, 255, 255, 0.05);
+}
+body.dark-mode .course-card-mini:hover {
+  box-shadow: 0 10px 25px rgba(13, 110, 253, 0.45);
+}
+body.dark-mode .reveal.visible { opacity: 1; transform: none; }
+
+/* === RESPONSIVE === */
 @media (max-width: 768px) {
-  .student-hero {
-    flex-direction: column;
-    text-align: center;
+  .courses-grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   }
-  .student-avatar {
-    margin-top: 1rem;
-  }
+  .zoom-controls { gap: 0.4rem; }
 }

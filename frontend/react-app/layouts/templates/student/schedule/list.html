@@ -3,41 +3,92 @@
 
 {% block content %}
 <div class="container mt-4">
-  <h4 class="fw-bold text-primary mb-3"><i class="bi bi-calendar3"></i> Lịch học & Kiểm tra</h4>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
+    </h4>
+    <a href="/student/schedule/calendar" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-grid-3x3-gap"></i> Xem dạng lịch
+    </a>
+  </div>
 
   {% if schedules %}
-  <table class="table table-bordered table-hover align-middle">
-    <thead class="table-primary text-center">
-      <tr>
-        <th>#</th>
-        <th>Môn học</th>
-        <th>Ngày</th>
-        <th>Giờ</th>
-        <th>Loại</th>
-        <th>Phòng</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for s in schedules %}
-      <tr>
-        <td>{{ loop.index }}</td>
-        <td>{{ s.course_name }}</td>
-        <td>{{ s.date.strftime('%d/%m/%Y') }}</td>
-        <td>{{ s.time }}</td>
-        <td>
-          {% if s.type == 'exam' %}
-            <span class="badge bg-danger">Thi</span>
-          {% else %}
-            <span class="badge bg-success">Học</span>
-          {% endif %}
-        </td>
-        <td>{{ s.room or '-' }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-responsive shadow-sm rounded-3">
+    <table class="table table-bordered align-middle mb-0">
+      <thead class="table-primary text-center align-middle">
+        <tr>
+          <th style="width: 5%">#</th>
+          <th style="width: 25%">Môn học</th>
+          <th style="width: 15%">Ngày</th>
+          <th style="width: 15%">Giờ</th>
+          <th style="width: 15%">Loại</th>
+          <th style="width: 15%">Phòng</th>
+        </tr>
+      </thead>
+      <tbody class="bg-light">
+        {% for s in schedules %}
+        <tr class="hover-row">
+          <td class="text-center fw-semibold text-secondary">{{ loop.index }}</td>
+          <td>
+            <div class="fw-semibold text-dark">{{ s.course_name }}</div>
+            <small class="text-muted">{{ s.module_name or '' }}</small>
+          </td>
+          <td class="text-center text-primary fw-semibold">
+            {{ s.date.strftime('%d/%m/%Y') }}
+          </td>
+          <td class="text-center text-dark">
+            {{ s.time or "Chưa rõ" }}
+          </td>
+          <td class="text-center">
+            {% if s.type == 'exam' %}
+              <span class="badge bg-danger"><i class="bi bi-pencil-square me-1"></i>Thi</span>
+            {% elif s.type == 'quiz' %}
+              <span class="badge bg-warning text-dark"><i class="bi bi-question-circle me-1"></i>Quiz</span>
+            {% else %}
+              <span class="badge bg-success"><i class="bi bi-book me-1"></i>Học</span>
+            {% endif %}
+          </td>
+          <td class="text-center">
+            {{ s.room or '-' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p class="text-muted mt-2 small">
+    <i class="bi bi-info-circle"></i> Dữ liệu được cập nhật tự động theo thời khóa biểu mới nhất.
+  </p>
+
   {% else %}
-  <div class="alert alert-info"><i class="bi bi-info-circle"></i> Không có lịch học hoặc kiểm tra.</div>
+  <div class="alert alert-info text-center py-3 shadow-sm rounded-3">
+    <i class="bi bi-info-circle"></i> Không có lịch học hoặc kiểm tra sắp tới.
+  </div>
   {% endif %}
 </div>
+
+<style>
+  /* 💎 Cải thiện hiển thị bảng */
+  table th {
+    white-space: nowrap;
+  }
+
+  .hover-row:hover {
+    background: #f1f7ff;
+    transition: 0.2s;
+  }
+
+  .badge {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: 0.6rem;
+  }
+
+  .alert-info {
+    background: linear-gradient(90deg, #e8f1ff, #f4f9ff);
+    color: #0d6efd;
+    border: 1px solid #bcd0ff;
+  }
+</style>
 {% endblock %}

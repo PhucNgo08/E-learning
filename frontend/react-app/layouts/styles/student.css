@@ -1,294 +1,229 @@
-/* =====================================================
-🎓 STUDENT LAYOUT - 2025 MODERN VERSION
-Author: E-Learning Team (Lương Hồng Tiền)
-===================================================== */
+/* ==========================================================
+🎓 STUDENT PANEL - Neo UI PRO (v2.5 Glow Motion Sync Edition)
+Author: Lương Hồng Tiền
+========================================================== */
 
-/* === COLOR VARIABLES === */
-:root {
-  --sidebar-bg: linear-gradient(180deg, #007bff, #0046b8);
-  --sidebar-text: #ffffff;
-  --content-bg: #f5f7fb;
-  --content-text: #1f1f2d;
-  --header-bg: rgba(255, 255, 255, 0.92);
-  --active-border: #ffc107;
-  --card-bg: #ffffff;
-  --footer-color: #6c757d;
-}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-body.dark-mode {
-  --sidebar-bg: linear-gradient(180deg, #101820, #0b0e14);
-  --sidebar-text: #e8eaed;
-  --content-bg: #0f141d;
-  --content-text: #e0e3e7;
-  --header-bg: rgba(15, 18, 25, 0.9);
-  --card-bg: #161b23;
-  --footer-color: #aaa;
-}
-
-/* === BASE === */
 body {
-  font-family: "Inter", "Segoe UI", sans-serif;
-  background: var(--content-bg);
-  color: var(--content-text);
   margin: 0;
+  font-family: "Inter","Segoe UI",sans-serif;
+  background: #f8f9fb;
+  color: #212529;
+  transition: background 0.35s,color 0.35s;
   overflow-x: hidden;
-  transition: background 0.4s, color 0.4s;
+}
+a { text-decoration: none; color: inherit; }
+
+/* === LAYOUT === */
+main {
+  margin-left: 260px;
+  padding: 80px 25px 60px;
+  min-height: 100vh;
+  transition: margin-left 0.4s cubic-bezier(0.4,0,0.2,1),opacity 0.4s ease;
 }
 
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: 0.25s ease;
-}
-
-/* ================================
+/* ==========================================================
 🧭 SIDEBAR
-================================ */
+========================================================== */
 #sidebar {
-  width: 250px;
-  height: 100vh;
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
   position: fixed;
-  top: 0;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 4px 0 14px rgba(0, 0, 0, 0.15);
-  z-index: 999;
-  transition: transform 0.35s ease;
-  border-top-right-radius: 12px;
+  top: 0; left: 0;
+  width: 260px;
+  height: 100vh;
+  background: linear-gradient(180deg,#0d6efd,#007bff);
+  color: #fff;
+  overflow-y: auto;
+  z-index: 1040;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.15);
+  transition: width 0.4s cubic-bezier(0.4,0,0.2,1),
+              background 0.5s ease;
 }
 
-#sidebar.show { transform: translateX(0); }
-#sidebar:not(.show) { transform: translateX(-100%); }
+/* Scrollbar */
+#sidebar::-webkit-scrollbar { width: 6px; }
+#sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 6px;
+}
+#sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.5);
+}
 
-.sidebar-header img.sidebar-avatar {
-  width: 85px;
-  height: 85px;
-  border-radius: 50%;
+.sidebar-header {
+  padding-top: 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+.sidebar-avatar {
+  width: 95px; height: 95px; border-radius: 50%;
   object-fit: cover;
-  border: 3px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
   cursor: pointer;
+  transition: transform 0.3s,opacity 0.3s,width 0.3s,height 0.3s;
 }
-.sidebar-header img.sidebar-avatar:hover {
-  transform: scale(1.07);
-  opacity: 0.9;
+.sidebar-avatar:hover { transform: scale(1.07); opacity: 0.9; }
+
+.camera-icon {
+  position: absolute; bottom: 3px; right: 5px;
+  background: linear-gradient(135deg,#0d6efd,#0066ff);
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  padding: 4px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
 .sidebar-inner {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-  margin-top: 15px;
+  padding: 14px 0;
+  transition: opacity 0.35s ease;
 }
-
-#sidebar a {
-  padding: 12px 22px;
-  color: var(--sidebar-text);
+.sidebar-inner a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  border-radius: 10px; margin: 6px 14px;
+  color: #f8f9fa;
   font-size: 0.95rem;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-left: 4px solid transparent;
   transition: all 0.25s ease;
 }
-
-#sidebar a:hover {
-  background: rgba(255,255,255,0.12);
+.sidebar-inner a i { transition: transform 0.25s,opacity 0.3s; }
+.sidebar-inner a:hover {
+  background: rgba(255,255,255,0.15);
   transform: translateX(4px);
 }
-
-#sidebar a.active {
-  background: rgba(255,255,255,0.2);
-  border-left-color: var(--active-border);
+.sidebar-inner a:hover i { transform: scale(1.15); }
+.sidebar-inner a.active {
+  background: rgba(255,255,255,0.25);
+  border-left: 4px solid #ffc107;
   font-weight: 600;
+  box-shadow: inset 2px 0 8px rgba(255,255,255,0.1);
 }
 
 .sidebar-footer {
+  position: sticky; bottom: 0;
   text-align: center;
-  padding: 15px 0;
-  border-top: 1px solid rgba(255,255,255,0.15);
-  font-size: 0.9rem;
-  color: rgba(255,255,255,0.8);
-  background: rgba(255,255,255,0.06);
-}
-
-.sidebar-footer img {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.5);
-  margin-bottom: 8px;
-  object-fit: cover;
-}
-
-/* ================================
-🌟 HEADER
-================================ */
-.student-header {
-  position: fixed;
-  top: 0;
-  left: 250px;
-  right: 0;
-  height: 65px;
-  background: var(--header-bg);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 25px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  z-index: 900;
-  transition: all 0.4s ease;
-  backdrop-filter: blur(8px);
-}
-#sidebar:not(.show) ~ .student-header { left: 0; }
-
-.nav-icons a {
-  color: var(--content-text);
-  font-size: 1.3rem;
-  margin-left: 20px;
-  transition: color 0.25s;
-}
-.nav-icons a:hover { color: #0d6efd; }
-
-.caret-icon {
-  transition: transform 0.3s ease;
-}
-.caret-icon.rotate {
-  transform: rotate(180deg);
-}
-
-/* ================================
-📦 CONTENT
-================================ */
-#content {
-  margin: 90px 30px 40px 280px;
-  background: var(--card-bg);
-  border-radius: 18px;
-  padding: 35px;
-  box-shadow: 0 5px 18px rgba(0,0,0,0.07);
-  transition: all 0.4s ease;
-}
-#sidebar:not(.show) ~ #content {
-  margin-left: 30px;
-  width: calc(100% - 60px);
-}
-
-/* ================================
-⚙️ TOGGLE BUTTONS
-================================ */
-.toggle-btn, .mode-toggle {
-  position: fixed;
-  top: 15px;
-  z-index: 2000;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.toggle-btn {
-  left: 15px;
-  background: white;
-  color: #0046d8;
-  box-shadow: 0 3px 10px rgba(0, 64, 255, 0.25);
-}
-.toggle-btn:hover { transform: rotate(10deg) scale(1.05); }
-
-.mode-toggle {
-  right: 15px;
-  background: var(--header-bg);
-  color: #ffb700;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-}
-.mode-toggle:hover { transform: rotate(-10deg) scale(1.05); }
-
-/* ================================
-📱 MOBILE RESPONSIVE
-================================ */
-#sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(3px);
-  z-index: 998;
-  opacity: 0;
-  pointer-events: none;
+  font-size: 0.85rem; opacity: 0.8;
+  padding: 10px 0;
+  border-top: 1px solid rgba(255,255,255,0.2);
   transition: opacity 0.3s ease;
 }
-#sidebar.show ~ #sidebar-overlay {
-  opacity: 1;
-  pointer-events: auto;
+
+/* ==========================================================
+🧊 COLLAPSED MODE
+========================================================== */
+#sidebar.collapsed { width: 80px; }
+#sidebar.collapsed .sidebar-header span,
+#sidebar.collapsed .sidebar-header small,
+#sidebar.collapsed .sidebar-inner a span,
+#sidebar.collapsed .sidebar-footer {
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+#sidebar.collapsed .sidebar-inner a {
+  justify-content: center; padding: 12px 0;
+}
+#sidebar.collapsed .sidebar-inner a i { font-size: 1.3rem; }
+#sidebar.collapsed .sidebar-avatar { width: 55px; height: 55px; }
+.student-header.collapsed { left: 80px; }
+main.collapsed { margin-left: 80px; }
+
+/* Glow line when collapsed */
+#sidebar.collapsed::after {
+  content:""; position:absolute; top:0; right:-1px; width:1px; height:100%;
+  background: linear-gradient(180deg,rgba(13,110,253,0.6),rgba(13,110,253,0));
 }
 
+/* ==========================================================
+🌟 HEADER
+========================================================== */
+.student-header {
+  position: fixed;
+  top: 0; left: 260px; right: 0;
+  height: 60px;
+  background: linear-gradient(90deg,#0d6efd,#2563eb);
+  color: #fff;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding: 0 22px;
+  z-index: 1035;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+.nav-icons a {
+  color: #fff;
+  font-size: 1.25rem;
+  margin-right: 20px;
+  transition: opacity 0.25s;
+}
+.nav-icons a:hover { opacity: 0.8; }
+
+/* ==========================================================
+⚙️ TOGGLE BUTTONS
+========================================================== */
+.toggle-btn, .mode-toggle {
+  position: fixed; z-index: 1100;
+  background: #0d6efd; color: #fff;
+  border: none; border-radius: 50%;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  transition: all 0.25s;
+}
+.toggle-btn:hover, .mode-toggle:hover {
+  background: #0b5ed7;
+  transform: scale(1.08);
+}
+.toggle-btn { top: 16px; left: 16px; }
+.mode-toggle { bottom: 25px; right: 25px; }
+
+/* ==========================================================
+🌫️ OVERLAY (MOBILE)
+========================================================== */
+#sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1030;
+  display: none; opacity: 0;
+  transition: opacity 0.35s;
+}
+#sidebar-overlay.active { display: block; opacity: 1; }
+
+/* ==========================================================
+🌙 DARK MODE
+========================================================== */
+body.dark-mode { background: #1e1e2f; color: #f1f1f1; }
+body.dark-mode main { background: #24243a; }
+body.dark-mode #sidebar {
+  background: linear-gradient(180deg,#202040,#1b1b2f);
+}
+body.dark-mode .student-header {
+  background: linear-gradient(90deg,#1f1f3d,#2b2b55);
+}
+body.dark-mode .sidebar-inner a.active { border-left-color: #ffd43b; }
+
+/* ==========================================================
+📱 RESPONSIVE
+========================================================== */
 @media (max-width: 992px) {
-  #sidebar {
-    transform: translateX(-100%);
-  }
-  #sidebar.show {
-    transform: translateX(0);
-  }
-  .student-header {
-    left: 0;
-    height: 60px;
-    padding: 0 15px;
-  }
-  #content {
-    margin: 80px 15px 25px 15px;
-    padding: 25px;
-  }
-  .toggle-btn, .mode-toggle {
-    width: 42px;
-    height: 42px;
-    top: 12px;
-  }
+  #sidebar { transform: translateX(-100%); position: fixed; }
+  #sidebar.show { transform: translateX(0); }
+  main { margin-left: 0; padding-top: 80px; }
+  .student-header { left: 0; }
 }
 
-/* ================================
-🦶 FOOTER
-================================ */
-footer {
-  text-align: center;
-  padding: 15px;
-  font-size: 0.9rem;
-  color: var(--footer-color);
-  opacity: 0.85;
+/* ==========================================================
+🎞️ ANIMATIONS
+========================================================== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
+main.fade-in { animation: fadeIn 0.6s ease-out; }
 
-/* ================================
-✨ SCROLLBAR
-================================ */
-html { scroll-behavior: smooth; }
-
-body::-webkit-scrollbar { width: 8px; }
-body::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-}
-body.dark-mode::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* ================================
-💫 CARD EFFECTS
-================================ */
-.card {
-  border: none;
-  background: var(--card-bg);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-  border-radius: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+#sidebar, main, .student-header {
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
 }

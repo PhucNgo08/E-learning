@@ -6,7 +6,7 @@ from app.models.security_setting import SecuritySetting
 from app.services.common.password_service import get_password_hash  # ✅ bcrypt hash chuẩn
 
 # =====================================================
-# ➕ Tạo người dùng
+# 🧩 1️⃣ TẠO NGƯỜI DÙNG
 # =====================================================
 def create_user(
     username: str,
@@ -38,6 +38,7 @@ def create_user(
         # --- Hash mật khẩu ---
         hashed_password = get_password_hash(password)
 
+        # --- Tạo user ---
         new_user = User(
             id=str(uuid.uuid4()),
             username=username,
@@ -67,19 +68,22 @@ def create_user(
 
 
 # =====================================================
-# 🔍 Lấy người dùng
+# 🔍 2️⃣ HÀM LẤY NGƯỜI DÙNG
 # =====================================================
 def get_user_by_id(user_id: str, db: Session):
+    """Lấy người dùng theo ID."""
     return db.query(User).filter(User.id == user_id).first()
 
 
 def get_user_by_email(email: str, db: Session):
-    """Lấy người dùng bằng email (dùng cho reset password)."""
+    """Lấy người dùng theo email (dùng cho đăng nhập hoặc reset password)."""
+    if not email:
+        return None
     return db.query(User).filter(User.email == email).first()
 
 
 def get_all_users(db: Session):
-    """Lấy danh sách người dùng."""
+    """Lấy toàn bộ danh sách người dùng (cho Admin)."""
     users = db.query(User).order_by(User.created_at.desc()).all()
     for u in users:
         u.role = u.role or "student"
@@ -88,7 +92,7 @@ def get_all_users(db: Session):
 
 
 # =====================================================
-# ✏️ Cập nhật người dùng
+# ✏️ 3️⃣ CẬP NHẬT NGƯỜI DÙNG
 # =====================================================
 def update_user(
     user_id: str,
@@ -102,7 +106,7 @@ def update_user(
     major_id: str = None,
     mssv: str = None
 ):
-    """Cập nhật thông tin người dùng (Admin cập nhật)."""
+    """Cập nhật thông tin người dùng (Admin hoặc Teacher)."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
@@ -121,7 +125,7 @@ def update_user(
     user.major_id = major_id or None
     user.mssv = mssv or user.mssv
 
-    # --- Nếu nhập mật khẩu mới ---
+    # --- Nếu có mật khẩu mới ---
     if password and password.strip() != "":
         user.password_hash = get_password_hash(password)
 
@@ -135,7 +139,7 @@ def update_user(
 
 
 # =====================================================
-# 🔐 Đặt lại mật khẩu (Quên mật khẩu)
+# 🔐 4️⃣ ĐẶT LẠI MẬT KHẨU (QUÊN MẬT KHẨU)
 # =====================================================
 def update_password(db: Session, email: str, new_password: str):
     """Đặt lại mật khẩu cho người dùng (dùng trong reset password)."""
@@ -154,10 +158,10 @@ def update_password(db: Session, email: str, new_password: str):
 
 
 # =====================================================
-# 🚫 Vô hiệu hóa tài khoản
+# 🚫 5️⃣ VÔ HIỆU HÓA TÀI KHOẢN
 # =====================================================
 def deactivate_user(user_id: str, db: Session):
-    """Vô hiệu hóa tài khoản."""
+    """Vô hiệu hóa tài khoản người dùng."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
@@ -174,10 +178,10 @@ def deactivate_user(user_id: str, db: Session):
 
 
 # =====================================================
-# 🔄 Khôi phục tài khoản
+# ♻️ 6️⃣ KHÔI PHỤC TÀI KHOẢN
 # =====================================================
 def restore_user(user_id: str, db: Session):
-    """Khôi phục tài khoản."""
+    """Khôi phục tài khoản bị vô hiệu hóa."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")

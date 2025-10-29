@@ -8,14 +8,14 @@ Quản lý hồ sơ cá nhân của học viên
 from fastapi import APIRouter, Request, Depends, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-import uuid, shutil, os
 from datetime import datetime
+import uuid, shutil, os
 
-# ✅ Import database & cấu hình template động
+# ✅ Database & template
 from app.database.connection import get_db
 from app.config.template_config import templates
 
-# ✅ Import models
+# ✅ Models
 from app.models.user import User
 from app.models.lesson_progress import LessonProgress
 from app.models.quiz_attempt import QuizAttempt
@@ -23,15 +23,15 @@ from app.models.assignment_submission import AssignmentSubmission
 from app.models.academic_year import AcademicYear
 from app.models.major import Major
 
-# ✅ Import service đổi mật khẩu
+# ✅ Service đổi mật khẩu
 from app.services.common.password_service import change_user_password
 
-# ✅ Import cấu hình upload
+# ✅ Upload cấu hình
 from app.config.paths import UPLOAD_AVATARS
 
 
 # =====================================================
-# ⚙️ Cấu hình Router
+# ⚙️ Router
 # =====================================================
 router = APIRouter(
     prefix="/student/profile",
@@ -44,7 +44,7 @@ router = APIRouter(
 # =====================================================
 @router.get("/", response_class=HTMLResponse)
 def profile_page(request: Request, db: Session = Depends(get_db)):
-    """Trang hồ sơ sinh viên"""
+    """Hiển thị trang hồ sơ sinh viên"""
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse(url="/auth/login", status_code=303)
@@ -52,6 +52,10 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         return RedirectResponse(url="/auth/login", status_code=303)
+
+    # ✅ Đồng bộ avatar vào session
+    if not request.session.get("user_avatar") or request.session["user_avatar"] != user.avatar_url:
+        request.session["user_avatar"] = user.avatar_url or "/uploads/avatars/default-avatar.png"
 
     # 🔹 Lấy ngành học & khóa học
     major = db.query(Major).filter(Major.id == user.major_id).first() if user.major_id else None
@@ -63,7 +67,6 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
         LessonProgress.user_id == user_id,
         LessonProgress.progress_status == "completed"
     ).count()
-
     total_quizzes = db.query(QuizAttempt).filter(QuizAttempt.user_id == user_id).count()
     total_assignments = db.query(AssignmentSubmission).filter(AssignmentSubmission.student_id == user_id).count()
 
@@ -95,7 +98,7 @@ async def upload_avatar(
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db)
 ):
-    """Upload 1 hoặc nhiều ảnh đại diện"""
+    """Upload và cập nhật ảnh đại diện"""
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse(url="/auth/login", status_code=303)
@@ -117,16 +120,16 @@ async def upload_avatar(
 
         avatar_urls.append(f"/uploads/avatars/{filename}")
 
-    # ✅ Nếu upload thành công → cập nhật DB và session
     if avatar_urls:
         user = db.query(User).filter(User.id == user_id).first()
-        user.avatar_url = avatar_urls[-1]
+        new_avatar = avatar_urls[-1]
+        user.avatar_url = new_avatar
+        user.updated_at = datetime.now()
         db.commit()
 
         # 🔁 Cập nhật session để sidebar đổi ảnh ngay
-        request.session["user_avatar"] = avatar_urls[-1]
-
-        print(f"🖼️ [Avatar Updated] {user.full_name} → {avatar_urls[-1]}")
+        request.session["user_avatar"] = new_avatar
+        print(f"🖼️ [Avatar Updated] {user.full_name} → {new_avatar}")
 
     return RedirectResponse(url="/student/profile", status_code=303)
 
@@ -136,7 +139,7 @@ async def upload_avatar(
 # =====================================================
 @router.get("/change-password", response_class=HTMLResponse)
 def change_password_page(request: Request):
-    """Trang đổi mật khẩu"""
+    """Hiển thị trang đổi mật khẩu"""
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse(url="/auth/login", status_code=303)
@@ -158,7 +161,7 @@ def change_password(
     new_password: str = Form(...),
     confirm_password: str = Form(...),
 ):
-    """Đổi mật khẩu và tự động đăng xuất"""
+    """Xử lý đổi mật khẩu & đăng xuất sau khi thành công"""
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse(url="/auth/login", status_code=303)
@@ -178,7 +181,6 @@ def change_password(
             status_code=400,
         )
 
-    # ✅ Nếu đổi thành công → tự logout
-    print(f"✅ Student {user_id} đã đổi mật khẩu thành công. Tự động đăng xuất.")
+    print(f"✅ Student {user_id} đổi mật khẩu thành công — tự động đăng xuất.")
     request.session.clear()
     return RedirectResponse(url="/auth/login?msg=logout_after_change", status_code=303)

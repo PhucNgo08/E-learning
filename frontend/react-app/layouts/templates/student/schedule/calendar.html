@@ -1,0 +1,146 @@
+{% extends "layout_student.html" %}
+{% block title %}🗓️ Lịch học - E-Learning{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
+    </h4>
+    <a href="/student/schedule/list" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-list-task"></i> Xem dạng danh sách
+    </a>
+  </div>
+
+  <div id="calendar" class="shadow-sm border rounded-3 p-2"></div>
+</div>
+
+<!-- 🗓️ FullCalendar.js -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const calendarEl = document.getElementById('calendar');
+
+  // === 📅 Dữ liệu từ Python truyền sang JSON ===
+  const scheduleData = JSON.parse(`{{ schedule | tojson | safe }}`);
+
+  // === 🎨 Map màu theo loại buổi học ===
+  const getEventColor = (type) => {
+    switch (type) {
+      case "exam": return "#ff4b5c";      // đỏ - thi
+      case "quiz": return "#ffc107";      // vàng - quiz
+      case "lesson": return "#28a745";    // xanh lá - học
+      default: return "#007bff";          // xanh dương - mặc định
+    }
+  };
+
+  // === 🧩 Chuẩn hoá dữ liệu cho FullCalendar ===
+  const events = scheduleData.map(s => ({
+    id: s.lesson_id || s.id,
+    title: s.course_name + " - " + s.lesson_title,
+    start: s.start,
+    end: s.end,
+    color: getEventColor(s.type || "lesson"),
+    extendedProps: {
+      module: s.module_name,
+      location: s.location || "Trực tuyến",
+      time: new Date(s.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }
+  }));
+
+  // === 🚀 Khởi tạo FullCalendar ===
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    locale: 'vi',
+    height: "auto",
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+    buttonText: {
+      today: 'Hôm nay',
+      month: 'Tháng',
+      week: 'Tuần',
+      day: 'Ngày'
+    },
+    events: events,
+
+    // Tooltip khi hover
+    eventMouseEnter: function (info) {
+      const tooltip = document.createElement('div');
+      tooltip.className = 'fc-tooltip';
+      tooltip.innerHTML = `
+        <b>${info.event.title}</b><br/>
+        <small>${info.event.extendedProps.module || ""}</small><br/>
+        <i class="bi bi-geo-alt"></i> ${info.event.extendedProps.location}<br/>
+        <i class="bi bi-clock"></i> ${info.event.extendedProps.time}
+      `;
+      document.body.appendChild(tooltip);
+
+      info.el.addEventListener('mousemove', e => {
+        tooltip.style.left = e.pageX + 15 + 'px';
+        tooltip.style.top = e.pageY + 10 + 'px';
+      });
+      info.el.addEventListener('mouseleave', () => tooltip.remove());
+    },
+  });
+
+  calendar.render();
+});
+</script>
+
+<style>
+  /* 🌈 Calendar Style */
+  #calendar {
+    background: #fff;
+    border-radius: 15px;
+    padding: 15px;
+  }
+
+  .fc {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+  }
+
+  .fc-toolbar-title {
+    font-weight: 600;
+    color: #0d6efd;
+  }
+
+  .fc-button {
+    border-radius: 6px !important;
+  }
+
+  .fc-event {
+    border: none !important;
+    color: #fff !important;
+    font-weight: 500;
+    padding: 3px 5px;
+    border-radius: 8px;
+  }
+
+  /* ✨ Tooltip */
+  .fc-tooltip {
+    position: absolute;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    line-height: 1.3;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+  }
+
+  @media (max-width: 768px) {
+    #calendar { padding: 8px; }
+  }
+</style>
+{% endblock %}
