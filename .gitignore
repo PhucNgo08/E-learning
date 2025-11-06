@@ -1,0 +1,78 @@
+# ===========================================
+# 🐍 Python
+# ===========================================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.db
+
+# ===========================================
+# 🧩 Virtual Environment
+# ===========================================
+venv/
+.venv/
+env/
+ENV/
+
+# ===========================================
+# 🧠 IDE / Editor Config
+# ===========================================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.iml
+
+# ===========================================
+# ⚙️ Environment Variables / Config
+# ===========================================
+.env
+*.env.local
+*.env.example
+*.secret
+config.json
+
+# ===========================================
+# 📦 Build & Cache
+# ===========================================
+build/
+dist/
+*.egg-info/
+.cache/
+pytest_cache/
+
+# ===========================================
+# 🧱 Project specific paths
+# ===========================================
+backend/app/uploads/
+backend/app/__pycache__/
+backend/app/**/*.pyc
+backend/app/**/*.pyo
+frontend/react-app/layouts/static/uploads/
+frontend/react-app/node_modules/
+frontend/react-app/.next/
+frontend/react-app/dist/
+frontend/react-app/build/
+
+# ===========================================
+# 🎞️ Large media files
+# ===========================================
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.zip
+*.rar
+*.7z
+
+# ===========================================
+# 🧑‍💻 System files
+# ===========================================
+.DS_Store
+Thumbs.db
+desktop.ini
