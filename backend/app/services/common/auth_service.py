@@ -1,197 +1,159 @@
 """
 ==========================================================
-👩‍🏫 app/routers/teacher/profile_teacher.py
-Quản lý hồ sơ giáo viên (Profile + Avatar + Đổi mật khẩu)
+🔐 app/services/common/auth_service.py
+Dịch vụ xử lý xác thực (đăng nhập / đăng xuất / kiểm tra vai trò)
 ==========================================================
 """
-from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import Request, HTTPException, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
-from pathlib import Path
-from datetime import datetime
-import shutil
+from datetime import datetime, timedelta
+import bcrypt
 import uuid
 
-from app.database.connection import get_db
 from app.models.user import User
-from app.models.course import Course
-from app.services.common.password_service import change_user_password  # ✅ Dùng hàm đổi mật khẩu chung
+from app.config.paths import UPLOAD_AVATARS
+from app.config.template_config import templates
 
 # =====================================================
-# 🚀 KHỞI TẠO ROUTER
+# ⚙️ THIẾT LẬP CHUNG
 # =====================================================
-router = APIRouter(
-    prefix="/teacher",
-    tags=["Teacher - Profile"]
-)
+SESSION_EXPIRE_HOURS = 6
+templates = templates["auth"]
 
 # =====================================================
-# 📁 TEMPLATE DIR
+# 🧠 HÀM HỖ TRỢ XỬ LÝ BCRYPT
 # =====================================================
-templates = Jinja2Templates(
-    directory="D:/KhoaHoctructuyen/KHoaHocOnline/frontend/react-app/layouts/templates/teacher/profile"
-)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Kiểm tra mật khẩu người dùng nhập vào có khớp với hash không"""
+    if not plain_password or not hashed_password:
+        return False
+    try:
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
+    except Exception:
+        return False
 
-# =====================================================
-# 🖼️ CẤU HÌNH AVATAR
-# =====================================================
-AVATAR_DIR = Path(r"D:/KhoaHoctructuyen/KHoaHocOnline/backend/app/uploads/avatars")
-AVATAR_DIR.mkdir(parents=True, exist_ok=True)
-DEFAULT_AVATAR = "/uploads/avatars/default-avatar.png"
-ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
-# =====================================================
-# 📦 HÀM PHỤ: LƯU AVATAR
-# =====================================================
-def save_avatar_file(file: UploadFile, old_url: str | None = None) -> str:
-    """Lưu ảnh đại diện mới và xóa ảnh cũ nếu có"""
-    if not file or not file.filename:
-        return old_url or DEFAULT_AVATAR
+def hash_password(password: str) -> str:
+    """Tạo hash cho mật khẩu (bcrypt)"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
-    ext = Path(file.filename).suffix.lower()
-    if ext not in ALLOWED_EXTENSIONS:
-        print(f"⚠️ File avatar không hợp lệ: {ext}")
-        return old_url or DEFAULT_AVATAR
-
-    # Xóa ảnh cũ
-    if old_url and old_url != DEFAULT_AVATAR:
-        try:
-            old_path = Path("D:/KhoaHoctructuyen/KHoaHocOnline/backend") / old_url.lstrip("/")
-            if old_path.exists():
-                old_path.unlink()
-                print(f"🗑️ Đã xóa avatar cũ: {old_path}")
-        except Exception as e:
-            print(f"⚠️ Không thể xóa avatar cũ: {e}")
-
-    # Lưu ảnh mới
-    file_name = f"{uuid.uuid4().hex}{ext}"
-    save_path = AVATAR_DIR / file_name
-    with open(save_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
-    print(f"🖼️ Lưu avatar mới: {save_path}")
-
-    return f"/uploads/avatars/{file_name}"
 
 # =====================================================
-# 👩‍🏫 TRANG HỒ SƠ GIÁO VIÊN
+# 🔐 ĐĂNG NHẬP NGƯỜI DÙNG
 # =====================================================
-@router.get("/profile", response_class=HTMLResponse)
-async def teacher_profile(request: Request, db: Session = Depends(get_db)):
-    """Hiển thị hồ sơ giáo viên"""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
+def authenticate_user(db: Session, email: str, password: str):
+    """Xác thực người dùng dựa trên email và mật khẩu"""
+    user = db.query(User).filter(User.email == email.strip().lower()).first()
 
-    teacher = db.query(User).filter(User.id == user_id).first()
-    if not teacher:
-        return HTMLResponse("<h3>Không tìm thấy thông tin giáo viên.</h3>", status_code=404)
+    if not user:
+        return {"success": False, "message": "Không tìm thấy tài khoản."}
 
-    # Lấy danh sách khóa học
-    courses = db.query(Course).filter(Course.teacher_id == teacher.id).all()
-    msg = request.query_params.get("msg")
+    if not verify_password(password, user.password_hash):
+        return {"success": False, "message": "Mật khẩu không đúng."}
 
-    return templates.TemplateResponse(
-        "profile.html",
-        {
-            "request": request,
-            "teacher": teacher,
-            "courses": courses,
-            "now": datetime.now(),
-            "msg": msg,
-        },
+    if not user.is_active:
+        return {"success": False, "message": "Tài khoản đã bị khóa."}
+
+    # ✅ Đăng nhập thành công
+    user.last_login = datetime.utcnow()
+    db.commit()
+    return {"success": True, "user": user}
+
+
+# =====================================================
+# 💾 LƯU SESSION SAU KHI ĐĂNG NHẬP
+# =====================================================
+def create_user_session(request: Request, user: User):
+    """Lưu thông tin user vào session"""
+    request.session.clear()
+    request.session.update({
+        "user_id": user.id,
+        "user_full_name": user.full_name,
+        "user_email": user.email,
+        "role": user.role.name if hasattr(user, "role") else "student",
+        "user_avatar": user.avatar_url or "/uploads/avatars/default-avatar.png",
+        "session_start": datetime.utcnow().isoformat(),
+    })
+    print(f"✅ Session tạo cho {user.full_name} ({user.email})")
+
+
+# =====================================================
+# 🚪 ĐĂNG XUẤT
+# =====================================================
+def logout_user(request: Request):
+    """Xóa session đăng nhập"""
+    request.session.clear()
+    print("🚪 Session đã được xóa thành công.")
+
+
+# =====================================================
+# 🔍 KIỂM TRA QUYỀN TRUY CẬP
+# =====================================================
+def require_role(role: str):
+    """Decorator kiểm tra quyền truy cập (admin / teacher / student)"""
+    def decorator(func):
+        async def wrapper(request: Request, *args, **kwargs):
+            session_role = request.session.get("role")
+            if session_role != role:
+                print(f"🚫 Quyền hạn không hợp lệ: yêu cầu={role}, hiện tại={session_role}")
+                return RedirectResponse(url="/auth/login", status_code=303)
+            return await func(request, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+# =====================================================
+# 🧩 HÀM HỖ TRỢ TỰ ĐỘNG LOGIN (CHO TEST HOẶC SEED DATA)
+# =====================================================
+def auto_login_as(db: Session, request: Request, role_name: str):
+    """Đăng nhập tự động 1 người dùng đầu tiên theo vai trò"""
+    user = db.query(User).join(User.roles).filter(User.roles.any(name=role_name)).first()
+    if user:
+        create_user_session(request, user)
+        print(f"⚡ Auto-login thành công với vai trò: {role_name}")
+        return user
+    print(f"⚠️ Không tìm thấy user có vai trò '{role_name}'")
+    return None
+
+
+# =====================================================
+# 🧭 TỰ ĐỘNG CHUYỂN HƯỚNG SAU KHI LOGIN
+# =====================================================
+def get_redirect_by_role(role_name: str) -> str:
+    """Xác định đường dẫn điều hướng sau khi đăng nhập"""
+    if role_name == "admin":
+        return "/admin/dashboard"
+    elif role_name == "teacher":
+        return "/teacher/dashboard"
+    elif role_name == "student":
+        return "/student/dashboard"
+    return "/auth/login"
+
+
+# =====================================================
+# ⚡ KHỞI TẠO USER MỚI (ĐĂNG KÝ / TẠO BỞI ADMIN)
+# =====================================================
+def create_user(db: Session, email: str, full_name: str, password: str, role_name: str = "student"):
+    """Tạo người dùng mới"""
+    # Kiểm tra trùng email
+    if db.query(User).filter(User.email == email.strip().lower()).first():
+        raise HTTPException(status_code=400, detail="Email đã tồn tại")
+
+    user = User(
+        id=str(uuid.uuid4()),
+        full_name=full_name.strip(),
+        email=email.strip().lower(),
+        password_hash=hash_password(password),
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
+        avatar_url="/uploads/avatars/default-avatar.png",
+        is_active=True,
     )
 
-# =====================================================
-# ✏️ FORM CHỈNH SỬA HỒ SƠ
-# =====================================================
-@router.get("/profile/edit", response_class=HTMLResponse)
-async def edit_profile_form(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    teacher = db.query(User).filter(User.id == user_id).first()
-    if not teacher:
-        return HTMLResponse("<h3>Không tìm thấy thông tin giáo viên.</h3>", status_code=404)
-
-    return templates.TemplateResponse("profile_edit.html", {"request": request, "teacher": teacher})
-
-# =====================================================
-# 💾 CẬP NHẬT HỒ SƠ
-# =====================================================
-@router.post("/profile/edit")
-async def update_profile(
-    request: Request,
-    db: Session = Depends(get_db),
-    full_name: str = Form(...),
-    email: str = Form(...),
-    phone: str = Form(""),
-    avatar: UploadFile = File(None),
-):
-    """Cập nhật thông tin và ảnh đại diện"""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    teacher = db.query(User).filter(User.id == user_id).first()
-    if not teacher:
-        return HTMLResponse("<h3>Không tìm thấy thông tin giáo viên.</h3>", status_code=404)
-
-    # 🖼️ Lưu avatar mới nếu có
-    avatar_url = save_avatar_file(avatar, teacher.avatar_url)
-
-    # ✅ Cập nhật thông tin
-    teacher.full_name = full_name.strip()
-    teacher.email = email.strip()
-    teacher.phone = phone.strip()
-    teacher.avatar_url = avatar_url
-    teacher.updated_at = datetime.utcnow()
-
+    db.add(user)
     db.commit()
-    print(f"✅ Giáo viên {teacher.full_name} cập nhật hồ sơ thành công.")
-
-    return RedirectResponse(url="/teacher/profile?msg=updated", status_code=303)
-
-# =====================================================
-# 🔑 FORM ĐỔI MẬT KHẨU
-# =====================================================
-@router.get("/profile/change-password", response_class=HTMLResponse)
-async def change_password_form(request: Request):
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-    return templates.TemplateResponse("change_password.html", {"request": request})
-
-# =====================================================
-# 💾 ĐỔI MẬT KHẨU (DÙNG CHUNG PASSWORD SERVICE)
-# =====================================================
-@router.post("/profile/change-password")
-async def change_password(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_password: str = Form(...),
-    new_password: str = Form(...),
-    confirm_password: str = Form(...),
-):
-    """Đổi mật khẩu cho giáo viên đang đăng nhập"""
-    user_id = request.session.get("user_id")
-    role = request.session.get("role")
-
-    if not user_id or role != "teacher":
-        return RedirectResponse(url="/auth/login", status_code=303)
-
-    # 🔁 Gọi service dùng chung
-    result = change_user_password(db, user_id, current_password, new_password, confirm_password)
-    if not result["success"]:
-        return HTMLResponse(
-            f"<h3 class='text-danger text-center mt-5'>{result['message']}</h3>", status_code=400
-        )
-
-    print(f"🔑 Giáo viên ID={user_id} đổi mật khẩu thành công.")
-    return RedirectResponse(url="/teacher/profile?msg=password_changed", status_code=303)
+    db.refresh(user)
+    print(f"👤 Tạo người dùng mới: {user.full_name} ({role_name})")
+    return user
