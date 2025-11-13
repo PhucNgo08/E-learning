@@ -16,38 +16,45 @@ class Assignment(Base):
 
     id = Column(String(36), primary_key=True, default=uuid_str)
 
-    # Thông tin chính
+    # 🧾 Thông tin chính
     title = Column(String(255), nullable=False)
     description = Column(Text)
 
-    # Liên kết
+    # 🔗 Liên kết
     course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
     module_id = Column(String(36), ForeignKey("modules.id"), nullable=True)
     teacher_id = Column(String(36), ForeignKey("users.id"), nullable=False)
 
-    # Cấu hình nộp bài
-    submission_type = Column(Enum("individual", "group", name="submission_type_enum"), default="individual")
+    # ⚙️ Cấu hình nộp bài
+    submission_type = Column(
+        Enum("individual", "group", name="submission_type_enum"), default="individual"
+    )
     allowed_file_types = Column(String(200))  # ví dụ: "pdf,docx,zip"
     max_files = Column(Integer, default=5)
     max_file_size_mb = Column(Integer, default=50)
 
-    # Thời gian và điểm
+    # 🕒 Thời gian & điểm
     start_date = Column(DateTime, default=datetime.utcnow)
     due_date = Column(DateTime, nullable=False)
     allow_late_submission = Column(Integer, default=0)  # 0 = không cho nộp trễ
     late_penalty_percent = Column(DECIMAL(5, 2), default=0)
     total_points = Column(DECIMAL(5, 2), default=10)
     grading_criteria = Column(Text)
+    max_score = Column(Integer, default=100)  # ✅ thêm để khớp DB
 
-    # Hệ thống
+    # 🗓️ Hệ thống
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 🔗 Quan hệ
+    # 🔗 Quan hệ ORM
     course = relationship("Course", back_populates="assignments")
     module = relationship("Module", back_populates="assignments")
     teacher = relationship("User", back_populates="assignments_created")
-    submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete")
+    submissions = relationship(
+        "AssignmentSubmission",
+        back_populates="assignment",
+        cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Assignment(title='{self.title}', course_id='{self.course_id}')>"

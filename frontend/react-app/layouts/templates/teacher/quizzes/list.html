@@ -20,8 +20,9 @@
           <th>#</th>
           <th>Tên Quiz</th>
           <th>Khóa học</th>
+          <th>Độ khó</th>
           <th>Thời lượng</th>
-          <th>Tổng điểm</th>
+          <th>Tổng câu hỏi</th>
           <th>Ngày tạo</th>
           <th class="text-center">Hành động</th>
         </tr>
@@ -32,22 +33,36 @@
           <td>{{ loop.index }}</td>
           <td class="fw-semibold">{{ quiz.title }}</td>
           <td>{{ quiz.course.course_name if quiz.course else "—" }}</td>
-          <td>{{ quiz.duration_minutes }} phút</td>
-          <td>{{ quiz.total_marks }}</td>
-          <td>{{ quiz.created_at|datetime }}</td>
+          <td>
+            {% if quiz.difficulty_level == "easy" %}
+              <span class="badge bg-success">Dễ</span>
+            {% elif quiz.difficulty_level == "medium" %}
+              <span class="badge bg-warning text-dark">Trung bình</span>
+            {% else %}
+              <span class="badge bg-danger">Khó</span>
+            {% endif %}
+          </td>
+          <td>{{ quiz.time_limit_minutes or "—" }} phút</td>
+          <td>{{ quiz.total_questions }}</td>
+          <td>{{ quiz.created_at.strftime('%d/%m/%Y %H:%M') if quiz.created_at else "—" }}</td>
           <td class="text-center">
-            <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-info btn-sm">
-              <i class="bi bi-eye"></i>
-            </a>
-            <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-outline-primary btn-sm">
-              <i class="bi bi-pencil-square"></i>
-            </a>
-            <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}" style="display:inline-block;">
-              <button type="submit" class="btn btn-outline-danger btn-sm"
-                onclick="return confirm('Bạn có chắc muốn xóa quiz này không?');">
-                <i class="bi bi-trash"></i>
-              </button>
-            </form>
+            <div class="btn-group" role="group">
+              <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-info btn-sm" title="Xem chi tiết">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-outline-primary btn-sm" title="Chỉnh sửa">
+                <i class="bi bi-pencil-square"></i>
+              </a>
+              <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-outline-warning btn-sm" title="Thống kê kết quả">
+                <i class="bi bi-graph-up"></i>
+              </a>
+              <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}" style="display:inline-block;">
+                <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa"
+                  onclick="return confirm('Bạn có chắc muốn xóa quiz này không?');">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}

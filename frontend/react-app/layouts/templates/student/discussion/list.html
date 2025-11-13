@@ -1,41 +1,52 @@
 {% extends "layout_student.html" %}
-{% block title %}{{ page_title }}{% endblock %}
+{% block title %}💬 Danh sách thảo luận{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="discussion-container fade-in">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-primary">{{ page_title }}</h3>
-    {% if course_id %}
-      <a href="{{ url_for('create_discussion_page', course_id=course_id) }}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> Tạo thảo luận mới
-      </a>
-    {% else %}
-      <a href="{{ url_for('create_general_discussion') }}" class="btn btn-success">
-        <i class="bi bi-plus-circle"></i> Tạo thảo luận chung
-      </a>
+    <h3 class="fw-bold text-gradient mb-0">
+      <i class="bi bi-chat-dots me-2"></i> {{ page_title or "💬 Thảo luận" }}
+    </h3>
+    <a href="/student/discussion/create" class="btn btn-primary rounded-pill">
+      <i class="bi bi-plus-circle me-1"></i> Tạo bài mới
+    </a>
+  </div>
+
+  <form method="get" action="/student/discussion/search" class="mb-3">
+    <div class="input-group">
+      <input type="text" name="keyword" placeholder="🔍 Tìm kiếm thảo luận..." class="form-control" />
+      <button class="btn btn-outline-secondary" type="submit">Tìm</button>
+    </div>
+  </form>
+
+  {% if discussions %}
+  <div class="list-group shadow-sm rounded-3">
+    {% for d in discussions %}
+    <a href="/student/discussion/detail/{{ d.id }}" class="list-group-item list-group-item-action py-3">
+      <div class="d-flex w-100 justify-content-between">
+        <h5 class="mb-1 fw-semibold">{{ d.author.full_name if d.author else "Ẩn danh" }}</h5>
+        <small class="text-muted">{{ d.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+      </div>
+      <p class="mb-1 text-secondary">{{ d.content[:180] ~ ('...' if d.content|length > 180) }}</p>
+      <small class="text-info"><i class="bi bi-book"></i> {{ d.course.course_name if d.course else "Khóa học chưa xác định" }}</small>
+    </a>
+    {% endfor %}
+  </div>
+
+  <div class="text-center mt-4">
+    {% if page > 1 %}
+      <a href="?page={{ page - 1 }}" class="btn btn-outline-secondary btn-sm">← Trước</a>
+    {% endif %}
+    <span class="mx-2">Trang {{ page }}/{{ total_pages }}</span>
+    {% if page < total_pages %}
+      <a href="?page={{ page + 1 }}" class="btn btn-outline-secondary btn-sm">Sau →</a>
     {% endif %}
   </div>
 
-  {% if discussions %}
-    <div class="list-group shadow-sm">
-      {% for d in discussions %}
-      <a href="{{ url_for('discussion_detail', discussion_id=d.id) }}"
-         class="list-group-item list-group-item-action flex-column align-items-start">
-        <div class="d-flex w-100 justify-content-between">
-          <h5 class="mb-1 fw-semibold text-dark">
-            {{ d.user.full_name if d.user else "Ẩn danh" }}
-          </h5>
-          <small class="text-muted">{{ d.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
-        </div>
-        <p class="mb-1 text-secondary">{{ d.content[:200] }}{% if d.content|length > 200 %}...{% endif %}</p>
-        {% if not course_id %}
-          <small class="text-primary">📘 {{ d.course.course_name if d.course else "Không rõ khóa học" }}</small>
-        {% endif %}
-      </a>
-      {% endfor %}
-    </div>
   {% else %}
-    <div class="alert alert-info text-center">💬 Chưa có bài thảo luận nào.</div>
+  <div class="alert alert-info mt-4">
+    <i class="bi bi-info-circle me-1"></i> Chưa có bài thảo luận nào.
+  </div>
   {% endif %}
 </div>
 {% endblock %}

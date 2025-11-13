@@ -1,0 +1,173 @@
+{% extends "layout_admin.html" %}
+{% block title %}📦 Quản lý File lưu trữ{% endblock %}
+
+{% block content %}
+<style>
+/* ==========================================================
+🎨 File Manager – Neon Glass v3.1
+========================================================== */
+.file-header {
+  background: linear-gradient(90deg, #0061ff, #60efff);
+  color: white;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 15px rgba(0, 97, 255, 0.2);
+}
+
+.file-header h4 i {
+  color: #fff;
+}
+
+.file-header .btn {
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.file-header .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.table-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 15px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+body.dark-mode .table-card {
+  background: rgba(30, 30, 35, 0.75);
+  color: #e5e5e5;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.table th {
+  font-weight: 600;
+  background: rgba(240, 243, 255, 0.9);
+}
+
+body.dark-mode .table th {
+  background: rgba(50, 50, 60, 0.9);
+  color: #eaeaea;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 0.45em 0.7em;
+  border-radius: 10px;
+}
+
+.btn-sm i {
+  font-size: 0.9rem;
+}
+</style>
+
+<div class="container mt-4 mb-5">
+  <!-- 🗂️ Header -->
+  <div class="file-header mb-4">
+    <h4 class="fw-bold mb-0">
+      <i class="bi bi-folder2-open me-2"></i> Danh sách File
+    </h4>
+    <div>
+      <a href="/admin/file-storage/upload" class="btn btn-light text-primary me-2">
+        <i class="bi bi-upload"></i> Upload File
+      </a>
+      <a href="/admin/file-storage/stats" class="btn btn-outline-light border-light">
+        <i class="bi bi-bar-chart"></i> Thống kê
+      </a>
+    </div>
+  </div>
+
+  <!-- 📋 Danh sách File -->
+  <div class="table-card p-3">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width:5%">#</th>
+          <th style="width:25%">Tên File</th>
+          <th style="width:15%">Kích thước</th>
+          <th style="width:10%">Loại</th>
+          <th style="width:10%">Public</th>
+          <th style="width:15%">CDN Cache</th>
+          <th style="width:20%">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in files %}
+        <tr class="fade-in">
+          <td>{{ loop.index }}</td>
+          <td>
+            <i class="bi bi-file-earmark-text text-primary me-1"></i>
+            <a href="{{ f.file_url }}" target="_blank" class="fw-semibold text-decoration-none text-dark">
+              {{ f.file_name }}
+            </a>
+          </td>
+          <td>{{ (f.file_size / 1024) | round(2) }} KB</td>
+          <td>
+            <span class="badge bg-gradient bg-primary bg-opacity-75 text-white">
+              {{ f.storage_provider }}
+            </span>
+          </td>
+          <td>
+            {% if f.is_public %}
+              <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
+            {% else %}
+              <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
+            {% endif %}
+          </td>
+          <td>
+            {% set cdn = cdn_data.get(f.id) %}
+            {% if cdn %}
+              <span class="badge bg-info text-dark"><i class="bi bi-check2-circle"></i> {{ cdn.cache_status }}</span><br>
+              <small class="text-muted"><i class="bi bi-cloud me-1"></i>{{ cdn.cdn_provider }}</small>
+            {% else %}
+              <form method="post" action="/admin/file-storage/cdn/cache" class="d-inline">
+                <input type="hidden" name="file_id" value="{{ f.id }}">
+                <button class="btn btn-sm btn-outline-info rounded-pill">
+                  <i class="bi bi-cloud-plus"></i> Cache
+                </button>
+              </form>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/admin/file-storage/delete/{{ f.id }}" 
+               class="btn btn-sm btn-outline-danger rounded-pill" 
+               onclick="return confirm('Bạn có chắc muốn xóa file này?');">
+              <i class="bi bi-trash"></i> Xóa
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">
+            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+            <span>Chưa có file nào được tải lên.</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ✨ Hiệu ứng nhỏ -->
+<script>
+document.querySelectorAll(".fade-in").forEach((el, i) => {
+  el.style.opacity = 0;
+  el.style.transform = "translateY(10px)";
+  setTimeout(() => {
+    el.style.transition = "all 0.4s ease";
+    el.style.opacity = 1;
+    el.style.transform = "translateY(0)";
+  }, 100 * i);
+});
+</script>
+{% endblock %}

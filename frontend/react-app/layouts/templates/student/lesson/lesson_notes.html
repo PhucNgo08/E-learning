@@ -2,36 +2,31 @@
 {% block title %}📝 Ghi chú bài học{% endblock %}
 {% block content %}
 <div class="container py-4 fade-in">
-  <h4 class="fw-bold text-primary mb-3">
-    📝 Ghi chú cho bài: {{ lesson.title }}
-  </h4>
+  <a href="/student/lesson/{{ lesson.id }}" class="btn btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Quay lại bài học
+  </a>
 
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body">
-      <form method="post">
-        <div class="mb-3">
-          <textarea name="content" class="form-control" rows="5" placeholder="Nhập ghi chú của bạn..." required>{{ note.content if note else '' }}</textarea>
-        </div>
-        <button class="btn btn-primary">
-          <i class="bi bi-save"></i> Lưu ghi chú
-        </button>
-      </form>
-    </div>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-primary"><i class="bi bi-journal-text me-2"></i>{{ lesson.title }}</h3>
+    <a href="/student/lesson/note/add/{{ lesson.id }}" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Thêm ghi chú
+    </a>
   </div>
 
-  <h6 class="fw-semibold mb-3 text-secondary">🕓 Lịch sử ghi chú</h6>
   {% if notes %}
   <ul class="list-group">
-    {% for n in notes %}
+    {% for note in notes %}
     <li class="list-group-item">
-      <p class="mb-1">{{ n.content }}</p>
-      <small class="text-muted">⏰ {{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+      <p class="mb-1">{{ note.content }}</p>
+      <small class="text-muted">
+        <i class="bi bi-clock me-1"></i>{{ note.created_at.strftime("%d/%m/%Y %H:%M") }}
+      </small>
     </li>
     {% endfor %}
   </ul>
   {% else %}
   <div class="alert alert-info text-center">
-    <i class="bi bi-info-circle"></i> Bạn chưa có ghi chú nào.
+    <i class="bi bi-info-circle me-2"></i>Chưa có ghi chú nào cho bài học này.
   </div>
   {% endif %}
 </div>

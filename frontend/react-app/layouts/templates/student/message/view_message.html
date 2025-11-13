@@ -68,7 +68,7 @@
   }
 </style>
 
-<div class="container py-4">
+<div class="container py-4 fade-in">
   <div class="message-container">
     <!-- 🔹 Header -->
     <div class="message-header">
@@ -102,11 +102,13 @@
         <div>
           <i class="bi bi-paperclip me-2"></i>
           <strong>{{ message.attachment_name }}</strong>
-          <small class="text-muted">({{ message.attachment_size }})</small>
+          <small class="text-muted">
+         ({{ "%.1f"|format(((message.attachment_size|float) or 0)/1024) }} KB)
+          </small>
         </div>
-        <a href="/{{ message.attachment_url }}" 
+        <a href="/student/message/download/{{ message.id }}" 
            class="btn btn-sm btn-outline-primary" 
-           download title="Tải xuống tệp">
+           title="Tải xuống tệp">
           <i class="bi bi-download"></i> Tải xuống
         </a>
       </div>

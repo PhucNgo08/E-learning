@@ -6,7 +6,6 @@ from app.services.teacher import class_service
 from app.dependencies.auth import get_current_teacher
 from app.config.template_config import get_template_by_path
 
-
 # =========================================================
 # 🚀 Router
 # =========================================================
@@ -14,7 +13,6 @@ router = APIRouter(
     prefix="/teacher/classes",
     tags=["Teacher - Classes"]
 )
-
 
 # =========================================================
 # 🧭 0️⃣ Redirect gốc → /list
@@ -26,7 +24,6 @@ def redirect_root():
         content='<meta http-equiv="refresh" content="0;url=/teacher/classes/list">',
         status_code=200
     )
-
 
 # =========================================================
 # 📋 1️⃣ Danh sách lớp mà giáo viên phụ trách
@@ -50,7 +47,6 @@ def class_list(
     except Exception as e:
         print("❌ Lỗi khi tải danh sách lớp:", e)
         raise HTTPException(status_code=500, detail="Không thể tải danh sách lớp học.")
-
 
 # =========================================================
 # 👨‍🎓 2️⃣ Xem danh sách học viên trong lớp
@@ -83,3 +79,35 @@ def class_students(
     except Exception as e:
         print("❌ Lỗi khi tải danh sách học viên:", e)
         raise HTTPException(status_code=500, detail="Không thể tải danh sách học viên.")
+
+# =========================================================
+# 📊 3️⃣ Thống kê điểm tổng hợp theo lớp
+# =========================================================
+@router.get("/stats/{class_id}", response_class=HTMLResponse)
+def class_statistics(
+    class_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    """Thống kê điểm trung bình quiz + assignment cho từng học viên trong lớp"""
+    try:
+        class_info = class_service.get_class_info(db, class_id)
+        if not class_info:
+            raise HTTPException(status_code=404, detail="Không tìm thấy lớp học.")
+
+        stats = class_service.get_class_grade_statistics(db, class_id)
+
+        templates = get_template_by_path(str(request.url.path))
+        return templates.TemplateResponse(
+            "classes/statistics.html",
+            {
+                "request": request,
+                "class_info": class_info,
+                "stats": stats,
+                "teacher_name": current_teacher.full_name,
+            },
+        )
+    except Exception as e:
+        print("❌ Lỗi khi thống kê điểm lớp:", e)
+        raise HTTPException(status_code=500, detail="Không thể thống kê điểm lớp học.")

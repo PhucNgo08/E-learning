@@ -1,144 +1,179 @@
 /* =====================================================
-🎓 TEACHER DASHBOARD STYLES
-Author: E-Learning Platform
-Version: 1.0
+🎓 TEACHER DASHBOARD – Glass Neo 2025 Animated
 ===================================================== */
 
 /* === Tổng thể === */
 .dashboard-wrapper {
-  background: #f8fafc;
+  background: var(--bg);
   min-height: 100vh;
+  color: var(--text);
+  transition: background 0.4s, color 0.4s;
 }
 
-/* === Hero Section (chào giáo viên) === */
+/* === Hero Section === */
 .teacher-hero {
-  border-radius: 20px;
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  background: var(--card-bg);
+  border-radius: 22px;
+  padding: 2rem;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: transform 0.3s ease, box-shadow 0.4s ease;
+  animation: heroGlow 6s ease-in-out infinite alternate;
 }
 .teacher-hero:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.15);
 }
-.teacher-hero .btn-gradient {
-  background: linear-gradient(135deg, #3b82f6, #6366f1);
+@keyframes heroGlow {
+  0% { box-shadow: 0 0 20px rgba(59,130,246,0.2); }
+  100% { box-shadow: 0 0 40px rgba(99,102,241,0.3); }
+}
+
+/* === Avatar Glow === */
+.teacher-avatar img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid rgba(255,255,255,0.8);
+  box-shadow: 0 0 25px rgba(37,99,235,0.5);
+  animation: avatarPulse 3s ease-in-out infinite alternate;
+}
+@keyframes avatarPulse {
+  0% { box-shadow: 0 0 18px rgba(59,130,246,0.4); }
+  100% { box-shadow: 0 0 35px rgba(99,102,241,0.6); }
+}
+
+/* === Nút Gradient === */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--blue1), #6366f1);
   color: #fff;
   border: none;
+  padding: 0.7rem 1.4rem;
+  border-radius: 10px;
   transition: all 0.3s ease;
+  box-shadow: 0 6px 12px rgba(37,99,235,0.25);
 }
-.teacher-hero .btn-gradient:hover {
-  background: linear-gradient(135deg, #2563eb, #4f46e5);
-  transform: translateY(-1px);
-}
-
-/* === Avatar === */
-.teacher-avatar img {
-  width: 110px;
-  height: 110px;
-  object-fit: cover;
-  border: 3px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.avatar-glow {
-  animation: glowPulse 2s ease-in-out infinite;
-}
-@keyframes glowPulse {
-  0% {
-    box-shadow: 0 0 0 rgba(59, 130, 246, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
-  }
-  100% {
-    box-shadow: 0 0 0 rgba(59, 130, 246, 0.4);
-  }
+.btn-gradient:hover {
+  background: linear-gradient(135deg, #1d4ed8, #4338ca);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(59,130,246,0.35);
 }
 
-/* === Card thống kê nhanh === */
+/* === Stat Cards === */
 .stat-card {
-  border-radius: 16px;
-  overflow: hidden;
-  color: white;
-  height: 140px;
+  border-radius: 18px;
+  color: #fff;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-}
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
-}
-.stat-card .card-body {
   text-align: center;
-}
-
-/* === Màu gradient === */
-.gradient-blue {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-}
-.gradient-green {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-}
-.gradient-purple {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-}
-.gradient-orange {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-}
-
-/* === Tiến độ khóa học === */
-.progress {
-  background-color: #e5e7eb;
-  border-radius: 30px;
-  height: 6px;
   overflow: hidden;
   position: relative;
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease, box-shadow 0.4s ease;
+}
+.stat-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-size: 300% 300%;
+  z-index: 0;
+  opacity: 0.95;
+  animation: gradientFlow 6s ease infinite;
+  border-radius: inherit;
+}
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.stat-card .card-body {
+  position: relative;
+  z-index: 1;
+}
+.stat-card i {
+  font-size: 2rem;
+  opacity: 0.95;
+}
+.stat-card h5 {
+  font-size: 1.8rem;
+  margin: 0.5rem 0 0;
+}
+.stat-card p {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.85;
 }
 
-.progress-bar {
-  height: 100%;
-  border-radius: 30px;
-  background: linear-gradient(90deg, #3b82f6, #6366f1);
-  width: 0%;
-  transition: width 0.6s ease;
-}
+/* === Màu Gradient Animated === */
+.gradient-blue::before { background: linear-gradient(120deg,#3b82f6,#2563eb,#60a5fa); }
+.gradient-green::before { background: linear-gradient(120deg,#22c55e,#15803d,#4ade80); }
+.gradient-purple::before { background: linear-gradient(120deg,#8b5cf6,#6d28d9,#a78bfa); }
+.gradient-orange::before { background: linear-gradient(120deg,#f59e0b,#d97706,#fbbf24); }
 
-/* ✅ Hỗ trợ biến CSS --percent (đã dùng trong HTML) */
-.progress[style*="--percent"] .progress-bar {
-  width: calc(var(--percent) * 1%);
-}
-
-/* === Course Card === */
+/* === Course Cards === */
 .course-card {
-  border-radius: 16px;
-  background-color: #fff;
+  border-radius: 18px;
+  background: var(--card-bg);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
   transition: all 0.3s ease;
 }
 .course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
 .course-thumb {
   width: 100%;
-  height: 150px;
+  height: 160px;
   object-fit: cover;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-top-left-radius: 18px;
+  border-top-right-radius: 18px;
 }
 
+/* === Progress bar === */
+.progress {
+  background-color: rgba(229,231,235,0.7);
+  border-radius: 30px;
+  height: 6px;
+  overflow: hidden;
+}
+.progress-bar {
+  height: 100%;
+  border-radius: 30px;
+  background: linear-gradient(90deg,var(--blue1),#6366f1,#3b82f6);
+  width: 0%;
+  transition: width 1.2s ease-out;
+  animation: progressGlow 3s ease-in-out infinite alternate;
+}
+@keyframes progressGlow {
+  0% { box-shadow: 0 0 8px rgba(59,130,246,0.3); }
+  100% { box-shadow: 0 0 16px rgba(99,102,241,0.4); }
+}
+.progress[style*="--percent"] .progress-bar {
+  width: calc(var(--percent) * 1%);
+}
+
+/* === Reveal Animation === */
+.reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
 /* === Responsive === */
-@media (max-width: 768px) {
-  .teacher-hero {
-    flex-direction: column;
-    text-align: center;
-  }
-  .teacher-avatar {
-    margin-top: 1rem;
-  }
-  .stat-card {
-    height: 120px;
-  }
-  .course-thumb {
-    height: 140px;
-  }
+@media (max-width: 992px) {
+  .teacher-hero { flex-direction: column; text-align: center; gap: 1rem; }
+  .teacher-avatar { margin-top: 1rem; }
+  .stat-card { height: 130px; }
+  .course-thumb { height: 140px; }
 }

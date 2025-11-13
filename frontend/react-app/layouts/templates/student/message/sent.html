@@ -1,34 +1,34 @@
 {% extends "layout_student.html" %}
-{% block title %}📤 Tin nhắn đã gửi{% endblock %}
-
+{% block title %}📤 Hộp thư đã gửi{% endblock %}
 {% block content %}
-<div class="container">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold text-primary"><i class="bi bi-send-check"></i> Tin nhắn đã gửi</h4>
-    <a href="/student/message/compose" class="btn btn-primary btn-sm">
-      <i class="bi bi-pencil-square"></i> Soạn tin mới
+<div class="container py-4 fade-in">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-primary"><i class="bi bi-send-check me-2"></i>Hộp thư đã gửi</h3>
+    <a href="/student/message/compose" class="btn btn-success">
+      <i class="bi bi-pencil-square"></i> Gửi tin mới
     </a>
   </div>
 
   {% if messages %}
-  <div class="list-group shadow-sm">
-    {% for msg in messages %}
-    <a href="/student/message/view/{{ msg.id }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
-      <div>
-        <div class="fw-semibold text-dark">
-          <i class="bi bi-person-fill text-success"></i>
-          Gửi đến: {{ msg.receiver.full_name if msg.receiver else "Người nhận ẩn danh" }}
+    <div class="list-group shadow-sm">
+      {% for m in messages %}
+      <a href="/student/message/view/{{ m.id }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-start">
+        <div>
+          <div class="fw-semibold text-dark">
+            <i class="bi bi-person-fill-check me-1 text-success"></i> {{ m.receiver.full_name if m.receiver else "Người nhận ẩn danh" }}
+          </div>
+          <small class="text-muted d-block">{{ m.content[:90] ~ ('...' if m.content|length > 90 else '') }}</small>
         </div>
-        <small class="text-muted">{{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}</small>
-      </div>
-      <small class="text-secondary">{{ msg.sent_at.strftime("%d/%m/%Y %H:%M") }}</small>
-    </a>
-    {% endfor %}
-  </div>
+        <div class="text-end small text-secondary">
+          <i class="bi bi-clock me-1"></i>{{ m.sent_at.strftime("%d/%m/%Y %H:%M") }}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
   {% else %}
-  <div class="alert alert-info text-center mt-4 shadow-sm">
-    <i class="bi bi-envelope-paper"></i> Bạn chưa gửi tin nhắn nào.
-  </div>
+    <div class="alert alert-info text-center mt-4">
+      <i class="bi bi-info-circle me-2"></i>Bạn chưa gửi tin nhắn nào.
+    </div>
   {% endif %}
 </div>
 {% endblock %}

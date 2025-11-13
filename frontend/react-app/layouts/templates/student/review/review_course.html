@@ -1,58 +1,48 @@
 {% extends "layout_student.html" %}
-{% block title %}⭐ Đánh giá khóa học{% endblock %}
+{% block title %}📖 Đánh giá khóa học{% endblock %}
 
 {% block content %}
 <div class="container py-4">
-  <div class="card border-0 shadow-sm p-4">
-    <div class="d-flex align-items-center mb-3">
-      <i class="bi bi-star text-warning fs-4 me-2"></i>
-      <h4 class="fw-bold text-primary mb-0">Đánh giá khóa học: {{ course.course_name }}</h4>
-    </div>
-
-    <form method="post" action="/student/review/submit/{{ course.id }}">
-      <div class="mb-4">
-        <label class="form-label fw-semibold">Chọn số sao:</label>
-        <div class="rating">
-          {% for i in range(5,0,-1) %}
-          <input type="radio" id="star{{i}}" name="rating" value="{{i}}" required>
-          <label for="star{{i}}" title="{{i}} sao">
-            <i class="bi bi-star-fill"></i>
-          </label>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Nhận xét của bạn:</label>
-        <textarea class="form-control" name="comment" rows="4" placeholder="Viết nhận xét..."></textarea>
-      </div>
-
-      <div class="text-end">
-        <button type="submit" class="btn btn-success px-4">
-          <i class="bi bi-send"></i> Gửi đánh giá
-        </button>
-      </div>
-    </form>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0"><i class="bi bi-book"></i> {{ course.title }}</h4>
+    <a href="/student/review/submit/{{ course.id }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-pencil-square"></i> Gửi đánh giá
+    </a>
   </div>
-</div>
 
-<style>
-.rating {
-  direction: rtl;
-  display: inline-flex;
-  gap: 4px;
-}
-.rating input { display: none; }
-.rating label {
-  color: #ddd;
-  font-size: 1.6rem;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-.rating input:checked ~ label,
-.rating label:hover,
-.rating label:hover ~ label {
-  color: #ffc107;
-}
-</style>
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-body text-center">
+      <h5 class="text-secondary mb-2">Điểm trung bình</h5>
+      <h2 class="text-warning fw-bold mb-0">{{ average_rating }}/5</h2>
+    </div>
+  </div>
+
+  {% if reviews %}
+  <div class="list-group shadow-sm">
+    {% for r in reviews %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between">
+        <h6 class="fw-semibold">{{ r.title }}</h6>
+        <small class="text-muted">{{ r.created_at.strftime("%d/%m/%Y") }}</small>
+      </div>
+      <div class="mb-2 text-warning">
+        {% for i in range(1,6) %}
+          {% if i <= r.overall_rating|round(0, 'floor') %}
+            <i class="bi bi-star-fill"></i>
+          {% else %}
+            <i class="bi bi-star"></i>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <p class="text-muted mb-1">{{ r.comment }}</p>
+      <small class="text-secondary">— {{ r.user_name }}</small>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info text-center">
+    <i class="bi bi-info-circle"></i> Chưa có đánh giá nào cho khóa học này.
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

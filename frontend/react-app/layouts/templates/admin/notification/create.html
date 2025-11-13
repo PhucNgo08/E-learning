@@ -1,0 +1,268 @@
+{% extends "layout_admin.html" %}
+{% block title %}📨 Gửi thông báo mới{% endblock %}
+
+{% block head_extra %}
+<style>
+  body {
+    background: linear-gradient(180deg, #f6f9ff, #ffffff);
+  }
+  .search-box-wrapper { position: relative; }
+  .search-box {
+    border-radius: 10px;
+    padding-left: 38px;
+  }
+  .search-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: #6c757d;
+  }
+  .suggestion-box {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+  .suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .suggestion-item:hover {
+    background-color: #eef3ff;
+  }
+  .highlight {
+    font-weight: 600;
+    color: #4051b5;
+  }
+  .selected-users {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .user-tag {
+    background: #5f72ff;
+    color: #fff;
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .user-tag i { cursor: pointer; }
+  .broadcast-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .fade-in { animation: fadeIn 0.5s ease-in-out; }
+  @keyframes fadeIn {
+    from {opacity: 0; transform: translateY(10px);}
+    to {opacity: 1; transform: translateY(0);}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 fade-in">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-plus-circle"></i> Gửi thông báo mới
+    </h4>
+    <a href="/admin/notification/list" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại danh sách
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Form -->
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body">
+          <form method="post" action="/admin/notification/create" id="notifyForm">
+
+            <!-- 📢 Broadcast -->
+            <div class="broadcast-toggle">
+              <input type="checkbox" id="broadcastAll" name="broadcast_all" class="form-check-input">
+              <label for="broadcastAll" class="form-check-label fw-semibold text-danger">
+                📢 Gửi cho tất cả người dùng
+              </label>
+            </div>
+
+            <!-- 👥 Người nhận -->
+            <div id="recipientSection">
+              <label class="form-label fw-semibold">👥 Người nhận</label>
+              <div class="search-box-wrapper mb-2">
+                <i class="bi bi-search search-icon"></i>
+                <input type="text" id="userSearch" class="form-control search-box" placeholder="Nhập tên người dùng...">
+                <div id="suggestionBox" class="suggestion-box"></div>
+              </div>
+              <div id="selectedUsers" class="selected-users"></div>
+              <input type="hidden" name="user_ids" id="userIds">
+              <small class="text-muted">Gõ tên người dùng để tìm và chọn nhiều người.</small>
+              <hr>
+            </div>
+
+            <!-- 📌 Tiêu đề -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">📌 Tiêu đề</label>
+              <input type="text" name="title" id="titleInput" class="form-control" maxlength="100"
+                     placeholder="Nhập tiêu đề..." required>
+              <div class="text-end small text-muted"><span id="titleCount">0</span> / 100</div>
+            </div>
+
+            <!-- 💬 Nội dung -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">💬 Nội dung</label>
+              <textarea name="message" id="messageInput" class="form-control" rows="5" maxlength="500"
+                        placeholder="Nhập nội dung..." required></textarea>
+              <div class="text-end small text-muted"><span id="messageCount">0</span> / 500</div>
+            </div>
+
+            <div class="text-end">
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-send"></i> Gửi thông báo
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body">
+          <h5 class="fw-bold text-primary"><i class="bi bi-eye me-2"></i> Xem trước</h5>
+          <hr>
+          <p><strong>📌 Tiêu đề:</strong> <span id="previewTitle" class="text-dark">—</span></p>
+          <p><strong>💬 Nội dung:</strong></p>
+          <div id="previewMessage" class="border rounded p-2 bg-light small text-dark">—</div>
+          <hr>
+          <p class="small text-muted mb-0"><i class="bi bi-info-circle"></i> 
+            Nếu bật <strong>Broadcast</strong>, thông báo sẽ gửi đến tất cả người dùng.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==============================
+// 👥 Lọc và gợi ý user theo tên
+// ==============================
+const allUsers = JSON.parse(`[
+  {% for user in users %}
+    {"id": "{{ user.id }}", "name": "{{ user.full_name | e }}"}{% if not loop.last %},{% endif %}
+  {% endfor %}
+]`);
+
+const userSearch = document.getElementById('userSearch');
+const suggestionBox = document.getElementById('suggestionBox');
+const selectedUsers = document.getElementById('selectedUsers');
+const userIds = document.getElementById('userIds');
+const selected = new Map();
+
+function renderSuggestions(list, keyword = '') {
+  suggestionBox.innerHTML = '';
+  if (list.length === 0) {
+    suggestionBox.style.display = 'none';
+    return;
+  }
+  list.forEach(u => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+    item.innerHTML = u.name.replace(new RegExp(`(${keyword})`, 'gi'), '<span class="highlight">$1</span>');
+    item.onclick = () => selectUser(u);
+    suggestionBox.appendChild(item);
+  });
+  suggestionBox.style.display = 'block';
+}
+
+function selectUser(user) {
+  if (selected.has(user.id)) return;
+  selected.set(user.id, user.name);
+
+  const tag = document.createElement('div');
+  tag.className = 'user-tag';
+  tag.innerHTML = `${user.name} <i class="bi bi-x-circle"></i>`;
+  tag.querySelector('i').onclick = () => {
+    selected.delete(user.id);
+    tag.remove();
+    updateHiddenInput();
+  };
+  selectedUsers.appendChild(tag);
+  updateHiddenInput();
+  suggestionBox.style.display = 'none';
+  userSearch.value = '';
+}
+
+function updateHiddenInput() {
+  userIds.value = Array.from(selected.keys()).join(',');
+}
+
+userSearch.addEventListener('input', () => {
+  const q = userSearch.value.toLowerCase().trim();
+  if (!q) {
+    suggestionBox.style.display = 'none';
+    return;
+  }
+  const matches = allUsers.filter(u => u.name.toLowerCase().includes(q));
+  renderSuggestions(matches, q);
+});
+
+// Enter chọn nhanh user đầu tiên
+userSearch.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const first = suggestionBox.querySelector('.suggestion-item');
+    if (first) first.click();
+  }
+});
+
+// Click ra ngoài đóng suggestion
+document.addEventListener('click', e => {
+  if (!suggestionBox.contains(e.target) && e.target !== userSearch) {
+    suggestionBox.style.display = 'none';
+  }
+});
+
+// 📢 Broadcast toggle
+document.getElementById('broadcastAll').addEventListener('change', function() {
+  const section = document.getElementById('recipientSection');
+  section.style.display = this.checked ? 'none' : 'block';
+});
+
+// 🧠 Preview
+const title = document.getElementById('titleInput');
+const message = document.getElementById('messageInput');
+const titleCount = document.getElementById('titleCount');
+const messageCount = document.getElementById('messageCount');
+const previewTitle = document.getElementById('previewTitle');
+const previewMessage = document.getElementById('previewMessage');
+
+function updatePreview() {
+  previewTitle.textContent = title.value || '—';
+  previewMessage.textContent = message.value || '—';
+  titleCount.textContent = title.value.length;
+  messageCount.textContent = message.value.length;
+}
+
+title.addEventListener('input', updatePreview);
+message.addEventListener('input', updatePreview);
+</script>
+{% endblock %}

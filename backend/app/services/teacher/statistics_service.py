@@ -32,7 +32,7 @@ def get_teacher_statistics(db: Session, teacher_id: str):
         .count()
     )
 
-    # 🔹 Tổng số bài học (join qua Module → Course)
+    # 🔹 Tổng số bài học
     total_lessons = (
         db.query(Lesson)
         .join(Module, Lesson.module_id == Module.id)
@@ -56,13 +56,35 @@ def get_teacher_statistics(db: Session, teacher_id: str):
         .count()
     )
 
-    # 🔹 Điểm trung bình đánh giá khóa học
+    # 🔹 Tổng số đánh giá nhận được
+    total_reviews = (
+        db.query(CourseReview)
+        .join(Course, CourseReview.course_id == Course.id)
+        .filter(Course.teacher_id == teacher_id)
+        .count()
+    )
+
+    # 🔹 Điểm trung bình đánh giá
     avg_rating = (
         db.query(func.avg(CourseReview.overall_rating))
         .join(Course, CourseReview.course_id == Course.id)
         .filter(Course.teacher_id == teacher_id)
         .scalar()
-    )
+    ) or 0
+
+    # 🔹 Phân bố điểm đánh giá (1–5 sao)
+    rating_distribution = [
+        db.query(func.count(CourseReview.id))
+        .join(Course, CourseReview.course_id == Course.id)
+        .filter(
+            Course.teacher_id == teacher_id,
+            CourseReview.overall_rating >= i,
+            CourseReview.overall_rating < i + 1,
+        )
+        .scalar()
+        or 0
+        for i in range(1, 6)
+    ]
 
     # 🔹 Top 3 khóa học được đánh giá cao nhất
     top_courses = (
@@ -79,13 +101,18 @@ def get_teacher_statistics(db: Session, teacher_id: str):
         .all()
     )
 
+    # ======================================================
+    # 📦 Trả kết quả
+    # ======================================================
     return {
         "total_courses": total_courses,
         "total_modules": total_modules,
         "total_lessons": total_lessons,
         "total_assignments": total_assignments,
         "total_students": total_students,
-        "average_rating": round(float(avg_rating or 0), 2),
+        "total_reviews": total_reviews,
+        "average_rating": round(float(avg_rating), 2),
+        "rating_distribution": rating_distribution,
         "top_courses": [
             {
                 "name": c.course_name,

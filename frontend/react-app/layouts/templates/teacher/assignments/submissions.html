@@ -5,37 +5,59 @@
   <title>📂 Danh sách bài nộp</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #f4f6f9;
+    }
+    .badge {
+      font-size: 0.85rem;
+      padding: 6px 10px;
+    }
+    .table thead th {
+      background-color: #007bff;
+      color: white;
+      text-align: center;
+    }
+  </style>
 </head>
 
-<body class="bg-light p-4">
-
+<body class="p-4">
   <div class="container bg-white p-4 rounded shadow-sm">
+
+    <!-- 🧭 Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4>
-        <i class="bi bi-folder2-open text-primary"></i> Bài nộp cho: 
+      <h4 class="text-primary mb-0">
+        <i class="bi bi-folder2-open"></i> Bài nộp cho:
         <span class="text-success">{{ assignment.title }}</span>
       </h4>
-      <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại danh sách
-      </a>
+      <div>
+        <a href="/teacher/assignments/export/{{ assignment.id }}" class="btn btn-success me-2">
+          <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </a>
+        <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+      </div>
     </div>
 
+    <!-- 📋 Bảng danh sách bài nộp -->
     {% if submissions %}
     <table class="table table-hover align-middle">
-      <thead class="table-primary">
+      <thead>
         <tr>
-          <th>Học viên</th>
-          <th>Thời gian nộp</th>
-          <th>Trạng thái</th>
-          <th>Điểm</th>
-          <th>Phản hồi</th>
-          <th class="text-center">Thao tác</th>
+          <th>👨‍🎓 Học viên</th>
+          <th>🕓 Thời gian nộp</th>
+          <th>📌 Trạng thái</th>
+          <th>💯 Điểm</th>
+          <th>📝 Phản hồi</th>
+          <th class="text-center">⚙️ Thao tác</th>
         </tr>
       </thead>
       <tbody>
-        {% for s, u in submissions %}
+        {% for s in submissions %}
         <tr>
-          <td>{{ u.full_name }}</td>
+          <td>{{ s.student.full_name if s.student else 'Không rõ' }}</td>
           <td>
             {% if s.submission_time %}
               {{ s.submission_time.strftime('%d/%m/%Y %H:%M') }}
@@ -43,18 +65,20 @@
               <em class="text-muted">Chưa nộp</em>
             {% endif %}
           </td>
-          <td>
+          <td class="text-center">
             {% if s.status == 'graded' %}
-              <span class="badge bg-success">Đã chấm</span>
+              <span class="badge bg-success"><i class="bi bi-check-circle"></i> Đã chấm</span>
             {% elif s.status == 'submitted' %}
-              <span class="badge bg-info text-dark">Đã nộp</span>
+              <span class="badge bg-info text-dark"><i class="bi bi-upload"></i> Đã nộp</span>
             {% elif s.status == 'late' %}
-              <span class="badge bg-warning text-dark">Trễ hạn</span>
+              <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Trễ hạn</span>
+            {% elif s.status == 'resubmitted' %}
+              <span class="badge bg-primary"><i class="bi bi-arrow-repeat"></i> Nộp lại</span>
             {% else %}
-              <span class="badge bg-secondary">Chưa nộp</span>
+              <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i> Chưa nộp</span>
             {% endif %}
           </td>
-          <td>{{ s.grade if s.grade else '-' }}</td>
+          <td>{{ s.grade if s.grade is not none else '-' }}</td>
           <td>{{ s.feedback if s.feedback else '-' }}</td>
           <td class="text-center">
             <a href="/teacher/assignments/grade/{{ s.id }}" class="btn btn-sm btn-outline-primary">
@@ -65,12 +89,12 @@
         {% endfor %}
       </tbody>
     </table>
+
     {% else %}
       <div class="alert alert-warning text-center py-4">
         <i class="bi bi-exclamation-circle"></i> Chưa có bài nộp nào.
       </div>
     {% endif %}
   </div>
-
 </body>
 </html>

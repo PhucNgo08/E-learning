@@ -125,3 +125,25 @@ def get_template_by_path(path: str) -> Jinja2Templates:
     elif path.startswith("/auth"):
         return templates["auth"]
     return templates["root"]
+
+# ==========================================================
+# 🕓 FILTER BỔ SUNG: todatetime — chuyển chuỗi ISO thành datetime
+# ==========================================================
+from datetime import datetime
+
+def todatetime(value):
+    """Chuyển chuỗi ISO 8601 (yyyy-MM-ddTHH:mm:ss) thành datetime object."""
+    if not value:
+        return None
+    try:
+        # Nếu có ký tự 'Z' (ISO format UTC), loại bỏ trước khi parse
+        return datetime.fromisoformat(value.replace("Z", ""))
+    except Exception:
+        try:
+            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            return value
+
+# 🔗 Đăng ký filter cho tất cả template
+for tpl in templates.values():
+    tpl.env.filters["todatetime"] = todatetime

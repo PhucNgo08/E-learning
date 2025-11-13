@@ -1,12 +1,19 @@
 {% extends "layout_student.html" %}
-{% block title %}🙏 Cảm ơn{% endblock %}
+{% block title %}🙏 Cảm ơn bạn{% endblock %}
 
 {% block content %}
-<div class="container text-center py-5">
-  <div class="display-6 mb-3">🙏 Cảm ơn phản hồi của bạn!</div>
-  <p class="text-muted mb-4">Chúng tôi luôn trân trọng ý kiến đóng góp của bạn để cải thiện khóa học.</p>
-  <a href="{{ url_for('student_enrolled_courses') }}" class="btn btn-outline-primary">
-    <i class="bi bi-house-door"></i> Về trang khóa học
-  </a>
+<div class="container py-5 text-center">
+  <div class="card border-0 shadow-sm mx-auto" style="max-width: 480px;">
+    <div class="card-body">
+      <i class="bi bi-emoji-smile fs-1 text-success mb-3"></i>
+      <h5 class="fw-bold mb-3 text-primary">{{ message }}</h5>
+      <p class="text-muted mb-4">
+        Khoá học: <strong>{{ course.title }}</strong>
+      </p>
+      <a href="/student/review/" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-arrow-left"></i> Quay lại danh sách khoá học
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}

@@ -14,7 +14,18 @@
       Hãy chọn một danh mục bên dưới để bắt đầu quản lý.
     </p>
   </div>
-
+    <!-- 🌟 3 NÚT NHANH -->
+  <div class="d-flex justify-content-center gap-3 flex-wrap mb-4">
+    <a href="/admin/file-storage/list" class="btn btn-primary">
+      <i class="bi bi-folder2-open"></i> Quản lý File
+    </a>
+    <a href="/admin/discussion/list" class="btn btn-success">
+      <i class="bi bi-chat-text"></i> Quản lý Thảo luận
+    </a>
+    <a href="/admin/notification/list" class="btn btn-warning text-white">
+      <i class="bi bi-bell"></i> Quản lý Thông báo
+    </a>
+  </div>
   <!-- ====== DANH MỤC QUẢN LÝ ====== -->
   <div class="row g-4">
     {% set items = [
@@ -34,6 +45,7 @@
       {"icon": "📝", "color": "warning", "title": "Đánh giá Khóa học", "desc": "Xem và duyệt phản hồi, chấm điểm giảng viên.", "link": "/admin/reviews/manage"},
       {"icon": "⚙️", "color": "dark", "title": "Cấu hình Hệ thống", "desc": "Quản lý logo, API key, email, giao diện hệ thống.", "link": "/admin/settings/manage"},
       {"icon": "💾", "color": "dark", "title": "Quản lý Sao lưu", "desc": "Tự động sao lưu dữ liệu và tải file backup.", "link": "/admin/backups/manage"},
+      
       {"icon": "📦", "color": "secondary", "title": "Sắp xếp Module", "desc": "Thay đổi thứ tự module trong khóa học.", "link": "/admin/modules/reorder"}
     ] %}
 

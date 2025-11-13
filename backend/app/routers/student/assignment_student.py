@@ -1,7 +1,7 @@
 """
 ==========================================================
 🎓 ROUTER: Student - Assignment
-Xử lý các chức năng bài tập của học viên
+Xử lý đầy đủ chức năng bài tập học viên
 ==========================================================
 """
 
@@ -13,11 +13,16 @@ from fastapi import (
     UploadFile,
     File
 )
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse
+from starlette import status
 from sqlalchemy.orm import Session
+from pathlib import Path
+import traceback
+
 from app.database.connection import get_db
 from app.services.student import assignment_service
-from app.config.template_config import templates  # ✅ Dùng template động
+from app.config.template_config import templates
+
 
 # ==========================================================
 # ⚙️ Cấu hình Router
@@ -29,20 +34,17 @@ router = APIRouter(
 
 
 # ----------------------------------------------------------
-# 🔹 1. Trang chính /student/assignment → danh sách bài tập đã nộp
+# 🔹 1. Trang chính → danh sách bài tập đã nộp
 # ----------------------------------------------------------
 @router.get("/", response_class=HTMLResponse)
 async def assignment_home(request: Request, db: Session = Depends(get_db)):
-    """
-    📋 Trang mặc định hiển thị tất cả bài tập học viên đã nộp
-    """
-    student_id = request.session.get("user_id", None)
+    student_id = request.session.get("user_id")
     if not student_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
 
     submissions = assignment_service.get_my_submissions(db, student_id)
     return templates["student"].TemplateResponse(
-        "assignment/list.html",   # ✅ bỏ student/
+        "assignment/list.html",
         {
             "request": request,
             "assignments": submissions,
@@ -53,13 +55,14 @@ async def assignment_home(request: Request, db: Session = Depends(get_db)):
 
 
 # ----------------------------------------------------------
-# 🔹 2. Danh sách bài tập của 1 khóa học cụ thể
+# 🔹 2. Danh sách bài tập theo khóa học
 # ----------------------------------------------------------
 @router.get("/course/{course_id}", response_class=HTMLResponse)
 async def list_assignments(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """
-    📘 Hiển thị danh sách bài tập thuộc 1 khóa học cụ thể
-    """
+    student_id = request.session.get("user_id")
+    if not student_id:
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+
     assignments = assignment_service.get_assignments_by_course(db, course_id)
     return templates["student"].TemplateResponse(
         "assignment/list.html",
@@ -77,12 +80,13 @@ async def list_assignments(request: Request, course_id: str, db: Session = Depen
 # ----------------------------------------------------------
 @router.get("/detail/{assignment_id}", response_class=HTMLResponse)
 async def assignment_detail(request: Request, assignment_id: str, db: Session = Depends(get_db)):
-    """
-    🔍 Xem chi tiết nội dung bài tập
-    """
     assignment = assignment_service.get_assignment_detail(db, assignment_id)
     if not assignment:
-        return HTMLResponse("❌ Không tìm thấy bài tập", status_code=404)
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "❌ Không tìm thấy bài tập."},
+            status_code=404,
+        )
 
     return templates["student"].TemplateResponse(
         "assignment/detail.html",
@@ -100,12 +104,17 @@ async def assignment_detail(request: Request, assignment_id: str, db: Session = 
 # ----------------------------------------------------------
 @router.get("/submit/{assignment_id}", response_class=HTMLResponse)
 async def submit_page(request: Request, assignment_id: str, db: Session = Depends(get_db)):
-    """
-    📤 Hiển thị form nộp bài
-    """
+    student_id = request.session.get("user_id")
+    if not student_id:
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+
     assignment = assignment_service.get_assignment_detail(db, assignment_id)
     if not assignment:
-        return HTMLResponse("❌ Không tìm thấy bài tập", status_code=404)
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "❌ Không tìm thấy bài tập."},
+            status_code=404,
+        )
 
     return templates["student"].TemplateResponse(
         "assignment/submit.html",
@@ -129,28 +138,39 @@ async def submit_assignment(
     files: list[UploadFile] = File(None),
     db: Session = Depends(get_db)
 ):
-    """
-    📤 Sinh viên nộp bài (có thể kèm file)
-    """
-    student_id = request.session.get("user_id", None)
+    student_id = request.session.get("user_id")
     if not student_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
 
-    result = assignment_service.submit_assignment(
-        db,
-        assignment_id=assignment_id,
-        student_id=student_id,
-        submission_text=submission_text,
-        files=files
-    )
-
-    if result:
-        return RedirectResponse(
-            url=f"/student/assignment/result/{assignment_id}",
-            status_code=303
+    try:
+        result = assignment_service.submit_assignment(
+            db=db,
+            assignment_id=assignment_id,
+            student_id=student_id,
+            submission_text=submission_text,
+            files=files
         )
-    else:
-        return HTMLResponse("❌ Nộp bài thất bại, vui lòng thử lại.", status_code=400)
+        if result:
+            return RedirectResponse(
+                url=f"/student/assignment/result/{assignment_id}",
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "❌ Nộp bài thất bại. Vui lòng thử lại."},
+            status_code=400,
+        )
+
+    except Exception as e:
+        db.rollback()
+        print(f"❌ [Submit Assignment Error]: {e}")
+        traceback.print_exc()
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "⚠️ Có lỗi khi nộp bài. Vui lòng thử lại."},
+            status_code=400,
+        )
 
 
 # ----------------------------------------------------------
@@ -158,12 +178,9 @@ async def submit_assignment(
 # ----------------------------------------------------------
 @router.get("/result/{assignment_id}", response_class=HTMLResponse)
 async def view_result(request: Request, assignment_id: str, db: Session = Depends(get_db)):
-    """
-    📊 Hiển thị danh sách các lần nộp bài + điểm
-    """
-    student_id = request.session.get("user_id", None)
+    student_id = request.session.get("user_id")
     if not student_id:
-        return RedirectResponse(url="/auth/login", status_code=303)
+        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
 
     submissions = assignment_service.get_my_submissions(db, student_id)
     target = [s for s in submissions if s.assignment_id == assignment_id]
@@ -184,12 +201,13 @@ async def view_result(request: Request, assignment_id: str, db: Session = Depend
 # ----------------------------------------------------------
 @router.get("/submission/{submission_id}", response_class=HTMLResponse)
 async def submission_detail(request: Request, submission_id: str, db: Session = Depends(get_db)):
-    """
-    🔎 Xem chi tiết 1 bài nộp (file đính kèm + phản hồi)
-    """
     submission = assignment_service.get_submission_detail(db, submission_id)
     if not submission:
-        return HTMLResponse("❌ Không tìm thấy bài nộp", status_code=404)
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "❌ Không tìm thấy bài nộp."},
+            status_code=404,
+        )
 
     return templates["student"].TemplateResponse(
         "assignment/submission_detail.html",
@@ -199,4 +217,33 @@ async def submission_detail(request: Request, submission_id: str, db: Session = 
             "page_title": "📎 Chi tiết bài nộp",
             "active_page": "assignment"
         },
+    )
+
+
+# ----------------------------------------------------------
+# 🔹 8. Tải file bài nộp
+# ----------------------------------------------------------
+@router.get("/download/{file_id}")
+async def download_submission_file(request: Request, file_id: str, db: Session = Depends(get_db)):
+    """⬇️ Cho phép sinh viên tải lại file đã nộp."""
+    file_info = assignment_service.get_submission_file(db, file_id)
+    if not file_info:
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "❌ Không tìm thấy file bài nộp."},
+            status_code=404,
+        )
+
+    file_path = Path(file_info.file_url)
+    if not file_path.exists():
+        return templates["student"].TemplateResponse(
+            "error.html",
+            {"request": request, "message": "⚠️ File không còn tồn tại trên hệ thống."},
+            status_code=404,
+        )
+
+    return FileResponse(
+        path=file_path,
+        filename=file_info.file_name,
+        media_type="application/octet-stream"
     )

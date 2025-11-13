@@ -6,14 +6,17 @@ Xử lý logic nghiệp vụ cho việc quản lý Quiz của giáo viên
 """
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from datetime import datetime
 import uuid
 
+# ✅ Import model
 from app.models.quiz import Quiz
 from app.models.course import Course
 from app.models.question import Question
 from app.models.question_option import QuestionOption
+from app.models.quiz_attempt import QuizAttempt
+from app.models.user import User
 
 
 # ======================================================
@@ -179,3 +182,57 @@ def get_quiz_detail(db: Session, teacher_id: str, quiz_id: str):
         )
         .first()
     )
+
+
+# ======================================================
+# 📈 7️⃣ Thống kê kết quả học viên cho quiz
+# ======================================================
+def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
+    """
+    Lấy thống kê tổng hợp kết quả học viên cho quiz thuộc quyền của giáo viên:
+    - Tổng số lượt làm
+    - Số học viên tham gia
+    - Điểm trung bình
+    - Số đạt / không đạt
+    - Top 5 học viên điểm cao nhất
+    """
+    quiz = (
+        db.query(Quiz)
+        .join(Course, Quiz.course_id == Course.id)
+        .filter(and_(Quiz.id == quiz_id, Course.teacher_id == teacher_id))
+        .first()
+    )
+    if not quiz:
+        return None
+
+    stats = (
+        db.query(
+            func.count(QuizAttempt.id).label("total_attempts"),
+            func.count(func.distinct(QuizAttempt.user_id)).label("unique_students"),
+            func.avg(QuizAttempt.score).label("avg_score"),
+            func.sum(func.case((QuizAttempt.score >= quiz.passing_score, 1), else_=0)).label("passed"),
+            func.sum(func.case((QuizAttempt.score < quiz.passing_score, 1), else_=0)).label("failed"),
+        )
+        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.status == "submitted")
+        .first()
+    )
+
+    top_students = (
+        db.query(
+            User.full_name,
+            QuizAttempt.score,
+            QuizAttempt.attempt_number,
+            QuizAttempt.submitted_at,
+        )
+        .join(User, QuizAttempt.user_id == User.id)
+        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.status == "submitted")
+        .order_by(QuizAttempt.score.desc())
+        .limit(5)
+        .all()
+    )
+
+    return {
+        "quiz": quiz,
+        "stats": stats,
+        "top_students": top_students,
+    }

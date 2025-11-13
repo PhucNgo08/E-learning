@@ -1,339 +1,289 @@
 /* =====================================================
-🎓 TEACHER LAYOUT - FULL RESPONSIVE + DARK MODE
-Author: E-Learning Team (2025)
+🎓 TEACHER PANEL LAYOUT – Glass Neo UI Pro 2025
+Author: E-Learning Platform
 ===================================================== */
 
-/* === THEME COLORS === */
+/* === Theme Variables === */
 :root {
-  --sidebar-bg: linear-gradient(180deg, #007bff, #0046b8);
-  --sidebar-text: #ffffff;
-  --content-bg: #f3f7ff;
-  --content-text: #1e1e2f;
-  --header-bg: rgba(255, 255, 255, 0.92);
-  --active-border: #ffc107;
-  --avatar-border: 3px solid #fff;
+  --blue1: #2563eb;
+  --blue2: #1e3a8a;
+  --text: #1e293b;
+  --bg: #f8fafc;
+  --card-bg: rgba(255,255,255,0.75);
+  --shadow: 0 8px 25px rgba(0,0,0,0.1);
+  --glass-border: rgba(255,255,255,0.25);
 }
-
 body.dark-mode {
-  --sidebar-bg: linear-gradient(180deg, #111827, #0c1018);
-  --sidebar-text: #e4e6eb;
-  --content-bg: #0f141d;
-  --content-text: #e9ecef;
-  --header-bg: rgba(20, 24, 35, 0.9);
-  --avatar-border: 3px solid #444;
+  --blue1: #3b82f6;
+  --blue2: #1e293b;
+  --text: #e2e8f0;
+  --bg: #0f172a;
+  --card-bg: rgba(15,23,42,0.75);
+  --shadow: 0 8px 25px rgba(255,255,255,0.05);
+  --glass-border: rgba(255,255,255,0.15);
 }
 
-/* === BASE === */
+/* === Base === */
 body {
   font-family: "Inter", "Segoe UI", sans-serif;
-  background: var(--content-bg);
-  color: var(--content-text);
+  background: var(--bg);
+  color: var(--text);
   margin: 0;
   overflow-x: hidden;
-  transition: all 0.3s ease;
   min-height: 100vh;
+  transition: background 0.4s, color 0.4s;
 }
+html { scroll-behavior: smooth; }
 
-/* ================================
+/* =====================================================
 🧭 SIDEBAR
-================================ */
+===================================================== */
 #sidebar {
-  width: 250px;
-  height: 100vh;
   position: fixed;
-  top: 0;
-  left: 0;
-  background: var(--sidebar-bg);
-  color: var(--sidebar-text);
+  top: 0; left: 0;
+  width: 260px; height: 100vh;
+  background: linear-gradient(180deg, var(--blue1), var(--blue2));
+  backdrop-filter: blur(15px);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 4px 0 18px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
+  color: #fff;
   z-index: 999;
-  transition: transform 0.35s ease;
-  box-shadow: 3px 0 10px rgba(0, 0, 0, 0.2);
-  border-top-right-radius: 14px;
+  transform: translateX(-100%);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(.68,-0.55,.27,1.55), opacity 0.3s ease;
 }
-#sidebar.hidden { transform: translateX(-100%); }
 
+/* Khi mở sidebar */
+#sidebar.show {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+/* Header */
 .sidebar-header {
   text-align: center;
-  padding: 25px 0;
+  padding: 28px 16px 20px;
   border-bottom: 1px solid rgba(255,255,255,0.15);
 }
 
-.sidebar-header img {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: var(--avatar-border);
-  background: #fff;
-  margin-bottom: 10px;
-}
-.sidebar-header span {
-  font-weight: 600;
-  display: block;
-  font-size: 1rem;
-}
-
-#sidebar a {
-  color: var(--sidebar-text);
-  text-decoration: none;
-  padding: 13px 22px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-left: 4px solid transparent;
-  transition: all 0.25s ease;
-  font-size: 0.95rem;
-}
-#sidebar a:hover,
-#sidebar a.active {
-  background: rgba(255,255,255,0.15);
-  border-left: 4px solid var(--active-border);
-  transform: translateX(3px);
-}
-
-.sidebar-footer {
-  margin-top: auto;
-  text-align: center;
-  padding: 18px 10px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.07);
-  font-size: 0.9rem;
-}
-.sidebar-footer img {
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: var(--avatar-border);
-  margin-bottom: 6px;
-}
-.sidebar-footer a {
-  color: #ffc107;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-/* ================================
-👨‍🏫 HEADER
-================================ */
-header.teacher-header {
-  position: fixed;
-  top: 0;
-  left: 250px;
-  right: 0;
-  height: 70px;
-  background: var(--header-bg);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 25px;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
-  z-index: 900;
-  border-bottom-left-radius: 14px;
-  transition: all 0.4s ease;
-  backdrop-filter: blur(8px);
-}
-#sidebar.hidden ~ header.teacher-header { left: 0; }
-
-.nav-icons i {
-  font-size: 1.3rem;
-  margin-left: 20px;
-  color: var(--content-text);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-.nav-icons i:hover { color: #007bff; }
-
-/* ================================
-📦 CONTENT
-================================ */
-#content {
-  background: #fff;
-  margin: 90px 25px 40px 275px;
-  border-radius: 20px;
-  box-shadow: 0 6px 25px rgba(0,0,0,0.08);
-  padding: 35px;
-  transition: margin 0.4s ease, width 0.4s ease;
-  overflow-x: hidden;
-}
-#sidebar.hidden ~ #content {
-  margin-left: 25px;
-  width: calc(100% - 50px);
-}
-#sidebar.show ~ #content {
-  margin-left: 25px;
-  width: calc(100% - 50px);
-}
-
-/* ================================
-⚙️ BUTTONS
-================================ */
-.toggle-btn, .mode-toggle {
-  position: fixed;
-  top: 18px;
-  z-index: 2001;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  cursor: pointer;
+/* Avatar glow */
+.avatar-wrapper {
+  position: relative;
+  display: inline-block;
   transition: all 0.3s ease;
 }
-
-.toggle-btn {
-  left: 15px;
-  background: white;
-  color: #0046d8;
-  box-shadow: 0 3px 10px rgba(0, 64, 255, 0.25);
+.avatar-wrapper img {
+  width: 95px; height: 95px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  object-fit: cover;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
 }
-.toggle-btn:hover { transform: rotate(10deg) scale(1.05); }
-
-.mode-toggle {
-  right: 15px;
-  background: var(--header-bg);
-  color: #ffb700;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+.avatar-wrapper:hover img {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(59,130,246,0.7);
 }
-.mode-toggle:hover { transform: rotate(-10deg) scale(1.05); }
+.camera-icon {
+  position: absolute;
+  bottom: 2px; right: 4px;
+  background: #fff;
+  color: var(--blue1);
+  border-radius: 50%;
+  padding: 4px;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
 
-body.dark-mode .mode-toggle { color: #ffe47a; }
+/* Sidebar Menu */
+.sidebar-inner {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.sidebar-inner a {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 22px;
+  color: #fff;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+.sidebar-inner a:hover,
+.sidebar-inner a.active {
+  background: rgba(255,255,255,0.15);
+  border-left: 4px solid #facc15;
+  transform: translateX(4px);
+}
+.sidebar-footer {
+  text-align: center;
+  padding: 14px 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  border-top: 1px solid rgba(255,255,255,0.15);
+}
 
-/* ================================
-📱 MOBILE RESPONSIVE
-================================ */
-
-/* Overlay nền mờ khi mở sidebar */
+/* =====================================================
+🌫 OVERLAY (làm mờ dashboard khi sidebar mở)
+===================================================== */
 #sidebar-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(2px);
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(4px);
   z-index: 998;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.35s ease;
 }
+
+/* Sidebar mở → overlay hiển thị */
 #sidebar.show ~ #sidebar-overlay {
   opacity: 1;
   pointer-events: auto;
 }
 
-/* --- Tablet & Mobile --- */
-@media (max-width: 992px) {
-  #sidebar {
-    width: 280px;
-    height: 100%;
-    transform: translateX(-100%);
-    transition: transform 0.35s ease;
-  }
+/* =====================================================
+👨‍🏫 HEADER
+===================================================== */
+.teacher-header {
+  position: fixed;
+  top: 0; left: 260px; right: 0;
+  height: 70px;
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 25px;
+  z-index: 900;
+  transition: all 0.4s ease;
+}
+body.dark-mode .teacher-header { background: rgba(15,23,42,0.85); }
 
-  #sidebar.show { transform: translateX(0); }
-
-  header.teacher-header {
-    left: 0;
-    height: 65px;
-    padding: 0 15px;
-  }
-
-  #content {
-    margin: 85px 15px 30px 15px;
-    padding: 25px;
-    width: calc(100% - 30px);
-  }
-
-  .toggle-btn {
-    width: 42px;
-    height: 42px;
-    top: 12px;
-    left: 12px;
-  }
-
-  .mode-toggle {
-    width: 42px;
-    height: 42px;
-    right: 12px;
-    top: 12px;
-  }
+.nav-icons a, .nav-icons i {
+  font-size: 1.3rem;
+  margin-left: 18px;
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+.nav-icons a:hover i {
+  color: var(--blue1);
+  transform: scale(1.2);
 }
 
-/* --- Small Phones --- */
-@media (max-width: 576px) {
-  .sidebar-header img {
-    width: 55px;
-    height: 55px;
-  }
-
-  #sidebar a {
-    font-size: 0.9rem;
-    padding: 10px 16px;
-  }
-
-  #content {
-    padding: 20px;
-    margin: 80px 10px 25px 10px;
-  }
+/* =====================================================
+⚙️ TOGGLE BUTTONS
+===================================================== */
+.toggle-btn, .mode-toggle {
+  position: fixed;
+  top: 18px;
+  z-index: 1201;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 1.4rem;
+  transition: all 0.3s ease;
 }
 
-/* ================================
+/* Hamburger */
+.toggle-btn {
+  left: 15px;
+  background: #fff;
+  color: var(--blue1);
+  box-shadow: 0 4px 10px rgba(37,99,235,0.25);
+}
+.toggle-btn:hover {
+  transform: rotate(10deg) scale(1.05);
+  background: #f8fafc;
+}
+
+/* Mode Switch */
+.mode-toggle {
+  right: 18px;
+  background: var(--card-bg);
+  color: #ffb700;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.mode-toggle:hover {
+  transform: rotate(-10deg) scale(1.05);
+}
+body.dark-mode .mode-toggle { color: #ffe47a; }
+
+/* =====================================================
+📦 CONTENT
+===================================================== */
+#content {
+  margin: 90px 25px 40px 285px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 35px;
+  box-shadow: var(--shadow);
+  transition: all 0.4s ease;
+}
+#sidebar.show ~ #content {
+  margin-left: 285px;
+}
+#sidebar ~ #content {
+  margin-left: 25px;
+}
+
+/* =====================================================
 🦶 FOOTER
-================================ */
+===================================================== */
 footer {
   text-align: center;
-  padding: 15px;
-  color: var(--content-text);
-  opacity: 0.8;
+  padding: 18px;
   font-size: 0.9rem;
-  background: transparent;
+  opacity: 0.8;
+  color: var(--text);
 }
 
-/* ================================
-✨ SCROLL SMOOTH + FIX GẮN MENU
-================================ */
-html { scroll-behavior: smooth; }
+/* =====================================================
+📱 RESPONSIVE
+===================================================== */
+@media (max-width: 992px) {
+  #sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  #sidebar.show {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  .teacher-header { left: 0; height: 65px; padding: 0 18px; }
+  #content { margin: 85px 18px 30px 18px; padding: 25px; }
+  .toggle-btn { width: 42px; height: 42px; top: 12px; left: 12px; }
+  .mode-toggle { width: 42px; height: 42px; top: 12px; right: 12px; }
+}
+
+/* =====================================================
+✨ SCROLLBAR & ANIMATIONS
+===================================================== */
 body::-webkit-scrollbar { width: 8px; }
 body::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.2);
-  border-radius: 10px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 6px;
 }
 body.dark-mode::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.25);
 }
 
-/* ================================
-🧩 DROPDOWN FIX (ẩn/hiện chuẩn Bootstrap)
-================================ */
-.teacher-header,
-.nav-icons,
-.profile-dropdown {
-  overflow: visible !important;
-}
+/* Caret animation (dropdown) */
+.caret-icon { transition: transform 0.3s ease; }
+.caret-icon.rotate { transform: rotate(180deg); }
 
-.dropdown-menu {
-  position: absolute !important;
-  z-index: 9999 !important;
-  transform: translate3d(-40px, 40px, 0) !important;
-  /* Không ép display hay opacity */
-}
-
-.dropdown-menu.show {
-  animation: fadeIn 0.25s ease-in-out;
-}
-
+/* Fade animation */
+.fade-in { animation: fadeIn 0.6s ease forwards; }
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
-}
-/* 🎯 Hiệu ứng xoay caret khi mở dropdown */
-.caret-icon {
-  transition: transform 0.3s ease;
-}
-
-.caret-icon.rotate {
-  transform: rotate(180deg);
 }

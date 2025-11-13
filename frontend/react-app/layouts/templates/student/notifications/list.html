@@ -1,35 +1,72 @@
 {% extends "layout_student.html" %}
-{% block title %}🔔 Thông báo của tôi{% endblock %}
+{% block title %}🔔 Thông báo cá nhân{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-primary mb-0"><i class="bi bi-bell"></i> Thông báo</h3>
-    <a href="{{ url_for('student_notification_settings') }}" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-gear"></i> Cài đặt
+<style>
+  .notif-item:hover {
+    background-color: #f8f9fa;
+    transition: 0.2s ease;
+  }
+  .notif-unread {
+    border-left: 4px solid #0d6efd;
+    background-color: #eef5ff;
+  }
+  .fab-settings {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    background: linear-gradient(135deg, #0d6efd, #0056b3);
+    color: white;
+    border-radius: 50%;
+    width: 58px;
+    height: 58px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; z-index: 1000;
+    transition: 0.3s;
+  }
+  .fab-settings:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, #0056b3, #003f88);
+  }
+</style>
+
+<div class="container py-4 fade-in">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-bell-fill"></i> Thông báo của tôi
+    </h4>
+    <a href="/student/notifications/read_all" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc
     </a>
   </div>
 
-  {% if notifications %}
-    <ul class="list-group shadow-sm">
-      {% for n in notifications %}
-        <a href="{{ url_for('student_notification_detail', notification_id=n.id) }}"
-           class="list-group-item list-group-item-action d-flex justify-content-between align-items-start {% if not n.is_read %}bg-light{% endif %}">
+  {% if notifications and notifications|length > 0 %}
+  <div class="list-group shadow-sm">
+    {% for n in notifications %}
+      <a href="/student/notifications/detail/{{ n.id }}" 
+         class="list-group-item list-group-item-action notif-item {% if not n.is_read %}notif-unread{% endif %}">
+        <div class="d-flex justify-content-between align-items-start">
           <div>
-            <h6 class="mb-1 fw-semibold">{{ n.title }}</h6>
-            <p class="mb-1 small text-muted">{{ n.message }}</p>
-            <small class="text-secondary">{{ n.created_at.strftime("%H:%M - %d/%m/%Y") }}</small>
+            <h6 class="fw-semibold mb-1">
+              <i class="bi bi-bell me-2 text-primary"></i>{{ n.title or "Không có tiêu đề" }}
+            </h6>
+            <small class="text-muted d-block">{{ n.message[:100] ~ ('...' if n.message|length > 100 else '') }}</small>
           </div>
-          {% if not n.is_read %}
-            <span class="badge bg-primary rounded-pill">Mới</span>
-          {% endif %}
-        </a>
-      {% endfor %}
-    </ul>
+          <small class="text-secondary">{{ n.created_at.strftime("%d/%m/%Y %H:%M") if n.created_at else '' }}</small>
+        </div>
+      </a>
+    {% endfor %}
+  </div>
   {% else %}
-    <div class="alert alert-info text-center mt-4">
-      <i class="bi bi-info-circle"></i> Chưa có thông báo nào.
-    </div>
+  <div class="alert alert-info text-center mt-4">
+    <i class="bi bi-info-circle me-2"></i>Chưa có thông báo nào.
+  </div>
   {% endif %}
 </div>
+
+<!-- ⚙️ Floating Button -->
+<a href="/student/notifications/settings" class="fab-settings" title="Cài đặt thông báo">
+  <i class="bi bi-gear-fill"></i>
+</a>
 {% endblock %}

@@ -5,7 +5,7 @@
 <div class="container-fluid py-3">
 
   <!-- 🌟 Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
     <div>
       <h3 class="fw-bold text-primary mb-0">
         <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
@@ -14,7 +14,7 @@
     </div>
 
     <!-- 🔙 Nút quay lại -->
-    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm">
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm mt-2 mt-md-0">
       <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
     </a>
   </div>
@@ -25,48 +25,68 @@
       background-color: #f9fbff !important;
       transition: background-color 0.2s ease-in-out;
     }
+
     .progress {
       height: 8px;
       background-color: #e9ecef;
+      border-radius: 4px;
+      overflow: hidden;
     }
+
     .progress-bar {
       transition: width 0.6s ease;
       border-radius: 4px;
     }
+
     .course-name a {
       font-weight: 600;
       color: #0d6efd;
       text-decoration: none;
     }
+
     .course-name a:hover {
       text-decoration: underline;
     }
+
     .btn-outline-secondary {
       border-color: #dee2e6;
       color: #495057;
     }
+
     .btn-outline-secondary:hover {
       background-color: #f8f9fa;
       color: #0d6efd;
       border-color: #0d6efd;
     }
+
+    /* 🧭 Responsive Table */
     @media (max-width: 768px) {
       .table thead { display: none; }
-      .table tbody td { display: block; width: 100%; border: none; }
-      .table tbody tr { margin-bottom: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-radius: 10px; padding: 8px; }
+      .table tbody tr {
+        display: block;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        border-radius: 10px;
+        background-color: #fff;
+        padding: 10px 12px;
+      }
+      .table tbody td {
+        display: flex;
+        justify-content: space-between;
+        border: none;
+        padding: 6px 0;
+      }
       .table tbody td::before {
         content: attr(data-label);
         font-weight: 600;
-        display: block;
-        margin-bottom: 4px;
         color: #6c757d;
       }
     }
   </style>
 
   <!-- 📋 Table -->
-  <div class="table-responsive">
-    <table class="table table-hover align-middle bg-white shadow-sm rounded overflow-hidden">
+  <div class="table-responsive shadow-sm rounded-3">
+    <table class="table table-hover align-middle bg-white mb-0">
       <thead class="table-light">
         <tr>
           <th>Khóa học</th>
@@ -78,20 +98,25 @@
       <tbody>
         {% for item in enrollments %}
         <tr>
+          <!-- 🎓 Khóa học -->
           <td data-label="Khóa học">
             <div class="course-name mb-1">
               <a href="{{ url_for('student_course_detail', course_id=item.course.id) }}">
                 {{ item.course.course_name }}
               </a>
             </div>
-            <div class="small text-muted">{{ item.course.course_code or "—" }}</div>
+            <div class="small text-muted">
+              <i class="bi bi-hash"></i> {{ item.course.course_code or "—" }}
+            </div>
           </td>
 
+          <!-- 👨‍🏫 Giảng viên -->
           <td data-label="Giảng viên">
             {{ item.course.teacher.full_name if item.course.teacher else "—" }}
           </td>
 
-          <td data-label="Tiến độ">
+          <!-- 📈 Tiến độ -->
+          <td data-label="Tiến độ" style="min-width:150px;">
             <div class="progress">
               <div class="progress-bar bg-success" data-width="{{ item.progress_percent or 0 }}"></div>
             </div>
@@ -100,6 +125,7 @@
             </div>
           </td>
 
+          <!-- ▶️ Hành động -->
           <td class="text-end" data-label="Hành động">
             <a class="btn btn-sm btn-outline-primary"
                href="{{ url_for('student_course_progress', course_id=item.course.id) }}">

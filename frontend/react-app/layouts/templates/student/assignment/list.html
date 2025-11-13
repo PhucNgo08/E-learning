@@ -1,57 +1,56 @@
 {% extends "layout_student.html" %}
 {% block title %}📚 Danh sách bài tập{% endblock %}
-
 {% block content %}
-<style>
-  .assignment-card {
-    border-radius: 12px;
-    transition: all 0.25s ease;
-    border: 1px solid #e5e7eb;
-  }
-  .assignment-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-  }
-</style>
+<div class="container py-4 fade-in">
+  <h3 class="fw-bold mb-3"><i class="bi bi-journal-text me-2"></i>{{ page_title }}</h3>
 
-<div class="container mt-4 mb-5">
-  <h4 class="fw-bold mb-4 text-primary">
-    📘 Danh sách bài tập
-  </h4>
-
-  {% if assignments and assignments|length > 0 %}
-    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
-      {% for a in assignments %}
-      <div class="col">
-        <div class="card assignment-card h-100 shadow-sm">
-          <div class="card-body">
-            <h6 class="card-title fw-bold text-dark">
-              <a href="/student/assignment/detail/{{ a.id }}" class="text-decoration-none text-primary">
-                {{ a.title }}
+  {% if assignments %}
+    <div class="table-responsive shadow-sm rounded-3">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Tên bài tập</th>
+            <th>Môn học / Khóa học</th>
+            <th>Hạn nộp</th>
+            <th>Trạng thái</th>
+            <th class="text-center">Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in assignments %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td class="fw-semibold">{{ a.title }}</td>
+            <td>{{ a.course_name or "Không rõ" }}</td>
+            <td>{{ a.due_date.strftime("%d/%m/%Y %H:%M") if a.due_date else "—" }}</td>
+            <td>
+              {% if a.status == 'submitted' %}
+                <span class="badge bg-info">Đã nộp</span>
+              {% elif a.status == 'graded' %}
+                <span class="badge bg-success">Đã chấm</span>
+              {% elif a.status == 'late' %}
+                <span class="badge bg-warning text-dark">Nộp trễ</span>
+              {% else %}
+                <span class="badge bg-secondary">Chưa nộp</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="/student/assignment/detail/{{ a.id }}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-eye"></i> Xem
               </a>
-            </h6>
-            <p class="text-muted small mb-2">
-              🕒 Hạn nộp:
-              <span class="{% if a.due_date and a.due_date < now() %}text-danger fw-semibold{% else %}text-success{% endif %}">
-                {{ a.due_date.strftime('%d/%m/%Y %H:%M') if a.due_date else 'Không có hạn' }}
-              </span>
-            </p>
-            <p class="card-text small text-secondary">
-              {{ a.description or 'Không có mô tả' }}
-            </p>
-          </div>
-          <div class="card-footer bg-transparent border-0 text-end">
-            <a href="/student/assignment/submit/{{ a.id }}" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-upload"></i> Nộp bài
-            </a>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
+              <a href="/student/assignment/submit/{{ a.id }}" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-upload"></i> Nộp bài
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   {% else %}
-    <div class="alert alert-info mt-4 text-center shadow-sm">
-      <i class="bi bi-info-circle"></i> Hiện tại chưa có bài tập nào được giao.
+    <div class="alert alert-info text-center mt-3">
+      <i class="bi bi-info-circle me-2"></i>Chưa có bài tập nào.
     </div>
   {% endif %}
 </div>

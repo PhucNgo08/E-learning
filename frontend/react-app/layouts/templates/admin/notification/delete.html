@@ -1,0 +1,32 @@
+{% extends "layout_admin.html" %}
+{% block title %}🗑️ Xóa thông báo{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="card shadow-sm border-danger">
+    <div class="card-header bg-danger text-white fw-bold">
+      <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa thông báo
+    </div>
+    <div class="card-body">
+      <p>Bạn có chắc chắn muốn xóa thông báo này không?</p>
+      <ul class="list-group mb-3">
+        <li class="list-group-item"><b>Người nhận:</b> {{ user.full_name if user else "Không rõ" }}</li>
+        <li class="list-group-item"><b>Tiêu đề:</b> {{ notification.title }}</li>
+        <li class="list-group-item"><b>Nội dung:</b> {{ notification.message }}</li>
+        <li class="list-group-item"><b>Thời gian:</b> {{ notification.created_at.strftime('%d/%m/%Y %H:%M') }}</li>
+      </ul>
+
+      <form method="post" action="/admin/notification/delete/{{ notification.id }}">
+        <div class="d-flex justify-content-end gap-2">
+          <a href="/admin/notification/list" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Hủy
+          </a>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Xóa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

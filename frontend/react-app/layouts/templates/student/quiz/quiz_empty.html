@@ -1,0 +1,15 @@
+{% extends "layout_student.html" %}
+{% block title %}📭 Chưa có bài kiểm tra{% endblock %}
+
+{% block content %}
+<div class="container py-5 text-center fade-in">
+  <i class="bi bi-emoji-neutral text-secondary display-4 mb-3"></i>
+  <h4 class="fw-bold text-muted mb-2">Hiện chưa có bài kiểm tra nào khả dụng</h4>
+  <p class="text-secondary">
+    Có thể giảng viên chưa tạo hoặc bài kiểm tra chưa đến thời gian làm.
+  </p>
+  <a href="/student/dashboard" class="btn btn-outline-primary mt-3">
+    <i class="bi bi-house-door"></i> Quay về bảng điều khiển
+  </a>
+</div>
+{% endblock %}

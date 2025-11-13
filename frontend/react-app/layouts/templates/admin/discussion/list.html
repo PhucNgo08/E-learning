@@ -1,0 +1,164 @@
+{% extends "layout_admin.html" %}
+{% block title %}💬 Quản lý Thảo luận{% endblock %}
+
+{% block content %}
+<style>
+  /* =====================================================
+     💬 Discussion Management v3.3
+     ===================================================== */
+  body {
+    background: linear-gradient(180deg, #f6f9ff, #ffffff);
+  }
+
+  .discussion-card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+  }
+
+  .discussion-card:hover {
+    transform: translateY(-2px);
+  }
+
+  .table thead th {
+    background: #eef3ff;
+    color: #4051b5;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+  }
+
+  .badge-topic {
+    background: linear-gradient(90deg, #5f72ff, #7b9eff);
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  .badge-author {
+    background: #e9f5ff;
+    color: #0078ff;
+    font-weight: 500;
+  }
+
+  .table tbody tr:hover {
+    background-color: #f8faff !important;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2rem 0;
+  }
+
+  .empty-state i {
+    font-size: 2.5rem;
+    color: #adb5bd;
+  }
+
+  .search-box {
+    max-width: 320px;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+
+<div class="container mt-4 fade-in">
+
+  <!-- HEADER -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-chat-dots-fill me-2"></i> Quản lý Thảo luận
+      </h3>
+      <p class="text-muted mb-0">Theo dõi và kiểm soát bình luận của học viên trong hệ thống.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <input type="text" class="form-control form-control-sm search-box" placeholder="🔍 Tìm nội dung, người đăng...">
+      <span class="badge bg-primary fs-6 shadow-sm px-3 py-2">
+        <i class="bi bi-people"></i> Tổng: {{ total }}
+      </span>
+    </div>
+  </div>
+
+  <!-- DANH SÁCH -->
+  <div class="discussion-card">
+    <div class="card-body p-0">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="text-center">#</th>
+            <th>Nội dung</th>
+            <th>Khóa học</th>
+            <th>Người đăng</th>
+            <th>Ngày tạo</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in discussions %}
+          <tr>
+            <td class="text-center text-muted">{{ loop.index }}</td>
+            <td>
+              <div class="fw-semibold text-dark">
+                {{ d.content[:100] }}{% if d.content|length > 100 %}...{% endif %}
+              </div>
+              {% if d.parent_id %}
+                <small class="text-muted"><i class="bi bi-reply"></i> Trả lời bình luận khác</small>
+              {% endif %}
+            </td>
+            <td><span class="badge badge-topic">{{ course_map.get(d.course_id, 'Không rõ') }}</span></td>
+            <td><span class="badge badge-author">{{ user_map.get(d.user_id, 'Không rõ') }}</span></td>
+            <td>
+              <small class="text-muted">
+                {% if d.created_at %}
+                  {{ d.created_at.strftime('%d/%m/%Y %H:%M') }}
+                {% else %}
+                  —
+                {% endif %}
+              </small>
+            </td>
+            <td class="text-center">
+              <a href="/admin/discussion/delete/{{ d.id }}" 
+                 class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                 onclick="return confirm('Bạn có chắc muốn xóa thảo luận này?');">
+                <i class="bi bi-trash"></i> Xóa
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="empty-state text-muted">
+              <i class="bi bi-chat-left-text d-block mb-2"></i>
+              <small>Chưa có thảo luận nào được ghi nhận.</small>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 🔍 Tìm kiếm nhanh (client-side)
+  const searchInput = document.querySelector('.search-box');
+  searchInput?.addEventListener('input', function () {
+    const filter = this.value.toLowerCase();
+    document.querySelectorAll('tbody tr').forEach(row => {
+      const text = row.textContent.toLowerCase();
+      row.style.display = text.includes(filter) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

@@ -1,15 +1,34 @@
 {% extends "layout_student.html" %}
-{% block title %}✅ Kết quả bài tập{% endblock %}
+{% block title %}📊 Kết quả bài nộp{% endblock %}
 {% block content %}
-<div class="card"><div class="card-body">
-<h5 class="mb-1">{{ assignment.title }}</h5>
-<div class="text-muted mb-2">Đã nộp lúc {{ submission.submission_time }}</div>
-{% if submission.grade is not none %}
-<div class="display-6">{{ submission.grade }}/{{ assignment.total_points }}</div>
-<div class="mt-2"><strong>Nhận xét:</strong> {{ submission.feedback or '—' }}</div>
-{% else %}
-<div class="alert alert-info">Bài của bạn đang chờ chấm.</div>
-{% endif %}
-<a class="btn btn-outline-primary mt-3" href="{{ url_for('student_assignment_list') }}">Quay lại danh sách</a>
-</div></div>
+<div class="container py-4 fade-in">
+  <h3 class="fw-bold mb-3"><i class="bi bi-clipboard-check me-2"></i>{{ page_title }}</h3>
+
+  {% if submissions %}
+  <div class="row">
+    {% for s in submissions %}
+    <div class="col-md-6 col-lg-4 mb-4">
+      <div class="card shadow-sm h-100 border-0">
+        <div class="card-body">
+          <h5 class="card-title">{{ s.assignment_title }}</h5>
+          <p class="text-muted mb-2"><i class="bi bi-clock me-1"></i>Nộp: {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}</p>
+          {% if s.grade %}
+          <p><strong>Điểm:</strong> {{ s.grade }}/{{ s.total_points }}</p>
+          {% else %}
+          <p><em>Chưa có điểm</em></p>
+          {% endif %}
+          <a href="/student/assignment/submission/{{ s.id }}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-eye"></i> Xem chi tiết
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="alert alert-info text-center">
+      <i class="bi bi-info-circle me-2"></i>Chưa có bài nộp nào.
+    </div>
+  {% endif %}
+</div>
 {% endblock %}

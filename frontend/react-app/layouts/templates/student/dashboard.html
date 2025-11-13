@@ -1,85 +1,62 @@
 {% extends "layout_student.html" %}
 {% block title %}🎓 Bảng điều khiển Sinh viên{% endblock %}
-
 {% block head_extra %}
 <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student_dashboard.css" />
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container fade-in">
-
-  <div class="mb-4 reveal">
-    <h2 class="fw-bold text-primary mb-1">🎓 Bảng điều khiển sinh viên</h2>
-    <p class="text-muted mb-0">Theo dõi tiến độ học tập, bài tập và khóa học của bạn.</p>
+  <div class="mb-4 text-center text-md-start reveal">
+    <h2 class="fw-bold text-gradient"><i class="bi bi-speedometer2 me-2"></i> Bảng điều khiển</h2>
+    <p class="text-muted">Theo dõi tiến độ học tập, bài tập, và kết quả của bạn.</p>
   </div>
 
   <div class="welcome-card shadow-sm mb-4 reveal">
-    <h5 class="fw-semibold mb-2">
-      Xin chào, <span class="text-primary">{{ request.session.get('user_full_name', 'Sinh viên') }}</span> 👋
-    </h5>
-    <p class="text-secondary mb-0">Chúc bạn có buổi học hiệu quả hôm nay!</p>
+    <h5>Xin chào, <span class="text-primary">{{ request.session.get('user_full_name', 'Sinh viên') }}</span> 👋</h5>
+    <p class="text-secondary mb-0">Chúc bạn học tập hiệu quả hôm nay!</p>
   </div>
 
-  <!-- 📊 Thống kê -->
   <div class="row g-3 mb-4">
-    <div class="col-md-4 reveal"><div class="stat-card gradient-blue"><i class="bi bi-journal-text"></i>
-      <h5>{{ enrolled_courses|length if enrolled_courses else 0 }}</h5><p>Khóa học đã ghi danh</p></div></div>
-    <div class="col-md-4 reveal"><div class="stat-card gradient-green"><i class="bi bi-clipboard-check"></i>
-      <h5>{{ assignments|length if assignments else 0 }}</h5><p>Bài tập & kiểm tra</p></div></div>
-    <div class="col-md-4 reveal"><div class="stat-card gradient-gold"><i class="bi bi-trophy"></i>
-      <h5>0</h5><p>Thành tích đạt được</p></div></div>
+    <div class="col-md-3 reveal"><div class="stat-card gradient-blue"><i class="bi bi-journal-text"></i><h5>{{ enrolled_courses|length or 0 }}</h5><p>Khóa học</p></div></div>
+    <div class="col-md-3 reveal"><div class="stat-card gradient-green"><i class="bi bi-clipboard-check"></i><h5>{{ completed_lessons or 0 }}</h5><p>Bài học hoàn thành</p></div></div>
+    <div class="col-md-3 reveal"><div class="stat-card gradient-purple"><i class="bi bi-question-circle"></i><h5>{{ quiz_attempts or 0 }}</h5><p>Lần làm trắc nghiệm</p></div></div>
+    <div class="col-md-3 reveal"><div class="stat-card gradient-gold"><i class="bi bi-trophy"></i><h5>{{ achievements or 0 }}</h5><p>Thành tích</p></div></div>
   </div>
 
+  <h5 class="fw-semibold text-secondary mb-3 reveal"><i class="bi bi-journals me-2"></i>Khóa học của bạn</h5>
   {% if enrolled_courses %}
-  <div class="d-flex justify-content-between align-items-center mb-3 reveal">
-    <h5 class="fw-semibold text-secondary mb-0"><i class="bi bi-journals"></i> Khóa học của bạn</h5>
-    <div class="zoom-controls">
-      <button id="zoomOutBtn" class="zoom-btn">➖</button>
-      <span id="zoomLevel" class="zoom-level">1/16</span>
-      <button id="zoomInBtn" class="zoom-btn">➕</button>
-    </div>
-  </div>
-
   <div class="courses-grid reveal">
     {% for course in enrolled_courses %}
-    {% set progress = course.progress or 0 %}
     <div class="course-card-mini shadow-sm">
-      {% if course.thumbnail_url %}
-      <img src="{{ course.thumbnail_url }}" class="course-thumb" alt="Ảnh khóa học" />
-      {% else %}
-      <div class="thumb-placeholder"><i class="bi bi-journal-bookmark"></i></div>
-      {% endif %}
-      <h6 class="fw-semibold small mt-1 px-1 text-center text-truncate">{{ course.course_name or course.title }}</h6>
-      <div class="progress mx-2 mt-1"><div class="progress-bar bg-success" data-progress="{{ progress }}"></div></div>
-      <small class="text-muted d-block text-center">{{ progress }}%</small>
-      <div class="text-center mt-2 mb-1">
-        <a href="/student/lesson/module" class="btn btn-sm btn-outline-primary px-3 py-1"><i class="bi bi-play-circle"></i> Học ngay</a>
+      <img src="{{ course.thumbnail_url or '/static/images/course-placeholder.png' }}" class="course-thumb" alt="Ảnh khóa học" />
+      <h6 class="fw-semibold mt-2 text-center text-truncate">{{ course.course_name }}</h6>
+      <div class="progress mx-2 mt-1">
+        <div class="progress-bar bg-success" data-progress="{{ course.progress or 0 }}"></div>
       </div>
+      <small class="text-muted d-block text-center">{{ course.progress or 0 }}%</small>
     </div>
     {% endfor %}
   </div>
   {% else %}
-  <div class="alert alert-info text-center shadow-sm reveal"><i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.</div>
+  <div class="alert alert-info text-center shadow-sm reveal">
+    <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
+  </div>
   {% endif %}
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded",()=>{
-  document.querySelectorAll(".progress-bar").forEach(b=>{const p=b.dataset.progress||0;b.style.width=0;setTimeout(()=>b.style.width=p+"%",200)});
-  const reveals=document.querySelectorAll(".reveal");
-  const revealOnScroll=()=>{const h=window.innerHeight;reveals.forEach(e=>{if(e.getBoundingClientRect().top<h-80)e.classList.add("visible")})};
-  window.addEventListener("scroll",revealOnScroll);window.addEventListener("load",revealOnScroll);
-
-  const root=document.documentElement,zoomIn=document.getElementById("zoomInBtn"),zoomOut=document.getElementById("zoomOutBtn"),
-        level=document.getElementById("zoomLevel"),cards=document.querySelectorAll(".course-card-mini");
-  let size=120;
-  const update=()=>{root.style.setProperty("--card-size",size+"px");
-    root.style.setProperty("--thumb-size",size*0.45+"px");
-    let r="1/16";if(size>=180)r="1/6";else if(size>=140)r="1/10";else if(size>=100)r="1/16";else if(size>=80)r="1/24";else r="1/32";
-    level.textContent=r;cards.forEach(c=>{if(size<=80)c.classList.add("tiny");else c.classList.remove("tiny")});};
-  zoomIn.addEventListener("click",()=>{if(size<200){size+=20;update();}});
-  zoomOut.addEventListener("click",()=>{if(size>60){size-=20;update();}});
-  update();
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".progress-bar").forEach(bar => {
+    const val = bar.dataset.progress || 0;
+    setTimeout(() => bar.style.width = val + "%", 400);
+  });
+  const reveals = document.querySelectorAll(".reveal");
+  const revealOnScroll = () => {
+    const h = window.innerHeight;
+    reveals.forEach(el => { if (el.getBoundingClientRect().top < h - 80) el.classList.add("visible"); });
+  };
+  window.addEventListener("scroll", revealOnScroll);
+  window.addEventListener("load", revealOnScroll);
 });
 </script>
 {% endblock %}

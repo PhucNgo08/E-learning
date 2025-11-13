@@ -36,15 +36,20 @@ from .assignment_group import AssignmentGroup
 from .assignment_file import AssignmentFile
 
 # === System & Security ===
-from .security_setting import SecuritySetting
+from .security_setting import SecuritySettings
+
 from .api_endpoint import ApiEndpoint
 from .api_rate_limit import ApiRateLimit
 from .api_request_log import ApiRequestLog
 from .backup_history import BackupHistory
 from .backup_schedule import BackupSchedule
-from .cdn_cache import CdnCache
+from .cdn_cache import CDNCache as CdnCache 
 from .database_health_log import DatabaseHealthLog
 from .file_storage import FileStorage
 from .storage_analytics import StorageAnalytics
 from .report import Report
 from .exam import Exam
+# ... các import khác
+
+from .discussion import Discussion
+from .discussion_like import DiscussionLike

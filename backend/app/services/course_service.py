@@ -456,3 +456,58 @@ def enroll_course(db: Session, user_id: str, course_id: str):
         db.rollback()
         print(f"❌ [enroll_course] Lỗi đăng ký khóa học:", e)
         return None
+# =====================================================
+# 🧠 13️⃣ Kiểm tra học viên đã đăng ký khóa học chưa
+# =====================================================
+def is_student_enrolled(db: Session, user_id: str, course_id: str) -> bool:
+    """
+    Kiểm tra học viên đã ghi danh (enrolled) vào khóa học chưa.
+    Trả về True nếu đã đăng ký, False nếu chưa.
+    """
+    try:
+        enrolled = (
+            db.query(Enrollment)
+            .filter(
+                Enrollment.user_id == user_id,
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status.in_(["approved", "active"]),
+            )
+            .first()
+        )
+        return enrolled is not None
+    except Exception as e:
+        print("❌ [CourseService][is_student_enrolled] Lỗi:", e)
+        return False
+# =====================================================
+# 💡 14️⃣ Gợi ý khóa học liên quan (Student)
+# =====================================================
+def get_related_courses(db: Session, course_id: str, limit: int = 4):
+    """
+    Gợi ý các khóa học liên quan dựa theo ngành học (major_id),
+    độ khó (difficulty_level), hoặc môn học (subject).
+    """
+    try:
+        current_course = db.query(Course).filter(Course.id == course_id).first()
+        if not current_course:
+            return []
+
+        related = (
+            db.query(Course)
+            .filter(
+                Course.id != course_id,
+                Course.status == "published",
+                # Ưu tiên cùng ngành hoặc cùng độ khó
+                (Course.major_id == current_course.major_id)
+                | (Course.difficulty_level == current_course.difficulty_level)
+                | (Course.subject == current_course.subject),
+            )
+            .order_by(Course.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return related
+
+    except Exception as e:
+        print("❌ [CourseService][get_related_courses] Lỗi:", e)
+        return []

@@ -1,57 +1,84 @@
 {% extends "layout_teacher.html" %}
 
 {% block title %}🎓 Bảng điều khiển Giáo viên{% endblock %}
-{% block header_title %}Bảng điều khiển giảng dạy{% endblock %}
+{% block header_title %}Bảng điều khiển Giảng dạy{% endblock %}
 
 {% block content %}
-<div class="dashboard-container fade-in">
-  <div class="mb-4 reveal">
-    <h2 class="fw-bold text-primary mb-1">🎓 Bảng điều khiển giáo viên</h2>
-    <p class="text-muted mb-0">Theo dõi hoạt động giảng dạy, học viên và phản hồi của bạn.</p>
-  </div>
+<div class="dashboard-wrapper fade-in">
 
-  <div class="dashboard-card shadow-sm mb-4 reveal">
-    <h5 class="fw-semibold mb-2">
-      👋 Xin chào, <span class="text-primary">{{ teacher.full_name or "Giáo viên" }}</span>!
-    </h5>
-    <p class="text-secondary mb-0">Chào mừng bạn quay lại hệ thống E-Learning.</p>
-  </div>
+  <!-- 🧑‍🏫 HERO SECTION -->
+  <section class="teacher-hero d-flex flex-wrap align-items-center justify-content-between mb-4 reveal">
+    <div>
+      <h2 class="fw-bold text-primary mb-2">🎓 Xin chào, {{ teacher.full_name or "Giáo viên" }}!</h2>
+      <p class="text-muted mb-3">
+        Chào mừng trở lại hệ thống E-Learning.<br>
+        Theo dõi tiến độ giảng dạy, học viên và phản hồi ngay tại đây.
+      </p>
+      <a href="/teacher/courses" class="btn btn-gradient shadow-sm">
+        <i class="bi bi-journal-bookmark"></i> Quản lý khóa học
+      </a>
+    </div>
+    <div class="teacher-avatar">
+      <img src="{{ teacher.avatar_url or '/uploads/avatars/default-avatar.png' }}" alt="Avatar" class="avatar-glow" />
+    </div>
+  </section>
 
-  <!-- Thống kê -->
+  <!-- 📊 THỐNG KÊ NHANH -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3 reveal"><div class="stat-box">
-      <i class="bi bi-journal-bookmark"></i>
-      <h5>{{ total_courses or 0 }}</h5><p class="small">Khóa học bạn giảng dạy</p>
-    </div></div>
-    <div class="col-md-3 reveal"><div class="stat-box" style="background:linear-gradient(135deg,#2563eb,#60a5fa);">
-      <i class="bi bi-people-fill"></i>
-      <h5>{{ total_students or 0 }}</h5><p class="small">Học viên đang học</p>
-    </div></div>
-    <div class="col-md-3 reveal"><div class="stat-box" style="background:linear-gradient(135deg,#059669,#34d399);">
-      <i class="bi bi-clipboard-check"></i>
-      <h5>{{ total_assignments or 0 }}</h5><p class="small">Bài tập & kiểm tra</p>
-    </div></div>
-    <div class="col-md-3 reveal"><div class="stat-box" style="background:linear-gradient(135deg,#d97706,#facc15);">
-      <i class="bi bi-chat-dots"></i>
-      <h5>{{ total_feedbacks or 0 }}</h5><p class="small">Phản hồi học viên</p>
-    </div></div>
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-blue">
+        <div class="card-body">
+          <i class="bi bi-journal-bookmark"></i>
+          <h5>{{ total_courses or 0 }}</h5>
+          <p>Khóa học bạn giảng dạy</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-green">
+        <div class="card-body">
+          <i class="bi bi-people-fill"></i>
+          <h5>{{ total_students or 0 }}</h5>
+          <p>Học viên đang học</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-purple">
+        <div class="card-body">
+          <i class="bi bi-clipboard-check"></i>
+          <h5>{{ total_assignments or 0 }}</h5>
+          <p>Bài tập & kiểm tra</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-orange">
+        <div class="card-body">
+          <i class="bi bi-chat-dots"></i>
+          <h5>{{ total_feedbacks or 0 }}</h5>
+          <p>Phản hồi học viên</p>
+        </div>
+      </div>
+    </div>
   </div>
 
+  <!-- 📘 DANH SÁCH KHÓA HỌC -->
   {% if courses %}
-  <h5 class="fw-semibold mb-3 text-secondary reveal">📘 Khóa học bạn đang giảng dạy</h5>
+  <h5 class="fw-semibold mb-3 text-secondary reveal">📚 Khóa học bạn đang giảng dạy</h5>
   <div class="row">
     {% for course in courses %}
       {% set progress = course.progress_percent or 0 %}
       <div class="col-md-6 col-lg-4 mb-4 reveal" data-delay="{{ loop.index * 0.08 }}">
-        <div class="card course-card shadow-sm h-100 border-0">
+        <div class="course-card h-100">
           <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}" 
-               class="card-img-top" style="height:160px; object-fit:cover;" alt="Course Thumbnail" />
+               alt="Thumbnail" class="course-thumb" />
           <div class="card-body d-flex flex-column justify-content-between">
             <div>
               <h6 class="fw-bold">{{ course.course_name }}</h6>
               <p class="text-muted small mb-1">Học viên: {{ course.total_students or 0 }}</p>
-              <div class="progress" style="height:6px;">
-                <div class="progress-bar bg-primary" role="progressbar" data-progress="{{ progress }}"></div>
+              <div class="progress" style="--percent: {{ progress }};">
+                <div class="progress-bar"></div>
               </div>
               <p class="small mt-1 text-muted">Tiến độ trung bình: {{ progress }}%</p>
             </div>
@@ -69,12 +96,12 @@
   </div>
   {% endif %}
 
+  <!-- 📈 BIỂU ĐỒ TIẾN ĐỘ -->
   {% if chart_data %}
   <div class="card shadow-sm mt-4 reveal">
     <div class="card-body">
       <h6 class="fw-semibold text-secondary mb-3">📊 Tiến độ trung bình các khóa học</h6>
       <canvas id="progressChart" height="120"></canvas>
-      <!-- 🔹 Dữ liệu biểu đồ dưới dạng JSON -->
       <script id="chart-data" type="application/json">{{ chart_data | tojson }}</script>
     </div>
   </div>
@@ -86,14 +113,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // Thanh tiến độ
+  // 🟦 Thanh tiến độ
   document.querySelectorAll('.progress-bar').forEach(bar => {
-    const p = bar.dataset.progress || 0;
+    const container = bar.parentElement;
+    const percent = parseFloat(container.style.getPropertyValue('--percent') || 0);
+    bar.style.width = '0%';
     bar.style.transition = 'width 1.2s ease-out';
-    setTimeout(() => bar.style.width = p + '%', 200);
+    setTimeout(() => (bar.style.width = percent + '%'), 300);
   });
 
-  // Hiệu ứng reveal
+  // ✨ Hiệu ứng reveal
   const revealElements = document.querySelectorAll('.reveal');
   const revealOnScroll = () => {
     const windowHeight = window.innerHeight;
@@ -108,18 +137,18 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('scroll', revealOnScroll);
   window.addEventListener('load', revealOnScroll);
 
-  // Biểu đồ Chart.js
+  // 📊 Biểu đồ Chart.js
   const chartDataTag = document.getElementById('chart-data');
   if (chartDataTag) {
-    const chartData = JSON.parse(chartDataTag.textContent);
+    const data = JSON.parse(chartDataTag.textContent);
     const ctx = document.getElementById('progressChart');
     new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: chartData.map(d => d.course_name),
+        labels: data.map(d => d.course_name),
         datasets: [{
           label: 'Tiến độ (%)',
-          data: chartData.map(d => d.progress_percent),
+          data: data.map(d => d.progress_percent),
           backgroundColor: 'rgba(37,99,235,0.6)',
           borderColor: '#2563eb',
           borderWidth: 1,
@@ -128,17 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
       },
       options: {
         responsive: true,
-        scales: {
-          y: { beginAtZero: true, max: 100, title: { display: true, text: 'Phần trăm (%)' } }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            backgroundColor: '#1e293b',
-            titleFont: { size: 13 },
-            bodyFont: { size: 12 }
-          }
-        }
+        scales: { y: { beginAtZero: true, max: 100 } },
+        plugins: { legend: { display: false } }
       }
     });
   }

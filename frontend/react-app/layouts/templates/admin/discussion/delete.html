@@ -1,0 +1,33 @@
+{% extends "layout_admin.html" %}
+{% block title %}🗑️ Xóa Thảo luận{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card border-danger shadow-sm">
+    <div class="card-header bg-danger text-white">
+      <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa thảo luận
+    </div>
+    <div class="card-body">
+      <p><strong>Nội dung:</strong> {{ discussion.content }}</p>
+      <p><strong>Người đăng:</strong> {{ user.full_name if user else 'Không rõ' }}</p>
+      <p><strong>Khóa học:</strong> {{ course.name if course else 'Không rõ' }}</p>
+
+      <p class="text-danger mt-3">
+        <i class="bi bi-exclamation-circle"></i>
+        Hành động này không thể hoàn tác.
+      </p>
+
+      <form method="post">
+        <div class="d-flex justify-content-end mt-4">
+          <a href="/admin/discussion/list" class="btn btn-secondary me-2">
+            <i class="bi bi-arrow-left-circle"></i> Hủy
+          </a>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Xóa
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

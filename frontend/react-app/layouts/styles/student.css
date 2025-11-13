@@ -1,229 +1,283 @@
-/* ==========================================================
-🎓 STUDENT PANEL - Neo UI PRO (v2.5 Glow Motion Sync Edition)
-Author: Lương Hồng Tiền
-========================================================== */
+/* =====================================================
+🎓 STUDENT PANEL – Glass Neo 2025 Pro (v2.3)
+Author: E-Learning Platform Team
+===================================================== */
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+/* === Theme Variables === */
+:root {
+  --blue1: #2563eb;
+  --blue2: #1e3a8a;
+  --accent: #facc15;
+  --text: #1e293b;
+  --bg: #f8fafc;
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --border-glass: rgba(255, 255, 255, 0.25);
+  --shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  --header-h: 70px;
+}
 
+body.dark-mode {
+  --blue1: #3b82f6;
+  --blue2: #0f172a;
+  --accent: #facc15;
+  --text: #e2e8f0;
+  --bg: #0f172a;
+  --card-bg: rgba(15, 23, 42, 0.7);
+  --border-glass: rgba(255, 255, 255, 0.15);
+  --shadow: 0 6px 25px rgba(255, 255, 255, 0.05);
+}
+
+/* === Base === */
 body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
   margin: 0;
-  font-family: "Inter","Segoe UI",sans-serif;
-  background: #f8f9fb;
-  color: #212529;
-  transition: background 0.35s,color 0.35s;
-  overflow-x: hidden;
+  transition: background 0.4s, color 0.4s;
 }
-a { text-decoration: none; color: inherit; }
+html { scroll-behavior: smooth; }
 
-/* === LAYOUT === */
-main {
-  margin-left: 260px;
-  padding: 80px 25px 60px;
-  min-height: 100vh;
-  transition: margin-left 0.4s cubic-bezier(0.4,0,0.2,1),opacity 0.4s ease;
-}
-
-/* ==========================================================
+/* =====================================================
 🧭 SIDEBAR
-========================================================== */
-#sidebar {
+===================================================== */
+.student-sidebar {
   position: fixed;
   top: 0; left: 0;
   width: 260px;
   height: 100vh;
-  background: linear-gradient(180deg,#0d6efd,#007bff);
+  background: linear-gradient(180deg, var(--blue1), var(--blue2));
   color: #fff;
-  overflow-y: auto;
-  z-index: 1040;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.15);
-  transition: width 0.4s cubic-bezier(0.4,0,0.2,1),
-              background 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.35s ease, transform 0.35s ease;
+  z-index: 999;
+  box-shadow: 4px 0 15px rgba(0,0,0,0.15);
 }
+.student-sidebar.collapsed { width: 72px; }
 
-/* Scrollbar */
-#sidebar::-webkit-scrollbar { width: 6px; }
-#sidebar::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.3);
-  border-radius: 6px;
-}
-#sidebar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.5);
-}
-
+/* === Header === */
 .sidebar-header {
-  padding-top: 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
   text-align: center;
+  padding: 20px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+.sidebar-header img {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  object-fit: cover;
   transition: all 0.3s ease;
 }
-.sidebar-avatar {
-  width: 95px; height: 95px; border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #fff;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-  cursor: pointer;
-  transition: transform 0.3s,opacity 0.3s,width 0.3s,height 0.3s;
-}
-.sidebar-avatar:hover { transform: scale(1.07); opacity: 0.9; }
-
-.camera-icon {
-  position: absolute; bottom: 3px; right: 5px;
-  background: linear-gradient(135deg,#0d6efd,#0066ff);
-  color: #fff;
-  border-radius: 50%;
-  border: 2px solid #fff;
-  padding: 4px;
-  font-size: 0.8rem;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+.sidebar-header img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
 }
 
+/* === Menu === */
 .sidebar-inner {
-  padding: 14px 0;
-  transition: opacity 0.35s ease;
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 10px;
 }
 .sidebar-inner a {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 20px;
-  border-radius: 10px; margin: 6px 14px;
-  color: #f8f9fa;
-  font-size: 0.95rem;
-  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: #fff;
+  text-decoration: none;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
 }
-.sidebar-inner a i { transition: transform 0.25s,opacity 0.3s; }
-.sidebar-inner a:hover {
-  background: rgba(255,255,255,0.15);
-  transform: translateX(4px);
-}
-.sidebar-inner a:hover i { transform: scale(1.15); }
-.sidebar-inner a.active {
-  background: rgba(255,255,255,0.25);
-  border-left: 4px solid #ffc107;
-  font-weight: 600;
-  box-shadow: inset 2px 0 8px rgba(255,255,255,0.1);
-}
-
-.sidebar-footer {
-  position: sticky; bottom: 0;
+.sidebar-inner a i {
+  font-size: 1.2rem;
+  min-width: 24px;
   text-align: center;
-  font-size: 0.85rem; opacity: 0.8;
-  padding: 10px 0;
+}
+.sidebar-inner a:hover,
+.sidebar-inner a.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-left-color: var(--accent);
+  transform: translateX(3px);
+}
+.student-sidebar.collapsed a span { display: none; }
+
+/* === Footer === */
+.sidebar-footer {
+  text-align: center;
+  padding: 14px 0;
+  font-size: 0.85rem;
+  opacity: 0.8;
   border-top: 1px solid rgba(255,255,255,0.2);
-  transition: opacity 0.3s ease;
 }
 
-/* ==========================================================
-🧊 COLLAPSED MODE
-========================================================== */
-#sidebar.collapsed { width: 80px; }
-#sidebar.collapsed .sidebar-header span,
-#sidebar.collapsed .sidebar-header small,
-#sidebar.collapsed .sidebar-inner a span,
-#sidebar.collapsed .sidebar-footer {
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.2s ease;
-}
-#sidebar.collapsed .sidebar-inner a {
-  justify-content: center; padding: 12px 0;
-}
-#sidebar.collapsed .sidebar-inner a i { font-size: 1.3rem; }
-#sidebar.collapsed .sidebar-avatar { width: 55px; height: 55px; }
-.student-header.collapsed { left: 80px; }
-main.collapsed { margin-left: 80px; }
-
-/* Glow line when collapsed */
-#sidebar.collapsed::after {
-  content:""; position:absolute; top:0; right:-1px; width:1px; height:100%;
-  background: linear-gradient(180deg,rgba(13,110,253,0.6),rgba(13,110,253,0));
-}
-
-/* ==========================================================
-🌟 HEADER
-========================================================== */
+/* =====================================================
+👨‍🎓 HEADER
+===================================================== */
 .student-header {
   position: fixed;
   top: 0; left: 260px; right: 0;
-  height: 60px;
-  background: linear-gradient(90deg,#0d6efd,#2563eb);
-  color: #fff;
-  display: flex; align-items: center; justify-content: flex-end;
-  padding: 0 22px;
-  z-index: 1035;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  transition: left 0.4s cubic-bezier(0.4,0,0.2,1);
+  height: var(--header-h);
+  background: var(--card-bg);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  transition: left 0.35s ease;
+  z-index: 900;
+}
+.student-header.collapsed { left: 72px; }
+
+.student-header .nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-right: 60px;
+  position: relative;
+  z-index: 1000;
+}
+.student-header .nav-icons a {
+  color: var(--text);
+  font-size: 1.3rem;
+  transition: color 0.2s, transform 0.2s;
+}
+.student-header .nav-icons a:hover {
+  color: var(--blue1);
+  transform: scale(1.1);
 }
 
-.nav-icons a {
-  color: #fff;
-  font-size: 1.25rem;
-  margin-right: 20px;
-  transition: opacity 0.25s;
-}
-.nav-icons a:hover { opacity: 0.8; }
-
-/* ==========================================================
+/* =====================================================
 ⚙️ TOGGLE BUTTONS
-========================================================== */
+===================================================== */
 .toggle-btn, .mode-toggle {
-  position: fixed; z-index: 1100;
-  background: #0d6efd; color: #fff;
-  border: none; border-radius: 50%;
-  width: 44px; height: 44px;
+  position: fixed;
+  top: 16px;
+  width: 45px; height: 45px;
+  border-radius: 50%;
+  border: none;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
-  transition: all 0.25s;
+  font-size: 1.3rem;
+  transition: all 0.3s ease;
 }
-.toggle-btn:hover, .mode-toggle:hover {
-  background: #0b5ed7;
-  transform: scale(1.08);
+.toggle-btn {
+  left: 15px;
+  background: #fff;
+  color: var(--blue1);
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  z-index: 1200;
 }
-.toggle-btn { top: 16px; left: 16px; }
-.mode-toggle { bottom: 25px; right: 25px; }
+.toggle-btn:hover { transform: rotate(10deg) scale(1.05); }
 
-/* ==========================================================
-🌫️ OVERLAY (MOBILE)
-========================================================== */
-#sidebar-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1030;
-  display: none; opacity: 0;
-  transition: opacity 0.35s;
+/* === 🌙 FIXED: Dark/Light toggle không che icon === */
+.mode-toggle {
+  right: 25px;
+  background: var(--card-bg);
+  color: #ffb700;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  z-index: 950; /* thấp hơn header icon */
 }
-#sidebar-overlay.active { display: block; opacity: 1; }
+.mode-toggle:hover { transform: rotate(-10deg) scale(1.05); }
 
-/* ==========================================================
-🌙 DARK MODE
-========================================================== */
-body.dark-mode { background: #1e1e2f; color: #f1f1f1; }
-body.dark-mode main { background: #24243a; }
-body.dark-mode #sidebar {
-  background: linear-gradient(180deg,#202040,#1b1b2f);
+/* =====================================================
+📦 CONTENT
+===================================================== */
+#content {
+  margin-top: calc(var(--header-h) + 25px);
+  margin-left: 285px;
+  margin-right: 25px;
+  margin-bottom: 40px;
+  background: var(--card-bg);
+  border-radius: 20px;
+  padding: 35px;
+  box-shadow: var(--shadow);
+  transition: all 0.35s ease;
 }
-body.dark-mode .student-header {
-  background: linear-gradient(90deg,#1f1f3d,#2b2b55);
+.student-header.collapsed ~ #content,
+.student-sidebar.collapsed ~ #content {
+  margin-left: 100px;
 }
-body.dark-mode .sidebar-inner a.active { border-left-color: #ffd43b; }
 
-/* ==========================================================
+/* =====================================================
+💬 CHAT AI STYLE
+===================================================== */
+#chatContainer {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.chat-message {
+  margin: 10px 0;
+  padding: 10px 16px;
+  border-radius: 16px;
+  max-width: 75%;
+  word-wrap: break-word;
+  animation: fadeIn 0.3s ease;
+}
+.chat-message.user {
+  background: var(--blue1);
+  color: white;
+  align-self: flex-end;
+}
+.chat-message.bot {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.dark-mode .chat-message.bot {
+  background: rgba(30,41,59,0.7);
+  border-color: rgba(255,255,255,0.1);
+}
+#typingIndicator {
+  color: var(--blue1);
+  font-style: italic;
+  opacity: 0.8;
+}
+@keyframes fadeIn { from {opacity:0;transform:translateY(5px);} to {opacity:1;transform:translateY(0);} }
+
+/* =====================================================
+🌗 TRANSITION EFFECT FOR DARK/LIGHT MODE
+===================================================== */
+body, .student-header, .student-sidebar, #content {
+  transition: background 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+
+/* =====================================================
 📱 RESPONSIVE
-========================================================== */
+===================================================== */
 @media (max-width: 992px) {
-  #sidebar { transform: translateX(-100%); position: fixed; }
-  #sidebar.show { transform: translateX(0); }
-  main { margin-left: 0; padding-top: 80px; }
+  .student-sidebar { transform: translateX(-100%); }
+  .student-sidebar.show { transform: translateX(0); }
   .student-header { left: 0; }
+  #content { margin: 90px 18px 25px; padding: 25px; }
+}
+/* =====================================================
+🌈 FADE TRANSITION WHEN TOGGLING LIGHT/DARK MODE
+===================================================== */
+body.fade-transition {
+  transition: background-color 0.6s ease, color 0.6s ease;
+}
+body.fade-transition * {
+  transition: background-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+.discussion-container, .discussion-detail, .discussion-create {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-/* ==========================================================
-🎞️ ANIMATIONS
-========================================================== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.text-gradient {
+  background: linear-gradient(90deg, #007bff, #6610f2);
+  background-clip: text;              /* ✅ Thuộc tính chuẩn */
+  -webkit-background-clip: text;      /* ✅ Cho Chrome, Safari */
+  -webkit-text-fill-color: transparent;
 }
-main.fade-in { animation: fadeIn 0.6s ease-out; }
 
-#sidebar, main, .student-header {
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+
+textarea.form-control {
+  border-radius: 12px;
+}
+
+.card {
+  border-radius: 16px !important;
 }

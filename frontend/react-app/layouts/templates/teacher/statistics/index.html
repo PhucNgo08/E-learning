@@ -1,79 +1,167 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>📊 Thống kê giảng dạy</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background: linear-gradient(180deg, #f5f8ff, #e9efff);
-      font-family: "Inter", "Segoe UI", sans-serif;
-      min-height: 100vh;
-    }
-    .stats-card {
-      border: none;
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-      transition: all 0.2s ease;
-    }
-    .stats-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-    }
-    .stats-icon {
-      font-size: 2rem;
-      color: #0056d2;
-    }
-    .stats-value {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #003087;
-    }
-  </style>
-</head>
-<body class="p-4">
-  <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="text-primary fw-bold">
-        <i class="bi bi-bar-chart-line"></i> Bảng thống kê giảng dạy
-      </h3>
-      <a href="/teacher/dashboard" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
+{% extends "layout_teacher.html" %}
+{% block title %}📊 Thống kê giảng dạy{% endblock %}
+
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<style>
+  body {
+    background: linear-gradient(180deg, #f5f8ff, #e9efff);
+    font-family: "Inter", "Segoe UI", sans-serif;
+  }
+  .stats-card {
+    border: none;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+  }
+  .stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  .stats-icon {
+    font-size: 2rem;
+    color: #0056d2;
+  }
+  .stats-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #003087;
+  }
+</style>
+
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary fw-bold">
+      <i class="bi bi-bar-chart-line"></i> Bảng thống kê giảng dạy
+    </h3>
+    <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <!-- Cards tổng quan -->
+  <div class="row g-4">
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-journal-bookmark"></i></div>
+        <h6 class="text-muted">Khóa học</h6>
+        <div class="stats-value">{{ data.total_courses }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-diagram-3"></i></div>
+        <h6 class="text-muted">Module</h6>
+        <div class="stats-value">{{ data.total_modules }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-collection-play"></i></div>
+        <h6 class="text-muted">Bài học</h6>
+        <div class="stats-value">{{ data.total_lessons }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-clipboard-check"></i></div>
+        <h6 class="text-muted">Bài tập</h6>
+        <div class="stats-value">{{ data.total_assignments }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-people"></i></div>
+        <h6 class="text-muted">Học viên</h6>
+        <div class="stats-value">{{ data.total_students }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-chat-left-heart"></i></div>
+        <h6 class="text-muted">Tổng đánh giá</h6>
+        <div class="stats-value">{{ data.total_reviews }}</div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="stats-card p-4 text-center">
+        <div class="stats-icon mb-2"><i class="bi bi-star-half"></i></div>
+        <h6 class="text-muted">Điểm trung bình đánh giá</h6>
+        <div class="stats-value">{{ '%.2f'|format(data.average_rating) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Biểu đồ & Top khóa học -->
+  <div class="row g-4 mt-1">
+    <!-- Biểu đồ -->
+    <div class="col-lg-6">
+      <div class="card stats-card p-4 h-100">
+        <h6 class="fw-semibold mb-3">⭐ Phân bố điểm đánh giá (1–5)</h6>
+        <canvas id="ratingChart"></canvas>
+      </div>
     </div>
 
-    <div class="row g-4">
-      <div class="col-md-3">
-        <div class="stats-card p-4 text-center">
-          <div class="stats-icon mb-2"><i class="bi bi-file-earmark-text"></i></div>
-          <h6 class="text-muted">Bài tập đã tạo</h6>
-          <div class="stats-value">{{ data.total_assignments }}</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="stats-card p-4 text-center">
-          <div class="stats-icon mb-2"><i class="bi bi-upload"></i></div>
-          <h6 class="text-muted">Bài nộp</h6>
-          <div class="stats-value">{{ data.total_submissions }}</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="stats-card p-4 text-center">
-          <div class="stats-icon mb-2"><i class="bi bi-mortarboard"></i></div>
-          <h6 class="text-muted">Bài học hoàn thành</h6>
-          <div class="stats-value">{{ data.completed_lessons }}</div>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="stats-card p-4 text-center">
-          <div class="stats-icon mb-2"><i class="bi bi-clipboard-data"></i></div>
-          <h6 class="text-muted">Điểm trung bình Quiz</h6>
-          <div class="stats-value">{{ data.avg_quiz_score }}</div>
+    <!-- Top khóa học -->
+    <div class="col-lg-6">
+      <div class="card stats-card p-4 h-100">
+        <h6 class="fw-semibold mb-3"><i class="bi bi-trophy"></i> Top 3 khóa học được đánh giá cao</h6>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Khóa học</th>
+                <th class="text-center">ĐTB</th>
+                <th class="text-end">Số đánh giá</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in data.top_courses %}
+              <tr>
+                <td>{{ c.name }}</td>
+                <td class="text-center">{{ '%.2f'|format(c.avg_rating) }}</td>
+                <td class="text-end">{{ c.total_reviews }}</td>
+              </tr>
+              {% else %}
+              <tr><td colspan="3" class="text-center text-muted">Chưa có dữ liệu</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
-</body>
-</html>
+
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // ✅ Dùng JSON.parse để tránh lỗi VS Code và vẫn render đúng
+  const ratingData = JSON.parse('{{ data.rating_distribution | tojson | safe }}');
+
+  const ctx = document.getElementById('ratingChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['1⭐','2⭐','3⭐','4⭐','5⭐'],
+      datasets: [{
+        label: 'Số lượng đánh giá',
+        data: ratingData,
+        backgroundColor: ['#dc3545','#fd7e14','#ffc107','#0d6efd','#198754'],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+</script>
+{% endblock %}

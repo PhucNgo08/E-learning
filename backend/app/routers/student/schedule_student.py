@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_db
 from app.services.student import schedule_service
 from app.dependencies.auth import get_current_student
-from app.config.template_config import get_template_by_path  # ✅ Dùng template chung
+from app.config.template_config import get_template_by_path
 
 router = APIRouter(prefix="/student/schedule", tags=["Student - Schedule"])
 
@@ -27,17 +27,18 @@ async def view_calendar(
     current_user=Depends(get_current_student)
 ):
     """Hiển thị lịch học dạng calendar cho sinh viên"""
-    tpl = get_template_by_path(request.url.path)  # ✅ Lấy template phù hợp (/student → student)
-    schedule = await schedule_service.get_student_schedule(db, current_user.id)
+    tpl = get_template_by_path(request.url.path)
+    schedule = schedule_service.get_student_schedule(db, current_user.id)  # ✅ bỏ await
 
     return tpl.TemplateResponse(
-        "schedule/calendar.html",  # ✅ KHÔNG có 'student/' ở đầu
+        "schedule/calendar.html",
         {
             "request": request,
             "schedule": schedule,
             "student": current_user,
-            "page_title": "🗓️ Lịch học & Kiểm tra"
-        }
+            "page_title": "🗓️ Lịch học & Kiểm tra",
+            "active_page": "schedule",
+        },
     )
 
 # ============================================================
@@ -51,14 +52,15 @@ async def view_list(
 ):
     """Hiển thị lịch học dạng danh sách"""
     tpl = get_template_by_path(request.url.path)
-    schedule = await schedule_service.get_schedule_list(db, current_user.id)
+    schedule = schedule_service.get_schedule_list(db, current_user.id)  # ✅ bỏ await
 
     return tpl.TemplateResponse(
-        "schedule/list.html",  # ✅ KHÔNG có 'student/' ở đầu
+        "schedule/list.html",
         {
             "request": request,
             "schedules": schedule,
             "student": current_user,
-            "page_title": "📋 Lịch học dạng danh sách"
-        }
+            "page_title": "📋 Lịch học dạng danh sách",
+            "active_page": "schedule",
+        },
     )

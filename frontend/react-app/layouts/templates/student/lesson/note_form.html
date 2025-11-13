@@ -1,0 +1,24 @@
+{% extends "layout_student.html" %}
+{% block title %}🖋️ Thêm ghi chú{% endblock %}
+{% block content %}
+<div class="container py-4 fade-in">
+  <a href="/student/lesson/notes/{{ lesson.id }}" class="btn btn-outline-secondary mb-3">
+    <i class="bi bi-arrow-left"></i> Quay lại danh sách ghi chú
+  </a>
+
+  <div class="card shadow-sm border-0 p-4">
+    <h4 class="fw-bold mb-3"><i class="bi bi-pencil-square me-2"></i>Thêm ghi chú</h4>
+    <form action="/student/lesson/note/add/{{ lesson.id }}" method="post">
+      <div class="mb-3">
+        <label for="content" class="form-label fw-semibold">Nội dung ghi chú</label>
+        <textarea id="content" name="content" class="form-control" rows="4" required placeholder="Nhập nội dung ghi chú của bạn..."></textarea>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-success">
+          <i class="bi bi-save"></i> Lưu ghi chú
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

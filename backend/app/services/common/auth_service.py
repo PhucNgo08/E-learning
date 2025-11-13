@@ -4,7 +4,7 @@
 Dịch vụ xử lý xác thực (đăng nhập / đăng xuất / kiểm tra vai trò)
 ==========================================================
 """
-from fastapi import Request, HTTPException, status
+from fastapi import Request, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -12,6 +12,7 @@ import bcrypt
 import uuid
 
 from app.models.user import User
+from app.models.security_setting import SecuritySettings
 from app.config.paths import UPLOAD_AVATARS
 from app.config.template_config import templates
 
@@ -41,24 +42,69 @@ def hash_password(password: str) -> str:
 
 
 # =====================================================
-# 🔐 ĐĂNG NHẬP NGƯỜI DÙNG
+# 🔐 XÁC THỰC NGƯỜI DÙNG (EMAIL + PASSWORD)
 # =====================================================
 def authenticate_user(db: Session, email: str, password: str):
-    """Xác thực người dùng dựa trên email và mật khẩu"""
+    """
+    Xác thực người dùng dựa trên email và mật khẩu.
+    Bao gồm kiểm tra khóa tạm thời và vô hiệu hóa.
+    """
     user = db.query(User).filter(User.email == email.strip().lower()).first()
 
     if not user:
-        return {"success": False, "message": "Không tìm thấy tài khoản."}
+        return {"success": False, "message": "❌ Không tìm thấy tài khoản."}
 
+    # Lấy hoặc tạo bản ghi SecuritySettings
+    security = db.query(SecuritySettings).filter(SecuritySettings.user_id == user.id).first()
+    if not security:
+        security = SecuritySettings(user_id=user.id)
+        db.add(security)
+        db.commit()
+        db.refresh(security)
+
+    # 🔒 Nếu tài khoản đang bị khóa tạm thời
+    if security.account_locked_until and security.account_locked_until > datetime.utcnow():
+        lock_time = security.account_locked_until.strftime("%H:%M:%S %d/%m/%Y")
+        return {
+            "success": False,
+            "message": f"🔒 Tài khoản đang bị khóa tạm thời đến {lock_time}."
+        }
+
+    # 🚫 Nếu tài khoản bị vô hiệu hóa
+    if str(user.status) != "active":
+        return {
+            "success": False,
+            "message": "🚫 Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên."
+        }
+
+    # ✅ Kiểm tra mật khẩu
     if not verify_password(password, user.password_hash):
-        return {"success": False, "message": "Mật khẩu không đúng."}
+        security.failed_login_attempts += 1
 
-    if not user.is_active:
-        return {"success": False, "message": "Tài khoản đã bị khóa."}
+        # Nếu nhập sai >= 5 lần → khóa 30 phút
+        if security.failed_login_attempts >= 5:
+            security.account_locked_until = datetime.utcnow() + timedelta(minutes=30)
+            security.failed_login_attempts = 0
+            db.commit()
+            lock_time = security.account_locked_until.strftime("%H:%M:%S %d/%m/%Y")
+            return {
+                "success": False,
+                "message": f"🔒 Sai mật khẩu quá 5 lần — tài khoản bị khóa đến {lock_time}."
+            }
+
+        db.commit()
+        remaining = 5 - security.failed_login_attempts
+        return {
+            "success": False,
+            "message": f"⚠️ Mật khẩu không đúng. Bạn còn {remaining} lần thử trước khi bị khóa."
+        }
 
     # ✅ Đăng nhập thành công
+    security.failed_login_attempts = 0
+    security.account_locked_until = None
     user.last_login = datetime.utcnow()
     db.commit()
+
     return {"success": True, "user": user}
 
 
@@ -69,10 +115,10 @@ def create_user_session(request: Request, user: User):
     """Lưu thông tin user vào session"""
     request.session.clear()
     request.session.update({
-        "user_id": user.id,
+        "user_id": str(user.id),
         "user_full_name": user.full_name,
         "user_email": user.email,
-        "role": user.role.name if hasattr(user, "role") else "student",
+        "role": getattr(user.role, "value", "student"),
         "user_avatar": user.avatar_url or "/uploads/avatars/default-avatar.png",
         "session_start": datetime.utcnow().isoformat(),
     })
@@ -102,20 +148,6 @@ def require_role(role: str):
             return await func(request, *args, **kwargs)
         return wrapper
     return decorator
-
-
-# =====================================================
-# 🧩 HÀM HỖ TRỢ TỰ ĐỘNG LOGIN (CHO TEST HOẶC SEED DATA)
-# =====================================================
-def auto_login_as(db: Session, request: Request, role_name: str):
-    """Đăng nhập tự động 1 người dùng đầu tiên theo vai trò"""
-    user = db.query(User).join(User.roles).filter(User.roles.any(name=role_name)).first()
-    if user:
-        create_user_session(request, user)
-        print(f"⚡ Auto-login thành công với vai trò: {role_name}")
-        return user
-    print(f"⚠️ Không tìm thấy user có vai trò '{role_name}'")
-    return None
 
 
 # =====================================================
@@ -149,11 +181,16 @@ def create_user(db: Session, email: str, full_name: str, password: str, role_nam
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
         avatar_url="/uploads/avatars/default-avatar.png",
-        is_active=True,
+        status="active",
     )
 
     db.add(user)
     db.commit()
     db.refresh(user)
+
+    # Tạo SecuritySettings mặc định
+    db.add(SecuritySettings(user_id=user.id))
+    db.commit()
+
     print(f"👤 Tạo người dùng mới: {user.full_name} ({role_name})")
     return user

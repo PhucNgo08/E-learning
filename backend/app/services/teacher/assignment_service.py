@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from datetime import datetime
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
@@ -98,14 +99,21 @@ def create_assignment(
 # 📄 Danh sách bài nộp theo Assignment
 # ====================================================
 def get_submissions_by_assignment(db: Session, assignment_id: str):
-    """Lấy danh sách bài nộp kèm thông tin sinh viên"""
-    return (
-        db.query(AssignmentSubmission, User)
-        .join(User, AssignmentSubmission.student_id == User.id)
+    """
+    Lấy danh sách bài nộp kèm thông tin sinh viên (dạng object)
+    Trả về list[AssignmentSubmission] với .student property gắn sẵn
+    """
+    submissions = (
+        db.query(AssignmentSubmission)
         .filter(AssignmentSubmission.assignment_id == assignment_id)
         .order_by(AssignmentSubmission.submission_time.desc())
         .all()
     )
+
+    # ✅ Gắn thêm thông tin sinh viên
+    for s in submissions:
+        s.student = db.query(User).filter(User.id == s.student_id).first()
+    return submissions
 
 
 # ====================================================
@@ -144,3 +152,56 @@ def get_submission_files(db: Session, submission_id: str):
         .filter(AssignmentFile.submission_id == submission_id)
         .all()
     )
+
+
+# ====================================================
+# 📊 Dữ liệu Export Excel
+# ====================================================
+def get_submission_export_rows(db: Session, assignment_id: str):
+    """
+    Trả về list[dict] chứa dữ liệu cần export Excel:
+    mssv, full_name, email, submission_time, status, grade, feedback, file_count
+    """
+    # Subquery đếm số file mỗi bài nộp
+    file_count_sq = (
+        db.query(
+            AssignmentFile.submission_id.label("sid"),
+            func.count(AssignmentFile.id).label("file_count")
+        )
+        .group_by(AssignmentFile.submission_id)
+        .subquery()
+    )
+
+    # JOIN submissions + users + file_count
+    q = (
+        db.query(
+            AssignmentSubmission.id,
+            AssignmentSubmission.submission_time,
+            AssignmentSubmission.status,
+            AssignmentSubmission.grade,
+            AssignmentSubmission.feedback,
+            User.mssv,
+            User.full_name,
+            User.email,
+            func.coalesce(file_count_sq.c.file_count, 0).label("file_count")
+        )
+        .join(User, User.id == AssignmentSubmission.student_id, isouter=True)
+        .join(file_count_sq, file_count_sq.c.sid == AssignmentSubmission.id, isouter=True)
+        .filter(AssignmentSubmission.assignment_id == assignment_id)
+        .order_by(AssignmentSubmission.submission_time.asc())
+    )
+
+    rows = []
+    for r in q.all():
+        rows.append({
+            "submission_id": r.id,
+            "submission_time": r.submission_time,
+            "status": r.status,
+            "grade": r.grade,
+            "feedback": r.feedback,
+            "mssv": r.mssv,
+            "full_name": r.full_name,
+            "email": r.email,
+            "file_count": r.file_count,
+        })
+    return rows

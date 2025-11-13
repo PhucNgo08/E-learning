@@ -3,6 +3,7 @@
 
 {% block content %}
 <style>
+  /* 🌈 Glass Neo UI – v3.0 */
   body {
     background: #f5f8ff;
     font-family: "Inter", "Segoe UI", sans-serif;
@@ -13,37 +14,40 @@
     border-radius: 14px;
     overflow: hidden;
     transition: all 0.3s ease;
-    background: #fff;
+    background: var(--card-bg, #fff);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     position: relative;
   }
+
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
   }
 
-  /* Ảnh khóa học có thể bấm */
+  /* 🖼️ Ảnh khóa học */
   .card-img-wrapper {
     position: relative;
     overflow: hidden;
     cursor: pointer;
   }
+
   .card-img-top {
     height: 180px;
     width: 100%;
     object-fit: cover;
     transition: transform 0.4s ease, opacity 0.3s ease;
   }
+
   .card-img-wrapper:hover .card-img-top {
     transform: scale(1.07);
     opacity: 0.85;
   }
 
-  /* Overlay “Xem chi tiết” */
+  /* 👁️ Overlay “Xem chi tiết” */
   .overlay {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.45);
     color: #fff;
     opacity: 0;
     display: flex;
@@ -53,11 +57,12 @@
     font-size: 1rem;
     transition: opacity 0.3s ease;
   }
+
   .card-img-wrapper:hover .overlay {
     opacity: 1;
   }
 
-  /* Badge trạng thái */
+  /* 🏷️ Badge trạng thái */
   .badge-status {
     position: absolute;
     top: 12px;
@@ -68,17 +73,50 @@
     font-weight: 600;
     text-transform: capitalize;
   }
-  .badge-status.published { background-color: #198754; color: #fff; }
-  .badge-status.draft { background-color: #ffc107; color: #212529; }
-  .badge-status.archived { background-color: #6c757d; color: #fff; }
+
+  .badge-status.published {
+    background-color: #198754;
+    color: #fff;
+  }
+
+  .badge-status.draft {
+    background-color: #ffc107;
+    color: #212529;
+  }
+
+  .badge-status.archived {
+    background-color: #6c757d;
+    color: #fff;
+  }
+
+  /* 🔘 Button */
+  .btn-success.btn-sm {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 6px 12px;
+  }
+
+  /* 🧭 Search bar */
+  .form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    transition: 0.2s;
+  }
+
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.2);
+  }
 </style>
 
-<div class="d-flex align-items-center justify-content-between mb-4">
-  <h4 class="fw-bold text-primary mb-0">
+<!-- ====================== HEADER ======================= -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap">
+  <h4 class="fw-bold text-primary mb-2 mb-md-0">
     <i class="bi bi-journal-bookmark"></i> Danh sách khóa học
   </h4>
-  <form class="d-flex" method="get">
-    <input 
+
+  <form class="d-flex" method="get" role="search">
+    <input
       name="q"
       value="{{ request.query_params.get('q', '') }}"
       class="form-control me-2"
@@ -88,15 +126,16 @@
   </form>
 </div>
 
+<!-- ====================== COURSE LIST ======================= -->
 {% if courses %}
 <div class="row g-4">
   {% for c in courses %}
   <div class="col-lg-4 col-md-6 col-sm-12">
     <div class="card h-100 shadow-sm">
 
-      <!-- Ảnh khóa học có thể click -->
+      <!-- 🖼️ Ảnh khóa học -->
       <a href="{{ url_for('student_course_detail', course_id=c.id) }}" class="card-img-wrapper text-decoration-none">
-        <img 
+        <img
           src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
           onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png';"
           class="card-img-top"
@@ -116,25 +155,26 @@
         </span>
       </a>
 
-      <div class="card-body">
+      <!-- 📖 Nội dung thẻ -->
+      <div class="card-body pb-1">
         <h5 class="card-title text-primary text-truncate">{{ c.course_name }}</h5>
         <p class="text-muted small mb-1">
-          Mã: {{ c.course_code }} • Tín chỉ: {{ c.credit_hours or 3 }}
+          <i class="bi bi-hash"></i> {{ c.course_code }} • 
+          <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 3 }} tín chỉ
         </p>
-        <p class="card-text text-truncate" title="{{ c.description }}">
+        <p class="card-text text-truncate small" title="{{ c.description }}">
           {{ c.description or "Chưa có mô tả cho khóa học này." }}
         </p>
       </div>
 
-      <!-- ✅ Chỉ giữ nút đăng ký -->
+      <!-- 🎯 Nút hành động -->
       <div class="card-footer bg-white border-0 text-end pb-3 px-3">
         <form method="post" action="{{ url_for('student_course_enroll', course_id=c.id) }}">
-          <button class="btn btn-success btn-sm">
+          <button class="btn btn-success btn-sm shadow-sm">
             <i class="bi bi-plus-circle"></i> Đăng ký
           </button>
         </form>
       </div>
-
     </div>
   </div>
   {% endfor %}
@@ -145,6 +185,7 @@
   </div>
 {% endif %}
 
+<!-- ====================== PAGINATION ======================= -->
 {% if pagination %}
 <nav class="mt-4">
   <ul class="pagination justify-content-center">

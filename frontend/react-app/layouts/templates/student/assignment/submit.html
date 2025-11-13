@@ -1,18 +1,29 @@
 {% extends "layout_student.html" %}
-{% block title %}📤 Nộp bài: {{ assignment.title }}{% endblock %}
+{% block title %}📤 Nộp bài tập{% endblock %}
 {% block content %}
-<h5 class="mb-3">📤 Nộp bài</h5>
-<form method="post" enctype="multipart/form-data">
-<div class="mb-3">
-<label class="form-label">Ghi chú</label>
-<textarea class="form-control" name="submission_text" rows="4" placeholder="Ghi chú cho giảng viên (tuỳ chọn)"></textarea>
+<div class="container py-4 fade-in">
+  <h3 class="fw-bold mb-3"><i class="bi bi-upload me-2"></i>{{ page_title }}</h3>
+
+  <form action="/student/assignment/submit/{{ assignment.id }}" method="post" enctype="multipart/form-data" class="card shadow-sm p-4">
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Ghi chú / Nội dung bài nộp</label>
+      <textarea class="form-control" name="submission_text" rows="4" placeholder="Nhập nội dung hoặc ghi chú (nếu có)..."></textarea>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-semibold">Tệp đính kèm (tối đa {{ assignment.max_files or 5 }} tệp)</label>
+      <input class="form-control" type="file" name="files" multiple />
+      <small class="text-muted">Định dạng cho phép: {{ assignment.allowed_file_types or 'pdf, docx, zip, jpg' }}</small>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+      <a href="/student/assignment/detail/{{ assignment.id }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-send-check"></i> Gửi bài
+      </button>
+    </div>
+  </form>
 </div>
-<div class="mb-3">
-<label class="form-label">Tệp đính kèm</label>
-<input class="form-control" type="file" name="files" multiple>
-<div class="form-text">Cho phép: {{ assignment.allowed_file_types or 'pdf, docx, zip' }} • Tối đa {{ assignment.max_files or 5 }} tệp</div>
-</div>
-<button class="btn btn-primary"><i class="bi bi-cloud-upload"></i> Nộp</button>
-<a class="btn btn-outline-secondary" href="{{ url_for('student_assignment_detail', assignment_id=assignment.id) }}">Hủy</a>
-</form>
 {% endblock %}

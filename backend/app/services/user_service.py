@@ -1,9 +1,11 @@
 import uuid
+from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from app.models.user import User
-from app.models.security_setting import SecuritySetting
+from app.models.security_setting import SecuritySettings
 from app.services.common.password_service import get_password_hash  # ✅ bcrypt hash chuẩn
+
 
 # =====================================================
 # 🧩 1️⃣ TẠO NGƯỜI DÙNG
@@ -49,15 +51,17 @@ def create_user(
             mssv=mssv,
             academic_year_id=academic_year_id or None,
             major_id=major_id or None,
-            status="active"
+            status="active",
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         )
 
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
 
-        # --- Tạo SecuritySetting mặc định ---
-        db.add(SecuritySetting(user_id=new_user.id))
+        # --- Tạo SecuritySettings mặc định ---
+        db.add(SecuritySettings(user_id=new_user.id))
         db.commit()
 
         return new_user
@@ -68,7 +72,7 @@ def create_user(
 
 
 # =====================================================
-# 🔍 2️⃣ HÀM LẤY NGƯỜI DÙNG
+# 🔍 2️⃣ LẤY THÔNG TIN NGƯỜI DÙNG
 # =====================================================
 def get_user_by_id(user_id: str, db: Session):
     """Lấy người dùng theo ID."""
@@ -124,6 +128,7 @@ def update_user(
     user.academic_year_id = academic_year_id or None
     user.major_id = major_id or None
     user.mssv = mssv or user.mssv
+    user.updated_at = datetime.utcnow()
 
     # --- Nếu có mật khẩu mới ---
     if password and password.strip() != "":
@@ -148,6 +153,7 @@ def update_password(db: Session, email: str, new_password: str):
         raise ValueError("Không tìm thấy người dùng với email này.")
 
     user.password_hash = get_password_hash(new_password)
+    user.updated_at = datetime.utcnow()
     try:
         db.commit()
         db.refresh(user)
@@ -158,17 +164,29 @@ def update_password(db: Session, email: str, new_password: str):
 
 
 # =====================================================
-# 🚫 5️⃣ VÔ HIỆU HÓA TÀI KHOẢN
+# 🚫 5️⃣ VÔ HIỆU HÓA TÀI KHOẢN (ADMIN)
 # =====================================================
 def deactivate_user(user_id: str, db: Session):
-    """Vô hiệu hóa tài khoản người dùng."""
+    """Vô hiệu hóa tài khoản người dùng (soft disable, KHÔNG khóa tạm)."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
     if user.status == "inactive":
         raise ValueError("Tài khoản đã bị vô hiệu hóa.")
 
+    # 🚫 Không cho vô hiệu hóa admin
+    if user.role == "admin":
+        raise ValueError("Không thể vô hiệu hóa tài khoản quản trị viên chính.")
+
     user.status = "inactive"
+    user.updated_at = datetime.utcnow()
+
+    # ✅ Chỉ reset, không khóa tạm
+    sec = db.query(SecuritySettings).filter(SecuritySettings.user_id == user_id).first()
+    if sec:
+        sec.failed_login_attempts = 0
+        sec.account_locked_until = None
+
     try:
         db.commit()
         return True
@@ -178,10 +196,10 @@ def deactivate_user(user_id: str, db: Session):
 
 
 # =====================================================
-# ♻️ 6️⃣ KHÔI PHỤC TÀI KHOẢN
+# ♻️ 6️⃣ KHÔI PHỤC TÀI KHOẢN (ADMIN)
 # =====================================================
 def restore_user(user_id: str, db: Session):
-    """Khôi phục tài khoản bị vô hiệu hóa."""
+    """Khôi phục tài khoản bị vô hiệu hóa (mở khóa)."""
     user = get_user_by_id(user_id, db)
     if not user:
         raise ValueError("Không tìm thấy người dùng.")
@@ -189,6 +207,13 @@ def restore_user(user_id: str, db: Session):
         raise ValueError("Tài khoản đang hoạt động.")
 
     user.status = "active"
+    user.updated_at = datetime.utcnow()
+
+    sec = db.query(SecuritySettings).filter(SecuritySettings.user_id == user_id).first()
+    if sec:
+        sec.failed_login_attempts = 0
+        sec.account_locked_until = None
+
     try:
         db.commit()
         return True

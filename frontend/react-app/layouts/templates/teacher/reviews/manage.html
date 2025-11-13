@@ -13,52 +13,25 @@
     body {
       background: linear-gradient(180deg, #f0f4ff, #f8f9fc);
       min-height: 100vh;
+      font-family: "Inter", sans-serif;
     }
-
-    .card {
-      border-radius: 15px;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-    }
+    .card { border-radius: 15px; transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
 
     .header-bar {
-      background: #0d6efd;
-      color: white;
-      border-radius: 12px;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+      background: #0d6efd; color: white; border-radius: 12px;
+      padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 25px; box-shadow: 0 4px 12px rgba(13,110,253,0.3);
     }
+    .header-bar h3 { margin: 0; font-weight: 600; }
+    .back-btn { background-color: #ffc107; border: none; color: #000; font-weight: 500; transition: 0.2s; }
+    .back-btn:hover { background-color: #ffcd39; color: #000; }
 
-    .header-bar h3 {
-      margin: 0;
-      font-weight: 600;
-    }
-
-    .back-btn {
-      background-color: #ffc107;
-      border: none;
-      color: #000;
-      font-weight: 500;
-      transition: 0.2s;
-    }
-
-    .back-btn:hover {
-      background-color: #ffcd39;
-      color: #000;
-    }
+    .filter-form label { font-weight: 500; color: #333; }
   </style>
 </head>
 
 <body class="p-4">
-
   <div class="container">
 
     <!-- 🌟 Header -->
@@ -86,9 +59,7 @@
       <div class="col-md-4">
         <div class="card shadow-sm text-center p-3">
           <h6 class="text-muted">🏆 Khóa học nổi bật</h6>
-          <h5 class="fw-bold text-success">
-            {{ top_course.course_name if top_course else 'Chưa có dữ liệu' }}
-          </h5>
+          <h5 class="fw-bold text-success">{{ top_course.course_name if top_course else 'Chưa có dữ liệu' }}</h5>
         </div>
       </div>
     </div>
@@ -101,24 +72,48 @@
       </div>
     </div>
 
+    <!-- 🔍 Bộ lọc nâng cao -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body">
+        <form method="get" class="row g-3 filter-form">
+          <div class="col-md-3">
+            <label>Khóa học</label>
+            <select name="course_id" class="form-select">
+              <option value="">-- Tất cả --</option>
+              {% for c in courses %}
+              <option value="{{ c.id }}" {% if filters.course_id == c.id %}selected{% endif %}>{{ c.course_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Trạng thái</label>
+            <select name="status" class="form-select">
+              <option value="">-- Tất cả --</option>
+              <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Đã duyệt</option>
+              <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Chờ duyệt</option>
+              <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Từ chối</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label>Điểm từ</label>
+            <input type="number" step="0.1" name="rating_min" value="{{ filters.rating_min or '' }}" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label>Đến</label>
+            <input type="number" step="0.1" name="rating_max" value="{{ filters.rating_max or '' }}" class="form-control">
+          </div>
+          <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="bi bi-funnel"></i> Lọc kết quả
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- 📋 Danh sách đánh giá -->
     <div class="card shadow-sm mb-5">
       <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h6 class="text-secondary"><i class="bi bi-list-ul"></i> Danh sách chi tiết đánh giá</h6>
-          <form class="d-flex" method="get">
-            <select name="course_id" class="form-select me-2">
-              <option value="">-- Lọc theo khóa học --</option>
-              {% for c in courses %}
-                <option value="{{ c.id }}">{{ c.course_name }}</option>
-              {% endfor %}
-            </select>
-            <button class="btn btn-outline-primary" type="submit">
-              <i class="bi bi-funnel"></i> Lọc
-            </button>
-          </form>
-        </div>
-
         {% if reviews %}
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -131,6 +126,7 @@
                 <th>⭐ Hỗ trợ</th>
                 <th>⭐ Trung bình</th>
                 <th>Bình luận</th>
+                <th>Trạng thái</th>
                 <th>Ngày</th>
                 <th class="text-center">Thao tác</th>
               </tr>
@@ -143,19 +139,38 @@
                 <td>{{ r.rating_content or '-' }}</td>
                 <td>{{ r.rating_teacher or '-' }}</td>
                 <td>{{ r.rating_support or '-' }}</td>
-                <td>
-                  <span class="badge bg-warning text-dark">
-                    {{ "%.1f"|format(r.overall_rating or 0) }}
-                  </span>
-                </td>
+                <td><span class="badge bg-warning text-dark">{{ "%.1f"|format(r.overall_rating or 0) }}</span></td>
                 <td>{{ r.comment or '-' }}</td>
+                <td>
+                  {% if r.status == 'approved' %}
+                    <span class="badge bg-success">Đã duyệt</span>
+                  {% elif r.status == 'pending' %}
+                    <span class="badge bg-secondary">Chờ duyệt</span>
+                  {% elif r.status == 'rejected' %}
+                    <span class="badge bg-danger">Từ chối</span>
+                  {% endif %}
+                </td>
                 <td>{{ r.created_at.strftime('%d/%m/%Y') }}</td>
                 <td class="text-center">
-                  <form method="post" action="/teacher/reviews/delete/{{ r.id }}" onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');">
-                    <button type="submit" class="btn btn-sm btn-outline-danger">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </form>
+                  <div class="btn-group">
+                    <a href="/teacher/reviews/detail/{{ r.id }}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                    {% if r.status != 'approved' %}
+                    <form method="post" action="/teacher/reviews/approve/{{ r.id }}" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-success" title="Duyệt">
+                        <i class="bi bi-check2-circle"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                    {% if r.status != 'rejected' %}
+                    <form method="post" action="/teacher/reviews/reject/{{ r.id }}" class="d-inline">
+                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối">
+                        <i class="bi bi-x-circle"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
                 </td>
               </tr>
               {% endfor %}
@@ -164,7 +179,7 @@
         </div>
         {% else %}
           <div class="alert alert-warning text-center py-4">
-            <i class="bi bi-exclamation-circle"></i> Chưa có đánh giá nào.
+            <i class="bi bi-exclamation-circle"></i> Chưa có đánh giá nào phù hợp với bộ lọc.
           </div>
         {% endif %}
       </div>
@@ -191,6 +206,5 @@
       }
     });
   </script>
-
 </body>
 </html>

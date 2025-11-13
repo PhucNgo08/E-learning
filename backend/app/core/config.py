@@ -1,13 +1,16 @@
-from pydantic_settings import BaseSettings  # ✅ ĐÚNG
-# pip install pydantic-settings
+from pydantic_settings import BaseSettings
 from urllib.parse import quote_plus
 
 class Settings(BaseSettings):
+    # 🗄️ Cấu hình Database
     DB_HOST: str
     DB_PORT: int
     DB_USER: str
     DB_PASS: str
     DB_NAME: str
+
+    # 🤖 Thêm API Key cho Chat AI (Google Gemini)
+    GOOGLE_API_KEY: str | None = None   # 👈 thêm dòng này
 
     @property
     def DATABASE_URL(self) -> str:
@@ -19,4 +22,5 @@ class Settings(BaseSettings):
         )
 
     class Config:
-        env_file = ".env"  # tự động đọc file .env ở root project
+        env_file = ".env"     # Tự động đọc file .env
+        extra = "ignore"      # 👈 Bỏ qua biến .env thừa, tránh lỗi pydantic

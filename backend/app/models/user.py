@@ -63,7 +63,7 @@ class User(Base):
 
     # ===== Security Setting =====
     security_setting = relationship(
-        "SecuritySetting",
+        "SecuritySettings",  # ✅ đồng bộ với models/security_settings.py
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan"
@@ -162,11 +162,12 @@ class User(Base):
         foreign_keys="QuizAttempt.graded_by",
         overlaps="quiz_attempts"
     )
+
     # === Discussions ===
     discussions = relationship(
-    "Discussion",
-    back_populates="user",
-    cascade="all, delete"
+        "Discussion",
+        back_populates="user",
+        cascade="all, delete"
     )
 
     # ============================================

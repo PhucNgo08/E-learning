@@ -1,7 +1,7 @@
 """
 ==========================================================
 🎓 ROUTER: Teacher - Quiz Management
-Quản lý tạo, sửa, xóa và xem danh sách Quiz của giáo viên
+Quản lý tạo, sửa, xóa, xem chi tiết và thống kê Quiz của giáo viên
 ==========================================================
 """
 
@@ -10,6 +10,7 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from datetime import datetime
 
 # ✅ Import nội bộ
@@ -17,9 +18,11 @@ from app.database.connection import get_db
 from app.dependencies.auth import get_current_teacher
 from app.config.template_config import get_template_by_path
 
-# ✅ Import services
+# ✅ Import services & models
 from app.services.teacher import quiz_service
 from app.models.course import Course
+from app.models.quiz_attempt import QuizAttempt
+from app.models.quiz import Quiz
 
 
 # ======================================================
@@ -245,3 +248,72 @@ def quiz_detail(
             "page_title": f"📊 Chi tiết Quiz: {quiz.title}",
         },
     )
+
+
+# ======================================================
+# 📈 8️⃣ Thống kê kết quả học viên
+# ======================================================
+@router.get("/statistics/{quiz_id}", response_class=HTMLResponse)
+def quiz_statistics(
+    quiz_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    """Thống kê kết quả học viên cho quiz"""
+    data = quiz_service.get_quiz_statistics(db, current_teacher.id, quiz_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Không tìm thấy quiz hoặc không có quyền truy cập.")
+
+    templates = get_template_by_path(str(request.url.path))
+    return templates.TemplateResponse(
+        "quizzes/statistics.html",
+        {
+            "request": request,
+            "teacher": current_teacher,
+            "quiz": data["quiz"],
+            "stats": data["stats"],
+            "top_students": data["top_students"],
+            "page_title": f"📈 Thống kê kết quả: {data['quiz'].title}",
+        },
+    )
+
+
+# ======================================================
+# 📊 9️⃣ API phụ trợ cho Chart.js (phân bố điểm & tỉ lệ đạt)
+# ======================================================
+@router.get("/api/score-distribution/{quiz_id}")
+def api_score_distribution(
+    quiz_id: str,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    """API trả về phân bố điểm cho biểu đồ Chart.js"""
+    quiz = (
+        db.query(Quiz)
+        .join(Course, Quiz.course_id == Course.id)
+        .filter(Course.teacher_id == current_teacher.id, Quiz.id == quiz_id)
+        .first()
+    )
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Không có quyền truy cập quiz này.")
+
+    ranges = [(0, 50), (50, 70), (70, 90), (90, 100)]
+    counts = []
+    for low, high in ranges:
+        count = (
+            db.query(func.count(QuizAttempt.id))
+            .filter(
+                QuizAttempt.quiz_id == quiz_id,
+                QuizAttempt.status == "submitted",
+                QuizAttempt.score >= low,
+                QuizAttempt.score < high
+            )
+            .scalar()
+        )
+        counts.append(count or 0)
+
+    total = sum(counts)
+    passed = sum(count for (low, high), count in zip(ranges, counts) if high >= quiz.passing_score)
+    failed = total - passed
+    return {"counts": counts, "passed": passed, "failed": failed}

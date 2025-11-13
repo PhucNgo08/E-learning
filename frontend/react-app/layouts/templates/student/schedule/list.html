@@ -1,55 +1,52 @@
 {% extends "layout_student.html" %}
-{% block title %}🗓️ Lịch học và kiểm tra{% endblock %}
+{% block title %}📋 Lịch học & Kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 fade-in">
+  <!-- 🧭 HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold text-primary mb-0">
-      <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
+      <i class="bi bi-list-task"></i> Lịch học & Kiểm tra
     </h4>
     <a href="/student/schedule/calendar" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-grid-3x3-gap"></i> Xem dạng lịch
+      <i class="bi bi-calendar3"></i> Xem dạng lịch
     </a>
   </div>
 
-  {% if schedules %}
+  <!-- 📋 NỘI DUNG -->
+  {% if schedules and schedules|length > 0 %}
   <div class="table-responsive shadow-sm rounded-3">
     <table class="table table-bordered align-middle mb-0">
       <thead class="table-primary text-center align-middle">
         <tr>
           <th style="width: 5%">#</th>
-          <th style="width: 25%">Môn học</th>
+          <th style="width: 30%">Môn học</th>
           <th style="width: 15%">Ngày</th>
           <th style="width: 15%">Giờ</th>
-          <th style="width: 15%">Loại</th>
-          <th style="width: 15%">Phòng</th>
+          <th style="width: 20%">Địa điểm</th>
         </tr>
       </thead>
       <tbody class="bg-light">
         {% for s in schedules %}
+        {% set start_time = s.start | todatetime %}
         <tr class="hover-row">
           <td class="text-center fw-semibold text-secondary">{{ loop.index }}</td>
           <td>
             <div class="fw-semibold text-dark">{{ s.course_name }}</div>
-            <small class="text-muted">{{ s.module_name or '' }}</small>
+            <small class="text-muted">{{ s.module_name }}</small><br>
+            <!-- ✅ Sạch lỗi VS Code + đúng màu -->
+            <span class="badge" data-color="{{ s.color | default('#007bff') }}">
+              {{ s.lesson_title }}
+            </span>
           </td>
           <td class="text-center text-primary fw-semibold">
-            {{ s.date.strftime('%d/%m/%Y') }}
+            {{ start_time.strftime('%d/%m/%Y') }}
           </td>
           <td class="text-center text-dark">
-            {{ s.time or "Chưa rõ" }}
+            {{ start_time.strftime('%H:%M') }}
           </td>
           <td class="text-center">
-            {% if s.type == 'exam' %}
-              <span class="badge bg-danger"><i class="bi bi-pencil-square me-1"></i>Thi</span>
-            {% elif s.type == 'quiz' %}
-              <span class="badge bg-warning text-dark"><i class="bi bi-question-circle me-1"></i>Quiz</span>
-            {% else %}
-              <span class="badge bg-success"><i class="bi bi-book me-1"></i>Học</span>
-            {% endif %}
-          </td>
-          <td class="text-center">
-            {{ s.room or '-' }}
+            {{ s.location or 'Trực tuyến' }}
           </td>
         </tr>
         {% endfor %}
@@ -58,31 +55,35 @@
   </div>
 
   <p class="text-muted mt-2 small">
-    <i class="bi bi-info-circle"></i> Dữ liệu được cập nhật tự động theo thời khóa biểu mới nhất.
+    <i class="bi bi-info-circle"></i>
+    Dữ liệu được đồng bộ tự động từ thời khóa biểu mới nhất.
   </p>
 
   {% else %}
+  <!-- 💤 KHI KHÔNG CÓ LỊCH -->
   <div class="alert alert-info text-center py-3 shadow-sm rounded-3">
-    <i class="bi bi-info-circle"></i> Không có lịch học hoặc kiểm tra sắp tới.
+    <i class="bi bi-info-circle"></i>
+    Không có lịch học hoặc kiểm tra sắp tới.
   </div>
   {% endif %}
 </div>
 
+<!-- 🎨 STYLE -->
 <style>
-  /* 💎 Cải thiện hiển thị bảng */
   table th {
     white-space: nowrap;
   }
 
   .hover-row:hover {
     background: #f1f7ff;
-    transition: 0.2s;
+    transition: background 0.2s ease;
   }
 
   .badge {
-    font-size: 0.85rem;
-    padding: 6px 10px;
+    font-size: 0.8rem;
+    padding: 5px 9px;
     border-radius: 0.6rem;
+    color: #fff;
   }
 
   .alert-info {
@@ -90,5 +91,28 @@
     color: #0d6efd;
     border: 1px solid #bcd0ff;
   }
+
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 5px;
+    }
+
+    .table th,
+    .table td {
+      font-size: 0.85rem;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 4px;
+    }
+  }
 </style>
+
+<!-- 🎨 JS: tô màu động cho badge -->
+<script>
+  document.querySelectorAll('.badge[data-color]').forEach(el => {
+    el.style.backgroundColor = el.dataset.color;
+  });
+</script>
 {% endblock %}

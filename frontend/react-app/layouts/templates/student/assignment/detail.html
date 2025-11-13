@@ -1,10 +1,26 @@
 {% extends "layout_student.html" %}
-{% block title %}🧾 {{ assignment.title }}{% endblock %}
+{% block title %}📄 {{ page_title }}{% endblock %}
 {% block content %}
-<div class="card"><div class="card-body">
-<h5>{{ assignment.title }}</h5>
-<div class="text-muted small">Hạn nộp: {{ assignment.due_date }} • Điểm tối đa: {{ assignment.total_points }}</div>
-<p class="mt-2">{{ assignment.description }}</p>
-<a class="btn btn-primary" href="{{ url_for('student_assignment_submit', assignment_id=assignment.id) }}">Nộp bài</a>
-</div></div>
+<div class="container py-4 fade-in">
+  <h3 class="fw-bold mb-3 text-primary"><i class="bi bi-file-earmark-text me-2"></i>{{ assignment.title }}</h3>
+
+  <div class="card shadow-sm border-0 mb-3">
+    <div class="card-body">
+      <p><strong>Mô tả:</strong> {{ assignment.description or "Không có mô tả" }}</p>
+      <p><strong>Thời gian:</strong> {{ assignment.start_date.strftime("%d/%m/%Y") if assignment.start_date else "—" }} → 
+         {{ assignment.due_date.strftime("%d/%m/%Y %H:%M") if assignment.due_date else "—" }}</p>
+      <p><strong>Tổng điểm:</strong> {{ assignment.total_points or 10 }}</p>
+      <p><strong>Hình thức nộp:</strong> {{ assignment.submission_type | title }}</p>
+    </div>
+  </div>
+
+  <div class="text-end">
+    <a href="/student/assignment/submit/{{ assignment.id }}" class="btn btn-success">
+      <i class="bi bi-upload"></i> Nộp bài
+    </a>
+    <a href="/student/assignment/" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+</div>
 {% endblock %}

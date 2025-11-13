@@ -18,7 +18,7 @@ from app.config.paths import UPLOADS_BASE  # ✅ dùng config chuẩn
 app = FastAPI(
     title="E-Learning Platform",
     version="1.2.3",
-    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (không tự tạo thư mục)"
+    description="🌐 Hệ thống quản lý học tập trực tuyến - E-Learning (FastAPI)",
 )
 
 # =====================================================
@@ -53,7 +53,7 @@ ROOT_TEMPLATE_DIR = FRONTEND_DIR / "layouts" / "templates"
 LAYOUT_STYLES_DIR = FRONTEND_DIR / "layouts" / "styles"
 
 def safe_mount(path: Path, mount_url: str, name: str):
-    """Chỉ mount static nếu thư mục tồn tại, không tự tạo."""
+    """Chỉ mount static nếu thư mục tồn tại."""
     if path.exists():
         app.mount(mount_url, StaticFiles(directory=str(path)), name=name)
         print(f"✅ Mounted {name}: {path}")
@@ -71,12 +71,19 @@ if ROOT_TEMPLATE_DIR.exists():
     admin_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "admin"))
     teacher_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "teacher"))
     student_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "student"))
+
+    # 👇 Gắn vào app để router có thể dùng request.app.templates
+    app.templates = templates
+    app.admin_templates = admin_templates
+    app.teacher_templates = teacher_templates
+    app.student_templates = student_templates
+
 else:
     templates = None
     print(f"⚠️ Thư mục templates không tồn tại: {ROOT_TEMPLATE_DIR}")
 
 # =====================================================
-# 📦 UPLOADS (KHÔNG TỰ TẠO)
+# 📦 UPLOADS
 # =====================================================
 if UPLOADS_BASE.exists():
     app.mount("/uploads", StaticFiles(directory=str(UPLOADS_BASE)), name="uploads")
@@ -104,11 +111,11 @@ async def serve_avatar(filename: str):
 # 🌍 BIẾN TOÀN CỤC TEMPLATE
 # =====================================================
 if templates:
-    for env in (templates.env, admin_templates.env, teacher_templates.env, student_templates.env):
+    for env in (templates.env, app.admin_templates.env, app.teacher_templates.env, app.student_templates.env):
         env.globals.update(now=datetime.now)
 
 # =====================================================
-# 🧭 IMPORT ROUTER
+# 🧭 IMPORT ROUTERS
 # =====================================================
 # --- AUTH ---
 from app.routers.auth.login import login_router
@@ -134,6 +141,7 @@ from app.routers.admin.settings import router as settings_router
 from app.routers.admin.majors import router as majors_router
 from app.routers.admin.teacher_management import router as teacher_router
 from app.routers.admin import assignment, course_material, quiz_template, quiz, module_reorder
+from app.routers.admin import discussion, file_storage_management, notification
 
 # --- TEACHER ---
 from app.routers.teacher.teacher_dashboard import router as teacher_dashboard_router
@@ -164,26 +172,26 @@ from app.routers.student.review_student import router as student_review_router
 from app.routers.student.schedule_student import router as student_schedule_router
 from app.routers.student.notifications_student import router as student_notifications_router
 from app.routers.student.message_student import router as student_message_router
+from app.routers.student import chat_ai  # ✅ Trợ lý AI
 
 # =====================================================
-# 🔗 ĐĂNG KÝ ROUTER
+# 🔗 ĐĂNG KÝ ROUTERS
 # =====================================================
 for routers in [
     [login_router, register_router, logout_router, forgot_router, reset_router],
-
     [dashboard_router, user_router, course_router, section_router, category_router,
      class_router, enrollment_router, backup_router, exam_router, report_router,
      review_router, majors_router, academic_year_router, settings_router, teacher_router,
-     assignment.router, course_material.router, quiz_template.router, quiz.router, module_reorder.router],
+     assignment.router, course_material.router, quiz_template.router, quiz.router, module_reorder.router,
+     discussion.router, file_storage_management.router, notification.router],
 
     [teacher_dashboard_router, teacher_course_router, teacher_module_router, teacher_lesson_router,
      teacher_material_router, teacher_profile_router, teacher_review_router, teacher_class_router,
      teacher_schedule_router, teacher_statistics_router, teacher_assignment_router, teacher_message_router,
      teacher_quiz_router, teacher_notifications_router],
-
     [student_dashboard_router, student_profile_router, student_course_router, student_lesson_router,
      student_quiz_router, student_assignment_router, student_material_router, student_discussion_router,
-     student_review_router, student_schedule_router, student_notifications_router, student_message_router]
+     student_review_router, student_schedule_router, student_notifications_router, student_message_router, chat_ai.router],
 ]:
     for r in routers:
         app.include_router(r)
@@ -196,7 +204,6 @@ async def startup_event():
     print("\n" + "=" * 85)
     print("🚀 KHỞI ĐỘNG HỆ THỐNG E-LEARNING PLATFORM".center(85))
     print("=" * 85)
-
     try:
         Base.metadata.create_all(bind=engine)
         inspector = inspect(engine)
@@ -206,7 +213,7 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Lỗi khởi tạo database: {e}")
 
-    # ✅ Kiểm tra tồn tại thư mục chính
+    # ✅ Kiểm tra template & static
     dirs = [
         ("Admin Templates", ROOT_TEMPLATE_DIR / "admin"),
         ("Teacher Templates", ROOT_TEMPLATE_DIR / "teacher"),

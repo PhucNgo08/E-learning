@@ -1,10 +1,13 @@
 from fastapi import (
     APIRouter, Request, Depends, Form, HTTPException
 )
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 import traceback
+import io
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment
 
 # ✅ Import models & services
 from app.models.assignment import Assignment
@@ -322,3 +325,76 @@ def submit_grade(
         print("❌ Lỗi khi chấm điểm:", e)
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Không thể chấm điểm bài nộp.")
+
+
+# ======================================================
+# 📤 8️⃣ Export Excel danh sách bài nộp
+# ======================================================
+@router.get("/export/{assignment_id}")
+def export_assignment_excel(
+    assignment_id: str,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher)
+):
+    """Xuất danh sách bài nộp sang Excel"""
+    # --- 1️⃣ Kiểm tra bài tập ---
+    assignment = (
+        db.query(Assignment)
+        .filter(
+            Assignment.id == assignment_id,
+            Assignment.teacher_id == current_teacher.id
+        )
+        .first()
+    )
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bài tập hoặc bạn không có quyền truy cập.")
+
+    # --- 2️⃣ Lấy dữ liệu bài nộp ---
+    submissions = assignment_service.get_submissions_by_assignment(db, assignment_id)
+
+    # --- 3️⃣ Tạo workbook ---
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Submissions"
+
+    headers = ["STT", "MSSV", "Họ và tên", "Email", "Thời gian nộp", "Trạng thái", "Điểm", "Nhận xét", "Nộp trễ?"]
+    ws.append(headers)
+
+    header_font = Font(bold=True)
+    center = Alignment(horizontal="center")
+    for col in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col)
+        cell.font = header_font
+        cell.alignment = center
+        ws.column_dimensions[cell.column_letter].width = 20
+
+    # --- 4️⃣ Ghi dữ liệu ---
+    for idx, sub in enumerate(submissions, start=1):
+        student = db.query(User).filter(User.id == sub.student_id).first()
+        is_late = ""
+        if sub.submission_time and assignment.due_date:
+            is_late = "Có" if sub.submission_time > assignment.due_date else "Không"
+
+        ws.append([
+            idx,
+            student.mssv if student and student.mssv else "",
+            student.full_name if student else "",
+            student.email if student else "",
+            sub.submission_time.strftime("%Y-%m-%d %H:%M:%S") if sub.submission_time else "",
+            sub.status or "",
+            sub.grade if sub.grade is not None else "",
+            sub.feedback or "",
+            is_late
+        ])
+
+    # --- 5️⃣ Xuất ra stream ---
+    stream = io.BytesIO()
+    wb.save(stream)
+    stream.seek(0)
+
+    filename = f"submissions_{assignment.title.replace(' ', '_')}.xlsx"
+    return StreamingResponse(
+        stream,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
