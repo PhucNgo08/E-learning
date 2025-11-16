@@ -1,24 +1,63 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tạo Báo Cáo Mới</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #f0f4ff;
+            min-height: 100vh;
+        }
+        .report-card {
+            max-width: 650px;
+            margin: 80px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .btn-primary {
+            padding: 10px 25px;
+            font-weight: 600;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Tạo Báo Cáo Mới</h1>
-    <form method="post" action="/admin/report/generate-report">
-        <label for="report_type">Chọn loại báo cáo:</label>
-        <select name="report_type" id="report_type">
-            <option value="course_report">Báo Cáo Khóa Học</option>
-            <option value="class_report">Báo Cáo Lớp Học</option>
-            <option value="student_report">Báo Cáo Sinh Viên</option>
-            <!-- Thêm các loại báo cáo khác nếu cần -->
-        </select>
-        <br><br>
-        <button type="submit">Tạo Báo Cáo</button>
-    </form>
-    <br>
-    <a href="/admin/report/manage-reports">Trở lại Quản Lý Báo Cáo</a>
+    <div class="report-card">
+        <h3 class="mb-4 text-primary">
+            📄 Tạo Báo Cáo Mới
+        </h3>
+
+        <form method="post" action="/admin/reports/generate">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Chọn loại báo cáo:</label>
+                <select class="form-select" name="report_type" id="report_type">
+                    <option value="courses">📘 Báo cáo Khóa Học</option>
+                    <option value="enrollments">🏫 Báo cáo Đăng Ký</option>
+                    <option value="students">👨‍🎓 Báo cáo Sinh Viên</option>
+                    <option value="teachers">👨‍🏫 Báo cáo Giáo Viên</option>
+                    <option value="quiz_attempts">📝 Báo cáo Bài Làm Quiz</option>
+                    <option value="assignments">📚 Báo cáo Bài Tập</option>
+                    <option value="lesson_progress">📈 Báo cáo Tiến Độ Học Tập</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3" type="submit">
+                🚀 Tạo Báo Cáo
+            </button>
+        </form>
+
+        <a href="/admin/reports/manage" class="btn btn-link mt-3">
+            ⬅ Quay lại trang quản lý báo cáo
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

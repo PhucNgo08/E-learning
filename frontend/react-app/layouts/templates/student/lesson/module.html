@@ -1,128 +1,93 @@
 {% extends "layout_student.html" %}
 {% block title %}📘 {{ module.title }}{% endblock %}
 
-{% block head_extra %}
-<style>
-  /* 🌈 Hiệu ứng cho thanh tiến độ */
-  .progress {
-    height: 8px;
-    background-color: #e9ecef;
-    border-radius: 50px;
-    overflow: hidden;
-  }
-
-  .progress-bar {
-    transition: width 0.6s ease;
-  }
-
-  /* 🎓 Hiệu ứng hover bài học */
-  .list-group-item-action:hover {
-    background-color: #f8f9fa;
-    transform: translateX(3px);
-    transition: all 0.2s ease;
-  }
-
-  /* 📘 Nút quay lại */
-  .btn-back i {
-    transition: transform 0.3s ease;
-  }
-  .btn-back:hover i {
-    transform: translateX(-4px);
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <!-- 🔙 Nút quay lại -->
-  <div class="mb-3">
-    <a href="{{ url_for('student_lesson_module_list') }}" class="btn btn-outline-secondary btn-sm btn-back">
-      <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách module
-    </a>
-  </div>
+  <!-- Nút quay lại danh sách module -->
+  <a href="/student/lesson/module" class="btn btn-outline-secondary mb-3 rounded-pill shadow-sm">
+    <i class="bi bi-arrow-left"></i> Quay lại danh sách module
+  </a>
 
-  <!-- 📘 Thông tin module -->
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body">
-      <h4 class="fw-bold text-primary mb-1">
-        📘 Module {{ module.module_number }}: {{ module.title }}
-      </h4>
-      <p class="text-muted mb-0">{{ module.description or "Không có mô tả cho module này." }}</p>
-    </div>
-  </div>
+  <!-- Tiêu đề module -->
+  <h3 class="fw-bold text-primary mb-3">
+    <i class="bi bi-collection me-2"></i>{{ module.title }}
+  </h3>
 
-  <!-- 📊 Thanh tiến độ -->
-  {% if module.total_lessons and module.completed_lessons is not none %}
-    {% set percent = (module.completed_lessons / module.total_lessons * 100) | round(0, 'floor') %}
-    <div class="mb-4">
-      <label class="fw-semibold small text-muted mb-1">Tiến độ học tập</label>
-
-      <div class="progress">
-        <div class="progress-bar {% if percent == 100 %}bg-success{% else %}bg-info{% endif %}" 
-             role="progressbar"
-             data-width="{{ percent }}"
-             aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
-      </div>
-
-      <div class="d-flex justify-content-between small text-muted mt-1">
-        <span>{{ module.completed_lessons or 0 }}/{{ module.total_lessons or 0 }} bài học</span>
-        {% if percent == 100 %}
-          <span class="text-success fw-semibold"><i class="bi bi-check-circle"></i> Hoàn thành</span>
-        {% elif percent > 0 %}
-          <span class="text-warning fw-semibold"><i class="bi bi-hourglass-split"></i> Đang học</span>
-        {% else %}
-          <span class="text-secondary fw-semibold"><i class="bi bi-dot"></i> Chưa học</span>
-        {% endif %}
-      </div>
-    </div>
+  <!-- Mô tả module -->
+  {% if module.description %}
+  <p class="text-muted mb-4">{{ module.description }}</p>
   {% endif %}
 
-  <!-- 📚 Danh sách bài học -->
+  <!-- Danh sách bài học -->
   <div class="card shadow-sm border-0">
-    <div class="card-header bg-light fw-semibold">
-      <i class="bi bi-journal-bookmark"></i> Danh sách bài học
-    </div>
+    <ul class="list-group list-group-flush">
 
-    <div class="list-group list-group-flush">
-      {% for l in lessons %}
-        <a href="{{ url_for('student_lesson_view', lesson_id=l.id) }}"
-           class="list-group-item list-group-item-action d-flex justify-content-between align-items-center flex-wrap">
+      {% for lesson in lessons %}
+      <li class="list-group-item d-flex justify-content-between align-items-center flex-wrap">
+
+        <!-- LEFT: icon + title -->
+        <div class="d-flex align-items-center mb-2 mb-md-0 flex-grow-1">
+
+          {% if lesson.content_type == "video" %}
+            <i class="bi bi-play-circle text-success me-2 fs-5"></i>
+          {% elif lesson.content_type == "document" %}
+            <i class="bi bi-file-earmark-text text-primary me-2 fs-5"></i>
+          {% elif lesson.content_type == "quiz" %}
+            <i class="bi bi-ui-checks-grid text-warning me-2 fs-5"></i>
+          {% elif lesson.content_type == "assignment" %}
+            <i class="bi bi-pencil-square text-info me-2 fs-5"></i>
+          {% else %}
+            <i class="bi bi-dot fs-4 me-2"></i>
+          {% endif %}
+
           <div>
-            <div class="fw-semibold text-dark">
-              <i class="bi bi-play-circle text-primary"></i>
-              Bài {{ l.lesson_number }}: {{ l.title }}
+            <div class="fw-semibold text-truncate" style="max-width: 250px;">
+              {{ lesson.lesson_number }}. {{ lesson.title }}
             </div>
-            <div class="text-muted small">
-              🕒 {{ l.duration_minutes or 0 }} phút • {{ l.content_type|capitalize }}
-            </div>
+            <small class="text-muted">
+              {{ lesson.duration_minutes or 0 }} phút • {{ lesson.content_type | capitalize }}
+            </small>
           </div>
+        </div>
 
-          {% if l.completed %}
+        <!-- RIGHT: Status + Action -->
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+
+          {% if lesson.progress and lesson.progress.progress_status == "completed" %}
             <span class="badge bg-success">
-              <i class="bi bi-check-circle"></i> Hoàn thành
+              <i class="bi bi-check2"></i> Đã học
             </span>
           {% else %}
-            <span class="badge bg-secondary">
-              <i class="bi bi-hourglass-split"></i> Chưa học
-            </span>
+            <span class="badge bg-secondary">Chưa học</span>
           {% endif %}
-        </a>
-      {% else %}
-        <div class="list-group-item text-center text-muted py-3">
-          <i class="bi bi-info-circle"></i> Chưa có bài học nào trong module này.
-        </div>
-      {% endfor %}
-    </div>
-  </div>
 
+          <a href="/student/lesson/view/{{ lesson.id }}" class="btn btn-outline-primary btn-sm rounded-pill">
+            <i class="bi bi-play-circle"></i> Học tiếp
+          </a>
+
+        </div>
+      </li>
+      {% else %}
+      <li class="list-group-item text-center text-muted py-4">
+        <i class="bi bi-info-circle"></i> Chưa có bài học nào trong module này.
+      </li>
+      {% endfor %}
+
+    </ul>
+  </div>
 </div>
 
-<!-- 🧩 Script để áp dụng width thanh tiến độ mà không dùng inline-style -->
-<script>
-  document.querySelectorAll('.progress-bar').forEach(bar => {
-    const width = bar.dataset.width;
-    if (width) bar.style.width = width + '%';
-  });
-</script>
+<!-- Responsive & Animation -->
+<style>
+  .list-group-item { transition: background 0.25s, transform 0.2s; }
+  .list-group-item:hover { background: rgba(13,110,253,0.05); }
+
+  @media (max-width: 768px) {
+    .list-group-item { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .list-group-item .d-flex.flex-grow-1 { width: 100%; }
+    .list-group-item .d-flex.flex-shrink-0 { width: 100%; justify-content: flex-end; }
+  }
+</style>
+
 {% endblock %}

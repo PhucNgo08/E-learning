@@ -3,14 +3,15 @@ from sqlalchemy.orm import relationship
 from app.database.connection import Base
 from datetime import datetime
 
+
 class CourseSection(Base):
     __tablename__ = "course_sections"
 
     id = Column(String(36), primary_key=True)
-    course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
+    course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
     section_code = Column(String(10), nullable=False)
     section_name = Column(String(100))
-    teacher_id = Column(String(36), ForeignKey("users.id"))  # ✅ Thêm cột bị thiếu
+    teacher_id = Column(String(36), ForeignKey("users.id"))
 
     max_students = Column(Integer, default=50)
     current_students = Column(Integer, default=0)
@@ -21,5 +22,5 @@ class CourseSection(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # 🔗 Quan hệ ORM
-    course = relationship("Course", backref="sections")
-    teacher = relationship("User", backref="teaching_sections")
+    course = relationship("Course", back_populates="sections")
+    teacher = relationship("User", back_populates="teaching_sections")

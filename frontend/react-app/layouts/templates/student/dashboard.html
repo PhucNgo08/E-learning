@@ -6,34 +6,83 @@
 
 {% block content %}
 <div class="dashboard-container fade-in">
+
+  <!-- HEADER -->
   <div class="mb-4 text-center text-md-start reveal">
-    <h2 class="fw-bold text-gradient"><i class="bi bi-speedometer2 me-2"></i> Bảng điều khiển</h2>
-    <p class="text-muted">Theo dõi tiến độ học tập, bài tập, và kết quả của bạn.</p>
+    <h2 class="fw-bold text-gradient">
+      <i class="bi bi-speedometer2 me-2"></i> Bảng điều khiển
+    </h2>
+    <p class="text-muted">Theo dõi tiến độ học tập, bài tập và kết quả của bạn.</p>
   </div>
 
+  <!-- WELCOME CARD -->
   <div class="welcome-card shadow-sm mb-4 reveal">
-    <h5>Xin chào, <span class="text-primary">{{ request.session.get('user_full_name', 'Sinh viên') }}</span> 👋</h5>
-    <p class="text-secondary mb-0">Chúc bạn học tập hiệu quả hôm nay!</p>
+    <h5>Xin chào, 
+      <span class="text-primary">{{ user.full_name }}</span> 👋
+    </h5>
+    <p class="text-secondary mb-0">Chúc bạn một ngày học tập hiệu quả!</p>
   </div>
 
+  <!-- STATISTICS -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3 reveal"><div class="stat-card gradient-blue"><i class="bi bi-journal-text"></i><h5>{{ enrolled_courses|length or 0 }}</h5><p>Khóa học</p></div></div>
-    <div class="col-md-3 reveal"><div class="stat-card gradient-green"><i class="bi bi-clipboard-check"></i><h5>{{ completed_lessons or 0 }}</h5><p>Bài học hoàn thành</p></div></div>
-    <div class="col-md-3 reveal"><div class="stat-card gradient-purple"><i class="bi bi-question-circle"></i><h5>{{ quiz_attempts or 0 }}</h5><p>Lần làm trắc nghiệm</p></div></div>
-    <div class="col-md-3 reveal"><div class="stat-card gradient-gold"><i class="bi bi-trophy"></i><h5>{{ achievements or 0 }}</h5><p>Thành tích</p></div></div>
+
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-blue">
+        <i class="bi bi-journal-text"></i>
+        <h5>{{ enrolled_courses|length or 0 }}</h5>
+        <p>Khóa học</p>
+      </div>
+    </div>
+
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-green">
+        <i class="bi bi-clipboard-check"></i>
+        <h5>{{ progress_stats.completed }}</h5>
+        <p>Bài học hoàn thành</p>
+      </div>
+    </div>
+
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-purple">
+        <i class="bi bi-question-circle"></i>
+        <h5>{{ total_quizzes }}</h5>
+        <p>Lần làm trắc nghiệm</p>
+      </div>
+    </div>
+
+    <div class="col-md-3 reveal">
+      <div class="stat-card gradient-gold">
+        <i class="bi bi-trophy"></i>
+        <h5>{{ total_assignments }}</h5>
+        <p>Bài tập đã nộp</p>
+      </div>
+    </div>
+
   </div>
 
-  <h5 class="fw-semibold text-secondary mb-3 reveal"><i class="bi bi-journals me-2"></i>Khóa học của bạn</h5>
-  {% if enrolled_courses %}
+  <!-- COURSE LIST -->
+  <h5 class="fw-semibold text-secondary mb-3 reveal">
+    <i class="bi bi-journals me-2"></i>Khóa học của bạn
+  </h5>
+
+  {% if course_progress_list %}
   <div class="courses-grid reveal">
-    {% for course in enrolled_courses %}
+    {% for item in course_progress_list %}
     <div class="course-card-mini shadow-sm">
-      <img src="{{ course.thumbnail_url or '/static/images/course-placeholder.png' }}" class="course-thumb" alt="Ảnh khóa học" />
-      <h6 class="fw-semibold mt-2 text-center text-truncate">{{ course.course_name }}</h6>
+
+      <img src="{{ item.course.thumbnail_url or '/static/images/course-placeholder.png' }}" 
+           class="course-thumb" alt="Ảnh khóa học" />
+
+      <h6 class="fw-semibold mt-2 text-center text-truncate">
+        {{ item.course.course_name }}
+      </h6>
+
+      <!-- PROGRESS BAR -->
       <div class="progress mx-2 mt-1">
-        <div class="progress-bar bg-success" data-progress="{{ course.progress or 0 }}"></div>
+        <div class="progress-bar bg-success" data-progress="{{ item.percent }}"></div>
       </div>
-      <small class="text-muted d-block text-center">{{ course.progress or 0 }}%</small>
+
+      <small class="text-muted d-block text-center">{{ item.percent }}%</small>
     </div>
     {% endfor %}
   </div>
@@ -42,21 +91,27 @@
     <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
   </div>
   {% endif %}
+
 </div>
 
+<!-- PROGRESS BAR ANIMATION -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".progress-bar").forEach(bar => {
     const val = bar.dataset.progress || 0;
-    setTimeout(() => bar.style.width = val + "%", 400);
+    setTimeout(() => bar.style.width = val + "%", 300);
   });
+
   const reveals = document.querySelectorAll(".reveal");
   const revealOnScroll = () => {
     const h = window.innerHeight;
-    reveals.forEach(el => { if (el.getBoundingClientRect().top < h - 80) el.classList.add("visible"); });
+    reveals.forEach(el => {
+      if (el.getBoundingClientRect().top < h - 80) el.classList.add("visible");
+    });
   };
   window.addEventListener("scroll", revealOnScroll);
   window.addEventListener("load", revealOnScroll);
 });
 </script>
+
 {% endblock %}

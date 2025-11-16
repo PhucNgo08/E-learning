@@ -2,205 +2,244 @@
 {% block title %}📚 Danh sách khóa học{% endblock %}
 
 {% block content %}
+
+<!-- ========================= -->
+<!-- 🎨 STYLE (UI đẹp - FINAL 2025) -->
+<!-- ========================= -->
 <style>
-  /* 🌈 Glass Neo UI – v3.0 */
   body {
     background: #f5f8ff;
     font-family: "Inter", "Segoe UI", sans-serif;
   }
 
-  .card {
+  .course-card {
     border: none;
     border-radius: 14px;
     overflow: hidden;
-    transition: all 0.3s ease;
-    background: var(--card-bg, #fff);
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-    position: relative;
+    background: #fff;
+    transition: .28s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,.08);
+  }
+  .course-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.18);
   }
 
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
-  }
-
-  /* 🖼️ Ảnh khóa học */
-  .card-img-wrapper {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer;
-  }
-
+  .card-img-wrapper { position: relative; display: block; overflow: hidden; }
   .card-img-top {
     height: 180px;
-    width: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease, opacity 0.3s ease;
+    transition: .25s ease;
   }
+  .card-img-wrapper:hover .card-img-top { opacity: .85; transform: scale(1.05); }
 
-  .card-img-wrapper:hover .card-img-top {
-    transform: scale(1.07);
-    opacity: 0.85;
-  }
-
-  /* 👁️ Overlay “Xem chi tiết” */
   .overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    color: #fff;
-    opacity: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: opacity 0.3s ease;
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,.45);
+    color: #fff; opacity: 0;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:600; font-size:1rem;
+    transition:.25s ease;
   }
+  .card-img-wrapper:hover .overlay { opacity: 1; }
 
-  .card-img-wrapper:hover .overlay {
-    opacity: 1;
-  }
-
-  /* 🏷️ Badge trạng thái */
   .badge-status {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    padding: 5px 9px;
-    font-size: 0.75rem;
-    border-radius: 8px;
-    font-weight: 600;
+    position:absolute; top:12px; left:12px;
+    font-size:.75rem; padding:6px 10px;
+    border-radius:8px; font-weight:600;
     text-transform: capitalize;
   }
+  .published { background:#198754; color:#fff; }
+  .draft { background:#ffc107; color:#212529; }
+  .archived { background:#6c757d; color:#fff; }
 
-  .badge-status.published {
-    background-color: #198754;
+  .course-title { font-weight: 600; color: #0d6efd; }
+  .price-tag { font-size: 1rem; font-weight:700; color:#dc3545; }
+  .price-free { font-weight:600; color:#198754; }
+
+  /* Ảnh bay */
+  .flying-img {
+    position: fixed;
+    width: 80px; height: 55px;
+    object-fit: cover;
+    border-radius: 10px;
+    z-index: 2000;
+    transition: all 0.6s cubic-bezier(.42,0,.58,1);
+    pointer-events: none;
+  }
+
+  /* Toast */
+  .toast-add-cart {
+    position: fixed;
+    top: 20px; right: 20px;
+    background: #2563eb;
     color: #fff;
+    padding: 12px 22px;
+    border-radius: 10px;
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: 0.3s ease;
+    z-index: 3000;
+    font-weight: 600;
+    pointer-events: none;
   }
-
-  .badge-status.draft {
-    background-color: #ffc107;
-    color: #212529;
-  }
-
-  .badge-status.archived {
-    background-color: #6c757d;
-    color: #fff;
-  }
-
-  /* 🔘 Button */
-  .btn-success.btn-sm {
-    border-radius: 8px;
-    font-weight: 500;
-    padding: 6px 12px;
-  }
-
-  /* 🧭 Search bar */
-  .form-control {
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    transition: 0.2s;
-  }
-
-  .form-control:focus {
-    border-color: #0d6efd;
-    box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.2);
+  .toast-add-cart.show {
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>
 
-<!-- ====================== HEADER ======================= -->
-<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap">
-  <h4 class="fw-bold text-primary mb-2 mb-md-0">
+<!-- =============== HEADER =============== -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+  <h4 class="fw-bold text-primary mb-3">
     <i class="bi bi-journal-bookmark"></i> Danh sách khóa học
   </h4>
 
-  <form class="d-flex" method="get" role="search">
-    <input
-      name="q"
-      value="{{ request.query_params.get('q', '') }}"
-      class="form-control me-2"
-      placeholder="🔍 Tìm khóa học..."
-    >
+  <form class="d-flex" method="get">
+    <input name="q"
+           value="{{ request.query_params.get('q','') }}"
+           class="form-control me-2"
+           style="min-width:220px;"
+           placeholder="🔍 Tìm khóa học...">
     <button class="btn btn-primary"><i class="bi bi-search"></i></button>
   </form>
 </div>
 
-<!-- ====================== COURSE LIST ======================= -->
+<!-- =============== COURSE LIST =============== -->
 {% if courses %}
 <div class="row g-4">
+
   {% for c in courses %}
   <div class="col-lg-4 col-md-6 col-sm-12">
-    <div class="card h-100 shadow-sm">
+    <div class="course-card h-100">
 
-      <!-- 🖼️ Ảnh khóa học -->
-      <a href="{{ url_for('student_course_detail', course_id=c.id) }}" class="card-img-wrapper text-decoration-none">
-        <img
-          src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-          onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png';"
-          class="card-img-top"
-          alt="{{ c.course_name }}"
-        >
+      <!-- ẢNH -->
+      <a href="{{ url_for('student_course_detail', course_id=c.id) }}"
+         class="card-img-wrapper text-decoration-none d-block">
+
+        <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
+             onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png'"
+             class="card-img-top">
+
         <div class="overlay">👁️ Xem chi tiết</div>
+
         <span class="badge-status {{ c.status or 'published' }}">
-          {% if c.status == 'published' %}
-            Đã xuất bản
-          {% elif c.status == 'draft' %}
-            Bản nháp
-          {% elif c.status == 'archived' %}
-            Lưu trữ
-          {% else %}
-            Khác
-          {% endif %}
+          {% if c.status == 'published' %}Đã xuất bản
+          {% elif c.status == 'draft' %}Bản nháp
+          {% elif c.status == 'archived' %}Lưu trữ
+          {% else %}Khác{% endif %}
         </span>
       </a>
 
-      <!-- 📖 Nội dung thẻ -->
+      <!-- BODY -->
       <div class="card-body pb-1">
-        <h5 class="card-title text-primary text-truncate">{{ c.course_name }}</h5>
-        <p class="text-muted small mb-1">
+        <h5 class="course-title text-truncate">{{ c.course_name }}</h5>
+
+        <p class="text-muted small">
           <i class="bi bi-hash"></i> {{ c.course_code }} • 
           <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 3 }} tín chỉ
         </p>
-        <p class="card-text text-truncate small" title="{{ c.description }}">
+
+        <p class="small text-truncate" title="{{ c.description }}">
           {{ c.description or "Chưa có mô tả cho khóa học này." }}
         </p>
+
+        <div class="mt-1 price-tag">
+          {% if c.price and c.price > 0 %}
+            {{ "{:,.0f}".format(c.price) }}₫
+          {% else %}
+            <span class="price-free">Miễn phí</span>
+          {% endif %}
+        </div>
       </div>
 
-      <!-- 🎯 Nút hành động -->
-      <div class="card-footer bg-white border-0 text-end pb-3 px-3">
-        <form method="post" action="{{ url_for('student_course_enroll', course_id=c.id) }}">
-          <button class="btn btn-success btn-sm shadow-sm">
-            <i class="bi bi-plus-circle"></i> Đăng ký
-          </button>
-        </form>
+      <!-- FOOTER -->
+      <div class="card-footer bg-white border-0 pb-3 px-3">
+
+        {% if c.id in enrolled_course_ids %}
+        <a href="{{ url_for('student_course_progress', course_id=c.id) }}"
+           class="btn btn-outline-primary btn-sm shadow-sm w-100 rounded-pill">
+          <i class="bi bi-play-circle"></i> Tiếp tục học
+        </a>
+
+        {% else %}
+        <button
+          type="button"
+          class="btn btn-success btn-sm shadow-sm w-100 rounded-pill add-to-cart-btn"
+          data-id="{{ c.id }}"
+          data-img="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
+        >
+          <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+        </button>
+        {% endif %}
+
       </div>
+
     </div>
   </div>
   {% endfor %}
+
 </div>
 {% else %}
-  <div class="alert alert-info text-center shadow-sm mt-5">
-    <i class="bi bi-info-circle"></i> Chưa có khóa học nào được mở.
-  </div>
+<div class="alert alert-info text-center shadow-sm mt-5">
+  <i class="bi bi-info-circle"></i> Chưa có khóa học nào được mở.
+</div>
 {% endif %}
 
-<!-- ====================== PAGINATION ======================= -->
-{% if pagination %}
-<nav class="mt-4">
-  <ul class="pagination justify-content-center">
-    <li class="page-item {% if not pagination.prev %}disabled{% endif %}">
-      <a class="page-link" href="{{ pagination.prev or '#' }}">«</a>
-    </li>
-    {% for p in pagination.pages %}
-    <li class="page-item {% if p.active %}active{% endif %}">
-      <a class="page-link" href="{{ p.url }}">{{ p.num }}</a>
-    </li>
-    {% endfor %}
-    <li class="page-item {% if not pagination.next %}disabled{% endif %}">
-      <a class="page-link" href="{{ pagination.next or '#' }}">»</a>
-    </li>
-  </ul>
-</nav>
-{% endif %}
+<!-- =============== SCRIPT: ANIMATION GIỎ HÀNG (FIXED) =============== -->
+<script>
+function flyToCart(imgUrl, originElement) {
+  const cartIcon = document.getElementById("cartIcon");
+  if (!cartIcon) return;
+
+  const flyingImg = document.createElement("img");
+  flyingImg.src = imgUrl;
+  flyingImg.className = "flying-img";
+
+  const rect = originElement.getBoundingClientRect();
+  flyingImg.style.left = rect.left + "px";
+  flyingImg.style.top = rect.top + "px";
+
+  document.body.appendChild(flyingImg);
+
+  const cartRect = cartIcon.getBoundingClientRect();
+
+  setTimeout(() => {
+    flyingImg.style.left = cartRect.left + "px";
+    flyingImg.style.top = cartRect.top + "px";
+    flyingImg.style.opacity = "0.2";
+    flyingImg.style.transform = "scale(0.2)";
+  }, 50);
+
+  setTimeout(() => flyingImg.remove(), 700);
+}
+
+document.addEventListener("click", async function(e) {
+  const btn = e.target.closest(".add-to-cart-btn");
+  if (!btn) return;
+
+  const courseId = btn.dataset.id;
+  const imgUrl = btn.dataset.img;
+
+  const imgElement = btn.closest(".course-card").querySelector("img");
+  flyToCart(imgUrl, imgElement);
+
+  /* 🔧 SỬA ĐÚNG ROUTE GIỎ HÀNG */
+  await fetch(`/student/cart/add/${courseId}`);
+
+  showToast("Đã thêm khóa học vào giỏ hàng!");
+});
+
+function showToast(msg) {
+  const t = document.createElement("div");
+  t.className = "toast-add-cart";
+  t.textContent = msg;
+
+  document.body.appendChild(t);
+  setTimeout(() => t.classList.add("show"), 10);
+  setTimeout(() => t.classList.remove("show"), 1800);
+  setTimeout(() => t.remove(), 2600);
+}
+</script>
+
 {% endblock %}

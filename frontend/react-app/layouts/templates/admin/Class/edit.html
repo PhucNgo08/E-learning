@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>✏️ Chỉnh sửa lớp học</title>
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
     body {
       background: linear-gradient(135deg, #f3f8ff, #e9f2ff);
@@ -16,120 +19,180 @@
     }
     .form-wrapper {
       width: 100%;
-      max-width: 750px;
+      max-width: 780px;
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
       padding: 2.5rem;
-      animation: fadeIn 0.5s ease;
+      animation: fadeIn .5s ease;
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    h3 {
-      font-weight: 700;
-      color: #0d47a1;
-    }
+    h3 { font-weight: 700; color: #0d47a1; }
   </style>
 </head>
 
 <body>
-  <div class="form-wrapper">
-    <!-- Tiêu đề -->
-    <div class="text-center mb-4">
-      <i class="bi bi-pencil-square text-primary fs-1 mb-2"></i>
-      <h3>Cập nhật thông tin lớp học</h3>
-      <p class="text-muted">Điều chỉnh thông tin chi tiết của lớp học bên dưới.</p>
+
+<div class="form-wrapper">
+
+  <!-- Tiêu đề -->
+  <div class="text-center mb-4">
+    <i class="bi bi-pencil-square text-primary fs-1 mb-2"></i>
+    <h3>Cập nhật thông tin lớp học</h3>
+    <p class="text-muted">Điều chỉnh thông tin chi tiết của lớp học bên dưới.</p>
+  </div>
+
+  <form method="post" action="/admin/Class/edit/{{ cls.id }}">
+
+    <!-- ===================== -->
+    <!-- 1. THÔNG TIN CHUNG -->
+    <!-- ===================== -->
+    <h5 class="fw-bold text-secondary mb-3">📘 Thông tin cơ bản</h5>
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Mã lớp</label>
+        <input type="text" class="form-control" name="class_code"
+               value="{{ cls.class_code }}" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Tên lớp</label>
+        <input type="text" class="form-control" name="class_name"
+               value="{{ cls.class_name }}" required>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Loại lớp</label>
+        <select class="form-select" name="class_type">
+          <option value="official"   {% if cls.class_type == 'official' %}selected{% endif %}>Chính thức</option>
+          <option value="club"       {% if cls.class_type == 'club' %}selected{% endif %}>Câu lạc bộ</option>
+          <option value="course"     {% if cls.class_type == 'course' %}selected{% endif %}>Lớp khóa học</option>
+          <option value="temporary"  {% if cls.class_type == 'temporary' %}selected{% endif %}>Tạm thời</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Khối / Niên khóa (Grade Level)</label>
+        <input type="number" class="form-control" name="grade_level"
+               value="{{ cls.grade_level or '' }}" placeholder="VD: 12">
+      </div>
+
     </div>
 
-    <form method="post" action="/admin/Class/edit/{{ cls.id }}">
-      <div class="row g-3">
-        <!-- Mã lớp -->
-        <div class="col-md-6">
-          <label class="form-label">Mã lớp</label>
-          <input type="text" class="form-control" name="class_code" value="{{ cls.class_code }}" required>
-        </div>
+    <!-- ===================== -->
+    <!-- 2. THÔNG TIN HỌC VỤ -->
+    <!-- ===================== -->
+    <h5 class="fw-bold text-secondary mt-4 mb-3">🏫 Thông tin học vụ</h5>
+    <div class="row g-3">
 
-        <!-- Tên lớp -->
-        <div class="col-md-6">
-          <label class="form-label">Tên lớp</label>
-          <input type="text" class="form-control" name="class_name" value="{{ cls.class_name }}" required>
-        </div>
-
-        <!-- Ngành học -->
-        <div class="col-md-6">
-          <label class="form-label">Ngành học</label>
-          <select class="form-select" name="major_id">
-            {% for m in majors %}
-              <option value="{{ m.id }}" {% if cls.major_id == m.id %}selected{% endif %}>{{ m.major_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Năm học -->
-        <div class="col-md-6">
-          <label class="form-label">Năm học</label>
-          <select class="form-select" name="academic_year_id">
-            {% for y in academic_years %}
-              <option value="{{ y.id }}" {% if cls.academic_year_id == y.id %}selected{% endif %}>{{ y.year_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Giáo viên chủ nhiệm -->
-        <div class="col-md-6">
-          <label class="form-label">Giáo viên chủ nhiệm</label>
-          <select class="form-select" name="homeroom_teacher_id">
-            {% for t in teachers %}
-              <option value="{{ t.id }}" {% if cls.homeroom_teacher_id == t.id %}selected{% endif %}>{{ t.full_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Số lượng sinh viên -->
-        <div class="col-md-6">
-          <label class="form-label">Số lượng tối đa</label>
-          <input type="number" class="form-control" name="max_students" min="1" value="{{ cls.max_students or 50 }}">
-        </div>
-
-        <!-- Trạng thái -->
-        <div class="col-md-6">
-          <label class="form-label">Trạng thái lớp</label>
-          <select class="form-select" name="status">
-            <option value="planning" {% if cls.status == 'planning' %}selected{% endif %}>Đang lên kế hoạch</option>
-            <option value="open_for_enrollment" {% if cls.status == 'open_for_enrollment' %}selected{% endif %}>Mở ghi danh</option>
-            <option value="active" {% if cls.status == 'active' %}selected{% endif %}>Đang học</option>
-            <option value="completed" {% if cls.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
-            <option value="cancelled" {% if cls.status == 'cancelled' %}selected{% endif %}>Đã hủy</option>
-          </select>
-        </div>
-
-        <!-- Ngày bắt đầu -->
-        <div class="col-md-6">
-          <label class="form-label">Ngày bắt đầu</label>
-          <input type="date" class="form-control" name="start_date"
-                 value="{{ cls.start_date.strftime('%Y-%m-%d') if cls.start_date else '' }}">
-        </div>
-
-        <!-- Ngày kết thúc -->
-        <div class="col-md-6">
-          <label class="form-label">Ngày kết thúc</label>
-          <input type="date" class="form-control" name="end_date"
-                 value="{{ cls.end_date.strftime('%Y-%m-%d') if cls.end_date else '' }}">
-        </div>
+      <div class="col-md-6">
+        <label class="form-label">Ngành học</label>
+        <select class="form-select" name="major_id">
+          {% for m in majors %}
+          <option value="{{ m.id }}" {% if cls.major_id == m.id %}selected{% endif %}>{{ m.major_name }}</option>
+          {% endfor %}
+        </select>
       </div>
 
-      <!-- Nút hành động -->
-      <div class="d-flex justify-content-between align-items-center mt-5">
-        <a href="/admin/Class/manage" class="btn btn-secondary px-4">
-          <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
-        </a>
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-save2 me-1"></i> Lưu thay đổi
-        </button>
+      <div class="col-md-6">
+        <label class="form-label">Năm học</label>
+        <select class="form-select" name="academic_year_id">
+          {% for y in academic_years %}
+          <option value="{{ y.id }}" {% if cls.academic_year_id == y.id %}selected{% endif %}>
+            {{ y.year_name }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
-    </form>
-  </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Giáo viên chủ nhiệm</label>
+        <select class="form-select" name="homeroom_teacher_id">
+          {% for t in teachers %}
+          <option value="{{ t.id }}" {% if cls.homeroom_teacher_id == t.id %}selected{% endif %}>
+            {{ t.full_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Số lượng tối đa</label>
+        <input type="number" class="form-control" name="max_students"
+               min="1" value="{{ cls.max_students or 50 }}">
+      </div>
+
+    </div>
+
+    <!-- ===================== -->
+    <!-- 3. THỜI GIAN LỚP -->
+    <!-- ===================== -->
+    <h5 class="fw-bold text-secondary mt-4 mb-3">⏳ Thời gian lớp học</h5>
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Ngày bắt đầu</label>
+        <input type="date" class="form-control" name="start_date"
+               value="{{ cls.start_date.strftime('%Y-%m-%d') if cls.start_date else '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Ngày kết thúc</label>
+        <input type="date" class="form-control" name="end_date"
+               value="{{ cls.end_date.strftime('%Y-%m-%d') if cls.end_date else '' }}">
+      </div>
+
+    </div>
+
+    <!-- ===================== -->
+    <!-- 4. GHI DANH -->
+    <!-- ===================== -->
+    <h5 class="fw-bold text-secondary mt-4 mb-3">📝 Thời gian ghi danh</h5>
+    <div class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Mở ghi danh</label>
+        <input type="date" class="form-control" name="enrollment_start"
+               value="{{ cls.enrollment_start.strftime('%Y-%m-%d') if cls.enrollment_start else '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Hạn ghi danh</label>
+        <input type="date" class="form-control" name="enrollment_end"
+               value="{{ cls.enrollment_end.strftime('%Y-%m-%d') if cls.enrollment_end else '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Trạng thái lớp</label>
+        <select class="form-select" name="status">
+          <option value="planning"             {% if cls.status == 'planning' %}selected{% endif %}>Đang lên kế hoạch</option>
+          <option value="open_for_enrollment"  {% if cls.status == 'open_for_enrollment' %}selected{% endif %}>Mở ghi danh</option>
+          <option value="active"               {% if cls.status == 'active' %}selected{% endif %}>Đang học</option>
+          <option value="completed"            {% if cls.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
+          <option value="cancelled"            {% if cls.status == 'cancelled' %}selected{% endif %}>Đã huỷ</option>
+        </select>
+      </div>
+
+    </div>
+
+    <!-- ===================== -->
+    <!-- ACTION BUTTONS -->
+    <!-- ===================== -->
+    <div class="d-flex justify-content-between mt-5">
+      <a href="/admin/Class/manage" class="btn btn-secondary px-4">
+        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
+      </a>
+      <button type="submit" class="btn btn-primary px-4">
+        <i class="bi bi-save2 me-1"></i> Lưu thay đổi
+      </button>
+    </div>
+
+  </form>
+</div>
+
 </body>
 </html>

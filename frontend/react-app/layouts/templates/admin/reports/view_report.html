@@ -1,16 +1,60 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xem Báo Cáo</title>
+    <title>📄 Xem Báo Cáo</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #eef3ff;
+            font-family: "Inter", sans-serif;
+            min-height: 100vh;
+        }
+        .report-box {
+            background: white;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 35px;
+            border-radius: 12px;
+            box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+        }
+        pre {
+            background: #f8f9fc;
+            padding: 15px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>{{ report.report_name }}</h1>
-    <p><strong>Mô Tả:</strong> {{ report.description }}</p>
-    <p><strong>Nội Dung:</strong> {{ report.content }}</p>
-    <p><strong>Ngày Tạo:</strong> {{ report.created_at }}</p>
-    <br>
-    <a href="/admin/report/manage-reports">Trở lại Quản Lý Báo Cáo</a>
+
+<div class="report-box">
+    <h3 class="text-primary mb-3">
+        📄 {{ report.title if report.title else "Báo cáo không có tiêu đề" }}
+    </h3>
+
+    <p><strong>Mô tả:</strong></p>
+    <p class="text-secondary">
+        {{ report.description if report.description else "— Không có mô tả —" }}
+    </p>
+
+    <p class="mt-4"><strong>Nội dung báo cáo:</strong></p>
+    <pre>{{ report.content if report.content else "Không có nội dung báo cáo." }}</pre>
+
+    <p class="mt-4 text-muted">
+        <strong>Ngày tạo:</strong>
+        {{ report.created_at.strftime("%Y-%m-%d %H:%M") if report.created_at else "Không rõ" }}
+    </p>
+
+    <div class="mt-4">
+        <a href="/admin/reports/manage" class="btn btn-secondary">
+            ⬅ Quay lại Quản lý Báo cáo
+        </a>
+    </div>
+</div>
+
 </body>
 </html>

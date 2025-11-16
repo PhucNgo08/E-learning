@@ -4,17 +4,16 @@
 {% block content %}
 <style>
 /* ==========================================================
-💎 Giao diện Compose – Glass Neo v2.7 Pro (Final Center Fixed)
+💎 Compose Message – Glass Neo v3.1 (Final Optimized 2025)
 ========================================================== */
 .compose-wrapper {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 100px);
   padding: 2rem 1rem;
 }
 
-/* 🎨 Form chính */
 .compose-container {
   width: 100%;
   max-width: 720px;
@@ -23,232 +22,212 @@
   box-shadow: var(--shadow);
   backdrop-filter: blur(25px);
   padding: 2rem 2.5rem;
-  transition: all 0.35s ease;
   border: 1px solid var(--border-glass);
-  box-sizing: border-box;
+  transition: transform .3s ease, box-shadow .3s ease;
 }
 
 .compose-container:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgb(0 0 0 / .15);
 }
 
 h4 i { color: var(--blue1); }
-label.form-label { color: var(--text); }
 
-/* === Input & Textarea === */
+/* === Input styling === */
 .form-control {
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-  font-size: 0.95rem;
-  padding: 10px 14px;
-  width: 100%;
-  box-sizing: border-box;
+  background: rgba(255,255,255,.45);
+  border: 1px solid rgba(0,0,0,.12);
   backdrop-filter: blur(10px);
+  font-size: .95rem;
+  padding: .65rem .9rem;
+  transition: all .25s ease;
 }
 
 body.dark-mode .form-control {
-  background: rgba(30, 41, 59, 0.45);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(30,41,59,.45);
+  border-color: rgba(255,255,255,.08);
   color: #e2e8f0;
 }
 
 .form-control:focus {
   border-color: var(--blue1);
-  box-shadow: 0 0 15px rgba(37, 99, 235, 0.25);
-  transform: scale(1.005);
+  box-shadow: 0 0 14px rgba(37,99,235,.28);
 }
 
-/* === Textarea cải tiến (đã fix lệch) === */
+/* === Textarea === */
 textarea.form-control {
+  min-height: 150px;
   resize: vertical;
-  min-height: 160px;
-  line-height: 1.6;
-  background: rgba(255, 255, 255, 0.55);
-  border-radius: 16px;
-  width: 100% !important;
-  display: block;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  box-sizing: border-box;
+  line-height: 1.55;
+  border-radius: 14px;
+  background: rgba(255,255,255,.55);
 }
 
 body.dark-mode textarea.form-control {
-  background: rgba(15, 23, 42, 0.5);
-  color: #f8fafc;
+  background: rgba(15,23,42,.55);
+  color: #eef2f7;
 }
 
 textarea::placeholder {
-  color: #94a3b8;
-  opacity: 0.9;
-}
-body.dark-mode textarea::placeholder {
-  color: #cbd5e1;
-  opacity: 0.75;
+  color: #90a1b8;
+  opacity: .85;
 }
 
-/* ✨ Glow khi đang nhập */
-textarea:focus, input:focus {
-  outline: none !important;
-  box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
-  animation: glowPulse 1.2s infinite alternate;
-}
-@keyframes glowPulse {
-  from { box-shadow: 0 0 10px rgba(37, 99, 235, 0.3); }
-  to { box-shadow: 0 0 18px rgba(37, 99, 235, 0.45); }
-}
-
-/* 📎 Upload box */
+/* === File upload box === */
 .file-upload {
-  border: 2px dashed rgba(180, 190, 200, 0.4);
+  border: 2px dashed rgba(180,190,200,.45);
   border-radius: 12px;
   padding: 25px;
   text-align: center;
-  color: var(--text);
   cursor: pointer;
-  transition: 0.3s;
-  background: rgba(255, 255, 255, 0.5);
-}
-.file-upload:hover {
-  border-color: var(--blue1);
-  color: var(--blue1);
-  background: rgba(37, 99, 235, 0.05);
-}
-body.dark-mode .file-upload {
-  background: rgba(15, 23, 42, 0.45);
-  color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255,255,255,.55);
+  transition: border-color .25s ease, background .25s ease;
 }
 
-/* ✉️ Nút gửi */
+.file-upload:hover {
+  background: rgba(37,99,235,.06);
+  border-color: var(--blue1);
+}
+
+body.dark-mode .file-upload {
+  background: rgba(15,23,42,.45);
+  border-color: rgba(255,255,255,.1);
+  color: #e2e8f0;
+}
+
+/* === Submit Button === */
 .btn-primary {
   border-radius: 10px;
   font-weight: 600;
-  letter-spacing: 0.3px;
-  transition: all 0.3s ease;
+  padding: .55rem 1.4rem;
 }
-.btn-primary i { transition: transform 0.25s ease; }
-.btn-primary:hover i { transform: translateX(5px); }
-.btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
 
-/* 🔙 Floating Back */
+.btn-primary i { transition: transform .2s ease; }
+.btn-primary:hover i { transform: translateX(4px); }
+
+/* === Floating Back Button === */
 .fab-back {
   position: fixed;
   bottom: 40px;
   left: 40px;
-  background: linear-gradient(135deg, #64748b, #334155);
-  color: white;
-  border-radius: 50%;
   width: 56px;
   height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#64748b,#334155);
+  color: white;
   font-size: 22px;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease;
-  z-index: 1000;
-}
-.fab-back:hover {
-  transform: scale(1.1);
-  background: linear-gradient(135deg, #475569, #1e293b);
-  text-decoration: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 6px 15px rgba(0,0,0,.25);
+  transition: transform .3s ease, background .3s ease;
+  z-index: 999;
 }
 
-/* ✨ Fade-in hiệu ứng tổng thể */
-.fade-in { animation: fadeIn 0.6s ease-in-out; }
+.fab-back:hover {
+  transform: scale(1.1);
+  background: linear-gradient(135deg,#475569,#1e293b);
+}
+
+/* Fade In */
+.fade-in { animation: fadeIn .6s ease; }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
 
-<!-- ✅ Căn giữa hoàn hảo -->
+
+<!-- ====================== 📝 FORM GỬI TIN NHẮN ====================== -->
 <div class="compose-wrapper fade-in">
   <div class="compose-container">
-    <h4 class="fw-bold mb-3">
+
+    <h4 class="fw-bold mb-2">
       <i class="bi bi-pencil-square me-2"></i> Soạn tin nhắn mới
     </h4>
     <p class="text-muted small mb-4">
       Nhập người nhận, soạn nội dung và đính kèm tệp nếu cần.
     </p>
 
-    <!-- ⚙️ Form gửi tin nhắn -->
-    <form method="post" action="/student/message/compose" enctype="multipart/form-data"
-          onsubmit="disableSubmit(this)">
+    <form method="post" action="/student/message/compose" enctype="multipart/form-data" onsubmit="disableSubmit(this)">
+
       <!-- Người nhận -->
       <div class="mb-3">
-        <label for="receiver_id" class="form-label fw-semibold">
-          👤 Người nhận (Email hoặc ID)
-        </label>
-        <input
-          type="text"
-          class="form-control"
-          id="receiver_id"
-          name="receiver_id"
-          placeholder="Ví dụ: nguyenvana@email.com hoặc ID hệ thống"
-          required
-        />
+        <label class="form-label fw-semibold">👤 Người nhận</label>
+        <input list="user_suggestions" type="text" class="form-control" name="receiver_id"
+               placeholder="Nhập Email hoặc ID người nhận" required />
+        
+        <!-- Gợi ý auto-complete -->
+        <datalist id="user_suggestions">
+          {% for u in users %}
+            <option value="{{ u.email }}">{{ u.full_name }} ({{ u.username }})</option>
+          {% endfor %}
+        </datalist>
       </div>
 
       <!-- Nội dung -->
       <div class="mb-3">
-        <label for="content" class="form-label fw-semibold">💬 Nội dung tin nhắn</label>
-        <textarea
-          class="form-control shadow-sm"
-          id="content"
-          name="content"
-          rows="6"
-          placeholder="💭 Nhập nội dung bạn muốn gửi..."
-          required
-        ></textarea>
+        <label class="form-label fw-semibold">💬 Nội dung tin nhắn</label>
+        <textarea name="content" class="form-control shadow-sm"
+                  placeholder="💭 Nhập nội dung muốn gửi..." required></textarea>
       </div>
 
-      <!-- Đính kèm file -->
+      <!-- Upload file -->
       <div class="mb-3">
-        <label class="form-label fw-semibold">📎 Đính kèm tệp (tùy chọn)</label>
-        <div class="file-upload" onclick="document.getElementById('file_input').click()">
+        <label class="form-label fw-semibold">📎 Đính kèm tệp</label>
+
+        <div class="file-upload" onclick="fileInput.click()">
           <i class="bi bi-cloud-arrow-up fs-3 d-block mb-2"></i>
           <span id="file_label">Chọn tệp hoặc kéo thả vào đây</span>
         </div>
-        <input type="file" id="file_input" name="attachment" class="d-none" onchange="showFileName(this)">
+
+        <input type="file" name="attachment" id="fileInput" class="d-none"
+               onchange="showFileName(this)">
       </div>
 
-      <!-- Nút gửi -->
+      <!-- Gửi -->
       <div class="d-flex justify-content-end mt-4">
-        <button type="submit" class="btn btn-primary px-4" id="sendBtn">
-          <i class="bi bi-send-fill me-1"></i> Gửi tin nhắn
+        <button type="submit" class="btn btn-primary" id="sendBtn">
+          <i class="bi bi-send-fill me-1"></i> Gửi tin
         </button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- 🔙 Nút nổi quay lại hộp thư đến -->
-<a href="/student/message/" class="fab-back" title="Quay lại hộp thư đến">
+<!-- Nút quay lại -->
+<a href="/student/message/" class="fab-back">
   <i class="bi bi-arrow-left"></i>
 </a>
 
-<!-- 📜 Script xử lý -->
+
+<!-- ====================== JS ====================== -->
 <script>
+const fileInput = document.getElementById('fileInput');
+const fileLabel = document.getElementById('file_label');
+
 function showFileName(input) {
-  const fileLabel = document.getElementById('file_label');
-  if (input.files.length > 0) {
-    const file = input.files[0];
-    const icon = file.type.startsWith("image/") ? "bi-image" : "bi-file-earmark";
-    fileLabel.innerHTML = `<i class="bi ${icon} me-1"></i><strong>${file.name}</strong> 
-      <span class="text-muted">(${(file.size / 1024).toFixed(1)} KB)</span>`;
-  } else {
+  if (!input.files.length) {
     fileLabel.textContent = "Chọn tệp hoặc kéo thả vào đây";
+    return;
   }
+
+  const file = input.files[0];
+  const icon = file.type.startsWith("image/") ? "bi-image" : "bi-file-earmark";
+
+  fileLabel.innerHTML = `
+    <i class="bi ${icon} me-1"></i>
+    <strong>${file.name}</strong>
+    <span class="text-muted">(${(file.size/1024).toFixed(1)} KB)</span>
+  `;
 }
 
 function disableSubmit(form) {
-  const btn = document.getElementById('sendBtn');
+  const btn = document.getElementById("sendBtn");
   btn.disabled = true;
   btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Đang gửi...';
 }
 </script>
+
 {% endblock %}

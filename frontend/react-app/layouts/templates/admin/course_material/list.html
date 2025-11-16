@@ -3,44 +3,16 @@
 
 {% block head_extra %}
 <style>
-  body {
-    background-color: #f8f9fa;
-    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    color: #333;
-  }
-  h3 {
-    font-weight: 700;
-    letter-spacing: -0.5px;
-  }
-  .btn {
-    font-weight: 600;
-    transition: all 0.25s ease;
-  }
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(13, 110, 253, 0.3);
-  }
-  .btn-primary {
-    background: linear-gradient(45deg, #0d6efd, #0b5ed7);
-    border: none;
-  }
-  .btn-outline-secondary {
-    border-color: #adb5bd;
-  }
-  .card {
-    border: none;
-    border-radius: 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  }
-  .table th {
-    background-color: #0d6efd;
-    color: white;
-    text-align: center;
-  }
-  .table td {
-    text-align: center;
-    vertical-align: middle;
-  }
+  body { background-color: #f8f9fa; }
+  .btn { font-weight: 600; transition: 0.25s; }
+  .btn:hover { transform: translateY(-2px); }
+  .table-hover tbody tr:hover { background-color: #eef5ff !important; }
+  .table th { text-align: center; }
+  .file-icon { font-size: 1.3rem; }
+  .badge-format { padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; }
+  .truncate { max-width: 260px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+  .private-row { opacity: 0.75; }
+  .expired { background-color: #ffe1e1 !important; }
 </style>
 {% endblock %}
 
@@ -49,7 +21,7 @@
 
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary mb-0">
+    <h3 class="text-primary fw-bold">
       <i class="bi bi-folder2-open"></i> Quản lý Tài liệu khóa học
     </h3>
 
@@ -64,68 +36,169 @@
   </div>
 
   <!-- Danh sách tài liệu -->
-  <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white fw-semibold">
       <i class="bi bi-collection"></i> Danh sách tài liệu chi tiết
     </div>
+
     <div class="card-body">
       {% if materials %}
       <div class="table-responsive">
         <table class="table table-bordered table-hover align-middle mb-0">
-          <thead class="table-primary text-center">
+          <thead class="table-primary text-center align-middle">
             <tr>
               <th>#</th>
-              <th>Tên tài liệu</th>
+              <th>Tài liệu</th>
               <th>Khóa học</th>
-              <th>Loại tệp</th>
-              <th>Kích thước</th>
+              <th>Loại</th>
+              <th>Phiên bản</th>
+              <th>Định dạng</th>
+              <th>Dung lượng</th>
+              <th>Ngày tạo</th>
               <th>Tải xuống</th>
               <th>Thao tác</th>
             </tr>
           </thead>
+
           <tbody>
             {% for m in materials %}
-            <tr>
-              <td>{{ loop.index }}</td>
-              <td class="fw-semibold text-start">{{ m.title }}</td>
-              <td>{{ m.course.course_name if m.course else '—' }}</td>
-              <td>{{ m.file_format or '—' }}</td>
-              <td>{{ (m.file_size / 1024 / 1024)|round(2) if m.file_size else '—' }} MB</td>
-              <td>
-                <a href="{{ m.file_url }}" class="btn btn-sm btn-outline-secondary" download>
-                  <i class="bi bi-download"></i> Tải
+            {% set ext = (m.file_format or '').lower() %}
+            {% set expired = m.available_to and m.available_to < now %}
+
+            <tr class="
+              {% if not m.is_public %}private-row{% endif %}
+              {% if expired %}expired{% endif %}
+            ">
+              <!-- Index -->
+              <td class="text-center">{{ loop.index }}</td>
+
+              <!-- Tên tài liệu + icon -->
+              <td class="text-start fw-semibold truncate" title="{{ m.title }}">
+
+                {% if ext == 'pdf' %}
+                  <i class="bi bi-file-earmark-pdf text-danger file-icon"></i>
+                {% elif ext in ['png','jpg','jpeg'] %}
+                  <i class="bi bi-file-earmark-image text-info file-icon"></i>
+                {% elif ext in ['doc','docx'] %}
+                  <i class="bi bi-file-earmark-word text-primary file-icon"></i>
+                {% elif ext in ['ppt','pptx'] %}
+                  <i class="bi bi-file-earmark-ppt text-warning file-icon"></i>
+                {% elif ext == 'mp4' %}
+                  <i class="bi bi-file-earmark-play text-dark file-icon"></i>
+                {% elif ext in ['xlsx','csv'] %}
+                  <i class="bi bi-file-earmark-spreadsheet text-success file-icon"></i>
+                {% else %}
+                  <i class="bi bi-file-earmark text-secondary file-icon"></i>
+                {% endif %}
+
+                {{ m.title }}
+
+                {% if expired %}
+                  <span class="badge bg-danger ms-2">Hết hạn</span>
+                {% endif %}
+              </td>
+
+              <!-- Khóa học -->
+              <td class="text-center">
+                {{ m.course.course_name if m.course else "—" }}
+              </td>
+
+              <!-- Material type -->
+              <td class="text-center">
+                <span class="badge bg-info text-dark">{{ m.material_type }}</span>
+              </td>
+
+              <!-- Version -->
+              <td class="text-center">
+                <span class="badge bg-dark">v{{ m.version }}</span>
+              </td>
+
+              <!-- File format badge -->
+              <td class="text-center">
+                {% if ext == 'pdf' %}
+                  <span class="badge bg-danger badge-format">PDF</span>
+                {% elif ext in ['png','jpg','jpeg'] %}
+                  <span class="badge bg-info text-dark badge-format">Hình ảnh</span>
+                {% elif ext in ['doc','docx'] %}
+                  <span class="badge bg-primary badge-format">Word</span>
+                {% elif ext in ['ppt','pptx'] %}
+                  <span class="badge bg-warning text-dark badge-format">PPT</span>
+                {% elif ext in ['xlsx','csv'] %}
+                  <span class="badge bg-success badge-format">Excel</span>
+                {% elif ext == 'mp4' %}
+                  <span class="badge bg-dark badge-format">Video</span>
+                {% else %}
+                  <span class="badge bg-secondary badge-format">{{ ext|upper }}</span>
+                {% endif %}
+              </td>
+
+              <!-- Size -->
+              <td class="text-center">
+                {{ (m.file_size / 1024 / 1024)|round(2) }} MB
+                {% if m.file_size > 50 * 1024 * 1024 %}
+                  <span class="badge bg-warning text-dark">Lớn</span>
+                {% endif %}
+              </td>
+
+              <td class="text-center">{{ m.created_at.strftime("%d/%m/%Y") }}</td>
+
+              <!-- Download -->
+              <td class="text-center">
+                <a href="/admin/course-material/download/{{ m.id }}"
+                   class="btn btn-sm btn-outline-secondary"
+                   title="Tải xuống">
+                  <i class="bi bi-download"></i>
                 </a>
               </td>
-              <td>
-                <div class="btn-group btn-group-sm" role="group">
-                  <a href="/admin/course-material/edit/{{ m.id }}" class="btn btn-outline-primary" title="Chỉnh sửa">
-                    <i class="bi bi-pencil-square"></i>
+
+              <!-- Actions -->
+              <td class="text-center">
+                <div class="btn-group btn-group-sm">
+
+                  <a href="/admin/course-material/detail/{{ m.id }}"
+                     class="btn btn-outline-info"
+                     title="Chi tiết">
+                    <i class="bi bi-eye"></i>
                   </a>
-                  <a href="/admin/course-material/delete/{{ m.id }}" class="btn btn-outline-danger"
-                     onclick="return confirm('Bạn có chắc muốn xóa tài liệu này không?');" title="Xóa">
+
+                  <a href="/admin/course-material/edit/{{ m.id }}"
+                     class="btn btn-outline-primary"
+                     title="Chỉnh sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+
+                  <a href="/admin/course-material/delete/{{ m.id }}"
+                     class="btn btn-outline-danger"
+                     title="Xóa"
+                     onclick="return confirm('Bạn có chắc muốn xóa tài liệu này không?');">
                     <i class="bi bi-trash"></i>
                   </a>
+
                 </div>
               </td>
             </tr>
+
             {% endfor %}
           </tbody>
+
         </table>
       </div>
+
       {% else %}
       <div class="text-center text-muted py-4">
         <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-        <span>Chưa có tài liệu nào.</span>
+        Không có tài liệu nào.
       </div>
       {% endif %}
     </div>
   </div>
 
-  <!-- Bảng thống kê -->
-  <div class="card mb-4">
-    <div class="card-header bg-info text-white">
+  <!-- Thống kê -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-info text-white fw-semibold">
       <i class="bi bi-bar-chart-line"></i> Thống kê tài liệu
     </div>
+
     <div class="card-body">
       {% if materials %}
       <div class="table-responsive">
@@ -138,28 +211,34 @@
               <th>Trạng thái</th>
             </tr>
           </thead>
+
           <tbody>
             {% for m in materials %}
-            <tr>
-              <td class="fw-semibold text-start">{{ m.title }}</td>
+            <tr class="text-center">
+              <td>{{ m.title }}</td>
               <td>{{ m.download_count or 0 }}</td>
-              <td>{{ m.version or '1.0' }}</td>
+              <td>v{{ m.version }}</td>
               <td>
                 {% if m.is_public %}
-                  <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
+                  <span class="badge bg-success">
+                    <i class="bi bi-unlock"></i> Công khai
+                  </span>
                 {% else %}
-                  <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
+                  <span class="badge bg-secondary">
+                    <i class="bi bi-lock"></i> Riêng tư
+                  </span>
                 {% endif %}
               </td>
             </tr>
             {% endfor %}
           </tbody>
+
         </table>
       </div>
       {% else %}
       <div class="text-center text-muted py-4">
         <i class="bi bi-bar-chart-line fs-3 d-block mb-2"></i>
-        <span>Không có dữ liệu thống kê.</span>
+        Không có dữ liệu thống kê.
       </div>
       {% endif %}
     </div>

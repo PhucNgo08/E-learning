@@ -1,37 +1,45 @@
-# === Core FastAPI Framework ===
+# =====================================================
+# FASTAPI BACKEND (Python)
+# =====================================================
+
+# --- Core FastAPI ---
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 starlette>=0.27.0
 SQLAlchemy>=2.0.0
 pymysql>=1.1.0
 alembic>=1.12.0
+orjson>=3.9.10
 
-# === Template & Static Files ===
+# --- Templates & Upload ---
 jinja2>=3.1.0
 aiofiles>=23.0.0
 python-multipart>=0.0.6
 MarkupSafe>=2.1.0
+python-magic-bin>=0.4.14
+pillow>=10.1.0
+moviepy>=1.0.3
 
-# === Security & Authentication ===
+# --- Security / JWT ---
 passlib[bcrypt]>=1.7.0
 python-jose[cryptography]>=3.3.0
-itsdangerous>=2.1.0
 PyJWT>=2.8.0
 bcrypt>=4.0.0
 cryptography>=41.0.0
+itsdangerous>=2.1.0
 
-# === Environment & Validation ===
+# --- Validation / Env ---
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
 python-dotenv>=1.0.0
 typing-extensions>=4.8.0
 python-dateutil>=2.8.0
 
-# === Mail & Notifications ===
+# --- Mail ---
 fastapi-mail>=1.5.0
 aiosmtplib>=3.0.0
 
-# === Task Queue & Background Jobs ===
+# --- Task Queue / Redis ---
 celery>=5.3.0
 redis>=5.0.0
 flower>=2.0.0
@@ -39,7 +47,7 @@ kombu>=5.3.0
 rq>=1.15.0
 APScheduler>=3.10.0
 
-# === Utils & Reports ===
+# --- Utils ---
 pandas>=2.1.0
 openpyxl>=3.1.0
 pytz>=2023.0
@@ -50,7 +58,7 @@ requests>=2.31.0
 cloudinary>=1.36.0
 python-crontab>=3.0.0
 
-# === Realtime & Networking ===
+# --- Realtime / Networking ---
 httptools>=0.6.0
 websockets>=12.0
 anyio>=3.7.0
@@ -60,17 +68,17 @@ idna>=3.4
 colorama>=0.4.0
 click>=8.1.0
 
-# === FastAPI Extensions ===
+# --- FastAPI Extensions ---
 fastapi-users[sqlalchemy2]>=12.1.0
 fastapi-cache2>=0.2.0
 fastapi-pagination>=0.12.0
 fastapi-plugins>=0.11.0
 
-# === Optional Admin & Visualization ===
+# --- Optional Admin ---
 gunicorn>=21.0.0
 matplotlib>=3.7.0
 
-# === Development & Testing ===
+# --- Testing / Debug ---
 pytest>=7.4.0
 pytest-asyncio>=0.20.0
 pytest-cov>=4.1.0
@@ -84,11 +92,12 @@ mypy>=1.3.0
 pre-commit>=3.4.0
 bandit>=1.7.0
 
-# =====================================================
-# 🧠 AI / GOOGLE GEMINI
-# =====================================================
+# --- GOOGLE GEMINI AI ---
 google-generativeai>=0.8.5
 google-ai-generativelanguage>=0.6.6
 google-api-core>=2.19.0
 protobuf>=5.27.2
-python-dotenv>=1.0.1
+
+authlib>=1.2.0
+
+python-decouple>=3.7

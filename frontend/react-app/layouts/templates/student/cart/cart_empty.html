@@ -1,0 +1,63 @@
+<div class="empty-cart-box text-center py-5">
+
+    <!-- Icon -->
+    <div class="icon-wrap mb-4 shadow-sm">
+        <i class="bi bi-cart-x text-primary" style="font-size: 3.2rem;"></i>
+    </div>
+
+    <!-- Title -->
+    <h3 class="fw-bold mb-2"
+        style="
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        ">
+        Giỏ hàng của bạn đang trống
+    </h3>
+
+    <p class="text-muted mb-4">
+        Hãy khám phá hàng trăm khóa học chất lượng để bắt đầu hành trình học tập của bạn!
+    </p>
+
+    <!-- Button -->
+    <a href="/student/course" class="btn btn-primary px-4 py-2 rounded-pill shadow-lg"
+       style="font-weight: 600;">
+        <i class="bi bi-search me-1"></i> Khám phá khóa học
+    </a>
+</div>
+
+<style>
+.empty-cart-box {
+    animation: fadeIn 0.65s ease;
+    max-width: 520px;
+    margin: auto;
+}
+
+/* Icon container */
+.icon-wrap {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--card-bg, rgba(255, 255, 255, 0.55));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* Hover button */
+.btn-primary:hover {
+    transform: translateY(-2px);
+    transition: 0.25s;
+}
+
+/* Fade animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+</style>

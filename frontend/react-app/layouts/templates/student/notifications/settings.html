@@ -1,0 +1,124 @@
+{% extends "layout_student.html" %}
+
+{% block title %}⚙️ Cài đặt thông báo{% endblock %}
+
+{% block content %}
+
+<style>
+  .settings-wrapper {
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .settings-card {
+    border-radius: 14px;
+    padding: 1.8rem 2rem;
+    background: var(--card-bg, #fff);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+  .setting-group-title {
+    font-weight: 600;
+    color: #0d6efd;
+    margin-bottom: 10px;
+    font-size: 1.05rem;
+  }
+  .form-check-label i {
+    margin-right: 6px;
+  }
+</style>
+
+<div class="container py-4 fade-in settings-wrapper">
+
+  <h3 class="fw-bold text-primary mb-3">
+    <i class="bi bi-gear-fill"></i> Cài đặt thông báo
+  </h3>
+
+  {% if message %}
+  <div class="alert alert-success py-2">
+    <i class="bi bi-check-circle"></i> {{ message }}
+  </div>
+  {% endif %}
+
+  <div class="settings-card">
+
+    <form method="post" action="/student/notifications/settings">
+
+      <!-- 1️⃣ Hệ thống -->
+      <div class="mb-3">
+        <div class="setting-group-title">📌 Thông báo hệ thống</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="system"
+                 id="systemNotif" {% if settings.system %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="systemNotif">
+            <i class="bi bi-gear"></i> Thông báo hệ thống
+          </label>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 2️⃣ Khóa học -->
+      <div class="mb-3">
+        <div class="setting-group-title">📚 Khóa học</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="course"
+                 id="courseNotif" {% if settings.course %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="courseNotif">
+            <i class="bi bi-book"></i> Thông báo về khóa học
+          </label>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 3️⃣ Bài tập & Quiz -->
+      <div class="mb-3">
+        <div class="setting-group-title">📝 Bài tập & Đánh giá</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="assignment"
+                 id="assignmentNotif" {% if settings.assignment %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="assignmentNotif">
+            <i class="bi bi-journal-check"></i> Bài tập được giao / hạn nộp
+          </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="quiz"
+                 id="quizNotif" {% if settings.quiz %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="quizNotif">
+            <i class="bi bi-ui-checks"></i> Quiz / kiểm tra
+          </label>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 4️⃣ Tin nhắn -->
+      <div class="mb-3">
+        <div class="setting-group-title">💬 Tin nhắn</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="message"
+                 id="msgNotif" {% if settings.message %}checked{% endif %}>
+          <label class="form-check-label fw-semibold" for="msgNotif">
+            <i class="bi bi-chat-dots"></i> Tin nhắn & phản hồi
+          </label>
+        </div>
+      </div>
+
+      <!-- Nút Lưu -->
+      <div class="text-end mt-4">
+        <button class="btn btn-primary px-4 fw-semibold">
+          <i class="bi bi-check-circle"></i> Lưu cài đặt
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+{% endblock %}

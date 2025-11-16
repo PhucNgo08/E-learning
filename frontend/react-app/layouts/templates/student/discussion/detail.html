@@ -1,36 +1,120 @@
 {% extends "layout_student.html" %}
 {% block title %}📄 Chi tiết thảo luận{% endblock %}
 
+{% block head_extra %}
+<style>
+  .comment-box {
+    border-left: 3px solid #e5e7eb;
+    margin-left: 1rem;
+    padding-left: 1rem;
+  }
+  .reply-btn {
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  .reply-btn:hover {
+    text-decoration: underline;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
+
+<!-- =================================================
+     1) IMPORT MACRO REPLY TREE
+================================================= -->
+{% from "discussion/reply_block.html" import render_replies %}
+
 <div class="discussion-detail fade-in">
+
+  <!-- ====== BÀI THẢO LUẬN GỐC ====== -->
   <div class="card shadow-sm rounded-4 mb-4">
     <div class="card-body">
-      <h5 class="fw-bold text-gradient mb-2"><i class="bi bi-chat-dots"></i> Bài thảo luận</h5>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="fw-semibold">{{ discussion.author.full_name if discussion.author else "Ẩn danh" }}</span>
-        <small class="text-muted">{{ discussion.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+
+      <h5 class="fw-bold text-gradient mb-3">
+        <i class="bi bi-chat-dots"></i> Bài thảo luận
+      </h5>
+
+      <!-- Author + Time -->
+      <div class="d-flex justify-content-between mb-2">
+        <span class="fw-semibold">
+          {{ discussion.author.full_name if discussion.author else "Ẩn danh" }}
+        </span>
+        <small class="text-muted">
+          <i class="bi bi-clock"></i> {{ discussion.created_at.strftime('%d/%m/%Y %H:%M') }}
+        </small>
       </div>
-      <p class="mb-3">{{ discussion.content }}</p>
+
+      <p class="mb-3" style="white-space: pre-line;">{{ discussion.content }}</p>
+
+      <!-- Actions -->
       <div class="d-flex gap-2">
+
+        <!-- LIKE -->
         <form action="/student/discussion/like/{{ discussion.id }}" method="post">
           <button type="submit" class="btn btn-sm btn-outline-primary">
             <i class="bi bi-hand-thumbs-up"></i> Thích
           </button>
         </form>
-        <a href="/student/discussion/delete/{{ discussion.id }}" class="btn btn-sm btn-outline-danger">
-          <i class="bi bi-trash"></i> Xóa
-        </a>
+
+        <!-- DELETE (POST) -->
+        <form action="/student/discussion/delete/{{ discussion.id }}" method="post">
+          <button type="submit" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash"></i> Xóa
+          </button>
+        </form>
+
       </div>
+
     </div>
   </div>
 
-  <h6 class="fw-bold mb-3"><i class="bi bi-reply-all"></i> Phản hồi</h6>
-  {% include "student/discussion/_reply_thread.html" with context %}
 
-  <form action="/student/discussion/reply/{{ discussion.id }}" method="post" class="mt-4 p-3 bg-light rounded-3">
-    <label class="form-label fw-semibold">Viết phản hồi:</label>
-    <textarea name="content" rows="3" class="form-control mb-2" placeholder="Nhập phản hồi của bạn..." required></textarea>
-    <button class="btn btn-primary rounded-pill"><i class="bi bi-send"></i> Gửi</button>
-  </form>
+  <!-- ====== DANH SÁCH PHẢN HỒI ====== -->
+  <h6 class="fw-bold mb-3">
+    <i class="bi bi-reply-all"></i> Phản hồi
+  </h6>
+
+  <!-- Render reply tree -->
+  {{ render_replies(replies) }}
+
+
+  <!-- ====== FORM GỬI PHẢN HỒI ====== -->
+  <div class="card mt-4 shadow-sm rounded-3">
+    <div class="card-body">
+
+      <form action="/student/discussion/reply/{{ discussion.id }}" method="post">
+
+        <label class="form-label fw-semibold">Viết phản hồi:</label>
+
+        <!-- parent_id sẽ được gán bởi JS khi click "Trả lời" -->
+        <input type="hidden" id="reply-parent-id" name="parent_id">
+
+        <textarea name="content"
+                  rows="3"
+                  class="form-control mb-2"
+                  placeholder="Nhập phản hồi của bạn..."
+                  required></textarea>
+
+        <button class="btn btn-primary rounded-pill">
+          <i class="bi bi-send"></i> Gửi
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
 </div>
+
+
+<!-- ====== JS: Gán parent_id khi bấm nút reply ====== -->
+<script>
+  function setReplyParent(id) {
+    const input = document.getElementById("reply-parent-id");
+    input.value = id;
+    input.scrollIntoView({ behavior: "smooth" });
+  }
+</script>
+
 {% endblock %}

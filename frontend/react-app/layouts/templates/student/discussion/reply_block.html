@@ -1,21 +1,35 @@
-{% for r in replies %}
-<div class="card mb-2 ms-{{ loop.depth * 3 }} p-2 border-0 shadow-sm">
-  <div class="card-body py-2">
-    <div class="d-flex justify-content-between align-items-center">
-      <span class="fw-semibold">{{ r.author.full_name if r.author else "Ẩn danh" }}</span>
-      <small class="text-muted">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+{% macro render_replies(replies) %}
+  {% for r in replies %}
+    <div class="reply-item mb-3 p-3 bg-white shadow-sm rounded-3">
+
+      <!-- Avatar + Name + Time -->
+      <div class="d-flex align-items-center mb-2">
+        <img src="{{ r.author.avatar_url if r.author and r.author.avatar_url else '/static/default-avatar.png' }}"
+             class="rounded-circle me-3" width="42" height="42" />
+        <div>
+          <strong>{{ r.author.full_name if r.author else "Người dùng" }}</strong><br>
+          <small class="text-muted">
+            <i class="bi bi-clock"></i> {{ r.created_at.strftime('%d/%m/%Y %H:%M') }}
+          </small>
+        </div>
+      </div>
+
+      <!-- Nội dung -->
+      <p class="mb-2" style="white-space: pre-line;">{{ r.content }}</p>
+
+      <!-- Reply button -->
+      <button class="btn btn-sm btn-outline-primary"
+              onclick="setReplyParent('{{ r.id }}')">
+        <i class="bi bi-reply"></i> Trả lời
+      </button>
+
+      <!-- Children (Replies cấp dưới) -->
+      {% if r.children %}
+      <div class="ms-4 mt-3 border-start ps-3">
+        {{ render_replies(r.children) }}
+      </div>
+      {% endif %}
+
     </div>
-    <p class="mb-2">{{ r.content }}</p>
-
-    <form action="/student/discussion/reply/{{ r.id }}" method="post" class="ms-3 mb-2">
-      <input type="hidden" name="parent_id" value="{{ r.id }}" />
-      <textarea name="content" rows="2" class="form-control mb-2" placeholder="Phản hồi..." required></textarea>
-      <button class="btn btn-sm btn-outline-primary rounded-pill"><i class="bi bi-reply"></i> Trả lời</button>
-    </form>
-
-    {% if r.children %}
-      {% include "student/discussion/_reply_thread.html" with context({'replies': r.children}) %}
-    {% endif %}
-  </div>
-</div>
-{% endfor %}
+  {% endfor %}
+{% endmacro %}

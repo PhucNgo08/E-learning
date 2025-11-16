@@ -2,14 +2,44 @@
 {% block title %}🔔 Thông báo cá nhân{% endblock %}
 
 {% block content %}
+
 <style>
+  .notif-item {
+    transition: 0.2s ease;
+    position: relative;
+  }
   .notif-item:hover {
     background-color: #f8f9fa;
-    transition: 0.2s ease;
   }
   .notif-unread {
     border-left: 4px solid #0d6efd;
     background-color: #eef5ff;
+  }
+  .notif-message {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 480px;
+  }
+  .notif-badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 6px;
+  }
+  .notif-icon {
+    font-size: 1.1rem;
+    margin-right: 6px;
+  }
+  .delete-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    opacity: 0;
+    transition: 0.2s ease;
+  }
+  .notif-item:hover .delete-btn {
+    opacity: 1;
   }
   .fab-settings {
     position: fixed;
@@ -21,8 +51,11 @@
     width: 58px;
     height: 58px;
     box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 24px; z-index: 1000;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 24px; 
+    z-index: 1000;
     transition: 0.3s;
   }
   .fab-settings:hover {
@@ -32,41 +65,87 @@
 </style>
 
 <div class="container py-4 fade-in">
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-bell-fill"></i> Thông báo của tôi
     </h4>
+
+    {% if notifications|length > 0 %}
     <a href="/student/notifications/read_all" class="btn btn-outline-primary btn-sm">
       <i class="bi bi-check2-all"></i> Đánh dấu tất cả đã đọc
     </a>
+    {% endif %}
   </div>
 
+  <!-- Danh sách thông báo -->
   {% if notifications and notifications|length > 0 %}
   <div class="list-group shadow-sm">
+
+    {% set icon_map = {
+      'system': 'bi-gear',
+      'course': 'bi-book',
+      'assignment': 'bi-journal-check',
+      'quiz': 'bi-ui-checks',
+      'message': 'bi-chat-dots',
+      'other': 'bi-bell'
+    } %}
+
     {% for n in notifications %}
-      <a href="/student/notifications/detail/{{ n.id }}" 
+      <a href="/student/notifications/detail/{{ n.id }}"
          class="list-group-item list-group-item-action notif-item {% if not n.is_read %}notif-unread{% endif %}">
+        
         <div class="d-flex justify-content-between align-items-start">
+
+          <!-- Icon + Title -->
           <div>
             <h6 class="fw-semibold mb-1">
-              <i class="bi bi-bell me-2 text-primary"></i>{{ n.title or "Không có tiêu đề" }}
+              <i class="bi {{ icon_map.get(n.notification_type, 'bi-bell') }} notif-icon text-primary"></i>
+              {{ n.title or "Không có tiêu đề" }}
+
+              <!-- Badge loại -->
+              <span class="notif-badge bg-primary text-white">
+                {{ n.notification_type | capitalize }}
+              </span>
             </h6>
-            <small class="text-muted d-block">{{ n.message[:100] ~ ('...' if n.message|length > 100 else '') }}</small>
+
+            <!-- Preview Message -->
+            <small class="text-muted notif-message">
+              {{ (n.message or '')[:100] ~ ('...' if n.message and n.message|length > 100 else '') }}
+            </small>
+
           </div>
-          <small class="text-secondary">{{ n.created_at.strftime("%d/%m/%Y %H:%M") if n.created_at else '' }}</small>
+
+          <!-- Thời gian -->
+          <small class="text-secondary ms-2">
+            {{ n.created_at.strftime("%d/%m/%Y %H:%M") if n.created_at else "" }}
+          </small>
+
         </div>
+
+        <!-- Nút xóa -->
+        <a href="/student/notifications/delete/{{ n.id }}" 
+           class="btn btn-outline-danger btn-sm delete-btn"
+           title="Xóa thông báo">
+          <i class="bi bi-trash"></i>
+        </a>
+
       </a>
     {% endfor %}
   </div>
+
   {% else %}
   <div class="alert alert-info text-center mt-4">
     <i class="bi bi-info-circle me-2"></i>Chưa có thông báo nào.
   </div>
   {% endif %}
+
 </div>
 
 <!-- ⚙️ Floating Button -->
 <a href="/student/notifications/settings" class="fab-settings" title="Cài đặt thông báo">
   <i class="bi bi-gear-fill"></i>
 </a>
+
 {% endblock %}

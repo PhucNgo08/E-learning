@@ -1,11 +1,6 @@
 """
 ==========================================================
 🎓 ROUTER: Student - Review
-Chức năng đánh giá khóa học dành cho sinh viên:
-- Xem danh sách khóa học đã ghi danh
-- Xem đánh giá từng khóa học
-- Gửi đánh giá mới
-- Trang cảm ơn
 ==========================================================
 """
 
@@ -16,36 +11,34 @@ from starlette import status
 from datetime import datetime
 import traceback
 
-# ✅ Import cấu hình
+# Config
 from app.config.template_config import templates
 from app.database.connection import get_db
 
-# ✅ Import service & model
+# Services
 from app.services.student import review_service
+
+# Models
 from app.models.course import Course
 from app.models.enrollment import Enrollment
 
 
-# ======================================================
-# ⚙️ Cấu hình Router
-# ======================================================
 router = APIRouter(
     prefix="/student/review",
     tags=["Student - Review"]
 )
 
-
 # ======================================================
-# 🏠 1️⃣ Trang danh sách khóa học để đánh giá
+# 🏠 1️⃣ Danh sách khóa học đã ghi danh
 # ======================================================
 @router.get("/", response_class=HTMLResponse)
 async def review_home(request: Request, db: Session = Depends(get_db)):
-    """Hiển thị danh sách khóa học mà sinh viên đã ghi danh."""
+
     user_id = request.session.get("user_id")
     role = request.session.get("role")
 
     if not user_id or role != "student":
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
     try:
         enrolled_courses = (
@@ -62,27 +55,26 @@ async def review_home(request: Request, db: Session = Depends(get_db)):
                 "enrolled_courses": enrolled_courses,
                 "active_page": "review",
                 "page_title": "⭐ Đánh giá khóa học",
-                "now": datetime.utcnow(),
             },
         )
 
     except Exception as e:
         print("❌ [Review][Home] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải danh sách khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi tải danh sách khóa học.", 500)
 
 
 # ======================================================
-# 🧾 2️⃣ Xem danh sách đánh giá của một khóa học
+# 🧾 2️⃣ Xem đánh giá của 1 khóa học
 # ======================================================
 @router.get("/course/{course_id}", response_class=HTMLResponse)
 async def view_course_reviews(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Hiển thị danh sách đánh giá cho một khóa học cụ thể."""
+
     user_id = request.session.get("user_id")
     role = request.session.get("role")
 
     if not user_id or role != "student":
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
     try:
         course = db.query(Course).filter(Course.id == course_id).first()
@@ -90,11 +82,12 @@ async def view_course_reviews(request: Request, course_id: str, db: Session = De
             return templates["student"].TemplateResponse(
                 "error.html",
                 {"request": request, "message": "❌ Không tìm thấy khóa học."},
-                status_code=404,
+                404,
             )
 
-        reviews = await review_service.get_reviews_by_course(course_id, db)
-        average_rating = await review_service.get_course_average_rating(db, course_id)
+        # ❗ FIX: bỏ await + truyền đúng thứ tự
+        reviews = review_service.get_reviews_by_course(db, course_id)
+        average_rating = review_service.get_course_average_rating(db, course_id)
 
         return templates["student"].TemplateResponse(
             "review/review_course.html",
@@ -103,7 +96,7 @@ async def view_course_reviews(request: Request, course_id: str, db: Session = De
                 "course": course,
                 "reviews": reviews,
                 "average_rating": average_rating,
-                "page_title": f"📖 Đánh giá khóa học: {course.title}",
+                "page_title": f"📖 Đánh giá khóa học: {course.course_name}",
                 "active_page": "review",
             },
         )
@@ -111,35 +104,35 @@ async def view_course_reviews(request: Request, course_id: str, db: Session = De
     except Exception as e:
         print("❌ [Review][ViewCourse] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải đánh giá khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi tải đánh giá khóa học.", 500)
 
 
 # ======================================================
-# 📝 3️⃣ Form gửi đánh giá khóa học
+# 📝 3️⃣ Form gửi đánh giá
 # ======================================================
 @router.get("/submit/{course_id}", response_class=HTMLResponse)
 async def review_submit_form(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Hiển thị form để sinh viên gửi đánh giá."""
+
     user_id = request.session.get("user_id")
     role = request.session.get("role")
 
     if not user_id or role != "student":
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
     try:
         course = db.query(Course).filter(Course.id == course_id).first()
         if not course:
             return templates["student"].TemplateResponse(
                 "error.html",
-                {"request": request, "message": "❌ Không tìm thấy khóa học để đánh giá."},
-                status_code=404,
+                {"request": request, "message": "❌ Không tìm thấy khóa học."},
+                404,
             )
 
-        # ⚠️ Nếu sinh viên đã từng đánh giá, chuyển sang trang cảm ơn
-        if await review_service.has_student_reviewed(db, course_id, user_id):
+        # ❗ FIX: bỏ await
+        if review_service.has_student_reviewed(db, course_id, user_id):
             return RedirectResponse(
-                url=f"/student/review/thanks/{course_id}",
-                status_code=status.HTTP_303_SEE_OTHER,
+                f"/student/review/thanks/{course_id}",
+                status.HTTP_303_SEE_OTHER,
             )
 
         return templates["student"].TemplateResponse(
@@ -154,7 +147,7 @@ async def review_submit_form(request: Request, course_id: str, db: Session = Dep
     except Exception as e:
         print("❌ [Review][SubmitForm] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải form đánh giá.</h4>", status_code=500)
+        return HTMLResponse("Lỗi tải form đánh giá.", 500)
 
 
 # ======================================================
@@ -172,27 +165,29 @@ async def review_submit_post(
     is_anonymous: bool = Form(False),
     db: Session = Depends(get_db),
 ):
-    """Xử lý khi sinh viên gửi đánh giá khóa học."""
+
     user_id = request.session.get("user_id")
     if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
     try:
         course = db.query(Course).filter(Course.id == course_id).first()
         if not course:
             return templates["student"].TemplateResponse(
                 "error.html",
-                {"request": request, "message": "❌ Không tìm thấy khóa học để đánh giá."},
-                status_code=404,
+                {"request": request, "message": "❌ Không tìm thấy khóa học."},
+                404,
             )
 
-        if await review_service.has_student_reviewed(db, course_id, user_id):
+        # ❗ FIX: bỏ await
+        if review_service.has_student_reviewed(db, course_id, user_id):
             return RedirectResponse(
-                url=f"/student/review/thanks/{course_id}",
-                status_code=status.HTTP_303_SEE_OTHER,
+                f"/student/review/thanks/{course_id}",
+                status.HTTP_303_SEE_OTHER,
             )
 
-        await review_service.submit_review(
+        # ❗ FIX: bỏ await
+        review_service.submit_review(
             db=db,
             course_id=course_id,
             user_id=user_id,
@@ -204,17 +199,16 @@ async def review_submit_post(
             is_anonymous=is_anonymous,
         )
 
-        print(f"✅ [Review][Submit] user={user_id}, course={course_id}")
         return RedirectResponse(
-            url=f"/student/review/thanks/{course_id}",
-            status_code=status.HTTP_303_SEE_OTHER,
+            f"/student/review/thanks/{course_id}",
+            status.HTTP_303_SEE_OTHER,
         )
 
     except Exception as e:
         db.rollback()
         print("❌ [Review][SubmitPost] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi gửi đánh giá khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi gửi đánh giá.", 500)
 
 
 # ======================================================
@@ -222,13 +216,14 @@ async def review_submit_post(
 # ======================================================
 @router.get("/thanks/{course_id}", response_class=HTMLResponse)
 async def review_thanks(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Hiển thị trang cảm ơn sau khi sinh viên gửi đánh giá."""
+
     user_id = request.session.get("user_id")
     if not user_id:
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
     try:
         course = db.query(Course).filter(Course.id == course_id).first()
+
         return templates["student"].TemplateResponse(
             "review/review_thanks.html",
             {
@@ -239,7 +234,8 @@ async def review_thanks(request: Request, course_id: str, db: Session = Depends(
                 "active_page": "review",
             },
         )
+
     except Exception as e:
         print("❌ [Review][Thanks] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi hiển thị trang cảm ơn.</h4>", status_code=500)
+        return HTMLResponse("Lỗi hiển thị trang cảm ơn.", 500)

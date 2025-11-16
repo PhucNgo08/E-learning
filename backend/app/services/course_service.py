@@ -1,7 +1,11 @@
 """
 ==========================================================
-📘 app/services/course_service.py
-Quản lý khóa học (dùng chung cho ADMIN, TEACHER & STUDENT)
+📘 app/services/course_service.py (FINAL 100% - 2025)
+Tương thích đầy đủ database 2025:
+- user_courses
+- cart_items
+- discount_percent
+- class_id (nullable)
 ==========================================================
 """
 
@@ -10,92 +14,193 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy.exc import SQLAlchemyError
 
-# ===== Import Models =====
+# ===== Models =====
 from app.models.course import Course
 from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.lesson_progress import LessonProgress
 from app.models.enrollment import Enrollment
 from app.models.course_review import CourseReview as Review
+from app.models.cart_item import CartItem
+from app.models.user_course import UserCourse
 
-# =====================================================
-# 🗂️ Cấu hình thư mục upload & ảnh mặc định
-# =====================================================
-BASE_DIR = Path(__file__).resolve().parent.parent  # → backend/app
+
+# =======================================================
+# 📁 Upload Thumbnail
+# =======================================================
+BASE_DIR = Path(__file__).resolve().parent.parent
 UPLOAD_DIR = BASE_DIR / "uploads" / "course_thumbnails"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_THUMBNAIL = "/uploads/course_thumbnails/default-course.png"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
 
-default_file = UPLOAD_DIR / "default-course.png"
-if not default_file.exists():
-    default_file.touch()
-    print(f"⚠️ [course_service] Ảnh mặc định chưa có, đã tạo tạm: {default_file}")
-
-print(f"📁 [course_service] Sử dụng thư mục upload: {UPLOAD_DIR}")
+if not (UPLOAD_DIR / "default-course.png").exists():
+    (UPLOAD_DIR / "default-course.png").touch()
 
 
-# =====================================================
-# 📋 1️⃣ Lấy danh sách khóa học (đa quyền)
-# =====================================================
-def get_all_courses(
-    db: Session,
-    user_id: str | None = None,
-    role: str = "admin",
-    search: str | None = None
-):
-    """Trả về danh sách khóa học phù hợp với quyền người dùng"""
+# =======================================================
+# 🔤 Helper: viết tắt môn học
+# =======================================================
+def _subject_abbr(subject: str) -> str:
+    if not subject:
+        return "CS"
+    words = subject.strip().split()
+    if len(words) == 1:
+        return subject[:2].upper()
+    return "".join(w[0].upper() for w in words[:2])
+
+
+# =======================================================
+# 🔢 Generate COURSE CODE - ex: CS-2025-001
+# =======================================================
+def generate_course_code(db: Session, subject: str) -> str:
+    year = datetime.now().year
+    abbr = _subject_abbr(subject)
+    prefix = f"{abbr}-{year}-"
+
+    latest = (
+        db.query(Course)
+        .filter(Course.course_code.like(f"{prefix}%"))
+        .order_by(Course.course_code.desc())
+        .first()
+    )
+
+    if not latest:
+        return f"{prefix}001"
+
+    last_no = int(latest.course_code.split("-")[-1])
+    return f"{prefix}{last_no + 1:03d}"
+
+
+# =======================================================
+# 🏷️ 0) Tính giá cuối (có giảm giá)
+# =======================================================
+def get_final_price(course: Course) -> float:
+    try:
+        if getattr(course, "discount_percent", 0):
+            return round(course.price * (100 - course.discount_percent) / 100, 2)
+        return round(course.price or 0, 2)
+    except:
+        return course.price or 0
+
+
+# =======================================================
+# 🧺 0.1) Kiểm tra khóa học trong giỏ hàng
+# =======================================================
+def is_in_cart(db: Session, user_id: str, course_id: str) -> bool:
+    return (
+        db.query(CartItem)
+        .filter(CartItem.user_id == user_id, CartItem.course_id == course_id)
+        .first()
+        is not None
+    )
+
+
+# =======================================================
+# 🛒 0.2) Kiểm tra user đã mua khóa học
+# =======================================================
+def is_course_purchased(db: Session, user_id: str, course_id: str) -> bool:
+    return (
+        db.query(UserCourse)
+        .filter(UserCourse.user_id == user_id, UserCourse.course_id == course_id)
+        .first()
+        is not None
+    )
+
+
+# =======================================================
+# 📋 1) Danh sách khóa học
+# =======================================================
+def get_all_courses(db: Session, user_id: str | None, role: str, search: str | None = None):
     query = db.query(Course)
 
-    if role == "student":
-        query = query.filter(Course.status == "published")
-    elif role == "teacher" and user_id:
+    if role == "teacher":
         query = query.filter(Course.teacher_id == user_id)
+
+    elif role == "student":
+        query = query.filter(
+            (Course.status == "published") | (Course.is_public == True)
+        )
 
     if search:
         s = f"%{search}%"
-        query = query.filter(Course.course_name.ilike(s) | Course.description.ilike(s))
+        query = query.filter(
+            Course.course_name.ilike(s) | Course.description.ilike(s)
+        )
 
-    return query.order_by(Course.created_at.desc()).all()
+    courses = query.order_by(Course.created_at.desc()).all()
+
+    # Bổ sung final_price
+    for c in courses:
+        c.final_price = get_final_price(c)
+
+    return courses
 
 
-# =====================================================
-# 📘 2️⃣ Lấy chi tiết khóa học (đa quyền)
-# =====================================================
-def get_course_detail(db: Session, course_id: str, role: str = "student", user_id: str | None = None):
-    """Lấy thông tin chi tiết của một khóa học, bao gồm modules và lessons"""
+# =======================================================
+# 📘 2) Lấy chi tiết khóa học (FULL quyền Student 2025)
+# =======================================================
+def get_course_detail(db: Session, course_id: str, role: str, user_id: str | None):
+
     course = (
         db.query(Course)
         .options(joinedload(Course.modules).joinedload(Module.lessons))
         .filter(Course.id == course_id)
         .first()
     )
+
     if not course:
         return None
 
-    # Học viên chỉ được xem khóa học đã public hoặc đã đăng ký
+    # ===== Student Check =====
     if role == "student":
+
+        # 1) Nếu đã mua => xem full
+        purchased = is_course_purchased(db, user_id, course_id)
+        if purchased:
+            course.final_price = get_final_price(course)
+            return course
+
+        # 2) Kiểm tra enrollment
         enrolled = (
             db.query(Enrollment)
-            .filter(Enrollment.course_id == course_id, Enrollment.user_id == user_id)
+            .filter(
+                Enrollment.user_id == user_id,
+                Enrollment.course_id == course_id,
+                Enrollment.enrollment_status.in_(["approved", "active", "applied"]),
+            )
             .first()
-            is not None
         )
-        if course.status != "published" and not enrolled:
+
+        if not enrolled and not (course.status == "published" or course.is_public):
             return None
 
+    course.final_price = get_final_price(course)
     return course
 
 
-# =====================================================
-# 🎓 3️⃣ Lấy danh sách khóa học học viên đã đăng ký
-# =====================================================
+# =======================================================
+# 🎓 3) Danh sách course_id đã đăng ký
+# =======================================================
+def get_enrolled_course_ids(db: Session, user_id: str) -> set[str]:
+    return {
+        e.course_id
+        for e in db.query(Enrollment)
+        .filter(
+            Enrollment.user_id == user_id,
+            Enrollment.enrollment_status.in_(["approved", "active", "applied"])
+        )
+        .all()
+    }
+
+
+# =======================================================
+# 🎓 4) Danh sách khóa học học viên đã tham gia (tiến độ)
+# =======================================================
 def get_enrolled_courses(db: Session, user_id: str):
-    """Lấy danh sách khóa học mà học viên đã ghi danh"""
-    enrollments = (
+    enrolls = (
         db.query(Enrollment)
         .options(joinedload(Enrollment.course))
         .filter(Enrollment.user_id == user_id)
@@ -103,7 +208,7 @@ def get_enrolled_courses(db: Session, user_id: str):
     )
 
     result = []
-    for e in enrollments:
+    for e in enrolls:
         total_lessons = (
             db.query(Lesson)
             .join(Module)
@@ -113,8 +218,7 @@ def get_enrolled_courses(db: Session, user_id: str):
 
         completed = (
             db.query(LessonProgress)
-            .join(Lesson)
-            .join(Module)
+            .join(Lesson).join(Module)
             .filter(
                 LessonProgress.user_id == user_id,
                 Module.course_id == e.course_id,
@@ -125,28 +229,24 @@ def get_enrolled_courses(db: Session, user_id: str):
 
         percent = round(completed / total_lessons * 100, 1) if total_lessons else 0
 
-        result.append(
-            {
-                "course": e.course,
-                "completed_lessons": completed,
-                "total_lessons": total_lessons,
-                "progress_percent": percent,
-            }
-        )
+        result.append({
+            "course": e.course,  # đã chắc chắn không None
+            "completed_lessons": completed,
+            "total_lessons": total_lessons,
+            "progress_percent": percent,
+        })
 
     return result
 
 
-# =====================================================
-# 📈 4️⃣ Lấy tiến độ học tập (Student)
-# =====================================================
+# =======================================================
+# 📈 5) Tiến độ khóa học
+# =======================================================
 def get_course_progress(db: Session, course_id: str, user_id: str):
-    """Lấy thông tin tiến độ học của học viên trong khóa học"""
     course = db.query(Course).filter(Course.id == course_id).first()
     if not course:
-        return {"course": None, "modules": [], "progress": {}}
+        return {"course": None, "modules": [], "progress": {}, "next_lesson_id": None}
 
-    # Lấy module + lesson
     modules = (
         db.query(Module)
         .options(joinedload(Module.lessons))
@@ -155,80 +255,78 @@ def get_course_progress(db: Session, course_id: str, user_id: str):
         .all()
     )
 
-    # Lấy danh sách bài học đã hoàn thành
-    completed_lessons = {
+    completed_ids = {
         lp.lesson_id
         for lp in db.query(LessonProgress)
-        .join(Lesson)
-        .join(Module)
+        .join(Lesson).join(Module)
         .filter(
             LessonProgress.user_id == user_id,
             Module.course_id == course_id,
-            LessonProgress.progress_status == "completed",
+            LessonProgress.progress_status == "completed"
         )
         .all()
     }
 
-    # Đánh dấu trạng thái hoàn thành cho từng bài học
-    total_lessons = 0
-    completed_count = 0
+    total = 0
+    done = 0
+    next_lesson_id = None  # lesson đầu tiên chưa học
+
     for m in modules:
         for l in m.lessons:
-            total_lessons += 1
-            l.completed = l.id in completed_lessons  # ✅ thuộc tính động
+            total += 1
+            l.completed = l.id in completed_ids
             if l.completed:
-                completed_count += 1
+                done += 1
+            elif not next_lesson_id:
+                next_lesson_id = l.id  # lấy lesson đầu tiên chưa học
 
-    # Tính phần trăm tiến độ
-    percent = round(completed_count / total_lessons * 100, 1) if total_lessons else 0
+    percent = round(done / total * 100, 1) if total else 0
 
     return {
         "course": course,
         "modules": modules,
         "progress": {
-            "completed_lessons": completed_count,
-            "total_lessons": total_lessons,
+            "completed_lessons": done,
+            "total_lessons": total,
             "percent": percent,
         },
+        "next_lesson_id": next_lesson_id
     }
 
-
-# =====================================================
-# 🌟 5️⃣ Lấy đánh giá khóa học (Feedback)
-# =====================================================
+# =======================================================
+# ⭐ 6) Reviews
+# =======================================================
 def get_course_feedback(db: Session, course_id: str):
-    """Lấy danh sách và trung bình điểm đánh giá của khóa học"""
     course = db.query(Course).filter(Course.id == course_id).first()
     reviews = db.query(Review).filter(Review.course_id == course_id).all()
 
-    avg_rating = (
-        round(sum(getattr(r, "overall_rating", 0) or 0 for r in reviews) / len(reviews), 1)
+    avg = (
+        round(sum((r.overall_rating or 0) for r in reviews) / len(reviews), 1)
         if reviews else 0
     )
 
-    return {"course": course, "reviews": reviews, "average_rating": avg_rating}
+    return {"course": course, "reviews": reviews, "average_rating": avg}
 
 
-# =====================================================
-# 💬 6️⃣ Học viên gửi đánh giá khóa học
-# =====================================================
-def add_course_feedback(db: Session, course_id: str, user_id: str,
-                        title: str, comment: str,
-                        overall_rating: int,
-                        rating_content: int, rating_teacher: int, rating_support: int):
-    """Học viên thêm hoặc cập nhật đánh giá khóa học"""
-    from app.models.course_review import CourseReview
+def add_course_feedback(
+    db: Session,
+    course_id: str,
+    user_id: str,
+    title: str,
+    comment: str,
+    overall_rating: int,
+    rating_content: int,
+    rating_teacher: int,
+    rating_support: int
+):
     try:
-        # ✅ Kiểm tra học viên đã đánh giá chưa
         existing = (
-            db.query(CourseReview)
-            .filter(CourseReview.course_id == course_id,
-                    CourseReview.user_id == user_id)
+            db.query(Review)
+            .filter(Review.course_id == course_id, Review.user_id == user_id)
             .first()
         )
 
         if existing:
-            # 🔁 Cập nhật đánh giá cũ
             existing.title = title.strip()
             existing.comment = comment.strip()
             existing.overall_rating = overall_rating
@@ -237,12 +335,9 @@ def add_course_feedback(db: Session, course_id: str, user_id: str,
             existing.rating_support = rating_support
             existing.updated_at = datetime.utcnow()
             db.commit()
-            db.refresh(existing)
-            print(f"✏️ Học viên {user_id} đã cập nhật đánh giá cho khóa học {course_id}.")
             return existing
 
-        # 🆕 Nếu chưa có → tạo mới
-        new_review = CourseReview(
+        new_review = Review(
             id=str(uuid.uuid4()),
             course_id=course_id,
             user_id=user_id,
@@ -257,46 +352,40 @@ def add_course_feedback(db: Session, course_id: str, user_id: str,
 
         db.add(new_review)
         db.commit()
-        db.refresh(new_review)
-        print(f"✅ Học viên {user_id} đã gửi đánh giá khóa học {course_id}.")
         return new_review
 
-    except Exception as e:
+    except:
         db.rollback()
-        print(f"❌ [add_course_feedback] Lỗi khi thêm đánh giá: {e}")
         return None
 
 
-# =====================================================
-# 🧱 7️⃣ Lưu file thumbnail (Admin/Teacher)
-# =====================================================
+# =======================================================
+# 🖼 8) Lưu thumbnail
+# =======================================================
 def save_thumbnail_file(thumbnail) -> str:
-    """Lưu ảnh thumbnail cho khóa học"""
     try:
-        if not thumbnail or not getattr(thumbnail, "filename", None):
+        if not thumbnail or not thumbnail.filename:
             return DEFAULT_THUMBNAIL
 
         ext = Path(thumbnail.filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
-            raise ValueError("❌ Chỉ chấp nhận định dạng JPG, PNG, GIF, WEBP")
+            raise ValueError("Chỉ nhận JPG, PNG, GIF, WEBP")
 
-        file_name = f"{uuid.uuid4().hex}{ext}"
-        file_path = UPLOAD_DIR / file_name
+        name = f"{uuid.uuid4().hex}{ext}"
+        path = UPLOAD_DIR / name
 
-        with open(file_path, "wb") as f:
+        with open(path, "wb") as f:
             shutil.copyfileobj(thumbnail.file, f)
 
-        print(f"🖼️ Đã lưu thumbnail: {file_path}")
-        return f"/uploads/course_thumbnails/{file_name}"
+        return f"/uploads/course_thumbnails/{name}"
 
-    except Exception as e:
-        print(f"⚠️ Lỗi lưu thumbnail: {e}")
+    except:
         return DEFAULT_THUMBNAIL
 
 
-# =====================================================
-# ➕ 8️⃣ Tạo khóa học (Admin/Teacher)
-# =====================================================
+# =======================================================
+# ➕ 9) Tạo khóa học
+# =======================================================
 async def create_course(
     db: Session,
     user_id: str | None,
@@ -307,44 +396,78 @@ async def create_course(
     grade_level: int | None,
     thumbnail,
     role: str = "admin",
-    teacher_id: str | None = None
-):
-    """Tạo mới khóa học"""
-    try:
-        course_code = f"C-{uuid.uuid4().hex[:6].upper()}"
-        assigned_teacher = teacher_id if role == "admin" else user_id
-        thumbnail_url = save_thumbnail_file(thumbnail)
 
-        new_course = Course(
+    teacher_id: str | None = None,
+    major_id: str | None = None,
+    course_code: str | None = None,
+    difficulty_level: str = "beginner",
+    price: float = 0,
+    discount_percent: int = 0,
+    enrollment_mode: str = "auto",
+    max_students: int = 100,
+    academic_year_id: str | None = None,
+    semester: int | None = None,
+    is_public: bool = False,
+    prerequisites: str | None = None,
+    allow_assignments: bool = True,
+    default_submission_type: str = "individual",
+):
+
+    if role == "teacher":
+        teacher_id = user_id
+
+    # Check mã khóa học tồn tại
+    if course_code:
+        exists = db.query(Course).filter(Course.course_code == course_code).first()
+        if exists:
+            return {"error": "Mã khóa học đã tồn tại"}
+    else:
+        course_code = generate_course_code(db, subject)
+
+    thumbnail_url = save_thumbnail_file(thumbnail)
+
+    try:
+        cr = Course(
             id=str(uuid.uuid4()),
             course_code=course_code,
             course_name=course_name.strip(),
             description=description.strip() if description else None,
             credit_hours=credit_hours,
-            subject=subject.strip() if subject else "Khác",
+            subject=subject,
             grade_level=grade_level,
-            teacher_id=assigned_teacher,
+            difficulty_level=difficulty_level,
+            teacher_id=teacher_id,
+            major_id=major_id,
+            academic_year_id=academic_year_id,
+            semester=semester,
+            price=price,
+            discount_percent=discount_percent,
+            enrollment_mode=enrollment_mode,
+            max_students=max_students,
+            is_public=is_public,
+            prerequisites=prerequisites,
+            allow_assignments=1 if allow_assignments else 0,
+            default_submission_type=default_submission_type,
             status="draft",
             thumbnail_url=thumbnail_url,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
 
-        db.add(new_course)
+        db.add(cr)
         db.commit()
-        db.refresh(new_course)
-        print(f"✅ [{role.upper()}] Tạo khóa học: {new_course.course_name}")
-        return new_course
+        db.refresh(cr)
+        cr.final_price = get_final_price(cr)
+        return cr
 
-    except (SQLAlchemyError, Exception) as e:
+    except Exception as e:
         db.rollback()
-        print(f"❌ [{role.upper()}] Lỗi tạo khóa học:", e)
         return {"error": str(e)}
 
 
-# =====================================================
-# ✏️ 9️⃣ Cập nhật khóa học (Admin/Teacher)
-# =====================================================
+# =======================================================
+# ✏️ 10) Update khóa học
+# =======================================================
 async def update_course(
     db: Session,
     user_id: str | None,
@@ -357,138 +480,166 @@ async def update_course(
     grade_level: int | None,
     thumbnail,
     role: str = "admin",
-    teacher_id: str | None = None
+
+    teacher_id: str | None = None,
+    major_id: str | None = None,
+    difficulty_level: str = "beginner",
+    price: float = 0,
+    discount_percent: int = 0,
+    enrollment_mode: str = "auto",
+    max_students: int = 100,
+    academic_year_id: str | None = None,
+    semester: int | None = None,
+    is_public: bool = False,
+    prerequisites: str | None = None,
+    allow_assignments: bool = True,
+    default_submission_type: str = "individual",
 ):
-    """Cập nhật thông tin khóa học"""
+
     course = get_course_owned(db, user_id, course_id, role)
     if not course:
-        return {"error": "Không tìm thấy khóa học hoặc không có quyền chỉnh sửa."}
+        return {"error": "Không có quyền chỉnh sửa"}
+
+    if role == "teacher":
+        teacher_id = course.teacher_id
+        major_id = course.major_id
 
     try:
         course.course_name = course_name.strip()
-        course.description = description.strip() if description else None
+        course.description = description.strip()
         course.credit_hours = credit_hours
         course.status = status_str
-        course.subject = subject.strip() if subject else "Khác"
+        course.subject = subject
         course.grade_level = grade_level
-        course.updated_at = datetime.utcnow()
 
-        if role == "admin" and teacher_id:
-            course.teacher_id = teacher_id
+        course.teacher_id = teacher_id
+        course.major_id = major_id
 
-        if thumbnail and getattr(thumbnail, "filename", None):
+        course.difficulty_level = difficulty_level
+        course.price = price
+        course.discount_percent = discount_percent
+        course.enrollment_mode = enrollment_mode
+        course.max_students = max_students
+        course.academic_year_id = academic_year_id
+        course.semester = semester
+        course.is_public = is_public
+        course.prerequisites = prerequisites
+        course.allow_assignments = 1 if allow_assignments else 0
+        course.default_submission_type = default_submission_type
+
+        if thumbnail and thumbnail.filename:
             course.thumbnail_url = save_thumbnail_file(thumbnail)
 
+        course.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(course)
-        print(f"✏️ [{role.upper()}] Cập nhật khóa học: {course.course_name}")
+
+        course.final_price = get_final_price(course)
         return course
 
-    except (SQLAlchemyError, Exception) as e:
+    except Exception as e:
         db.rollback()
-        print(f"❌ [{role.upper()}] Lỗi cập nhật khóa học:", e)
         return {"error": str(e)}
 
 
-# =====================================================
-# ❌ 🔟 Xóa khóa học
-# =====================================================
+# =======================================================
+# ❌ 11) Xóa khóa học
+# =======================================================
 def delete_course(db: Session, user_id: str | None, course_id: str, role: str = "admin"):
-    """Xóa khóa học"""
     course = get_course_owned(db, user_id, course_id, role)
     if not course:
-        print(f"⚠️ [{role.upper()}] Không tìm thấy khóa học để xóa.")
         return False
 
     try:
         db.delete(course)
         db.commit()
-        print(f"🗑️ [{role.upper()}] Đã xóa khóa học: {course.course_name}")
         return True
-    except SQLAlchemyError as e:
+    except:
         db.rollback()
-        print(f"❌ [{role.upper()}] Lỗi xóa khóa học:", e)
         return False
 
 
-# =====================================================
-# 🔍 11️⃣ Lấy khóa học theo quyền
-# =====================================================
-def get_course_owned(db: Session, user_id: str | None, course_id: str, role: str = "admin"):
-    """Kiểm tra quyền sở hữu khóa học"""
+# =======================================================
+# 🔍 12) Kiểm tra khóa học thuộc giáo viên
+# =======================================================
+def get_course_owned(db: Session, user_id: str | None, course_id: str, role: str):
     query = db.query(Course).filter(Course.id == course_id)
-    if role == "teacher" and user_id:
+    if role == "teacher":
         query = query.filter(Course.teacher_id == user_id)
     return query.first()
 
 
-# =====================================================
-# 🧭 12️⃣ Học viên đăng ký khóa học (Enroll)
-# =====================================================
-def enroll_course(db: Session, user_id: str, course_id: str):
-    """Học viên đăng ký khóa học nếu chưa tồn tại Enrollment"""
+# =======================================================
+# 🧭 13) Học viên đăng ký khóa học (HỖ TRỢ class_id)
+# =======================================================
+def enroll_course(db: Session, user_id: str, course_id: str, class_id: str | None = None):
+
     try:
-        existing = (
-            db.query(Enrollment)
-            .filter(Enrollment.user_id == user_id, Enrollment.course_id == course_id)
-            .first()
-        )
-        if existing:
-            print(f"⚠️ Học viên {user_id} đã đăng ký khóa học {course_id}.")
-            return existing
+        exists = db.query(Enrollment).filter(
+            Enrollment.user_id == user_id,
+            Enrollment.course_id == course_id,
+        ).first()
+
+        if exists:
+            return exists
 
         new_enroll = Enrollment(
             id=str(uuid.uuid4()),
             user_id=user_id,
             course_id=course_id,
-            enrollment_status="approved",
-            enrolled_at=datetime.utcnow(),
+            class_id=class_id,  # ⭐ hỗ trợ theo DB 2025
+            enrollment_type="student",
+            enrollment_status="applied",
+            applied_at=datetime.utcnow(),
             created_at=datetime.utcnow(),
         )
 
         db.add(new_enroll)
+
+        course = db.query(Course).filter(Course.id == course_id).first()
+        if course:
+            course.current_students = (course.current_students or 0) + 1
+
         db.commit()
         db.refresh(new_enroll)
-        print(f"✅ Học viên {user_id} đăng ký thành công khóa học {course_id}.")
         return new_enroll
 
-    except Exception as e:
+    except Exception:
         db.rollback()
-        print(f"❌ [enroll_course] Lỗi đăng ký khóa học:", e)
         return None
-# =====================================================
-# 🧠 13️⃣ Kiểm tra học viên đã đăng ký khóa học chưa
-# =====================================================
+
+
+# =======================================================
+# 🧠 14) Kiểm tra học viên đã đăng ký (hoặc đã mua)
+# =======================================================
 def is_student_enrolled(db: Session, user_id: str, course_id: str) -> bool:
-    """
-    Kiểm tra học viên đã ghi danh (enrolled) vào khóa học chưa.
-    Trả về True nếu đã đăng ký, False nếu chưa.
-    """
+
+    # Nếu đã mua khóa học → xem luôn
+    if is_course_purchased(db, user_id, course_id):
+        return True
+
     try:
-        enrolled = (
+        return (
             db.query(Enrollment)
             .filter(
                 Enrollment.user_id == user_id,
                 Enrollment.course_id == course_id,
-                Enrollment.enrollment_status.in_(["approved", "active"]),
+                Enrollment.enrollment_status.in_(["approved", "active", "applied"]),
             )
             .first()
+            is not None
         )
-        return enrolled is not None
-    except Exception as e:
-        print("❌ [CourseService][is_student_enrolled] Lỗi:", e)
+    except:
         return False
-# =====================================================
-# 💡 14️⃣ Gợi ý khóa học liên quan (Student)
-# =====================================================
+
+
+# =======================================================
+# 💡 15) Khóa học liên quan
+# =======================================================
 def get_related_courses(db: Session, course_id: str, limit: int = 4):
-    """
-    Gợi ý các khóa học liên quan dựa theo ngành học (major_id),
-    độ khó (difficulty_level), hoặc môn học (subject).
-    """
     try:
-        current_course = db.query(Course).filter(Course.id == course_id).first()
-        if not current_course:
+        course = db.query(Course).filter(Course.id == course_id).first()
+        if not course:
             return []
 
         related = (
@@ -496,18 +647,21 @@ def get_related_courses(db: Session, course_id: str, limit: int = 4):
             .filter(
                 Course.id != course_id,
                 Course.status == "published",
-                # Ưu tiên cùng ngành hoặc cùng độ khó
-                (Course.major_id == current_course.major_id)
-                | (Course.difficulty_level == current_course.difficulty_level)
-                | (Course.subject == current_course.subject),
+                (
+                    (Course.major_id == course.major_id) |
+                    (Course.subject == course.subject) |
+                    (Course.difficulty_level == course.difficulty_level)
+                ),
             )
             .order_by(Course.created_at.desc())
             .limit(limit)
             .all()
         )
 
+        for c in related:
+            c.final_price = get_final_price(c)
+
         return related
 
-    except Exception as e:
-        print("❌ [CourseService][get_related_courses] Lỗi:", e)
+    except:
         return []

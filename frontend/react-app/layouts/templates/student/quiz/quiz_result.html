@@ -2,73 +2,95 @@
 {% block title %}🎯 Kết quả bài kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <!-- 🧩 Phần tổng điểm -->
-  <div class="card shadow-sm border-0 mb-4">
+<div class="container mt-4 fade-in">
+
+  <!-- ===================================================== -->
+  <!-- 🎯 TỔNG QUAN KẾT QUẢ -->
+  <!-- ===================================================== -->
+  <div class="card shadow-sm border-0 mb-4 rounded-3">
     <div class="card-body text-center py-4">
+
       <h4 class="fw-bold text-primary mb-3">
         <i class="bi bi-clipboard-check"></i> Kết quả bài kiểm tra
       </h4>
 
       {% set score = result.attempt.score or 0 %}
+
       {% if score >= 80 %}
         <i class="bi bi-emoji-laughing text-success fs-1"></i>
-        <h2 class="fw-bold text-success mt-2">{{ score }}%</h2>
-        <p class="text-success fw-semibold">Xuất sắc! Bạn làm rất tốt 🎉</p>
+        <h1 class="fw-bold text-success mt-2">{{ score }}%</h1>
+        <p class="fw-semibold text-success">Xuất sắc! Bạn làm rất tốt 🎉</p>
+
       {% elif score >= 50 %}
         <i class="bi bi-emoji-neutral text-warning fs-1"></i>
-        <h2 class="fw-bold text-warning mt-2">{{ score }}%</h2>
-        <p class="text-warning fw-semibold">Tạm ổn! Hãy luyện thêm để đạt kết quả cao hơn 💪</p>
+        <h1 class="fw-bold text-warning mt-2">{{ score }}%</h1>
+        <p class="fw-semibold text-warning">Khá tốt! Hãy luyện thêm để tiến bộ 💪</p>
+
       {% else %}
         <i class="bi bi-emoji-frown text-danger fs-1"></i>
-        <h2 class="fw-bold text-danger mt-2">{{ score }}%</h2>
-        <p class="text-danger fw-semibold">Chưa đạt, bạn cần cố gắng hơn nhé 💡</p>
+        <h1 class="fw-bold text-danger mt-2">{{ score }}%</h1>
+        <p class="fw-semibold text-danger">Bạn cần cố gắng thêm nhé 💡</p>
       {% endif %}
 
-      <p class="text-muted mb-0">
-        Số câu đúng: <strong>{{ result.attempt.correct_answers or 0 }}/{{ result.attempt.total_questions or 0 }}</strong> |
-        Nộp lúc: <strong>{{ result.attempt.submitted_at.strftime('%H:%M %d/%m/%Y') if result.attempt.submitted_at else 'Không rõ' }}</strong>
+      <!-- Info -->
+      <p class="text-muted mt-3 mb-0">
+        <strong>{{ result.attempt.correct_answers or 0 }}/{{ result.attempt.total_questions or 0 }}</strong> câu đúng • 
+        Nộp lúc <strong>{{ result.attempt.submitted_at.strftime('%H:%M %d/%m/%Y') if result.attempt.submitted_at else 'Không rõ' }}</strong>
       </p>
+
     </div>
   </div>
 
-  <!-- 📋 Phần chi tiết câu hỏi -->
-  <div class="card shadow-sm border-0">
-    <div class="card-header bg-light fw-bold text-primary">
+
+  <!-- ===================================================== -->
+  <!-- 📋 CHI TIẾT TỪNG CÂU -->
+  <!-- ===================================================== -->
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-header bg-light text-primary fw-bold">
       <i class="bi bi-list-check"></i> Chi tiết bài làm
     </div>
+
     <div class="card-body">
+
       {% if result.answers %}
         {% for ans in result.answers %}
-          <div class="border-bottom py-2 d-flex justify-content-between align-items-center">
-            <div>
-              <span class="fw-semibold">Câu {{ loop.index }}</span>
-            </div>
-            <div>
-              {% if ans.is_correct %}
-                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Đúng</span>
-              {% else %}
-                <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Sai</span>
-              {% endif %}
-            </div>
+        <div class="py-3 border-bottom d-flex justify-content-between align-items-center">
+          <div class="fw-semibold">
+            Câu {{ loop.index }}
           </div>
+
+          {% if ans.is_correct %}
+            <span class="badge bg-success px-3 py-2">
+              <i class="bi bi-check-circle"></i> Đúng
+            </span>
+          {% else %}
+            <span class="badge bg-danger px-3 py-2">
+              <i class="bi bi-x-circle"></i> Sai
+            </span>
+          {% endif %}
+        </div>
         {% endfor %}
       {% else %}
         <div class="alert alert-info mb-0">
-          <i class="bi bi-info-circle"></i> Không có dữ liệu chi tiết cho bài này.
+          <i class="bi bi-info-circle"></i> Không có dữ liệu chi tiết cho bài làm này.
         </div>
       {% endif %}
+
     </div>
   </div>
 
-  <!-- 🔙 Nút điều hướng -->
+
+  <!-- ===================================================== -->
+  <!-- 🔙 NÚT QUAY LẠI -->
+  <!-- ===================================================== -->
   <div class="text-center mt-4">
-    <a href="/student/quiz/history" class="btn btn-outline-primary me-2">
+    <a href="/student/quiz/history" class="btn btn-outline-primary px-4 me-2 shadow-sm">
       <i class="bi bi-clock-history"></i> Lịch sử làm bài
     </a>
-    <a href="/student/quiz" class="btn btn-secondary">
+    <a href="/student/quiz" class="btn btn-secondary px-4 shadow-sm">
       <i class="bi bi-arrow-left"></i> Danh sách kiểm tra
     </a>
   </div>
+
 </div>
 {% endblock %}

@@ -1,16 +1,54 @@
 {% extends "layout_student.html" %}
 {% block title %}✅ Đã đọc tất cả{% endblock %}
+
 {% block content %}
+
+<style>
+  .done-card {
+    max-width: 480px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #f8fff9, #e9ffe9);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+  .done-icon {
+    font-size: 3rem;
+    color: #28a745;
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+</style>
+
 <div class="container py-5 text-center fade-in">
-  <div class="card shadow-sm border-0 mx-auto" style="max-width: 480px;">
+
+  <div class="card shadow-sm border-0 mx-auto done-card">
     <div class="card-body py-4">
-      <i class="bi bi-check-circle-fill text-success fs-1 mb-3"></i>
+
+      <i class="bi bi-check-circle-fill done-icon mb-3"></i>
+
       <h5 class="fw-bold text-success mb-2">Hoàn tất!</h5>
-      <p class="text-muted mb-4">{{ message }}</p>
-      <a href="/student/notifications" class="btn btn-primary">
-        <i class="bi bi-arrow-left"></i> Quay lại danh sách
-      </a>
+
+      <p class="text-muted mb-2">
+        {{ message if message else "Tất cả thông báo đã được đánh dấu là đã đọc." }}
+      </p>
+
+      {% if count is not none %}
+      <p class="fw-semibold text-dark small">
+        📬 Tổng số thông báo đã đọc: <span class="text-success">{{ count }}</span>
+      </p>
+      {% endif %}
+
+      <div class="mt-4">
+        <a href="/student/notifications" class="btn btn-primary px-4">
+          <i class="bi bi-arrow-left"></i> Quay lại danh sách
+        </a>
+      </div>
+
     </div>
   </div>
+
 </div>
+
 {% endblock %}

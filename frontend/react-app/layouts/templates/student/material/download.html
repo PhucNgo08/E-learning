@@ -4,8 +4,8 @@
 {% block head_extra %}
 <style>
   .download-card {
-    max-width: 500px;
-    animation: fadeIn 0.4s ease-in-out;
+    max-width: 520px;
+    animation: fadeIn 0.45s ease-in-out;
   }
 
   @keyframes fadeIn {
@@ -20,6 +20,8 @@
 
   <div class="card shadow-sm border-0 mx-auto download-card">
     <div class="card-body py-4">
+
+      <!-- Icon thành công -->
       <div class="mb-3">
         <i class="bi bi-check-circle-fill text-success fs-1"></i>
       </div>
@@ -27,24 +29,28 @@
       <h5 class="fw-bold mb-2 text-success">Tải xuống thành công</h5>
 
       <p class="text-muted mb-4">
-        Bạn đã tải: <strong>{{ material.title }}</strong><br>
-        Loại: {{ material.material_type|capitalize }} — 
-        Tổng lượt tải: {{ material.download_count or 1 }}
+        Bạn vừa tải: <strong>{{ material.title }}</strong><br>
+        Loại: {{ material.material_type|capitalize }}<br>
+        Tổng lượt tải: {{ material.download_count }}
       </p>
 
+      <!-- Mở tài liệu nếu có URL -->
       {% if material.file_url %}
-        <a href="{{ material.file_url }}" target="_blank" class="btn btn-primary mb-2">
-          <i class="bi bi-box-arrow-up-right"></i> Mở tài liệu
-        </a><br>
+        <a href="{{ material.file_url }}" target="_blank" class="btn btn-primary mb-3">
+          <i class="bi bi-box-arrow-up-right"></i> Mở tài liệu trực tuyến
+        </a>
       {% else %}
         <p class="text-danger small mb-3">
           <i class="bi bi-exclamation-triangle me-1"></i> Không tìm thấy đường dẫn tệp.
         </p>
       {% endif %}
 
-      <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+      <!-- Quay lại -->
+      <a href="/student/material/course/{{ material.course_id }}" 
+         class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
       </a>
+
     </div>
   </div>
 

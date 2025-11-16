@@ -1,18 +1,50 @@
 {% extends "layout_student.html" %}
 {% block title %}🎉 Hoàn thành bài học{% endblock %}
+
 {% block content %}
-<div class="container py-4 text-center fade-in">
-  <div class="card shadow-sm border-0 p-5">
+<div class="container py-4 fade-in">
+
+  <div class="card shadow-sm border-0 glass-card p-4 text-center">
+
     <h2 class="fw-bold text-success mb-3">
-      <i class="bi bi-check-circle-fill"></i> Chúc mừng!
+      <i class="bi bi-check-circle-fill fs-1"></i><br>
+      Chúc mừng!
     </h2>
-    <p class="text-muted mb-4">
-      Bạn đã hoàn thành bài học <strong>{{ lesson.title }}</strong> trong khóa học
-      <strong>{{ course.course_name if course else 'Không xác định' }}</strong>.
+
+    <p class="text-muted fs-5">
+      Bạn đã hoàn thành bài học:<br>
+      <strong class="text-primary">{{ lesson.title }}</strong><br><br>
+      Trong khóa học:<br>
+      <strong class="text-secondary">{{ course.course_name if course else "Không xác định" }}</strong>
     </p>
-    <a href="/student/lesson/module/{{ lesson.module_id }}" class="btn btn-outline-primary">
-      <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách bài học
-    </a>
+
+    <!-- Next actions -->
+    <div class="d-flex flex-wrap justify-content-center gap-3 mt-4">
+      <a href="/student/lesson/module/{{ lesson.module_id }}" class="btn btn-outline-primary btn-lg">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+      </a>
+
+      <a href="/student/lesson/view/{{ lesson.id }}" class="btn btn-outline-secondary btn-lg">
+        <i class="bi bi-eye"></i> Xem lại
+      </a>
+
+      {% if next_lesson %}
+      <a href="/student/lesson/view/{{ next_lesson.id }}" class="btn btn-success btn-lg">
+        <i class="bi bi-arrow-right-circle"></i> Bài tiếp theo
+      </a>
+      {% endif %}
+    </div>
+
   </div>
+
 </div>
+
+<style>
+.glass-card {
+  background: rgba(255,255,255,.1);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+}
+.fade-in { animation: fadeIn .5s ease; }
+</style>
 {% endblock %}

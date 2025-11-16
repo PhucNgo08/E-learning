@@ -4,51 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>📋 Danh sách ghi danh học viên</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
     body {
-      background: linear-gradient(135deg, #f3f8ff, #eaf0fb);
+      background: linear-gradient(135deg, #eef4ff, #e3ecff);
       font-family: "Inter", "Segoe UI", sans-serif;
-      color: #333;
     }
     .container {
-      margin-top: 60px;
-    }
-    h3 {
-      font-weight: 600;
-    }
-    .btn {
-      border-radius: 8px;
+      margin-top: 50px;
     }
     .card {
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      border: none;
     }
-    .badge {
+    .page-title {
+      font-weight: 700;
+      color: #2b4eff;
+    }
+    .badge-status {
+      padding: 6px 10px;
       font-size: 0.85rem;
-      padding: 0.4em 0.6em;
-      border-radius: 8px;
+      border-radius: 10px;
+    }
+    .table th {
+      background: #e6eeff !important;
+      color: #003399;
+      font-weight: 600;
+    }
+    .btn-action {
+      padding: 5px 10px;
+    }
+    .num {
+      font-weight: 700;
+      color: #325dff;
     }
   </style>
 </head>
+
 <body>
 
-  <div class="container py-4">
-    <!-- 🔹 Header -->
+  <div class="container">
+
+    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="text-primary mb-0"><i class="bi bi-person-lines-fill"></i> Danh sách ghi danh</h3>
+      <h3 class="page-title">
+        <i class="bi bi-person-lines-fill me-2"></i>
+        Danh sách ghi danh học viên
+      </h3>
+
       <a href="/admin/enrollments/create" class="btn btn-success shadow-sm">
         <i class="bi bi-plus-circle"></i> Thêm ghi danh mới
       </a>
-      
     </div>
 
-    <!-- 🔹 Table -->
     <div class="card">
       <div class="card-body p-4">
+
         <table class="table table-bordered table-hover align-middle">
-          <thead class="table-primary text-center">
+          <thead class="text-center">
             <tr>
               <th>#</th>
               <th>👤 Học viên</th>
@@ -56,79 +73,137 @@
               <th>📄 Loại</th>
               <th>⚙️ Trạng thái</th>
               <th>⏰ Ngày đăng ký</th>
-              <th>🛠️ Thao tác</th>
+              <th width="260">🛠️ Thao tác</th>
             </tr>
           </thead>
-        <tbody>
-  {% for e in enrollments %}
-  <tr>
-    <td class="text-center">{{ loop.index }}</td>
-    <td>{{ e.user.full_name if e.user else 'Không rõ' }}</td>
-    <td>{{ e.class_.class_name if e.class_ else 'N/A' }}</td>
 
-    <!-- 📄 Cột loại ghi danh -->
-    <td class="text-center">
-      {% if e.enrollment_type == "official" %}
-        <span class="badge bg-primary">Chính thức</span>
-      {% elif e.enrollment_type == "elective" %}
-        <span class="badge bg-success">Tự chọn</span>
-      {% elif e.enrollment_type == "audit" %}
-        <span class="badge bg-warning text-dark">Thính giảng</span>
-      {% elif e.enrollment_type == "temporary" %}
-        <span class="badge bg-info text-dark">Tạm thời</span>
-      {% else %}
-        <span class="badge bg-secondary">Khác</span>
-      {% endif %}
-    </td>
+          <tbody>
 
-    <!-- ⚙️ Trạng thái -->
-    <td class="text-center">
-      {% if e.enrollment_status == "approved" %}
-        <span class="badge bg-success">Đã duyệt</span>
-      {% elif e.enrollment_status == "dropped" %}
-        <span class="badge bg-danger">Đã hủy</span>
-      {% elif e.enrollment_status == "completed" %}
-        <span class="badge bg-info text-dark">Hoàn thành</span>
-      {% else %}
-        <span class="badge bg-secondary">Chờ duyệt</span>
-      {% endif %}
-    </td>
+            {% for e in enrollments %}
+            <tr>
 
-    <td class="text-center">{{ e.applied_at.strftime('%Y-%m-%d') if e.applied_at else '-' }}</td>
+              <td class="text-center num">{{ loop.index }}</td>
 
-    <!-- 🛠️ Thao tác -->
-    <td class="text-center">
-      <form method="post" action="/admin/enrollments/update/{{ e.id }}" class="d-inline">
-        <select name="new_status" class="form-select form-select-sm d-inline w-auto">
-          <option value="approved">✔️ Duyệt</option>
-          <option value="dropped">❌ Hủy</option>
-          <option value="completed">🏁 Hoàn thành</option>
-        </select>
-        <button type="submit" class="btn btn-sm btn-outline-primary ms-1">Cập nhật</button>
-      </form>
-      <a href="/admin/enrollments/delete/{{ e.id }}"
-         class="btn btn-sm btn-outline-danger ms-1"
-         onclick="return confirm('Bạn có chắc muốn xóa ghi danh này không?')">🗑️</a>
-    </td>
-  </tr>
-  {% else %}
-  <tr>
-    <td colspan="7" class="text-center text-muted py-4">
-      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-      <p class="mb-0">Chưa có dữ liệu ghi danh.</p>
-    </td>
-  </tr>
-  {% endfor %}
-</tbody>
+              <!-- Student -->
+              <td>{{ e.user.full_name if e.user else "Không rõ" }}</td>
 
+              <!-- Class -->
+              <td>{{ e.clazz.class_name if e.clazz else "N/A" }}</td>
 
-    <!-- 🔹 Back button -->
-    <div class="text-end mt-4">
-      <a href="/admin/dashboard" class="btn btn-secondary shadow-sm">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại bảng điều khiển
-      </a>
+              <!-- Type Badge -->
+              <td class="text-center">
+                {% if e.enrollment_type == "official" %}
+                  <span class="badge bg-primary badge-status">Chính thức</span>
+                {% elif e.enrollment_type == "elective" %}
+                  <span class="badge bg-success badge-status">Tự chọn</span>
+                {% elif e.enrollment_type == "audit" %}
+                  <span class="badge bg-warning text-dark badge-status">Thính giảng</span>
+                {% else %}
+                  <span class="badge bg-secondary badge-status">Khác</span>
+                {% endif %}
+              </td>
+
+              <!-- Status -->
+              <td class="text-center">
+                {% if e.enrollment_status == "approved" %}
+                  <span class="badge bg-success badge-status"><i class="bi bi-check-circle-fill"></i> Đã duyệt</span>
+
+                {% elif e.enrollment_status == "active" %}
+                  <span class="badge bg-info text-dark badge-status"><i class="bi bi-lightning-charge"></i> Đang học</span>
+
+                {% elif e.enrollment_status == "completed" %}
+                  <span class="badge bg-primary badge-status"><i class="bi bi-flag-fill"></i> Hoàn thành</span>
+
+                {% elif e.enrollment_status == "dropped" %}
+                  <span class="badge bg-danger badge-status"><i class="bi bi-x-circle-fill"></i> Đã hủy</span>
+
+                {% elif e.enrollment_status == "rejected" %}
+                  <span class="badge bg-dark badge-status"><i class="bi bi-slash-circle"></i> Từ chối</span>
+
+                {% else %}
+                  <span class="badge bg-secondary badge-status"><i class="bi bi-hourglass-split"></i> Chờ duyệt</span>
+                {% endif %}
+              </td>
+
+              <!-- Date -->
+              <td class="text-center">
+                {{ e.applied_at.strftime('%d/%m/%Y') if e.applied_at else "-" }}
+              </td>
+
+              <!-- ACTIONS -->
+              <td class="text-center">
+
+                {% if e.enrollment_status == "applied" %}
+                <div class="btn-group">
+
+                  <!-- APPROVE -->
+                  <form method="post" action="/admin/enrollments/approve/{{ e.id }}">
+                    <button class="btn btn-success btn-sm btn-action" data-bs-toggle="tooltip" title="Phê duyệt">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </form>
+
+                  <!-- REJECT -->
+                  <form method="post" action="/admin/enrollments/reject/{{ e.id }}">
+                    <button class="btn btn-dark btn-sm btn-action" data-bs-toggle="tooltip" title="Từ chối">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </form>
+
+                </div>
+                {% endif %}
+
+                {% if e.enrollment_status in ["approved", "active"] %}
+                <!-- QUICK STATUS -->
+                <form method="post" action="/admin/enrollments/update/{{ e.id }}" class="d-inline-block ms-2">
+                  <div class="input-group input-group-sm">
+                    <select name="new_status" class="form-select">
+                      <option value="active">🚀 Kích hoạt</option>
+                      <option value="completed">🏁 Hoàn thành</option>
+                      <option value="dropped">❌ Hủy</option>
+                    </select>
+                    <button class="btn btn-outline-primary">OK</button>
+                  </div>
+                </form>
+                {% endif %}
+
+                <!-- DELETE -->
+                <button class="btn btn-outline-danger btn-sm ms-2"
+                        onclick="confirmDelete('{{ e.id }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+
+              </td>
+
+            </tr>
+
+            {% endfor %}
+          </tbody>
+
+        </table>
+
+        <div class="text-end mt-4">
+          <a href="/admin/dashboard" class="btn btn-secondary shadow-sm">
+            <i class="bi bi-arrow-left-circle"></i> Quay lại bảng điều khiển
+          </a>
+        </div>
+
+      </div>
     </div>
+
   </div>
+
+
+  <!-- Delete Confirmation -->
+  <script>
+    function confirmDelete(id) {
+      if (confirm("Bạn có chắc muốn xóa ghi danh này?")) {
+        window.location.href = "/admin/enrollments/delete/" + id;
+      }
+    }
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

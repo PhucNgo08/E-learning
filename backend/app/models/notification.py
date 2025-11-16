@@ -1,6 +1,6 @@
 """
 ==========================================================
-📦 MODEL: Notification (bản tương thích với DB hiện tại)
+📦 MODEL: Notification (Chuẩn ORM - Không conflict backref)
 ==========================================================
 """
 
@@ -19,20 +19,32 @@ class Notification(Base):
     __tablename__ = "notifications"
 
     id = Column(String(36), primary_key=True, default=uuid_str)
-    user_id = Column(String(36), ForeignKey("users.id"), nullable=False)  # 🟢 đổi từ receiver_id → user_id
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
     title = Column(String(255), nullable=False)
     message = Column(Text, nullable=False)
+
     notification_type = Column(
-        Enum("system", "course", "assignment", "quiz", "message", "other", name="notification_type_enum"),
+        Enum(
+            "system", "course", "assignment", "quiz", "message", "other",
+            name="notification_type_enum"
+        ),
         default="system"
     )
+
     link_url = Column(String(500), nullable=True)
     is_read = Column(Boolean, default=False)
     read_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Quan hệ ORM (liên kết tới user)
-    user = relationship("User", backref="notifications")
+    # ---------------------------------------------------
+    # 🔥 FIX QUAN TRỌNG: KHÔNG DÙNG backref !!!
+    # ---------------------------------------------------
+    user = relationship(
+        "User",
+        back_populates="notifications",
+        foreign_keys=[user_id]
+    )
 
     def __repr__(self):
         return f"<Notification(title={self.title}, user_id={self.user_id}, is_read={self.is_read})>"

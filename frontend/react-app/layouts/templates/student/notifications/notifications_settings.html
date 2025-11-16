@@ -1,44 +1,123 @@
 {% extends "layout_student.html" %}
 {% block title %}⚙️ Cài đặt thông báo{% endblock %}
+
 {% block content %}
+
 <style>
   .settings-container {
     max-width: 650px;
     margin: 0 auto;
-    background: #fff;
+    background: var(--card-bg, #fff);
     border-radius: 14px;
+    padding: 2rem 2.2rem;
     box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-    padding: 2rem;
+  }
+  .setting-group-title {
+    font-weight: 600;
+    color: #0d6efd;
+    margin-bottom: 10px;
+  }
+  .form-check-label i {
+    margin-right: 6px;
   }
 </style>
 
 <div class="container py-4 fade-in">
+
   <div class="settings-container">
-    <h4 class="fw-bold text-primary mb-3"><i class="bi bi-gear-fill"></i> Cài đặt thông báo</h4>
-    <p class="text-muted small mb-4">Tùy chỉnh cách bạn nhận thông báo từ hệ thống.</p>
 
-    <form method="post" action="#">
-      <div class="form-check form-switch mb-3">
-        <input class="form-check-input" type="checkbox" id="emailNotif" {% if settings.email_enabled %}checked{% endif %}>
-        <label class="form-check-label" for="emailNotif">Nhận thông báo qua email</label>
+    <h4 class="fw-bold text-primary mb-3">
+      <i class="bi bi-gear-fill"></i> Cài đặt thông báo
+    </h4>
+
+    <p class="text-muted small mb-4">
+      Chọn loại thông báo mà bạn muốn nhận trong hệ thống.
+    </p>
+
+    {% if message %}
+    <div class="alert alert-success py-2 mb-3">
+      <i class="bi bi-check-circle"></i> {{ message }}
+    </div>
+    {% endif %}
+
+    <!-- =============================
+         FORM CÀI ĐẶT THÔNG BÁO
+    ============================== -->
+    <form method="post" action="/student/notifications/settings">
+
+      <div class="mb-3">
+        <div class="setting-group-title">📌 Thông báo hệ thống</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="system"
+                 id="systemNotif" {% if settings.system %}checked{% endif %}>
+          <label class="form-check-label" for="systemNotif">
+            <i class="bi bi-gear"></i> Thông báo hệ thống
+          </label>
+        </div>
       </div>
 
-      <div class="form-check form-switch mb-3">
-        <input class="form-check-input" type="checkbox" id="appNotif" {% if settings.app_enabled %}checked{% endif %}>
-        <label class="form-check-label" for="appNotif">Hiển thị thông báo trong ứng dụng</label>
+      <hr>
+
+      <div class="mb-3">
+        <div class="setting-group-title">📚 Khóa học</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="course"
+                 id="courseNotif" {% if settings.course %}checked{% endif %}>
+          <label class="form-check-label" for="courseNotif">
+            <i class="bi bi-book"></i> Thông báo về khóa học
+          </label>
+        </div>
       </div>
 
-      <div class="form-check form-switch mb-3">
-        <input class="form-check-input" type="checkbox" id="soundNotif" {% if settings.sound_enabled %}checked{% endif %}>
-        <label class="form-check-label" for="soundNotif">Âm thanh khi có thông báo mới</label>
+      <hr>
+
+      <div class="mb-3">
+        <div class="setting-group-title">📝 Bài tập & Đánh giá</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="assignment"
+                 id="assignmentNotif" {% if settings.assignment %}checked{% endif %}>
+          <label class="form-check-label" for="assignmentNotif">
+            <i class="bi bi-journal-check"></i> Bài tập được giao / hạn nộp
+          </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="quiz"
+                 id="quizNotif" {% if settings.quiz %}checked{% endif %}>
+          <label class="form-check-label" for="quizNotif">
+            <i class="bi bi-ui-checks"></i> Quiz / kiểm tra
+          </label>
+        </div>
       </div>
 
+      <hr>
+
+      <div class="mb-3">
+        <div class="setting-group-title">💬 Tin nhắn</div>
+
+        <div class="form-check form-switch mb-2">
+          <input class="form-check-input" type="checkbox" name="message"
+                 id="msgNotif" {% if settings.message %}checked{% endif %}>
+          <label class="form-check-label" for="msgNotif">
+            <i class="bi bi-chat-dots"></i> Tin nhắn & phản hồi
+          </label>
+        </div>
+      </div>
+
+      <!-- BUTTON -->
       <div class="text-end mt-4">
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-save"></i> Lưu thay đổi
         </button>
       </div>
+
     </form>
+
   </div>
+
 </div>
+
 {% endblock %}

@@ -1,37 +1,12 @@
 {% extends "layout_student.html" %}
-{% block title %}🎓 {{ lesson.title }}{% endblock %}
+{% block title %}📘 Chi tiết bài học{% endblock %}
+
 {% block content %}
 <div class="container py-4 fade-in">
-  <a href="/student/course" class="btn btn-outline-secondary mb-3">
-    <i class="bi bi-arrow-left"></i> Quay lại khóa học
-  </a>
 
-  <h3 class="fw-bold mb-3 text-primary"><i class="bi bi-book me-2"></i>{{ lesson.title }}</h3>
+  <h3 class="fw-bold text-primary mb-3">{{ lesson.title }}</h3>
 
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-body">
-      {% if lesson.content_type == "video" and lesson.video_url %}
-        <div class="ratio ratio-16x9 mb-3">
-          <iframe src="{{ lesson.video_url }}" frameborder="0" allowfullscreen></iframe>
-        </div>
-      {% elif lesson.document_url %}
-        <p><a href="{{ lesson.document_url }}" target="_blank" class="btn btn-outline-primary">
-          <i class="bi bi-file-earmark-text"></i> Xem tài liệu
-        </a></p>
-      {% else %}
-        <p class="text-muted">Không có nội dung hiển thị.</p>
-      {% endif %}
-      <p>{{ lesson.description or "" }}</p>
-    </div>
-  </div>
+  <p class="text-muted">{{ lesson.description }}</p>
 
-  <div class="d-flex justify-content-between">
-    <a href="/student/lesson/notes/{{ lesson.id }}" class="btn btn-outline-secondary">
-      <i class="bi bi-journal-plus"></i> Ghi chú
-    </a>
-    <a href="/student/lesson/complete/{{ lesson.id }}" class="btn btn-success">
-      <i class="bi bi-check-circle"></i> Đánh dấu hoàn thành
-    </a>
-  </div>
 </div>
 {% endblock %}

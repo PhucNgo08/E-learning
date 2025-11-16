@@ -1,26 +1,91 @@
 {% extends "layout_student.html" %}
 {% block title %}📄 {{ page_title }}{% endblock %}
 {% block content %}
-<div class="container py-4 fade-in">
-  <h3 class="fw-bold mb-3 text-primary"><i class="bi bi-file-earmark-text me-2"></i>{{ assignment.title }}</h3>
 
+<div class="container py-4 fade-in">
+
+  <!-- ============================== -->
+  <!-- 🔹 TIÊU ĐỀ BÀI TẬP -->
+  <!-- ============================== -->
+  <h3 class="fw-bold mb-3 text-primary">
+    <i class="bi bi-file-earmark-text me-2"></i>{{ assignment.title }}
+  </h3>
+
+  <!-- ============================== -->
+  <!-- 🔹 THÔNG TIN CHUNG -->
+  <!-- ============================== -->
   <div class="card shadow-sm border-0 mb-3">
     <div class="card-body">
-      <p><strong>Mô tả:</strong> {{ assignment.description or "Không có mô tả" }}</p>
-      <p><strong>Thời gian:</strong> {{ assignment.start_date.strftime("%d/%m/%Y") if assignment.start_date else "—" }} → 
-         {{ assignment.due_date.strftime("%d/%m/%Y %H:%M") if assignment.due_date else "—" }}</p>
+
+      <p>
+        <strong>Mô tả:</strong><br>
+        {{ assignment.description or "Không có mô tả" }}
+      </p>
+
+      <!-- Thời gian -->
+      <p>
+        <strong>Thời gian:</strong><br>
+        📌 Mở: 
+        {{ assignment.start_date.strftime("%d/%m/%Y %H:%M") if assignment.start_date else "—" }}<br>
+        ⏳ Hạn nộp: 
+        <span class="{% if assignment.due_date and assignment.due_date < now %}text-danger fw-bold{% endif %}">
+          {{ assignment.due_date.strftime("%d/%m/%Y %H:%M") if assignment.due_date else "—" }}
+        </span>
+
+        {% if assignment.due_date %}
+          {% if assignment.due_date < now %}
+            <br><span class="badge bg-danger mt-1"><i class="bi bi-clock-history"></i> Đã quá hạn</span>
+          {% else %}
+            <br><span class="badge bg-success mt-1"><i class="bi bi-clock"></i> Còn hạn nộp</span>
+          {% endif %}
+        {% endif %}
+      </p>
+
+      <!-- Điểm & hình thức -->
       <p><strong>Tổng điểm:</strong> {{ assignment.total_points or 10 }}</p>
       <p><strong>Hình thức nộp:</strong> {{ assignment.submission_type | title }}</p>
+
+      <!-- Cho phép nộp muộn -->
+      <p>
+        <strong>Nộp muộn:</strong>
+        {% if assignment.allow_late_submission %}
+          <span class="text-success fw-bold">Cho phép</span> 
+          (Phạt: {{ assignment.late_penalty_percent or 0 }}%)
+        {% else %}
+          <span class="text-danger fw-bold">Không cho phép</span>
+        {% endif %}
+      </p>
+
+      <!-- ============================== -->
+      <!-- 🔹 THÔNG TIN FILE UPLOAD -->
+      <!-- ============================== -->
+      <p><strong>Loại file cho phép:</strong> 
+        {{ assignment.allowed_file_types or "Không giới hạn" }}
+      </p>
+
+      <p><strong>Số file tối đa:</strong> 
+        {{ assignment.max_files or "Không giới hạn" }}
+      </p>
+
+      <p><strong>Dung lượng tối đa:</strong> 
+        {{ assignment.max_file_size_mb }} MB
+      </p>
+
     </div>
   </div>
 
-  <div class="text-end">
+  <!-- ============================== -->
+  <!-- 🔹 NÚT HÀNH ĐỘNG -->
+  <!-- ============================== -->
+  <div class="d-flex justify-content-end gap-2">
     <a href="/student/assignment/submit/{{ assignment.id }}" class="btn btn-success">
       <i class="bi bi-upload"></i> Nộp bài
     </a>
+
     <a href="/student/assignment/" class="btn btn-secondary">
       <i class="bi bi-arrow-left"></i> Quay lại
     </a>
   </div>
 </div>
+
 {% endblock %}

@@ -1,40 +1,97 @@
 {% extends "layout_student.html" %}
 {% block title %}📘 Tài liệu khóa học{% endblock %}
+
 {% block content %}
 <div class="container py-4 fade-in">
+
   <h3 class="fw-bold mb-3 text-primary">
     <i class="bi bi-folder2-open me-2"></i>Tài liệu khóa học
   </h3>
 
   {% if materials %}
     <div class="list-group shadow-sm">
+
       {% for m in materials %}
-      <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap py-3">
-        <div class="me-3">
-          <h6 class="fw-semibold mb-1">
-            <i class="bi bi-file-earmark-text text-primary me-1"></i>{{ m.title }}
+
+      <!-- 🔧 Tự động chọn icon theo định dạng -->
+      {% set ext = (m.file_format or '').lower() %}
+      {% if ext == "pdf" %}
+        {% set icon = "bi-filetype-pdf text-danger" %}
+      {% elif ext in ["doc", "docx"] %}
+        {% set icon = "bi-filetype-doc text-primary" %}
+      {% elif ext in ["ppt", "pptx"] %}
+        {% set icon = "bi-filetype-ppt text-warning" %}
+      {% elif ext in ["xls", "xlsx"] %}
+        {% set icon = "bi-filetype-xlsx text-success" %}
+      {% elif ext in ["zip", "rar"] %}
+        {% set icon = "bi-file-earmark-zip text-dark" %}
+      {% else %}
+        {% set icon = "bi-file-earmark-text text-secondary" %}
+      {% endif %}
+
+      <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center flex-wrap py-3">
+
+        <!-- LEFT CONTENT -->
+        <div class="me-3" style="max-width: 70%;">
+          <h6 class="fw-semibold mb-1 text-truncate">
+            <i class="bi {{ icon }} me-1"></i>
+            {{ m.title }}
           </h6>
-          <p class="text-muted small mb-1">{{ m.description or "Không có mô tả" }}</p>
+
+          <p class="text-muted small mb-1 text-truncate">
+            {{ m.description or "Không có mô tả" }}
+          </p>
+
+          <!-- Metadata -->
           <small class="text-secondary">
-            <i class="bi bi-clock me-1"></i>{{ m.created_at.strftime("%d/%m/%Y %H:%M") }}
-            &nbsp;•&nbsp; <i class="bi bi-download me-1"></i>{{ m.download_count or 0 }} lượt tải
+            <i class="bi bi-clock me-1"></i>
+            {{ m.created_at.strftime("%d/%m/%Y %H:%M") }}
+
+            {% if m.available_from or m.available_to %}
+              &nbsp;•&nbsp;
+              <i class="bi bi-calendar-range me-1"></i>
+              {% if m.available_from %}
+                từ {{ m.available_from.strftime("%d/%m/%Y") }}
+              {% endif %}
+              {% if m.available_to %}
+                đến {{ m.available_to.strftime("%d/%m/%Y") }}
+              {% endif %}
+            {% endif %}
+
+            &nbsp;•&nbsp;
+            <i class="bi bi-download me-1"></i>{{ m.download_count or 0 }}
+            lượt tải
           </small>
+
+          <!-- Hiển thị loại tài liệu -->
+          <div class="text-muted small mt-1">
+            <i class="bi bi-tag me-1"></i>{{ m.material_type|capitalize }}
+          </div>
+
         </div>
+
+        <!-- ACTION BUTTONS -->
         <div class="text-end">
-          <a href="/student/material/{{ m.id }}" class="btn btn-outline-primary btn-sm me-1">
-            <i class="bi bi-eye"></i> Xem chi tiết
+          <a href="/student/material/detail/{{ m.id }}" class="btn btn-outline-primary btn-sm me-1">
+            <i class="bi bi-eye"></i> Xem
           </a>
+
           <a href="/student/material/download/{{ m.id }}" class="btn btn-success btn-sm">
             <i class="bi bi-download"></i> Tải xuống
           </a>
         </div>
+
       </div>
       {% endfor %}
+
     </div>
+
   {% else %}
     <div class="alert alert-info text-center">
-      <i class="bi bi-info-circle me-2"></i>Chưa có tài liệu nào trong khóa học này.
+      <i class="bi bi-info-circle me-2"></i>
+      Chưa có tài liệu nào trong khóa học này.
     </div>
   {% endif %}
+
 </div>
 {% endblock %}

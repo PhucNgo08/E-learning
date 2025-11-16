@@ -17,15 +17,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
 
     .confirm-card {
       background: #fff;
       border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      padding: 2rem 2.5rem;
-      max-width: 600px;
-      text-align: center;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+      padding: 2.5rem;
+      max-width: 650px;
+      width: 100%;
       animation: fadeIn 0.5s ease;
     }
 
@@ -36,20 +37,23 @@
 
     h2 {
       color: #dc3545;
-      font-weight: 700;
+      font-weight: 800;
+      letter-spacing: -0.5px;
     }
 
-    p {
-      color: #444;
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
+    .info-box {
+      background: #f8f9ff;
+      border-left: 5px solid #0d6efd;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .btn-danger {
       background: linear-gradient(45deg, #dc3545, #c82333);
       border: none;
       color: white;
-      transition: all 0.3s ease;
+      transition: 0.25s;
     }
 
     .btn-danger:hover {
@@ -59,23 +63,44 @@
 
     .btn-secondary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(108, 117, 125, 0.3);
+      box-shadow: 0 4px 10px rgba(108,117,125,0.3);
     }
   </style>
 </head>
 
 <body>
-  <div class="confirm-card">
-    <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-3"></i>
-    <h2>Xác nhận xóa khóa học</h2>
-    <p>Bạn có chắc chắn muốn xóa khóa học <strong>{{ course.course_name }}</strong> không?</p>
 
-    <form action="/admin/Course/delete/{{ course.id }}" method="get" class="d-flex justify-content-center gap-3">
+  <div class="confirm-card">
+    <div class="text-center">
+      <i class="bi bi-exclamation-octagon-fill text-danger fs-1 mb-3"></i>
+      <h2>Xác nhận xóa khóa học</h2>
+      <p class="text-muted">Bạn sắp thực hiện thao tác <strong>xóa vĩnh viễn</strong>. Hãy kiểm tra kỹ thông tin.</p>
+    </div>
+
+    <!-- 🔹 Thông tin khóa học -->
+    <div class="info-box">
+      <p><strong>Tên khóa học:</strong> {{ course.course_name }}</p>
+      <p><strong>Mã khóa học:</strong> {{ course.course_code }}</p>
+      <p><strong>Giảng viên:</strong> {{ teacher.full_name if teacher else 'Chưa phân công' }}</p>
+      <p><strong>Trạng thái:</strong> 
+        {% if course.status == 'published' %}
+          <span class="badge bg-success">Công khai</span>
+        {% elif course.status == 'draft' %}
+          <span class="badge bg-secondary">Nháp</span>
+        {% else %}
+          <span class="badge bg-dark">Lưu trữ</span>
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- 🔹 Form xác nhận DELETE -->
+    <form action="/admin/Course/delete/{{ course.id }}" method="post" class="d-flex justify-content-center gap-3 mt-4">
       <a href="/admin/Course/manage" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
+        <i class="bi bi-arrow-left-circle me-1"></i> Hủy
       </a>
+
       <button type="submit" class="btn btn-danger px-4">
-        <i class="bi bi-trash3-fill me-1"></i> Xóa
+        <i class="bi bi-trash3-fill me-1"></i> Xóa khóa học
       </button>
     </form>
   </div>

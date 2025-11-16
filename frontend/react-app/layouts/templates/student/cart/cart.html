@@ -1,0 +1,75 @@
+{% extends "layout_student.html" %}
+{% block title %}🛒 Giỏ hàng{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h3 class="fw-bold mb-4 text-primary">
+    <i class="bi bi-cart3"></i> Giỏ hàng khóa học
+  </h3>
+
+  {% if not items or items|length == 0 %}
+      {% include "cart/cart_empty.html" %}
+  {% else %}
+
+  <!-- 🧾 DANH SÁCH KHÓA HỌC -->
+  <div class="row g-4">
+    {% for item in items %}
+    <div class="col-12 col-md-6 col-lg-4">
+      {% include "cart/cart_item.html" %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ========================================= -->
+  <!-- 🧮 TỔNG TIỀN -->
+  <!-- ========================================= -->
+  <div class="card shadow-sm border-0 mt-4">
+    <div class="card-body">
+
+      <h5 class="fw-bold mb-3">
+        <i class="bi bi-receipt"></i> Tạm tính
+      </h5>
+
+      <!-- Tổng -->
+      <div class="d-flex justify-content-between mb-2">
+        <span>Tổng cộng:</span>
+        <span class="fw-bold text-dark">
+          {{ "{:,.0f}".format(subtotal or 0) }}₫
+        </span>
+      </div>
+
+      <hr>
+
+      <!-- FORM CHECKOUT -->
+      <form method="post" action="/student/cart/checkout">
+
+        <!-- PHƯƠNG THỨC THANH TOÁN -->
+        <div class="mb-3">
+          <label class="fw-semibold mb-1">Phương thức thanh toán:</label>
+          <select name="pay_method" class="form-select">
+              <option value="momo">Momo (0%)</option>
+              <option value="vnpay">VNPAY (2%)</option>
+              <option value="card">Thẻ quốc tế (3%)</option>
+          </select>
+        </div>
+
+        <!-- MÃ GIẢM GIÁ -->
+        <div class="mb-3">
+          <label class="fw-semibold mb-1">Mã giảm giá:</label>
+          <input type="text" name="coupon_code" class="form-control" placeholder="Nhập mã GIAM10, GIAM20, GIAM50...">
+        </div>
+
+        <!-- SUBMIT -->
+        <button class="btn btn-success px-4 py-2 mt-2 w-100 fw-semibold">
+          <i class="bi bi-wallet2"></i> Tiến hành thanh toán
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+{% endblock %}

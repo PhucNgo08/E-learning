@@ -1,8 +1,9 @@
-from sqlalchemy import Column, String, Integer, DateTime, Text, ForeignKey, Enum, BigInteger
+from sqlalchemy import Column, String, Integer, BigInteger, DateTime, Text, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from app.database.connection import Base
 from datetime import datetime
 import uuid
+from app.database.connection import Base
+
 
 def uuid_str():
     return str(uuid.uuid4())
@@ -11,42 +12,53 @@ def uuid_str():
 class CourseMaterial(Base):
     __tablename__ = "course_materials"
 
-    # 🧩 Khóa chính
     id = Column(String(36), primary_key=True, default=uuid_str)
 
-    # 🔗 Liên kết khóa học
+    # Liên kết khóa học
     course_id = Column(String(36), ForeignKey("courses.id"), nullable=False)
 
-    # 📘 Thông tin file
+    # Metadata chung
     title = Column(String(200), nullable=False)
     description = Column(Text)
+
+    # File mới nhất
     file_name = Column(String(255))
-    file_url = Column(String(500), nullable=False)
-    file_size = Column(BigInteger, default=0)  # ⚡ dùng BigInteger thay Integer cho file lớn
+    file_url = Column(String(500), nullable=True)
+    file_size = Column(BigInteger, default=0)
     file_format = Column(String(20))
-    material_type = Column(  # ✅ thêm loại tài liệu (slide, syllabus, assignment, ...)
+    mime_type = Column(String(100))
+
+    material_type = Column(
         Enum("syllabus", "textbook", "slide", "assignment", "reference", "code", name="material_type_enum"),
         default="slide"
     )
 
-    # 📊 Thống kê và trạng thái
     download_count = Column(Integer, default=0)
+
+    # ⭐ Bổ sung cho service increment_download_count
+    last_download_at = Column(DateTime, nullable=True)
+
     version = Column(String(20), default="1.0")
     is_public = Column(Integer, default=0)
 
-    # ⏰ Thời gian khả dụng
     available_from = Column(DateTime)
     available_to = Column(DateTime)
 
-    # 👤 Người tạo
     created_by = Column(String(36), ForeignKey("users.id"), nullable=False)
 
-    # 🕒 Thời gian hệ thống
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 🧭 Quan hệ ORM
+    # Quan hệ đến Course
     course = relationship("Course", back_populates="materials", lazy="joined")
 
+    # Danh sách phiên bản
+    versions = relationship(
+        "CourseMaterialVersion",
+        back_populates="material",
+        cascade="all, delete-orphan",
+        order_by="desc(CourseMaterialVersion.created_at)"
+    )
+
     def __repr__(self):
-        return f"<CourseMaterial(title='{self.title}', course_id='{self.course_id}', file='{self.file_name}')>"
+        return f"<CourseMaterial(title='{self.title}', version='{self.version}')>"

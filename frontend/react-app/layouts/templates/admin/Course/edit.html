@@ -2,105 +2,119 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>✏️ Chỉnh sửa Khóa Học</title>
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
     body {
-      background: linear-gradient(135deg, #f3f8ff, #e9f2ff);
-      font-family: "Inter", "Segoe UI", sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: #eef3ff;
+      font-family: "Inter", sans-serif;
     }
-
-    .form-wrapper {
-      width: 100%;
-      max-width: 700px;
+    .page-wrapper {
+      max-width: 1100px;
+      margin: auto;
       background: #fff;
+      padding: 2rem 2.5rem;
+      margin-top: 40px;
+      margin-bottom: 40px;
       border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      padding: 2.5rem;
-      animation: fadeIn 0.6s ease;
+      box-shadow: 0px 8px 30px rgba(0,0,0,0.08);
     }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .nav-tabs .nav-link.active {
+      background: #0d6efd;
+      color: #fff !important;
     }
-
-    h2 {
-      font-weight: 700;
-      color: #0d47a1;
-    }
-
     label {
       font-weight: 600;
-      color: #333;
     }
-
-    .form-control:focus, .form-select:focus {
-      border-color: #0d6efd;
-      box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
-    }
-
-    .btn-primary {
-      background: linear-gradient(45deg, #0d6efd, #007bff);
-      border: none;
-      transition: all 0.25s ease;
-    }
-
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(13,110,253,0.35);
-    }
-
-    .btn-secondary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 3px 10px rgba(108,117,125,0.25);
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #999;
-      font-size: 0.85rem;
+    .thumb-preview {
+      width: 140px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 2px solid #ddd;
     }
   </style>
 </head>
 
 <body>
-  <div class="form-wrapper">
-    <!-- 🔹 Header -->
-    <div class="text-center mb-4">
-      <i class="bi bi-pencil-square text-primary fs-1 mb-2"></i>
-      <h2>Chỉnh sửa khóa học</h2>
-      <p class="text-muted mb-0">Cập nhật thông tin chi tiết cho khóa học hiện có.</p>
-    </div>
 
-    <!-- 🔹 Form -->
-    <form method="post" action="/admin/Course/edit/{{ course.id }}">
+<div class="page-wrapper">
+
+  <h3 class="text-primary fw-bold mb-4">
+    <i class="bi bi-pencil-square"></i> Chỉnh sửa khóa học
+  </h3>
+
+  <!-- TAB HEADER -->
+  <ul class="nav nav-tabs mb-4" id="editTab" role="tablist">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">Thông tin chính</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time">Lịch - Học vụ</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings">Cài đặt khóa học</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-limit">Giới hạn - Enroll</button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-thumb">Ảnh Thumbnail</button>
+    </li>
+  </ul>
+
+  <form method="post" action="/admin/Course/edit/{{ course.id }}" enctype="multipart/form-data">
+  <div class="tab-content">
+
+    <!-- TAB 1 -->
+    <div class="tab-pane fade show active" id="tab-basic">
       <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">Mã khóa học</label>
-          <input type="text" class="form-control" name="course_code" value="{{ course.course_code }}" required>
-        </div>
 
         <div class="col-md-6">
-          <label class="form-label">Tên khóa học</label>
+          <label class="form-label">Tên khóa học *</label>
           <input type="text" class="form-control" name="course_name" value="{{ course.course_name }}" required>
         </div>
 
+        <div class="col-md-6">
+          <label class="form-label">Subject *</label>
+          <input type="text" class="form-control" name="subject" value="{{ course.subject }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Số tín chỉ *</label>
+          <input type="number" class="form-control" name="credit_hours" value="{{ course.credit_hours }}" min="1">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Độ khó</label>
+          <select class="form-select" name="difficulty_level">
+            <option value="beginner"     {% if course.difficulty_level=='beginner' %}selected{% endif %}>Dễ</option>
+            <option value="intermediate" {% if course.difficulty_level=='intermediate' %}selected{% endif %}>Trung bình</option>
+            <option value="advanced"     {% if course.difficulty_level=='advanced' %}selected{% endif %}>Khó</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Grade level</label>
+          <input type="number" class="form-control" name="grade_level" value="{{ course.grade_level }}">
+        </div>
+
         <div class="col-12">
-          <label class="form-label">Mô tả khóa học</label>
+          <label class="form-label">Mô tả</label>
           <textarea class="form-control" name="description" rows="3">{{ course.description }}</textarea>
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Số tín chỉ</label>
-          <input type="number" class="form-control" name="credit_hours" min="1" value="{{ course.credit_hours }}" required>
-        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2 -->
+    <div class="tab-pane fade" id="tab-time">
+      <div class="row g-3">
 
         <div class="col-md-6">
           <label class="form-label">Giảng viên</label>
@@ -125,48 +139,150 @@
         <div class="col-md-6">
           <label class="form-label">Ngành học</label>
           <select class="form-select" name="major_id">
-            <option value="">-- Chọn ngành học --</option>
+            <option value="">-- Chọn ngành --</option>
             {% for m in majors %}
               <option value="{{ m.id }}" {% if course.major_id == m.id %}selected{% endif %}>{{ m.major_name }}</option>
             {% endfor %}
           </select>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-3">
           <label class="form-label">Ngày bắt đầu</label>
-          <input type="date" class="form-control" name="start_date" 
-                 value="{{ course.start_date.strftime('%Y-%m-%d') if course.start_date }}">
+          <input type="date" class="form-control" name="start_date"
+            value="{{ course.start_date.strftime('%Y-%m-%d') if course.start_date }}">
         </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Ngày kết thúc</label>
+          <input type="date" class="form-control" name="end_date"
+            value="{{ course.end_date.strftime('%Y-%m-%d') if course.end_date }}">
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label">Semester</label>
+          <input type="number" class="form-control" name="semester" value="{{ course.semester }}">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3 -->
+    <div class="tab-pane fade" id="tab-settings">
+      <div class="row g-3">
 
         <div class="col-md-6">
-          <label class="form-label">Ngày kết thúc</label>
-          <input type="date" class="form-control" name="end_date" 
-                 value="{{ course.end_date.strftime('%Y-%m-%d') if course.end_date }}">
-        </div>
-
-        <div class="col-md-12">
-          <label class="form-label">Trạng thái</label>
-          <select class="form-select" name="status">
-            <option value="draft" {% if course.status == 'draft' %}selected{% endif %}>Bản nháp</option>
-            <option value="published" {% if course.status == 'published' %}selected{% endif %}>Công khai</option>
-            <option value="archived" {% if course.status == 'archived' %}selected{% endif %}>Lưu trữ</option>
+          <label class="form-label">Loại khóa học</label>
+          <select class="form-select" name="course_type">
+            <option value="mandatory" {% if course.course_type=='mandatory' %}selected{% endif %}>Bắt buộc</option>
+            <option value="elective" {% if course.course_type=='elective' %}selected{% endif %}>Tự chọn</option>
+            <option value="workshop" {% if course.course_type=='workshop' %}selected{% endif %}>Workshop</option>
+            <option value="online" {% if course.course_type=='online' %}selected{% endif %}>Online</option>
+            <option value="hybrid" {% if course.course_type=='hybrid' %}selected{% endif %}>Hybrid</option>
           </select>
         </div>
-      </div>
 
-      <!-- 🔹 Nút hành động -->
-      <div class="d-flex justify-content-between align-items-center mt-5">
-        <a href="/admin/Course/manage" class="btn btn-secondary px-4">
-          <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
-        </a>
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-save2 me-1"></i> Lưu thay đổi
-        </button>
+        <div class="col-md-6">
+          <label class="form-label">Trạng thái</label>
+          <select class="form-select" name="status_str">
+            <option value="draft" {% if course.status=='draft' %}selected{% endif %}>Bản nháp</option>
+            <option value="published" {% if course.status=='published' %}selected{% endif %}>Công khai</option>
+            <option value="archived" {% if course.status=='archived' %}selected{% endif %}>Lưu trữ</option>
+          </select>
+        </div>
+
+        <div class="col-12">
+          <label class="form-label">Môn tiên quyết</label>
+          <textarea class="form-control" name="prerequisites" rows="2">{{ course.prerequisites }}</textarea>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Cho phép bài tập</label>
+          <select class="form-select" name="allow_assignments">
+            <option value="1" {% if course.allow_assignments==1 %}selected{% endif %}>Có</option>
+            <option value="0" {% if course.allow_assignments==0 %}selected{% endif %}>Không</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Hình thức nộp bài</label>
+          <select class="form-select" name="default_submission_type">
+            <option value="individual" {% if course.default_submission_type=='individual' %}selected{% endif %}>Cá nhân</option>
+            <option value="group" {% if course.default_submission_type=='group' %}selected{% endif %}>Nhóm</option>
+          </select>
+        </div>
+
       </div>
-    </form>
+    </div>
+
+    <!-- TAB 4 -->
+    <div class="tab-pane fade" id="tab-limit">
+      <div class="row g-3">
+
+        <div class="col-md-6">
+          <label class="form-label">Giá (VNĐ)</label>
+          <input type="number" class="form-control" name="price" value="{{ course.price }}" step="1000">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Số lượng tối đa</label>
+          <input type="number" class="form-control" name="max_students" value="{{ course.max_students }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Chế độ đăng ký</label>
+          <select class="form-select" name="enrollment_mode">
+            <option value="auto" {% if course.enrollment_mode=='auto' %}selected{% endif %}>Tự động</option>
+            <option value="approval" {% if course.enrollment_mode=='approval' %}selected{% endif %}>Chờ duyệt</option>
+            <option value="invite_only" {% if course.enrollment_mode=='invite_only' %}selected{% endif %}>Mời mới được vào</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Công khai</label>
+          <select class="form-select" name="is_public">
+            <option value="0" {% if course.is_public==0 %}selected{% endif %}>Không</option>
+            <option value="1" {% if course.is_public==1 %}selected{% endif %}>Có</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 5 -->
+    <div class="tab-pane fade" id="tab-thumb">
+      <div class="row g-3">
+
+        <div class="col-md-4">
+          <label class="form-label">Thumbnail hiện tại</label><br>
+          <img src="{{ course.thumbnail_url }}" class="thumb-preview">
+        </div>
+
+        <div class="col-md-8">
+          <label class="form-label">Tải ảnh mới</label>
+          <input type="file" class="form-control" name="thumbnail">
+          <p class="text-muted small mt-2">Hỗ trợ JPG, PNG, GIF, WEBP</p>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
-  <footer>© 2025 E-Learning Admin Panel</footer>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- ACTION BUTTON -->
+  <div class="d-flex justify-content-between mt-4">
+    <a href="/admin/Course/manage" class="btn btn-secondary px-4">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+
+    <button type="submit" class="btn btn-primary px-4">
+      <i class="bi bi-check-lg"></i> Cập nhật khóa học
+    </button>
+  </div>
+
+  </form>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

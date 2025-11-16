@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 from app.database.connection import Base
 from datetime import datetime
 
@@ -13,21 +13,22 @@ class Message(Base):
     content = Column(Text, nullable=False)
     sent_at = Column(DateTime, default=datetime.utcnow)
 
-    # 📎 File đính kèm (tùy chọn)
+    # File đính kèm
     attachment_url = Column(String(500), nullable=True)
     attachment_name = Column(String(255), nullable=True)
     attachment_size = Column(String(50), nullable=True)
 
-    # ✅ Quan hệ ORM hai chiều rõ ràng
+    # ✅ Quan hệ ORM TWO-WAY đúng chuẩn
     sender = relationship(
         "User",
         foreign_keys=[sender_id],
-        backref=backref("messages_sent", cascade="all, delete-orphan")
+        back_populates="messages_sent"
     )
+
     receiver = relationship(
         "User",
         foreign_keys=[receiver_id],
-        backref=backref("messages_received", cascade="all, delete-orphan")
+        back_populates="messages_received"
     )
 
     def __repr__(self):

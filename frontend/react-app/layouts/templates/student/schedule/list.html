@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="container mt-4 fade-in">
+
   <!-- 🧭 HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold text-primary mb-0">
@@ -26,28 +27,45 @@
           <th style="width: 20%">Địa điểm</th>
         </tr>
       </thead>
+
       <tbody class="bg-light">
         {% for s in schedules %}
         {% set start_time = s.start | todatetime %}
         <tr class="hover-row">
+
+          <!-- STT -->
           <td class="text-center fw-semibold text-secondary">{{ loop.index }}</td>
+
+          <!-- Môn học + chi tiết -->
           <td>
             <div class="fw-semibold text-dark">{{ s.course_name }}</div>
+
+            {% if s.module_name %}
             <small class="text-muted">{{ s.module_name }}</small><br>
-            <!-- ✅ Sạch lỗi VS Code + đúng màu -->
-            <span class="badge" data-color="{{ s.color | default('#007bff') }}">
+            {% endif %}
+
+            <!-- Badge loại buổi học -->
+            <span class="badge lesson-badge"
+                  data-color="{{ s.color | default('#007bff') }}">
               {{ s.lesson_title }}
             </span>
           </td>
+
+          <!-- Ngày -->
           <td class="text-center text-primary fw-semibold">
             {{ start_time.strftime('%d/%m/%Y') }}
           </td>
+
+          <!-- Giờ -->
           <td class="text-center text-dark">
             {{ start_time.strftime('%H:%M') }}
           </td>
+
+          <!-- Địa điểm -->
           <td class="text-center">
             {{ s.location or 'Trực tuyến' }}
           </td>
+
         </tr>
         {% endfor %}
       </tbody>
@@ -79,11 +97,13 @@
     transition: background 0.2s ease;
   }
 
-  .badge {
+  .lesson-badge {
     font-size: 0.8rem;
     padding: 5px 9px;
     border-radius: 0.6rem;
     color: #fff;
+    display: inline-block;
+    margin-top: 3px;
   }
 
   .alert-info {
@@ -100,10 +120,10 @@
     .table th,
     .table td {
       font-size: 0.85rem;
+      white-space: nowrap;
     }
 
-    .badge {
-      display: inline-block;
+    .lesson-badge {
       margin-top: 4px;
     }
   }
@@ -111,8 +131,9 @@
 
 <!-- 🎨 JS: tô màu động cho badge -->
 <script>
-  document.querySelectorAll('.badge[data-color]').forEach(el => {
+  document.querySelectorAll('.lesson-badge[data-color]').forEach(el => {
     el.style.backgroundColor = el.dataset.color;
   });
 </script>
+
 {% endblock %}

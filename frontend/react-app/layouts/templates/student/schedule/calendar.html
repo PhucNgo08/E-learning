@@ -3,6 +3,8 @@
 
 {% block content %}
 <div class="container mt-4 fade-in">
+
+  <!-- 🧭 HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
@@ -22,36 +24,53 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('calendar');
-  const scheduleData = JSON.parse(`{{ schedule | tojson | safe }}`);
+
+  // 🟦 Router trả về biến "events" → phải lấy đúng tên
+  const scheduleData = JSON.parse(`{{ events | tojson | safe }}`);
 
   // ✨ Chuẩn hóa dữ liệu sự kiện
   const events = scheduleData.map(s => ({
-    id: s.lesson_id,
+    id: s.lesson_id || null, // class_schedule không có lesson_id
     title: `${s.course_name} - ${s.lesson_title}`,
     start: s.start,
     end: s.end,
-    color: s.color,
+    color: s.color || "#0d6efd",
     extendedProps: {
-      module: s.module_name,
-      location: s.location || "Trực tuyến"
+      module_name: s.module_name || "Không có module",
+      location: s.location || "Trực tuyến",
+      type: s.type || "lesson"
     }
   }));
 
+  // 🗓️ Tạo lịch FullCalendar
   const calendar = new FullCalendar.Calendar(calendarEl, {
     initialView: 'dayGridMonth',
     locale: 'vi',
     height: "auto",
+    themeSystem: 'bootstrap5',
+
     headerToolbar: {
       left: 'prev,next today',
       center: 'title',
       right: 'dayGridMonth,timeGridWeek,timeGridDay'
     },
-    buttonText: { today: 'Hôm nay', month: 'Tháng', week: 'Tuần', day: 'Ngày' },
+
+    buttonText: { 
+      today: 'Hôm nay', month: 'Tháng', week: 'Tuần', day: 'Ngày' 
+    },
+
     events: events,
 
+    // 📌 Click vào sự kiện
     eventClick: function(info) {
-      const e = info.event.extendedProps;
-      alert(`📘 ${info.event.title}\n📦 ${e.module}\n📍 ${e.location}`);
+      const p = info.event.extendedProps;
+      const message = 
+`📚 ${info.event.title}
+📦 Module: ${p.module_name}
+📍 Địa điểm: ${p.location}
+🔖 Loại: ${p.type}`;
+
+      alert(message);
     }
   });
 
@@ -66,18 +85,31 @@ document.addEventListener('DOMContentLoaded', function () {
     border-radius: 15px;
     padding: 15px;
   }
-  .fc { font-family: 'Inter', sans-serif; font-size: 0.95rem; }
-  .fc-toolbar-title { font-weight: 600; color: #0d6efd; }
-  .fc-button { border-radius: 6px !important; }
+
+  .fc { 
+    font-family: 'Inter', sans-serif; 
+    font-size: 0.95rem; 
+  }
+
+  .fc-toolbar-title { 
+    font-weight: 600; 
+    color: #0d6efd; 
+  }
+
+  .fc-button { 
+    border-radius: 6px !important; 
+  }
+
   .fc-event {
     border: none !important;
     color: #fff !important;
     font-weight: 500;
-    padding: 3px 5px;
+    padding: 3px 6px;
     border-radius: 8px;
   }
+
   .fc .fc-daygrid-day.fc-day-today {
-    background-color: rgba(13, 110, 253, 0.1) !important;
+    background-color: rgba(13, 110, 253, 0.15) !important;
   }
 </style>
 {% endblock %}

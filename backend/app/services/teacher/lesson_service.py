@@ -7,12 +7,9 @@ import uuid
 
 
 # =========================================================
-# 📋 Danh sách bài học theo module
+# 📋 1️⃣ Danh sách bài học theo module
 # =========================================================
 def list_lessons_by_module(db: Session, module_id: str):
-    """
-    Lấy danh sách tất cả bài học thuộc một module cụ thể.
-    """
     return (
         db.query(Lesson)
         .filter(Lesson.module_id == module_id)
@@ -22,12 +19,9 @@ def list_lessons_by_module(db: Session, module_id: str):
 
 
 # =========================================================
-# 📋 Danh sách tất cả bài học của giáo viên
+# 📋 2️⃣ Danh sách tất cả bài học của giáo viên
 # =========================================================
 def list_lessons_by_teacher(db: Session, teacher_id: str):
-    """
-    Lấy tất cả bài học thuộc các module của giáo viên.
-    """
     return (
         db.query(Lesson)
         .join(Module, Lesson.module_id == Module.id)
@@ -40,26 +34,19 @@ def list_lessons_by_teacher(db: Session, teacher_id: str):
 
 
 # =========================================================
-# ➕ Tạo bài học mới
+# ➕ 3️⃣ Tạo bài học mới
 # =========================================================
 def create_lesson(
     db: Session,
     teacher_id: str,
     module_id: str,
-    lesson_number: int,
     title: str,
     description: str,
-    content_type: str,
     video_url: str,
     document_url: str,
     thumbnail_url: str,
 ):
-    """
-    Tạo bài học mới.
-    Yêu cầu ít nhất 1 trong 3 nội dung: video_url, document_url hoặc thumbnail_url.
-    """
-
-    # Kiểm tra module có thuộc giáo viên này không
+    # 1. Kiểm tra quyền sở hữu module
     module = (
         db.query(Module)
         .join(Course, Module.course_id == Course.id)
@@ -67,25 +54,31 @@ def create_lesson(
         .first()
     )
     if not module:
-        raise ValueError("Không tìm thấy module hoặc bạn không có quyền thêm bài học vào module này.")
+        raise ValueError("Module không thuộc sở hữu của bạn.")
 
-    # Ràng buộc nội dung bắt buộc
+    # 2. Ràng buộc nội dung tối thiểu
     if not (video_url or document_url or thumbnail_url):
-        raise ValueError("Cần ít nhất 1 trong 3 nội dung: video, tài liệu hoặc hình ảnh.")
+        raise ValueError("Cần ít nhất 1 nội dung: video / tài liệu / hình ảnh.")
 
+    # 3. Tự động tạo lesson_number
+    lesson_number = (
+        db.query(Lesson).filter(Lesson.module_id == module_id).count() + 1
+    )
+
+    # 4. Tạo bài học
     lesson = Lesson(
         id=str(uuid.uuid4()),
         module_id=module_id,
         lesson_number=lesson_number,
-        title=title,
-        description=description,
-        content_type=content_type,
-        video_url=video_url,
-        document_url=document_url,
+        title=title.strip(),
+        description=description.strip(),
+        video_url=video_url or None,
+        document_url=document_url or None,
         thumbnail_url=thumbnail_url,
         is_published=False,
         created_at=datetime.now(),
     )
+
     db.add(lesson)
     db.commit()
     db.refresh(lesson)
@@ -93,12 +86,9 @@ def create_lesson(
 
 
 # =========================================================
-# ✏️ Lấy bài học (và kiểm tra quyền)
+# ✏️ 4️⃣ Lấy bài học theo quyền giáo viên
 # =========================================================
 def get_lesson_owned(db: Session, teacher_id: str, lesson_id: str, with_module_course=False):
-    """
-    Lấy bài học theo ID và kiểm tra xem giáo viên có quyền sở hữu không.
-    """
     query = (
         db.query(Lesson)
         .join(Module, Lesson.module_id == Module.id)
@@ -115,65 +105,25 @@ def get_lesson_owned(db: Session, teacher_id: str, lesson_id: str, with_module_c
     if not lesson:
         return None
 
-    return (lesson, lesson.module, lesson.module.course)
+    return lesson
 
 
 # =========================================================
-# 💾 Cập nhật bài học
+# 💾 5️⃣ Cập nhật bài học
 # =========================================================
 def update_lesson(
     db: Session,
     teacher_id: str,
     lesson_id: str,
-    lesson_number: int,
     title: str,
     description: str,
     content_type: str,
     video_url: str,
     document_url: str,
     thumbnail_url: str,
-    is_published: int,
+    is_published: str,
 ):
-    """
-    Cập nhật thông tin bài học.
-    """
-    lesson_data = (
-        db.query(Lesson)
-        .join(Module, Lesson.module_id == Module.id)
-        .join(Course, Module.course_id == Course.id)
-        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
-        .first()
-    )
-
-    if not lesson_data:
-        return None
-
-    # Ràng buộc: phải có ít nhất 1 nội dung
-    if not (video_url or document_url or thumbnail_url):
-        raise ValueError("Phải có ít nhất một nội dung (video, tài liệu hoặc hình ảnh).")
-
-    lesson_data.lesson_number = lesson_number
-    lesson_data.title = title
-    lesson_data.description = description
-    lesson_data.content_type = content_type
-    lesson_data.video_url = video_url
-    lesson_data.document_url = document_url
-    lesson_data.thumbnail_url = thumbnail_url
-    lesson_data.is_published = bool(is_published)
-    lesson_data.updated_at = datetime.now()
-
-    db.commit()
-    db.refresh(lesson_data)
-    return lesson_data.module_id
-
-
-# =========================================================
-# ❌ Xóa bài học
-# =========================================================
-def delete_lesson(db: Session, teacher_id: str, lesson_id: str):
-    """
-    Xóa bài học nếu giáo viên là chủ sở hữu khóa học.
-    """
+    # 1. Lấy bài học
     lesson = (
         db.query(Lesson)
         .join(Module, Lesson.module_id == Module.id)
@@ -183,7 +133,44 @@ def delete_lesson(db: Session, teacher_id: str, lesson_id: str):
     )
 
     if not lesson:
-        return None
+        raise ValueError("Bài học không tồn tại hoặc bạn không có quyền.")
+
+    # 2. Xử lý giá trị boolean is_published
+    publish_flag = True if str(is_published) in ["1", "true", "True", "on"] else False
+
+    # 3. Không nội dung nào → lỗi
+    if not (video_url or document_url or thumbnail_url):
+        raise ValueError("Cần ít nhất 1 nội dung.")
+
+    # 4. Cập nhật
+    lesson.title = title.strip()
+    lesson.description = description.strip()
+    lesson.content_type = content_type
+    lesson.video_url = video_url or None
+    lesson.document_url = document_url or None
+    lesson.thumbnail_url = thumbnail_url
+    lesson.is_published = publish_flag
+    lesson.updated_at = datetime.now()
+
+    db.commit()
+    db.refresh(lesson)
+    return lesson.module_id
+
+
+# =========================================================
+# ❌ 6️⃣ Xóa bài học
+# =========================================================
+def delete_lesson(db: Session, teacher_id: str, lesson_id: str):
+    lesson = (
+        db.query(Lesson)
+        .join(Module, Lesson.module_id == Module.id)
+        .join(Course, Module.course_id == Course.id)
+        .filter(Lesson.id == lesson_id, Course.teacher_id == teacher_id)
+        .first()
+    )
+
+    if not lesson:
+        raise ValueError("Không thể xóa bài học không thuộc sở hữu của bạn.")
 
     module_id = lesson.module_id
     db.delete(lesson)

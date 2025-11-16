@@ -3,16 +3,16 @@
 
 {% block content %}
 <style>
-  /* ==========================================================
-  🎨 HỘP THƯ ĐẾN – Student Inbox UI v2.5
-  ========================================================== */
+/* ==========================================================
+📥 INBOX – Student Message UI v3.3 (Final 2025)
+========================================================== */
 
-  /* 💬 Floating Action Button (FAB) */
-  .fab-compose {
+/* Floating Compose Button */
+.fab-compose {
   position: fixed;
   bottom: 30px;
-  right: 100px; /* ✅ dịch sang trái 100px tránh trùng chatbot */
-  background: linear-gradient(135deg, #007bff, #0d6efd);
+  right: 100px; /* tránh che chatbot */
+  background: linear-gradient(135deg, #0d6efd, #0056d6);
   color: #fff;
   border-radius: 50%;
   width: 60px;
@@ -21,89 +21,141 @@
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 22px rgba(0,0,0,.25);
   z-index: 1050;
-  transition: all 0.3s ease;
+  transition: all .3s ease;
 }
-  .fab-compose:hover {
-    transform: scale(1.1);
-    background: linear-gradient(135deg, #0d6efd, #0056b3);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    text-decoration: none;
-  }
+.fab-compose:hover {
+  transform: scale(1.12);
+  background: linear-gradient(135deg, #0b5ed7, #003c9e);
+  text-decoration: none;
+}
 
-  /* 📨 List item hover */
-  .list-group-item:hover {
-    background-color: #f8f9fa;
-    transition: background 0.2s ease-in-out;
-  }
+/* List Group */
+.inbox-item {
+  backdrop-filter: blur(10px);
+  background: rgba(255,255,255,0.65);
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,0,0,0.05) !important;
+  transition: all .25s ease;
+}
+.inbox-item:hover {
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+}
 
-  /* 🧭 Header */
-  h4 i {
-    color: var(--blue1, #0d6efd);
-  }
+/* Dark Mode Support */
+body.dark-mode .inbox-item {
+  background: rgba(30,41,59,0.45);
+  border-color: rgba(255,255,255,0.08) !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode .inbox-item:hover {
+  background: rgba(30,41,59,0.65);
+}
 
-  /* 🧾 Responsive */
-  @media (max-width: 576px) {
-    .fab-compose {
-      bottom: 20px;
-      right: 20px;
-      width: 54px;
-      height: 54px;
-      font-size: 22px;
-    }
+.msg-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(0,0,0,0.1);
+}
+body.dark-mode .msg-avatar {
+  border-color: rgba(255,255,255,0.1);
+}
 
-    h4 {
-      font-size: 1.1rem;
-    }
+.unread-badge {
+  background: #dc3545;
+  padding: 4px 8px;
+  font-size: .72rem;
+  border-radius: 6px;
+  color: white;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media(max-width: 576px) {
+  .fab-compose {
+    right: 20px;
+    bottom: 20px;
   }
+}
 </style>
 
+
 <div class="container py-3 fade-in">
-  <!-- 🔹 Header -->
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-inbox"></i> Hộp thư đến
     </h4>
     <a href="/student/message/sent" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-send-check"></i> Thư đã gửi
+      <i class="bi bi-send-check"></i> Đã gửi
     </a>
   </div>
 
-  <!-- 🔹 Danh sách tin nhắn -->
+  <!-- Message List -->
   {% if messages and messages|length > 0 %}
-  <div class="list-group shadow-sm">
+  <div class="list-group border-0">
+
     {% for msg in messages %}
     <a href="/student/message/view/{{ msg.id }}"
-       class="list-group-item list-group-item-action d-flex justify-content-between align-items-start py-3 rounded-3 mb-2 border-0 shadow-sm">
-      <div class="flex-grow-1 me-3">
-        <div class="fw-semibold text-dark mb-1">
-          <i class="bi bi-person-circle text-primary"></i>
-          {{ msg.sender.full_name if msg.sender else "Người gửi ẩn danh" }}
+       class="list-group-item list-group-item-action inbox-item d-flex justify-content-between align-items-center mb-2 py-3">
+
+      <!-- Avatar + Info Left -->
+      <div class="d-flex align-items-center gap-3">
+        
+        <!-- Avatar -->
+        {% if msg.sender.avatar_url %}
+          <img src="{{ msg.sender.avatar_url }}" class="msg-avatar" alt="avatar">
+        {% else %}
+          <img src="/static/img/default_avatar.png" class="msg-avatar" alt="avatar">
+        {% endif %}
+
+        <!-- Message text -->
+        <div>
+          <div class="fw-semibold text-dark">
+            {{ msg.sender.full_name if msg.sender else "Người gửi ẩn danh" }}
+          </div>
+          <small class="text-muted">
+            {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
+          </small>
         </div>
-        <small class="text-muted">
-          {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
-        </small>
+
       </div>
+
+      <!-- Right: Time + Unread -->
       <div class="text-end">
-        <small class="text-secondary">
+
+        <small class="text-secondary d-block">
           {{ msg.sent_at.strftime("%d/%m/%Y %H:%M") if msg.sent_at else "" }}
         </small>
+
+        {% if msg.is_read == 0 %}
+        <span class="unread-badge mt-1 d-inline-block">Chưa đọc</span>
+        {% endif %}
+
       </div>
+
     </a>
     {% endfor %}
+
   </div>
 
   {% else %}
-  <!-- 🔹 Khi trống -->
+  <!-- Empty -->
   <div class="alert alert-info text-center mt-4 shadow-sm py-3">
-    <i class="bi bi-envelope-exclamation"></i> Chưa có tin nhắn nào.
+    <i class="bi bi-envelope-exclamation"></i> Hộp thư trống.
   </div>
   {% endif %}
 </div>
 
-<!-- ✉️ Floating Compose Button -->
-<a href="/student/message/compose" class="fab-compose" title="Soạn tin nhắn" aria-label="Soạn tin nhắn">
+
+<!-- FAB: Compose -->
+<a href="/student/message/compose" class="fab-compose" title="Soạn tin mới">
   <i class="bi bi-pencil-square"></i>
 </a>
 

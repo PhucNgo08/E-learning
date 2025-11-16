@@ -3,46 +3,76 @@
 
 {% block content %}
 <div class="container py-4">
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold text-primary mb-0"><i class="bi bi-book"></i> {{ course.title }}</h4>
+    <h4 class="fw-bold text-primary mb-0">
+      <i class="bi bi-book"></i> {{ course.course_name }}
+    </h4>
+
     <a href="/student/review/submit/{{ course.id }}" class="btn btn-primary btn-sm">
       <i class="bi bi-pencil-square"></i> Gửi đánh giá
     </a>
   </div>
 
+  <!-- Average rating -->
   <div class="card shadow-sm border-0 mb-4">
     <div class="card-body text-center">
-      <h5 class="text-secondary mb-2">Điểm trung bình</h5>
+      <h6 class="text-secondary mb-2">Điểm trung bình</h6>
       <h2 class="text-warning fw-bold mb-0">{{ average_rating }}/5</h2>
+
+      <div class="mt-2">
+        {% for i in range(1,6) %}
+          {% if i <= average_rating|round(0, 'floor') %}
+            <i class="bi bi-star-fill text-warning"></i>
+          {% else %}
+            <i class="bi bi-star text-warning"></i>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
   </div>
 
   {% if reviews %}
   <div class="list-group shadow-sm">
+
     {% for r in reviews %}
-    <div class="list-group-item">
+    <div class="list-group-item py-3">
+
+      <!-- Tiêu đề + ngày -->
       <div class="d-flex justify-content-between">
-        <h6 class="fw-semibold">{{ r.title }}</h6>
+        <h6 class="fw-semibold mb-0">{{ r.title }}</h6>
         <small class="text-muted">{{ r.created_at.strftime("%d/%m/%Y") }}</small>
       </div>
-      <div class="mb-2 text-warning">
+
+      <!-- Sao -->
+      <div class="my-2">
         {% for i in range(1,6) %}
           {% if i <= r.overall_rating|round(0, 'floor') %}
-            <i class="bi bi-star-fill"></i>
+            <i class="bi bi-star-fill text-warning"></i>
           {% else %}
-            <i class="bi bi-star"></i>
+            <i class="bi bi-star text-warning"></i>
           {% endif %}
         {% endfor %}
       </div>
+
+      <!-- Nội dung -->
       <p class="text-muted mb-1">{{ r.comment }}</p>
+
+      <!-- Người đánh giá -->
       <small class="text-secondary">— {{ r.user_name }}</small>
+
     </div>
     {% endfor %}
+
   </div>
   {% else %}
+
   <div class="alert alert-info text-center">
     <i class="bi bi-info-circle"></i> Chưa có đánh giá nào cho khóa học này.
   </div>
+
   {% endif %}
+
 </div>
 {% endblock %}

@@ -10,83 +10,18 @@
       <h3 class="fw-bold text-primary mb-0">
         <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
       </h3>
-      <small class="text-muted">Xem và tiếp tục các khóa học bạn đã đăng ký</small>
+      <small class="text-muted">Xem và tiếp tục các khóa học bạn đã đăng ký hoặc mua</small>
     </div>
 
-    <!-- 🔙 Nút quay lại -->
-    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm mt-2 mt-md-0">
-      <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm rounded-pill mt-2 mt-md-0">
+      <i class="bi bi-arrow-left-circle"></i> Danh sách khóa học
     </a>
   </div>
 
-  <!-- 🎨 Custom CSS -->
-  <style>
-    .table-hover tbody tr:hover {
-      background-color: #f9fbff !important;
-      transition: background-color 0.2s ease-in-out;
-    }
-
-    .progress {
-      height: 8px;
-      background-color: #e9ecef;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .progress-bar {
-      transition: width 0.6s ease;
-      border-radius: 4px;
-    }
-
-    .course-name a {
-      font-weight: 600;
-      color: #0d6efd;
-      text-decoration: none;
-    }
-
-    .course-name a:hover {
-      text-decoration: underline;
-    }
-
-    .btn-outline-secondary {
-      border-color: #dee2e6;
-      color: #495057;
-    }
-
-    .btn-outline-secondary:hover {
-      background-color: #f8f9fa;
-      color: #0d6efd;
-      border-color: #0d6efd;
-    }
-
-    /* 🧭 Responsive Table */
-    @media (max-width: 768px) {
-      .table thead { display: none; }
-      .table tbody tr {
-        display: block;
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-        border-radius: 10px;
-        background-color: #fff;
-        padding: 10px 12px;
-      }
-      .table tbody td {
-        display: flex;
-        justify-content: space-between;
-        border: none;
-        padding: 6px 0;
-      }
-      .table tbody td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        color: #6c757d;
-      }
-    }
-  </style>
-
   <!-- 📋 Table -->
-  <div class="table-responsive shadow-sm rounded-3">
+  <div class="table-responsive shadow-sm rounded-4 overflow-hidden">
     <table class="table table-hover align-middle bg-white mb-0">
+
       <thead class="table-light">
         <tr>
           <th>Khóa học</th>
@@ -95,43 +30,66 @@
           <th class="text-end">Hành động</th>
         </tr>
       </thead>
+
       <tbody>
         {% for item in enrollments %}
-        <tr>
-          <!-- 🎓 Khóa học -->
+        {% set level = item.course.difficulty_level|lower %}
+
+        <tr class="course-row">
+
+          <!-- 🎓 Tên khóa học -->
           <td data-label="Khóa học">
-            <div class="course-name mb-1">
-              <a href="{{ url_for('student_course_detail', course_id=item.course.id) }}">
+            <div class="fw-semibold course-title text-truncate" title="{{ item.course.course_name }}">
+              <a href="/student/course/detail/{{ item.course.id }}" class="text-primary text-decoration-none">
+                <i class="bi bi-journal-bookmark-fill text-info"></i>
                 {{ item.course.course_name }}
               </a>
             </div>
-            <div class="small text-muted">
+
+            <!-- Level badge -->
+            <span class="badge 
+              {% if level == 'beginner' %} bg-success
+              {% elif level == 'intermediate' %} bg-warning text-dark
+              {% else %} bg-danger
+              {% endif %} small mt-1">
+              {{ item.course.difficulty_level | capitalize }}
+            </span>
+
+            <div class="small text-muted mt-1">
               <i class="bi bi-hash"></i> {{ item.course.course_code or "—" }}
             </div>
           </td>
 
           <!-- 👨‍🏫 Giảng viên -->
           <td data-label="Giảng viên">
+            <i class="bi bi-person-badge"></i>
             {{ item.course.teacher.full_name if item.course.teacher else "—" }}
           </td>
 
           <!-- 📈 Tiến độ -->
-          <td data-label="Tiến độ" style="min-width:150px;">
-            <div class="progress">
-              <div class="progress-bar bg-success" data-width="{{ item.progress_percent or 0 }}"></div>
+          <td data-label="Tiến độ" style="min-width:160px;">
+            {% set p = item.progress_percent or 0 %}
+            <div class="progress progress-custom">
+              <div class="progress-bar" data-width="{{ p }}"></div>
             </div>
-            <div class="small text-muted mt-1">
-              {{ item.completed_lessons }}/{{ item.total_lessons }} bài ({{ item.progress_percent or 0 }}%)
+            <div class="small text-muted mt-1 fw-semibold">
+              <i class="bi bi-flag"></i> {{ item.completed_lessons }}/{{ item.total_lessons }}
+              <span class="text-primary">({{ p }}%)</span>
             </div>
           </td>
 
           <!-- ▶️ Hành động -->
           <td class="text-end" data-label="Hành động">
-            <a class="btn btn-sm btn-outline-primary"
-               href="{{ url_for('student_course_progress', course_id=item.course.id) }}">
-              <i class="bi bi-play-circle"></i> Tiếp tục học
-            </a>
+            {% if item.progress_percent < 100 and item.next_lesson_id %}
+              <a class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
+                 href="/student/lesson/view/{{ item.next_lesson_id }}">
+                <i class="bi bi-play-circle"></i> Học tiếp
+              </a>
+            {% else %}
+              <span class="badge bg-success">Hoàn thành</span>
+            {% endif %}
           </td>
+
         </tr>
         {% else %}
         <tr>
@@ -141,15 +99,32 @@
         </tr>
         {% endfor %}
       </tbody>
+
     </table>
   </div>
 </div>
 
-<!-- ✅ Auto progress animation -->
+<!-- 🎬 Progress animation -->
 <script>
   document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
-    const width = el.dataset.width || 0;
-    setTimeout(() => { el.style.width = width + '%'; }, 200);
+    const percent = el.dataset.width || 0;
+    setTimeout(() => el.style.width = percent + '%', 200);
   });
 </script>
+
+<!-- 🎨 CSS -->
+<style>
+  .course-row { transition: background 0.25s, transform 0.2s; }
+  .course-row:hover { background: rgba(13,110,253,0.05); }
+
+  .progress-custom { height: 9px; background: #e9ecef; border-radius: 10px; overflow: hidden; }
+  .progress-bar { transition: width .7s ease; background: linear-gradient(90deg, #0d6efd, #4fb0ff); }
+
+  @media (max-width: 768px) {
+    .table thead { display: none; }
+    .table tbody tr { display: block; margin-bottom: 1rem; border-radius: 14px; background: #fff; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .table tbody td { display: flex; justify-content: space-between; border: none !important; padding: 6px 0; }
+    .table tbody td::before { content: attr(data-label); font-weight: 600; color: #6c757d; }
+  }
+</style>
 {% endblock %}

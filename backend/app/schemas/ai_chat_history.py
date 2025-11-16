@@ -2,19 +2,23 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
+
 class AIChatHistoryBase(BaseModel):
     message: str
-    response: Optional[str]
-    model_name: Optional[str]
+    response: Optional[str] = None
+    model_name: Optional[str] = None
+
 
 class AIChatHistoryCreate(AIChatHistoryBase):
     user_id: str
-    role: str = "user"
+    role: str = "user"   # user hoặc assistant
+
 
 class AIChatHistoryOut(AIChatHistoryBase):
     id: str
-    created_at: datetime
+    user_id: str
     role: str
+    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True

@@ -1,7 +1,29 @@
 /* =====================================================
-🎓 STUDENT DASHBOARD – Glass Neo 2025 Hyper-Smooth
+🎓 STUDENT DASHBOARD – Glass Neo 2025 (Full Upgrade)
 ===================================================== */
 
+/* === Global Variables === */
+:root {
+  --bg: #f5f7fb;
+  --text: #1f2937;
+
+  --card-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.25);
+
+  --card-size: 140px;
+  --thumb-size: 65px;
+}
+
+/* === Dark Mode Support === */
+.dark-theme {
+  --bg: #0f172a;
+  --text: #e2e8f0;
+
+  --card-bg: rgba(30, 41, 59, 0.55);
+  --glass-border: rgba(148,163,184,0.2);
+}
+
+/* === Main Container === */
 .dashboard-container {
   background: var(--bg);
   color: var(--text);
@@ -10,30 +32,44 @@
   transition: background 0.4s, color 0.4s;
 }
 
-/* === Welcome Card === */
+/* =====================================================
+✨ WELCOME CARD
+===================================================== */
 .welcome-card {
   background: var(--card-bg);
   border-radius: 18px;
   padding: 1.8rem 2rem;
   border: 1px solid var(--glass-border);
   backdrop-filter: blur(16px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
-  transition: all 0.4s ease;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
+
 .welcome-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(130deg, rgba(255,255,255,0.08), rgba(59,130,246,0.12));
+  background: linear-gradient(
+    130deg,
+    rgba(255, 255, 255, 0.10),
+    rgba(59, 130, 246, 0.18)
+  );
   opacity: 0;
   transition: opacity 0.6s ease;
 }
-.welcome-card:hover::before { opacity: 1; }
-.welcome-card:hover { transform: translateY(-4px); }
 
-/* === Stat Cards === */
+.welcome-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+}
+
+.welcome-card:hover::before { opacity: 1; }
+
+/* =====================================================
+📊 STAT CARDS
+===================================================== */
 .stat-card {
   position: relative;
   border-radius: 18px;
@@ -41,90 +77,133 @@
   text-align: center;
   height: 140px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.2);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-  transition: all 0.4s ease;
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
+  transition: transform 0.45s ease, box-shadow 0.45s ease;
   backdrop-filter: blur(12px);
 }
+
 .stat-card::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-size: 300% 300%;
-  animation: gradientFlow 7s ease infinite;
   border-radius: inherit;
+  background-size: 300% 300%;
+  animation: gradientFlow 7s ease infinite alternate;
 }
+
 @keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% { background-position: 0% 40%; }
+  100% { background-position: 100% 60%; }
 }
-.stat-card:hover { transform: translateY(-6px) scale(1.03); }
+
+.stat-card:hover {
+  transform: translateY(-6px) scale(1.025);
+  box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+}
+
 .stat-card i { font-size: 2rem; }
-.stat-card h5 { font-size: 1.9rem; margin: .4rem 0; }
+.stat-card h5 { font-size: 2rem; margin: .4rem 0; }
 .stat-card p { font-size: .95rem; opacity: .9; }
 
-/* === Color Themes === */
-.gradient-blue::before { background: linear-gradient(120deg,#3b82f6,#2563eb,#60a5fa); }
-.gradient-green::before { background: linear-gradient(120deg,#22c55e,#15803d,#4ade80); }
-.gradient-gold::before { background: linear-gradient(120deg,#fbbf24,#f59e0b,#d97706); }
+/* Gradient Themes */
+.gradient-blue::before {
+  background: linear-gradient(120deg,#3b82f6,#2563eb,#60a5fa);
+}
+.gradient-green::before {
+  background: linear-gradient(120deg,#22c55e,#15803d,#4ade80);
+}
+.gradient-gold::before {
+  background: linear-gradient(120deg,#fbbf24,#f59e0b,#d97706);
+}
+/* Missing earlier → Added now */
+.gradient-purple::before {
+  background: linear-gradient(120deg,#a855f7,#7e22ce,#c084fc);
+}
 
-/* === Courses Grid === */
+/* =====================================================
+📚 COURSE CARDS
+===================================================== */
 .courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--card-size,140px),1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-size),1fr));
   gap: 1rem;
 }
+
 .course-card-mini {
   background: var(--card-bg);
   border-radius: 16px;
   border: 1px solid var(--glass-border);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   text-align: center;
-  overflow: hidden;
-  padding: .6rem;
-  transition: all 0.3s ease;
-}
-.course-card-mini:hover { transform: translateY(-4px); }
-.course-thumb { width: 100%; height: var(--thumb-size,65px); border-radius: 10px; object-fit: cover; }
-.thumb-placeholder {
-  height: var(--thumb-size,65px);
-  background: rgba(37,99,235,0.08);
-  display: flex; align-items: center; justify-content: center;
-  color: #2563eb; font-size: 1.8rem;
+  padding: .7rem;
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+  cursor: pointer;
 }
 
-/* === Progress Bar === */
+.course-card-mini:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+}
+
+.course-thumb {
+  width: 100%;
+  height: var(--thumb-size);
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.thumb-placeholder {
+  height: var(--thumb-size);
+  background: rgba(37,99,235,0.12);
+  display: flex; align-items: center; justify-content: center;
+  color: #2563eb;
+  font-size: 1.6rem;
+}
+
+/* =====================================================
+📈 PROGRESS BAR
+===================================================== */
 .progress {
   height: 6px;
   border-radius: 30px;
   background-color: rgba(229,231,235,0.6);
   overflow: hidden;
 }
+
 .progress-bar {
   height: 100%;
   border-radius: 30px;
   background: linear-gradient(90deg,#22c55e,#16a34a,#4ade80);
   width: 0%;
-  transition: width 1.2s ease-out;
-  animation: progressGlow 3s ease-in-out infinite alternate;
+  transition: width 1s ease-out;
+  animation: progressGlow 2.5s ease-in-out infinite alternate;
 }
+
 @keyframes progressGlow {
   0% { box-shadow: 0 0 6px rgba(34,197,94,0.3); }
   100% { box-shadow: 0 0 14px rgba(16,185,129,0.45); }
 }
 
-/* === Reveal Animation === */
+/* =====================================================
+🪄 REVEAL ANIMATION
+===================================================== */
 .reveal {
   opacity: 0;
-  transform: translateY(24px);
+  transform: translateY(22px);
   transition: all 0.65s ease;
 }
-.reveal.visible { opacity: 1; transform: translateY(0); }
 
-/* === Responsive === */
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =====================================================
+📱 RESPONSIVE DESIGN
+===================================================== */
 @media (max-width:768px){
-  .stat-card{height:120px;}
-  .course-card-mini{font-size:.85rem;}
-  .welcome-card{padding:1.2rem;}
+  .stat-card { height: 120px; }
+  .course-card-mini { font-size: .85rem; }
+  .welcome-card { padding:1.2rem; }
 }

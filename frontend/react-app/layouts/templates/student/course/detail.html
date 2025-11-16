@@ -2,87 +2,108 @@
 {% block title %}📘 {{ course.course_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
+<div class="container-fluid py-3 fade-in">
 
-  <!-- 🔙 Quay lại -->
+  <!-- Back -->
   <div class="mb-3">
-    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm">
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm rounded-pill shadow-sm">
       <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
     </a>
   </div>
 
   <div class="row g-4">
-    <!-- 🧭 Thông tin khóa học -->
+
+    <!-- LEFT CONTENT -->
     <div class="col-lg-8">
-      <div class="card shadow-sm border-0">
-        <div class="card-img-wrapper position-relative">
+
+      <!-- COURSE HEADER -->
+      <div class="card shadow-sm border-0 glass-card mb-4">
+
+        <div class="position-relative">
           <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-               onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png';"
-               class="card-img-top"
-               style="height: 260px; object-fit: cover; border-top-left-radius: 10px; border-top-right-radius: 10px;">
-          <span class="badge position-absolute top-0 end-0 m-3 px-3 py-2 bg-success text-white shadow-sm">
-            {{ course.status|capitalize or "Published" }}
+               onerror="this.src='/uploads/course_thumbnails/default-course.png'"
+               class="card-img-top course-thumb">
+
+          {% if course.discount_percent and course.discount_percent > 0 %}
+          <span class="badge badge-discount">
+            🔥 -{{ course.discount_percent }}%
+          </span>
+          {% endif %}
+
+          <span class="badge badge-status">
+            {{ (course.status or 'Published') | capitalize }}
           </span>
         </div>
 
         <div class="card-body">
-          <h3 class="fw-bold text-primary mb-1">{{ course.course_name }}</h3>
-          <p class="text-muted small mb-2">
-            <i class="bi bi-hash"></i> {{ course.course_code }} • 
-            👨‍🏫 {{ teacher.full_name if teacher else 'Giảng viên đang cập nhật' }}
+          <h2 class="fw-bold text-primary mb-2">{{ course.course_name }}</h2>
+
+          <p class="text-muted small mb-3">
+            <i class="bi bi-hash"></i> {{ course.course_code }}
+            • 👨‍🏫 {{ teacher.full_name if teacher else 'Giảng viên đang cập nhật' }}
           </p>
+
           <p class="mb-0">{{ course.description or "Không có mô tả cho khóa học này." }}</p>
         </div>
       </div>
 
-      <!-- 📘 Nội dung khóa học -->
-      <div class="card mt-4 shadow-sm border-0">
+      <!-- MODULES -->
+      <div class="card shadow-sm border-0 glass-card mb-4">
         <div class="card-header bg-light fw-semibold">
           <i class="bi bi-journal-bookmark"></i> Nội dung khóa học
         </div>
+
         <div class="list-group list-group-flush">
           {% if modules %}
             {% for m in modules %}
-            <div class="list-group-item d-flex justify-content-between align-items-start flex-wrap border-0 border-bottom">
-              <div>
+            <div class="list-group-item module-item">
+
+              <div class="flex-grow-1">
                 <div class="fw-semibold text-primary">
-                  <i class="bi bi-folder2-open"></i>
+                  <i class="bi bi-folder2-open text-warning"></i>
                   Module {{ m.module_number }}: {{ m.title }}
                 </div>
-                <div class="text-muted small">{{ m.description or "Không có mô tả" }}</div>
+                <small class="text-muted">{{ m.description or "Không có mô tả" }}</small>
               </div>
-              <a href="{{ url_for('student_lesson_module', module_id=m.id) }}"
-                 class="btn btn-outline-primary btn-sm mt-2 mt-md-0">
-                <i class="bi bi-play-circle"></i> Xem bài học
+
+              <a href="/student/lesson/module/{{ m.id }}"
+                 class="btn btn-outline-primary btn-sm rounded-pill">
+                <i class="bi bi-play-circle"></i> Học ngay
               </a>
+
             </div>
             {% endfor %}
           {% else %}
-            <div class="list-group-item text-muted text-center py-3">Chưa có module nào được thêm.</div>
+            <div class="list-group-item text-center text-muted py-3">
+              Chưa có module nào trong khóa học.
+            </div>
           {% endif %}
         </div>
       </div>
 
-      <!-- 💡 Gợi ý khóa học liên quan -->
-      <div class="card mt-4 shadow-sm border-0">
+      <!-- RELATED COURSES -->
+      <div class="card shadow-sm border-0 glass-card mb-4 related-card-box">
         <div class="card-header bg-light fw-semibold">
           <i class="bi bi-lightbulb"></i> Gợi ý khóa học liên quan
         </div>
+
         <div class="card-body">
           <div class="row g-3">
             {% if related_courses %}
               {% for rc in related_courses %}
               <div class="col-md-6 col-lg-6">
-                <div class="card h-100 border-0 related-card">
+                <div class="card border-0 h-100 related-item">
                   <img src="{{ rc.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-                       onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png';"
-                       class="card-img-top" style="height:160px;object-fit:cover;border-radius:8px;">
+                       class="card-img-top related-thumb">
+
                   <div class="card-body p-2">
                     <h6 class="fw-semibold text-truncate">{{ rc.course_name }}</h6>
                     <p class="text-muted small mb-2">
                       {{ rc.teacher.full_name if rc.teacher else 'Giảng viên chưa xác định' }}
                     </p>
-                    <a href="/student/course/detail/{{ rc.id }}" class="btn btn-outline-primary btn-sm w-100">
+
+                    <a href="/student/course/detail/{{ rc.id }}"
+                       class="btn btn-outline-primary btn-sm w-100 rounded-pill">
                       <i class="bi bi-arrow-right-circle"></i> Xem chi tiết
                     </a>
                   </div>
@@ -95,83 +116,145 @@
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- 🎓 Thông tin bên phải -->
+    <!-- RIGHT SIDEBAR -->
     <div class="col-lg-4">
-      <div class="card shadow-sm border-0 mb-3">
+
+      <div class="card shadow-sm border-0 glass-card mb-3 sidebar-card">
         <div class="card-body">
-          {% if enrolled %}
-          <div class="alert alert-success small py-2 mb-3">
-            <i class="bi bi-check-circle"></i> Bạn đã đăng ký khóa học này.
+
+          {% if enrolled or purchased %}
+
+          <div class="alert alert-success small py-2 mb-3 rounded-pill text-center">
+            <i class="bi bi-check-circle"></i>
+            {% if purchased %}
+              Bạn đã mua khóa học này.
+            {% else %}
+              Bạn đã đăng ký khóa học này.
+            {% endif %}
           </div>
-          <a href="{{ url_for('student_course_progress', course_id=course.id) }}"
-             class="btn btn-success w-100 mb-2">
+
+          <a href="/student/course/progress/{{ course.id }}"
+             class="btn btn-success w-100 mb-2 rounded-pill">
             <i class="bi bi-play-circle"></i> Tiếp tục học
           </a>
-          <a href="{{ url_for('student_course_feedback', course_id=course.id) }}"
-             class="btn btn-outline-warning w-100">
+
+          <!-- ⭐ Xem đánh giá -->
+          <a href="/student/course/feedback/{{ course.id }}"
+             class="btn btn-outline-warning w-100 mb-2 rounded-pill">
             <i class="bi bi-star-half"></i> Xem đánh giá khóa học
           </a>
+
+          <!-- 📝 Gửi đánh giá -->
+          <!-- <a href="/student/course/feedback/{{ course.id }}#review-form"
+             class="btn btn-outline-primary w-100 rounded-pill">
+            <i class="bi bi-pencil-square"></i> Gửi đánh giá
+          </a> -->
+
           {% else %}
-          <form method="post" action="{{ url_for('student_course_enroll', course_id=course.id) }}">
-            <button class="btn btn-primary w-100">
-              <i class="bi bi-plus-circle"></i> Đăng ký khóa học
+
+          <!-- PRICE -->
+          <div class="text-center mb-3">
+            {% if course.discount_percent and course.discount_percent > 0 %}
+              <div class="fs-2 fw-bold text-danger">
+                {{ "{:,.0f}".format(course.final_price) }}₫
+              </div>
+              <div class="text-muted text-decoration-line-through">
+                {{ "{:,.0f}".format(course.price) }}₫
+              </div>
+            {% else %}
+              <div class="fs-2 fw-bold text-primary">
+                {{ "{:,.0f}".format(course.final_price) }}₫
+              </div>
+            {% endif %}
+          </div>
+
+          {% if course.final_price == 0 %}
+          <form method="post" action="/student/course/enroll/{{ course.id }}">
+            <button class="btn btn-primary w-100 rounded-pill">
+              <i class="bi bi-plus-circle"></i> Đăng ký miễn phí
             </button>
           </form>
+
+          {% else %}
+          <a href="/student/cart/add/{{ course.id }}"
+             class="btn btn-outline-primary w-100 mb-2 rounded-pill">
+            <i class="bi bi-cart-plus"></i> Thêm vào giỏ hàng
+          </a>
+
+          <form method="post" action="/student/course/enroll/{{ course.id }}">
+            <button class="btn btn-success w-100 rounded-pill">
+              <i class="bi bi-credit-card"></i> Mua ngay
+            </button>
+          </form>
+          {% endif %}
+
           {% endif %}
         </div>
       </div>
 
-      <!-- 📊 Thông tin chi tiết -->
-      <div class="card shadow-sm border-0">
+      <!-- INFO -->
+      <div class="card shadow-sm border-0 glass-card info-card">
         <div class="card-body">
-          <div class="fw-semibold mb-2">📊 Thông tin khóa học</div>
-          <ul class="list-unstyled small mb-0">
+          <h6 class="fw-semibold mb-3">📊 Thông tin khóa học</h6>
+
+          <ul class="list-unstyled small">
             <li><i class="bi bi-calendar-event"></i> Học kỳ: {{ course.semester or '—' }}</li>
             <li><i class="bi bi-people"></i> Sĩ số tối đa: {{ course.max_students or '—' }}</li>
             <li><i class="bi bi-person-check"></i> Đã đăng ký: {{ course.current_students or 0 }}</li>
-            <li><i class="bi bi-clock-history"></i> Thời gian: 
-              {{ course.start_date or '—' }} → {{ course.end_date or '—' }}
-            </li>
-            <li><i class="bi bi-award"></i> Trạng thái: 
-              <span class="badge bg-{{ 'success' if enrolled else 'secondary' }}">
+            <li>
+              <i class="bi bi-award"></i> Trạng thái:
+              <span class="badge bg-{{ 'success' if enrolled else 'secondary' }} rounded-pill">
                 {{ 'Đã ghi danh' if enrolled else 'Chưa đăng ký' }}
               </span>
             </li>
           </ul>
         </div>
       </div>
+
     </div>
   </div>
 </div>
 
-<!-- 🎨 Custom CSS -->
+<!-- CSS -->
 <style>
-  .card { border-radius: 10px; }
-  .related-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-  }
-  .related-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 22px rgba(0,0,0,0.12);
-  }
-  .btn-outline-warning {
-    border-color: #ffc107;
-    color: #b8860b;
-  }
-  .btn-outline-warning:hover {
-    background-color: #ffc107;
-    color: #212529;
-  }
-  .list-group-item {
-    background-color: transparent;
-    border-left: 3px solid transparent;
-    transition: 0.2s;
-  }
-  .list-group-item:hover {
-    background-color: #f8faff;
-    border-left: 3px solid #0d6efd;
-  }
+.fade-in { animation: fadeIn .5s ease; }
+@keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+
+.glass-card {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(14px);
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+.course-thumb { height: 260px; object-fit: cover; border-radius: 14px 14px 0 0; }
+
+.badge-discount {
+  position: absolute; top: 10px; left: 10px;
+  background: #dc3545; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.9rem;
+}
+.badge-status {
+  position: absolute; top: 10px; right: 10px;
+  background: #198754; padding: 6px 14px;
+  border-radius: 20px; font-size: 0.9rem;
+}
+
+.module-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px;
+  border-left: 4px solid transparent;
+  transition: .25s;
+}
+.module-item:hover {
+  background: #f3f7ff; border-left-color: #0d6efd;
+}
+
+.related-thumb { height: 150px; object-fit: cover; border-radius: 10px; }
+.related-item:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
 </style>
+
 {% endblock %}

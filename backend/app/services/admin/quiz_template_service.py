@@ -9,18 +9,25 @@ def get_all(db: Session):
 def get_by_id(db: Session, template_id: str):
     return db.query(QuizTemplate).filter(QuizTemplate.id == template_id).first()
 
-def create(db: Session, name, description, rules):
+
+# ===============================
+# 🔥 FIX: MUST ADD created_by
+# ===============================
+def create(db: Session, name, description, rules, created_by: str):
     qt = QuizTemplate(
         id=str(uuid.uuid4()),
         name=name,
         description=description,
         rules=rules,
+        created_by=created_by,       # 👈 FIX QUAN TRỌNG
+        is_public=0,                 # default
         created_at=datetime.utcnow()
     )
     db.add(qt)
     db.commit()
     db.refresh(qt)
     return qt
+
 
 def update(db: Session, template_id, name, description, rules):
     qt = get_by_id(db, template_id)

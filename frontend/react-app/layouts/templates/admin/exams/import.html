@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📥 Import câu hỏi</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f3f6fb;
+    }
+
+    .upload-box {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    .dropzone {
+      border: 2px dashed #6c8cff;
+      padding: 35px;
+      border-radius: 10px;
+      text-align: center;
+      background: #f8faff;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+
+    .dropzone:hover {
+      background: #eef4ff;
+      transform: scale(1.02);
+    }
+
+    /* Khi kéo file vào */
+    .dropzone.dragover {
+      background: #dde8ff;
+      border-color: #3b6bff;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      font-style: italic;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <h3 class="fw-bold text-primary mb-4 text-center">
+      <i class="bi bi-upload"></i> Import câu hỏi cho kỳ thi
+    </h3>
+
+    <div class="upload-box">
+
+      <!-- Form Upload -->
+      <form action="/admin/exams/{{ exam_id }}/import" method="post" enctype="multipart/form-data">
+
+        <label class="form-label fw-semibold">📄 Chọn file Excel hoặc CSV</label>
+
+        <label class="dropzone" id="dropzone">
+          <i class="bi bi-file-earmark-spreadsheet fs-1 text-primary"></i>
+          <p>Kéo thả file vào đây hoặc click để chọn file</p>
+          <input type="file" name="file" id="fileInput" accept=".xlsx,.csv" class="d-none" required>
+        </label>
+
+        <div id="fileName" class="file-name"></div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a href="/admin/exams/manage" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-cloud-arrow-up"></i> Tải lên
+          </button>
+        </div>
+
+      </form>
+
+      <hr class="my-4">
+
+      <h6 class="fw-bold">📘 Mẫu file Excel cần có:</h6>
+
+      <pre class="bg-light p-3 rounded small">
+question_text | option_a | option_b | option_c | option_d | correct
+Câu hỏi 1     | A1       | B1       | C1       | D1       | A
+Câu hỏi 2     | A2       | B2       | C2       | D2       | C
+      </pre>
+
+    </div>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById("dropzone");
+    const fileInput = document.getElementById("fileInput");
+    const fileName = document.getElementById("fileName");
+
+    dropzone.addEventListener("click", () => fileInput.click());
+
+    fileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) fileName.innerText = "Đã chọn: " + file.name;
+    });
+
+    // Drag & Drop
+    dropzone.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dropzone.classList.add("dragover");
+    });
+
+    dropzone.addEventListener("dragleave", () => {
+      dropzone.classList.remove("dragover");
+    });
+
+    dropzone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropzone.classList.remove("dragover");
+
+      const file = e.dataTransfer.files[0];
+      if (file) {
+        fileInput.files = e.dataTransfer.files;
+        fileName.innerText = "Đã chọn: " + file.name;
+      }
+    });
+  </script>
+
+</body>
+
+</html>

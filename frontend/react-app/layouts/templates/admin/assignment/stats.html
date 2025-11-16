@@ -3,59 +3,135 @@
 <head>
   <meta charset="UTF-8">
   <title>📈 Dashboard thống kê bài tập</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body class="bg-light p-4">
-  <div class="container">
-    <h3 class="text-primary fw-bold mb-4">📈 Dashboard Thống kê Bài tập</h3>
 
-    <!-- Thống kê tổng quan -->
-    <div class="row text-center mb-4">
-      <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Tổng bài tập</h6><h3>{{ global_stats.total_assignments }}</h3></div></div>
-      <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Lượt nộp</h6><h3 class="text-success">{{ global_stats.total_submissions }}</h3></div></div>
-      <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Đã chấm</h6><h3 class="text-info">{{ global_stats.graded_submissions }}</h3></div></div>
-      <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Điểm trung bình</h6><h3 class="text-warning">{{ global_stats.average_grade }}</h3></div></div>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { background: #f5f7fa; }
+    .stat-card {
+      border-radius: 14px;
+      padding: 22px;
+      color: white;
+      transition: 0.25s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    }
+    .table thead th { font-weight: bold; }
+  </style>
+</head>
+
+<body class="p-4">
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="text-primary fw-bold">📈 Dashboard Thống kê Bài tập</h3>
+    <a href="/admin/assignment/list" class="btn btn-secondary">⬅️ Quay lại</a>
+  </div>
+
+  <!-- TOP STATS -->
+  <div class="row g-4 text-center">
+
+    <!-- Tổng bài tập -->
+    <div class="col-md-3">
+      <div class="stat-card shadow-sm"
+           style="background: linear-gradient(135deg, #4e73df, #224abe);">
+        <div class="mb-2"><i class="bi bi-files fs-2"></i></div>
+        <h6 class="text-light">Tổng bài tập</h6>
+        <h3 class="fw-bold">{{ global_stats.total_assignments | default(0) }}</h3>
+      </div>
     </div>
 
-    <!-- Biểu đồ -->
-    <h5 class="mt-4">📘 Biểu đồ tỉ lệ chấm điểm</h5>
-    <canvas id="chartOverall" height="90"></canvas>
+    <!-- Lượt nộp -->
+    <div class="col-md-3">
+      <div class="stat-card shadow-sm"
+           style="background: linear-gradient(135deg, #1cc88a, #17a673);">
+        <div class="mb-2"><i class="bi bi-send-check fs-2"></i></div>
+        <h6 class="text-light">Lượt nộp</h6>
+        <h3 class="fw-bold">{{ global_stats.total_submissions | default(0) }}</h3>
+      </div>
+    </div>
 
-    <!-- Theo giảng viên -->
-    <h5 class="mt-5 text-primary">👨‍🏫 Thống kê theo giảng viên</h5>
-    <table class="table table-bordered table-hover">
+    <!-- Đã chấm -->
+    <div class="col-md-3">
+      <div class="stat-card shadow-sm"
+           style="background: linear-gradient(135deg, #36b9cc, #258ea6);">
+        <div class="mb-2"><i class="bi bi-check2-circle fs-2"></i></div>
+        <h6 class="text-light">Đã chấm</h6>
+        <h3 class="fw-bold">{{ global_stats.graded_submissions | default(0) }}</h3>
+      </div>
+    </div>
+
+    <!-- Điểm trung bình -->
+    <div class="col-md-3">
+      <div class="stat-card shadow-sm"
+           style="background: linear-gradient(135deg, #f6c23e, #dda20a);">
+        <div class="mb-2"><i class="bi bi-bar-chart fs-2"></i></div>
+        <h6 class="text-light">Điểm trung bình</h6>
+        <h3 class="fw-bold">{{ global_stats.average_grade | default(0) }}</h3>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BIỂU ĐỒ -->
+  <div class="card shadow-sm mt-5 p-4">
+    <h5 class="fw-bold text-primary mb-3">📘 Biểu đồ tỉ lệ chấm điểm</h5>
+    <canvas id="chartOverall" height="100"></canvas>
+  </div>
+
+  <!-- THEO GIẢNG VIÊN -->
+  <h5 class="mt-5 text-primary fw-bold">👨‍🏫 Thống kê theo giảng viên</h5>
+  <div class="card shadow-sm p-3">
+    <table class="table table-bordered table-hover align-middle">
       <thead class="table-primary text-center">
         <tr>
           <th>Giảng viên</th>
           <th>Khóa học</th>
           <th>Bài tập</th>
-          <th>Nộp</th>
-          <th>Trễ</th>
+          <th>Đã nộp</th>
+          <th>Nộp trễ</th>
           <th>Điểm TB</th>
         </tr>
       </thead>
       <tbody>
-        {% for t in teacher_stats %}
-          {% for c in t.data %}
-          <tr>
-            <td>{{ t.teacher_name }}</td>
-            <td>{{ c.course_name }}</td>
-            <td>{{ c.total_assignments }}</td>
-            <td>{{ c.total_submissions }}</td>
-            <td>{{ c.late_submissions }}</td>
-            <td>{{ c.average_grade }}</td>
-          </tr>
+
+        {% if teacher_stats and teacher_stats|length > 0 %}
+          {% for t in teacher_stats %}
+            {% if t.data and t.data|length > 0 %}
+              {% for c in t.data %}
+              <tr>
+                <td class="fw-semibold">{{ t.teacher_name | default("Không rõ") }}</td>
+                <td>{{ c.course_name | default("Không có") }}</td>
+                <td>{{ c.total_assignments | default(0) }}</td>
+                <td>{{ c.total_submissions | default(0) }}</td>
+                <td class="text-danger fw-bold">{{ c.late_submissions | default(0) }}</td>
+                <td class="text-success fw-bold">{{ c.average_grade | default(0) }}</td>
+              </tr>
+              {% endfor %}
+            {% endif %}
           {% endfor %}
         {% else %}
-          <tr><td colspan="6" class="text-center text-muted">Không có dữ liệu giảng viên.</td></tr>
-        {% endfor %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">
+              Không có dữ liệu giảng viên.
+            </td>
+          </tr>
+        {% endif %}
+
       </tbody>
     </table>
+  </div>
 
-    <!-- Theo sinh viên -->
-    <h5 class="mt-5 text-success">🎓 Thống kê nhanh sinh viên</h5>
-    <table class="table table-bordered table-striped">
+  <!-- THEO SINH VIÊN -->
+  <h5 class="mt-5 text-success fw-bold">🎓 Thống kê nhanh sinh viên</h5>
+  <div class="card shadow-sm p-3">
+    <table class="table table-bordered table-striped align-middle">
       <thead class="table-success text-center">
         <tr>
           <th>Sinh viên</th>
@@ -67,46 +143,52 @@
         </tr>
       </thead>
       <tbody>
-        {% for s in student_stats %}
-        <tr>
-          <td>{{ s.student_name }}</td>
-          <td>{{ s.data.total_assigned }}</td>
-          <td>{{ s.data.total_submitted }}</td>
-          <td>{{ s.data.graded }}</td>
-          <td>{{ s.data.late }}</td>
-          <td>{{ s.data.avg_grade }}</td>
-        </tr>
+
+        {% if student_stats and student_stats|length > 0 %}
+          {% for s in student_stats %}
+          <tr>
+            <td class="fw-semibold">{{ s.student_name | default("Không rõ") }}</td>
+            <td>{{ s.data.total_assigned | default(0) }}</td>
+            <td>{{ s.data.total_submitted | default(0) }}</td>
+            <td>{{ s.data.graded | default(0) }}</td>
+            <td class="text-danger fw-bold">{{ s.data.late | default(0) }}</td>
+            <td class="text-primary fw-bold">{{ s.data.avg_grade | default(0) }}</td>
+          </tr>
+          {% endfor %}
         {% else %}
-          <tr><td colspan="6" class="text-center text-muted">Không có dữ liệu sinh viên.</td></tr>
-        {% endfor %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">
+              Không có dữ liệu sinh viên.
+            </td>
+          </tr>
+        {% endif %}
+
       </tbody>
     </table>
   </div>
 
-  <!-- JS Chart: version clean syntax -->
-  <script>
-    // Gán biến từ template (dưới dạng chuỗi, sau đó parse thành số)
-    const graded = parseInt("{{ global_stats.graded_submissions }}") || 0;
-    const late = parseInt("{{ global_stats.late_submissions }}") || 0;
-    const total = parseInt("{{ global_stats.total_submissions }}") || 0;
-    const ungraded = Math.max(total - graded - late, 0);
+</div>
 
-    const ctx = document.getElementById("chartOverall");
-    new Chart(ctx, {
-      type: "doughnut",
-      data: {
-        labels: ["Đã chấm", "Nộp trễ", "Chưa chấm"],
-        datasets: [{
-          data: [graded, late, ungraded],
-          backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"],
-        }]
-      },
-      options: {
-        plugins: {
-          legend: { position: "bottom" },
-        }
-      }
-    });
-  </script>
+
+<!-- BIỂU ĐỒ DOUGHNUT -->
+<script>
+  const graded = parseInt("{{ global_stats.graded_submissions | default(0) }}") || 0;
+  const late = parseInt("{{ global_stats.late_submissions | default(0) }}") || 0;
+  const total = parseInt("{{ global_stats.total_submissions | default(0) }}") || 0;
+  const ungraded = Math.max(total - graded - late, 0);
+
+  new Chart(document.getElementById("chartOverall"), {
+    type: "doughnut",
+    data: {
+      labels: ["Đã chấm", "Nộp trễ", "Chưa chấm"],
+      datasets: [{
+        data: [graded, late, ungraded],
+        backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"]
+      }]
+    },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+</script>
+
 </body>
 </html>

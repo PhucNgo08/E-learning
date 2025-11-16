@@ -1,34 +1,109 @@
 {% extends "layout_student.html" %}
 {% block title %}📊 Kết quả bài nộp{% endblock %}
 {% block content %}
+
 <div class="container py-4 fade-in">
-  <h3 class="fw-bold mb-3"><i class="bi bi-clipboard-check me-2"></i>{{ page_title }}</h3>
+
+  <h3 class="fw-bold mb-3">
+    <i class="bi bi-clipboard-check me-2"></i>{{ page_title }}
+  </h3>
 
   {% if submissions %}
   <div class="row">
+
     {% for s in submissions %}
+    {% set a = s.assignment %}
+
     <div class="col-md-6 col-lg-4 mb-4">
       <div class="card shadow-sm h-100 border-0">
+
+        <!-- ==================== CARD BODY ==================== -->
         <div class="card-body">
-          <h5 class="card-title">{{ s.assignment_title }}</h5>
-          <p class="text-muted mb-2"><i class="bi bi-clock me-1"></i>Nộp: {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}</p>
-          {% if s.grade %}
-          <p><strong>Điểm:</strong> {{ s.grade }}/{{ s.total_points }}</p>
+
+          <!-- Tên bài tập -->
+          <h5 class="card-title text-primary fw-bold">
+            {{ a.title }}
+          </h5>
+
+          <!-- Thời gian nộp -->
+          <p class="text-muted mb-2">
+            <i class="bi bi-clock me-1"></i>
+            Nộp lúc:
+            {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}
+          </p>
+
+          <!-- ==================== TRẠNG THÁI ==================== -->
+          <p class="mb-1">
+            <strong>Trạng thái:</strong>
+            {% if s.status == 'submitted' %}
+              <span class="badge bg-info">Đã nộp</span>
+            {% elif s.status == 'late' %}
+              <span class="badge bg-warning text-dark">Nộp trễ</span>
+            {% elif s.status == 'graded' %}
+              <span class="badge bg-success">Đã chấm</span>
+            {% elif s.status == 'resubmitted' %}
+              <span class="badge bg-primary">Đã nộp lại</span>
+            {% else %}
+              <span class="badge bg-secondary">Không xác định</span>
+            {% endif %}
+          </p>
+
+          <!-- ==================== ĐIỂM ==================== -->
+          {% if s.grade is not none %}
+            <p class="mb-1">
+              <strong>Điểm:</strong>
+              <span class="text-success fw-bold">{{ s.grade }}</span>
+              / {{ a.total_points or 10 }}
+            </p>
+
+            {% if s.feedback %}
+              <p class="small text-muted mb-2">
+                <i class="bi bi-chat-left-quote me-1"></i> {{ s.feedback }}
+              </p>
+            {% endif %}
           {% else %}
-          <p><em>Chưa có điểm</em></p>
+            <p class="text-muted"><em>Chưa có điểm</em></p>
           {% endif %}
-          <a href="/student/assignment/submission/{{ s.id }}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-eye"></i> Xem chi tiết
+
+          <!-- ==================== FILE ĐÃ NỘP ==================== -->
+          <p class="mt-2 mb-2">
+            <strong>File đã nộp:</strong><br>
+            {% if s.files %}
+              <ul class="list-unstyled small">
+                {% for f in s.files %}
+                <li>
+                  <i class="bi bi-file-earmark me-1"></i>
+                  <a href="/student/assignment/download/{{ f.id }}">
+                    {{ f.file_name }}
+                  </a>
+                </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <span class="text-muted">Không có file</span>
+            {% endif %}
+          </p>
+
+          <!-- Xem chi tiết -->
+          <a href="/student/assignment/submission/{{ s.id }}"
+             class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-eye"></i> Chi tiết
           </a>
-        </div>
+
+        </div> <!-- end card-body -->
+
       </div>
     </div>
     {% endfor %}
+
   </div>
+
   {% else %}
     <div class="alert alert-info text-center">
       <i class="bi bi-info-circle me-2"></i>Chưa có bài nộp nào.
     </div>
   {% endif %}
+
 </div>
+
 {% endblock %}

@@ -1,66 +1,122 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>✏️ Cập nhật ghi danh</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
   <style>
     body {
-      background: #f3f7ff;
+      background: #eef4ff;
       font-family: "Inter", "Segoe UI", sans-serif;
     }
+
     .card {
-      border-radius: 14px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    h3 {
+      font-weight: 700;
+      color: #0d47a1;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #344767;
     }
   </style>
 </head>
+
 <body class="d-flex align-items-center justify-content-center min-vh-100">
 
-  <div class="card p-4" style="max-width:650px;width:100%;">
-    <h3 class="text-center text-primary mb-4">✏️ Cập nhật thông tin ghi danh</h3>
+  <div class="card p-4" style="max-width:700px;width:100%;">
+
+    <h3 class="text-center mb-4">
+      ✏️ Cập nhật thông tin ghi danh
+    </h3>
 
     <form method="post" action="/admin/enrollments/update/{{ enrollment.id }}">
+
+      <!-- Học viên -->
       <div class="mb-3">
-        <label class="form-label">👤 Học viên</label>
-        <input type="text" class="form-control" value="{{ enrollment.user.full_name if enrollment.user else 'Không rõ' }}" readonly>
+        <label class="form-label info-label">👤 Học viên</label>
+        <input type="text" class="form-control"
+          value="{{ enrollment.user.full_name if enrollment.user else 'Không rõ' }}" readonly>
       </div>
 
+      <!-- Lớp học -->
       <div class="mb-3">
-        <label class="form-label">🏫 Lớp học</label>
-        <input type="text" class="form-control" value="{{ enrollment.class_.class_name if enrollment.class_ else 'Không rõ' }}" readonly>
+        <label class="form-label info-label">🏫 Lớp học</label>
+        <input type="text" class="form-control"
+          value="{{ enrollment.clazz.class_name if enrollment.clazz else 'Không rõ' }}" readonly>
       </div>
 
+      <!-- Loại ghi danh -->
       <div class="mb-3">
-        <label class="form-label">🔖 Loại ghi danh</label>
-        <input type="text" class="form-control" value="{{ enrollment.enrollment_type }}" readonly>
+        <label class="form-label info-label">🔖 Loại ghi danh</label>
+        <input type="text" class="form-control"
+          value="{{ enrollment.enrollment_type }}" readonly>
       </div>
 
+      <!-- Trạng thái hiện tại -->
       <div class="mb-3">
-        <label class="form-label">⚙️ Trạng thái hiện tại</label>
-        <input type="text" class="form-control" value="{{ enrollment.enrollment_status }}" readonly>
+        <label class="form-label info-label">⚙️ Trạng thái hiện tại</label>
+        <input type="text" class="form-control"
+          value="{{ enrollment.enrollment_status }}" readonly>
       </div>
 
+      <!-- Update trạng thái -->
       <div class="mb-3">
-        <label class="form-label">🔁 Cập nhật trạng thái</label>
+        <label class="form-label info-label">🔁 Cập nhật trạng thái</label>
         <select name="new_status" class="form-select" required>
-          <option value="approved">✔️ Duyệt</option>
-          <option value="dropped">❌ Hủy</option>
-          <option value="completed">🏁 Hoàn thành</option>
+          <option value="">-- Chọn trạng thái --</option>
+
+          <option value="approved"
+            {% if enrollment.enrollment_status == 'approved' %}selected{% endif %}>
+            ✔️ Duyệt
+          </option>
+
+          <option value="active"
+            {% if enrollment.enrollment_status == 'active' %}selected{% endif %}>
+            🚀 Kích hoạt học
+          </option>
+
+          <option value="dropped"
+            {% if enrollment.enrollment_status == 'dropped' %}selected{% endif %}>
+            ❌ Hủy
+          </option>
+
+          <option value="completed"
+            {% if enrollment.enrollment_status == 'completed' %}selected{% endif %}>
+            🏁 Hoàn thành
+          </option>
+
+          <option value="rejected"
+            {% if enrollment.enrollment_status == 'rejected' %}selected{% endif %}>
+            ⛔ Từ chối
+          </option>
+
         </select>
       </div>
 
       <div class="text-end mt-4">
-        <a href="/admin/enrollments/manage" class="btn btn-secondary">
+        <a href="/admin/enrollments/manage" class="btn btn-secondary px-4">
           <i class="bi bi-arrow-left-circle"></i> Quay lại
         </a>
-        <button type="submit" class="btn btn-primary">
+
+        <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-save2"></i> Lưu thay đổi
         </button>
       </div>
+
     </form>
+
   </div>
 
 </body>
+
 </html>

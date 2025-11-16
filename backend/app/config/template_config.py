@@ -3,64 +3,59 @@ from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
 import os
 
-# ==========================================================
-# 🌍 TEMPLATE CONFIGURATION - DÙNG CHUNG CHO ADMIN / TEACHER / STUDENT / AUTH
-# ==========================================================
 
-# ✅ BASE_DIR: Thư mục gốc của dự án
-BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+# ==========================================================
+# 📌 1) ĐỊNH NGHĨA BASE_DIR CHÍNH XÁC 100%
+# ==========================================================
+# File này nằm tại:
+# backend/app/config/template_config.py
+# Project root cần là:
+# KHoaHocOnline/ (nằm trên backend)
 
-# ✅ ROOT_TEMPLATE_DIR: chứa toàn bộ template HTML
+BASE_DIR = Path(__file__).resolve().parents[3]   # LÊN 3 CẤP: config → app → backend → KHoaHocOnline
+
+
+# ==========================================================
+# 📌 2) ĐƯỜNG DẪN ĐẾN TEMPLATE ROOT
+# ==========================================================
 ROOT_TEMPLATE_DIR = BASE_DIR / "frontend" / "react-app" / "layouts" / "templates"
 
 
 # ==========================================================
-# 🧩 HÀM LOG & KIỂM TRA THƯ MỤC TEMPLATE
+# 📌 3) LOG KIỂM TRA – chỉ chạy 1 lần
 # ==========================================================
 def log_template_config():
-    print("=" * 90)
+    print("=" * 80)
     print("📁 [TEMPLATE CONFIG] Root template dir:", ROOT_TEMPLATE_DIR)
-    print("📂 Template directory exists:", ROOT_TEMPLATE_DIR.exists())
-    print("📂 Exists student/course/list.html:",
-          (ROOT_TEMPLATE_DIR / "student" / "course" / "list.html").exists())
-
-    # 🧩 Kiểm tra các thư mục con bắt buộc
-    EXPECTED_DIRS = ["admin", "teacher", "student", "auth"]
-    missing_dirs = [d for d in EXPECTED_DIRS if not (ROOT_TEMPLATE_DIR / d).exists()]
-
-    if missing_dirs:
-        print("⚠️ Thiếu các thư mục template con:", ", ".join(missing_dirs))
-    else:
-        print("✅ Tất cả thư mục template con đầy đủ:", ", ".join(EXPECTED_DIRS))
-    print("=" * 90)
+    print("📂 Exists:", ROOT_TEMPLATE_DIR.exists())
+    print("📂 Test student/discussion/reply_block.html:",
+          (ROOT_TEMPLATE_DIR / "student" / "discussion" / "reply_block.html").exists())
+    print("=" * 80)
 
 
-# ✅ In log chỉ 1 lần (tránh spam khi reload)
 if not os.environ.get("TEMPLATE_LOGGED"):
     os.environ["TEMPLATE_LOGGED"] = "1"
     log_template_config()
 
 
 # ==========================================================
-# 🧱 KHỞI TẠO TEMPLATE CHO TỪNG NHÓM (Admin / Teacher / Student / Auth / Root)
+# 📌 4) KHỞI TẠO TEMPLATE ENGINE (Admin / Teacher / Student / Auth / Root)
 # ==========================================================
 templates = {
     "admin": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "admin")),
     "teacher": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "teacher")),
     "student": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "student")),
     "auth": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "auth")),
-    "root": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR)),  # cho trang index
+    "root": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR)),
 }
 
 
 # ==========================================================
-# 🌟 BIẾN TOÀN CỤC DÙNG CHUNG
+# 📌 5) GLOBAL VARIABLES DÙNG CHO MỌI TEMPLATE
 # ==========================================================
 for name, tpl in templates.items():
     tpl.env.globals.update({
-        # ✅ now() → {{ now().strftime('%H:%M - %d/%m/%Y') }}
         "now": lambda: datetime.utcnow() + timedelta(hours=7),
-        # ✅ year → {{ year }}
         "year": (datetime.utcnow() + timedelta(hours=7)).year,
         "app_name": f"E-Learning Platform ({name.capitalize()})",
         "version": "1.0.0",
@@ -70,10 +65,9 @@ for name, tpl in templates.items():
 
 
 # ==========================================================
-# 🧮 FILTER DÙNG CHUNG
+# 📌 6) FILTER CHUNG: filesize, datetime, date_short
 # ==========================================================
 def filesize_fmt(value: int):
-    """Định dạng kích thước file (B, KB, MB, GB)."""
     if not value:
         return "0 B"
     for unit in ["B", "KB", "MB", "GB", "TB"]:
@@ -84,20 +78,18 @@ def filesize_fmt(value: int):
 
 
 def datetime_fmt(value: datetime):
-    """Định dạng ngày giờ theo múi giờ VN (UTC+7)."""
     if not value:
         return ""
     return (value + timedelta(hours=7)).strftime("%H:%M - %d/%m/%Y")
 
 
 def date_short(value: datetime):
-    """Định dạng ngày ngắn gọn (dd/mm/yyyy)."""
     if not value:
         return ""
     return (value + timedelta(hours=7)).strftime("%d/%m/%Y")
 
 
-# Đăng ký filter cho tất cả template
+# Đăng ký filter
 for tpl in templates.values():
     tpl.env.filters["filesize"] = filesize_fmt
     tpl.env.filters["datetime"] = datetime_fmt
@@ -105,24 +97,32 @@ for tpl in templates.values():
 
 
 # ==========================================================
-# 🧭 HÀM TIỆN LỢI: TỰ CHỌN TEMPLATE THEO PREFIX ROUTE
+# 📌 7) FILTER todatetime (parse ISO string → datetime)
+# ==========================================================
+def todatetime(value):
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", ""))
+    except Exception:
+        return value
+
+
+for tpl in templates.values():
+    tpl.env.filters["todatetime"] = todatetime
+
+
+# ==========================================================
+# 📌 8) HÀM TIỆN LỢI CHỌN TEMPLATE THEO PREFIX
 # ==========================================================
 def get_template_by_path(path: str) -> Jinja2Templates:
-    """
-    Trả về template phù hợp theo URL.
-    - /admin/...   → templates["admin"]
-    - /teacher/... → templates["teacher"]
-    - /student/... → templates["student"]
-    - /auth/...    → templates["auth"]
-    - /            → templates["root"]
-    """
     if path.startswith("/admin"):
         return templates["admin"]
-    elif path.startswith("/teacher"):
+    if path.startswith("/teacher"):
         return templates["teacher"]
-    elif path.startswith("/student"):
+    if path.startswith("/student"):
         return templates["student"]
-    elif path.startswith("/auth"):
+    if path.startswith("/auth"):
         return templates["auth"]
     return templates["root"]
 

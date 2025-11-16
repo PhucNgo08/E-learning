@@ -3,19 +3,35 @@
 
 {% block content %}
 <div class="container py-5 text-center fade-in">
-  <i class="bi bi-exclamation-triangle text-danger display-4 mb-3"></i>
-  <h4 class="fw-bold text-danger mb-2">Đã xảy ra lỗi khi tải dữ liệu bài kiểm tra</h4>
+
+  <!-- Icon -->
+  <div class="mb-3">
+    <i class="bi bi-exclamation-octagon text-danger display-4"></i>
+  </div>
+
+  <!-- Title -->
+  <h4 class="fw-bold text-danger mb-2">
+    Đã xảy ra lỗi khi tải dữ liệu bài kiểm tra
+  </h4>
+
+  <!-- Description -->
   <p class="text-muted mb-4">
-    Có thể do kết nối mạng, thời gian làm bài đã hết hạn hoặc lỗi hệ thống.  
+    Có thể do kết nối mạng, bài kiểm tra đã hết thời gian làm hoặc sự cố hệ thống.<br>
     Vui lòng thử lại sau vài phút.
   </p>
-  <div>
-    <a href="/student/quiz" class="btn btn-outline-primary me-2">
-      <i class="bi bi-arrow-left"></i> Quay lại danh sách bài kiểm tra
+
+  <!-- Buttons -->
+  <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+
+    <a href="/student/quiz" class="btn btn-outline-primary px-4 shadow-sm">
+      <i class="bi bi-arrow-left"></i> Quay lại danh sách
     </a>
-    <a href="/student/dashboard" class="btn btn-secondary">
+
+    <a href="/student/dashboard" class="btn btn-secondary px-4 shadow-sm">
       <i class="bi bi-house"></i> Trang chính
     </a>
+
   </div>
+
 </div>
 {% endblock %}

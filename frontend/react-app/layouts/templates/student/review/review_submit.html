@@ -3,23 +3,28 @@
 
 {% block content %}
 <div class="container py-4">
+
   <h4 class="fw-bold text-primary mb-3">
-    <i class="bi bi-pencil-square"></i> Đánh giá: {{ course.title }}
+    <i class="bi bi-pencil-square"></i> Đánh giá: {{ course.course_name }}
   </h4>
 
   <form method="post" action="/student/review/submit/{{ course.id }}">
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body">
-        <h6 class="fw-semibold mb-3 text-secondary">Đánh giá nội dung khoá học</h6>
+
+        <h6 class="fw-semibold mb-3 text-secondary">Đánh giá nội dung khóa học</h6>
+
         <div class="row mb-3">
           <div class="col-md-4">
             <label class="form-label">⭐ Nội dung</label>
             <input type="number" class="form-control" name="rating_content" min="1" max="5" required>
           </div>
+
           <div class="col-md-4">
             <label class="form-label">👨‍🏫 Giảng viên</label>
             <input type="number" class="form-control" name="rating_teacher" min="1" max="5" required>
           </div>
+
           <div class="col-md-4">
             <label class="form-label">🤝 Hỗ trợ</label>
             <input type="number" class="form-control" name="rating_support" min="1" max="5" required>
@@ -44,8 +49,10 @@
         <button type="submit" class="btn btn-primary px-4">
           <i class="bi bi-send-fill"></i> Gửi đánh giá
         </button>
+
       </div>
     </div>
   </form>
+
 </div>
 {% endblock %}

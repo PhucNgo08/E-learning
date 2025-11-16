@@ -2,7 +2,7 @@ from fastapi import (
     APIRouter, Request, Depends, Form, HTTPException, UploadFile, File
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 from uuid import uuid4
 from pathlib import Path
@@ -70,7 +70,13 @@ def list_lessons(
     templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
         "lessons/list.html",
-        {"request": request, "lessons": lessons, "module": module, "course": course, "teacher_name": current_teacher.full_name},
+        {
+            "request": request,
+            "lessons": lessons,
+            "module": module,
+            "course": course,
+            "teacher_name": current_teacher.full_name
+        },
     )
 
 
@@ -83,7 +89,6 @@ def list_all_lessons(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị toàn bộ bài học của giáo viên."""
     teacher_id = current_teacher.id
     lessons = (
         db.query(Lesson)
@@ -102,7 +107,7 @@ def list_all_lessons(
 
 
 # ======================================================
-# ➕ 3️⃣ Tạo bài học (chung hoặc theo module)
+# ➕ 3️⃣ Tạo bài học (GENERAL)
 # ======================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_lesson_general(
@@ -110,7 +115,6 @@ def create_lesson_general(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Trang tạo bài học chung (chưa chọn module)."""
     teacher_id = current_teacher.id
     modules = (
         db.query(Module)
@@ -127,6 +131,9 @@ def create_lesson_general(
     )
 
 
+# ======================================================
+# ➕ 3.1 Tạo bài học theo module
+# ======================================================
 @router.get("/create/{module_id}", response_class=HTMLResponse)
 def create_lesson_page(
     module_id: str,
@@ -134,7 +141,6 @@ def create_lesson_page(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị form tạo bài học."""
     teacher_id = current_teacher.id
     module = db.query(Module).filter(Module.id == module_id).first()
     if not module:
@@ -153,6 +159,9 @@ def create_lesson_page(
     )
 
 
+# ======================================================
+# ➕ CREATE POST
+# ======================================================
 @router.post("/create/{module_id}")
 async def create_lesson(
     module_id: str,
@@ -160,32 +169,49 @@ async def create_lesson(
     current_teacher=Depends(get_current_teacher),
     title: str = Form(...),
     description: str = Form(""),
+    content_type: str = Form("video"),
     video_url: str = Form(""),
     document_url: str = Form(""),
+    is_published: str = Form("off"),
     thumbnail: UploadFile | None = File(None)
 ):
-    """Xử lý tạo bài học."""
     teacher_id = current_teacher.id
     module = db.query(Module).filter(Module.id == module_id).first()
     if not module:
         raise HTTPException(status_code=404, detail="Không tìm thấy module.")
 
+    # check course ownership
     course = db.query(Course).filter(
         Course.id == module.course_id, Course.teacher_id == teacher_id
     ).first()
     if not course:
-        raise HTTPException(status_code=403, detail="Bạn không có quyền tạo bài học trong module này.")
+        raise HTTPException(status_code=403, detail="Bạn không có quyền tạo bài học.")
 
+    # validate content
+    if not (video_url.strip() or document_url.strip() or thumbnail):
+        raise HTTPException(status_code=400, detail="Cần ít nhất 1 nội dung (video/tài liệu/ảnh).")
+
+    # auto lesson number
     next_number = db.query(Lesson).filter(Lesson.module_id == module_id).count() + 1
 
+    # validate enum
+    valid_types = ["video", "document", "quiz", "assignment"]
+    if content_type not in valid_types:
+        content_type = "document"
+
+    publish_flag = True if is_published in ["1", "true", "True", "on"] else False
+
+    # handle thumbnail
     thumbnail_path = None
     if thumbnail and thumbnail.filename:
         upload_dir = BASE_DIR / "uploads" / "lessons"
         upload_dir.mkdir(parents=True, exist_ok=True)
+
         filename = f"{uuid4()}_{thumbnail.filename}"
         file_path = upload_dir / filename
         with open(file_path, "wb") as f:
             f.write(await thumbnail.read())
+
         thumbnail_path = f"/uploads/lessons/{filename}"
 
     lesson = Lesson(
@@ -194,20 +220,23 @@ async def create_lesson(
         lesson_number=next_number,
         title=title.strip(),
         description=description.strip(),
+        content_type=content_type,
         video_url=video_url.strip() or None,
         document_url=document_url.strip() or None,
         thumbnail_url=thumbnail_path,
-        created_at=datetime.now()
+        is_published=publish_flag,
+        created_at=datetime.utcnow()
     )
 
     db.add(lesson)
     db.commit()
     db.refresh(lesson)
+
     return RedirectResponse(f"/teacher/lessons/list/{module_id}", status_code=303)
 
 
 # ======================================================
-# ✏️ 4️⃣ Sửa bài học
+# ✏️ 4️⃣ EDIT PAGE
 # ======================================================
 @router.get("/edit/{lesson_id}", response_class=HTMLResponse)
 def edit_lesson_page(
@@ -216,24 +245,34 @@ def edit_lesson_page(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    lesson = (
+        db.query(Lesson)
+        .options(joinedload(Lesson.module).joinedload(Module.course))
+        .filter(Lesson.id == lesson_id)
+        .first()
+    )
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học.")
 
-    module = db.query(Module).filter(Module.id == lesson.module_id).first()
-    course = db.query(Course).filter(
-        Course.id == module.course_id, Course.teacher_id == current_teacher.id
-    ).first()
-    if not course:
+    if lesson.module.course.teacher_id != current_teacher.id:
         raise HTTPException(status_code=403, detail="Bạn không có quyền sửa bài học này.")
 
     templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
         "lessons/edit.html",
-        {"request": request, "lesson": lesson, "module": module, "course": course, "teacher_name": current_teacher.full_name},
+        {
+            "request": request,
+            "lesson": lesson,
+            "module": lesson.module,
+            "course": lesson.module.course,
+            "teacher_name": current_teacher.full_name,
+        },
     )
 
 
+# ======================================================
+# ✏️ 4️⃣ EDIT POST (FULL FIX)
+# ======================================================
 @router.post("/edit/{lesson_id}")
 async def edit_lesson(
     lesson_id: str,
@@ -241,43 +280,67 @@ async def edit_lesson(
     current_teacher=Depends(get_current_teacher),
     title: str = Form(...),
     description: str = Form(""),
+    content_type: str = Form("video"),
     video_url: str = Form(""),
     document_url: str = Form(""),
+    is_published: str = Form("off"),
     thumbnail: UploadFile | None = File(None)
 ):
-    """Xử lý chỉnh sửa bài học."""
-    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+
+    lesson = (
+        db.query(Lesson)
+        .options(joinedload(Lesson.module).joinedload(Module.course))
+        .filter(Lesson.id == lesson_id)
+        .first()
+    )
+
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học.")
 
-    module = db.query(Module).filter(Module.id == lesson.module_id).first()
-    course = db.query(Course).filter(
-        Course.id == module.course_id, Course.teacher_id == current_teacher.id
-    ).first()
-    if not course:
+    if lesson.module.course.teacher_id != current_teacher.id:
         raise HTTPException(status_code=403, detail="Bạn không có quyền chỉnh sửa bài học này.")
 
+    # validate content type ENUM
+    valid_types = ["video", "document", "quiz", "assignment"]
+    if content_type not in valid_types:
+        content_type = lesson.content_type or "document"
+
+    publish_flag = True if is_published in ["1", "true", "True", "on"] else False
+
+    # validate content minimal
+    if not (video_url.strip() or document_url.strip() or thumbnail):
+        raise HTTPException(status_code=400, detail="Cần ít nhất 1 nội dung (video/tài liệu/ảnh).")
+
+    # update fields
     lesson.title = title.strip()
     lesson.description = description.strip()
+    lesson.content_type = content_type
     lesson.video_url = video_url.strip() or None
     lesson.document_url = document_url.strip() or None
+    lesson.is_published = publish_flag
+    lesson.updated_at = datetime.utcnow()
 
+    # upload thumbnail
     if thumbnail and thumbnail.filename:
         upload_dir = BASE_DIR / "uploads" / "lessons"
         upload_dir.mkdir(parents=True, exist_ok=True)
+
         filename = f"{uuid4()}_{thumbnail.filename}"
         file_path = upload_dir / filename
+
         with open(file_path, "wb") as f:
             f.write(await thumbnail.read())
+
         lesson.thumbnail_url = f"/uploads/lessons/{filename}"
 
     db.commit()
     db.refresh(lesson)
+
     return RedirectResponse(f"/teacher/lessons/list/{lesson.module_id}", status_code=303)
 
 
 # ======================================================
-# ❌ 5️⃣ Xóa bài học
+# ❌ 5️⃣ Delete Page
 # ======================================================
 @router.get("/delete/{lesson_id}", response_class=HTMLResponse)
 def delete_lesson_page(
@@ -286,31 +349,40 @@ def delete_lesson_page(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    lesson = (
+        db.query(Lesson)
+        .options(joinedload(Lesson.module).joinedload(Module.course))
+        .filter(Lesson.id == lesson_id)
+        .first()
+    )
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học.")
 
-    module = db.query(Module).filter(Module.id == lesson.module_id).first()
-    course = db.query(Course).filter(
-        Course.id == module.course_id, Course.teacher_id == current_teacher.id
-    ).first()
-    if not course:
+    if lesson.module.course.teacher_id != current_teacher.id:
         raise HTTPException(status_code=403, detail="Bạn không có quyền xóa bài học này.")
 
     templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
         "lessons/delete.html",
-        {"request": request, "lesson": lesson, "module": module, "course": course, "teacher_name": current_teacher.full_name},
+        {
+            "request": request,
+            "lesson": lesson,
+            "module": lesson.module,
+            "course": lesson.module.course,
+            "teacher_name": current_teacher.full_name
+        },
     )
 
 
+# ======================================================
+# ❌ 5️⃣ Delete POST
+# ======================================================
 @router.post("/delete/{lesson_id}")
 def delete_lesson(
     lesson_id: str,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Xử lý xóa bài học."""
     lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
     if not lesson:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài học.")
@@ -319,6 +391,7 @@ def delete_lesson(
     course = db.query(Course).filter(
         Course.id == module.course_id, Course.teacher_id == current_teacher.id
     ).first()
+
     if not course:
         raise HTTPException(status_code=403, detail="Bạn không có quyền xóa bài học này.")
 

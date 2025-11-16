@@ -1,75 +1,93 @@
 """
-==========================================================
-🎓 ROUTER: Student - Course
-Xử lý toàn bộ chức năng khóa học dành cho học viên
-Hoàn thiện 100% (Danh sách, Đăng ký, Chi tiết, Tiến độ, Đánh giá, Gợi ý)
-==========================================================
+==============================================================
+🎓 ROUTER: Student - Course (PRODUCTION 2025 - FINAL 100%)
+Tương thích FULL course_service (discount, user_courses, cart_items)
+==============================================================
 """
 
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette import status
 from sqlalchemy.orm import Session
-from datetime import datetime
 import traceback
 
-# === Import Database & Service ===
 from app.database.connection import get_db
 from app.services import course_service
-
-# === Import Models cần dùng ===
-from app.models.course import Course
-from app.models.enrollment import Enrollment
-
-# === Import template động ===
 from app.config.template_config import templates
 
+router = APIRouter(
+    prefix="/student/course",
+    tags=["Student - Course"]
+)
 
 # =====================================================
-# ⚙️ Cấu hình Router
+# 📚 1) Danh sách khóa học
 # =====================================================
-router = APIRouter(prefix="/student/course", tags=["Student - Course"])
-
-
-# =====================================================
-# 📚 1️⃣ Danh sách khóa học đang mở
-# =====================================================
-@router.get("/", response_class=HTMLResponse)
-async def list_courses(request: Request, db: Session = Depends(get_db), q: str = None):
-    """Hiển thị danh sách khóa học có thể đăng ký"""
+@router.get("/", response_class=HTMLResponse, name="student_course_list")
+async def list_courses(
+    request: Request,
+    db: Session = Depends(get_db),
+    q: str = None
+):
     try:
         student_id = request.session.get("user_id")
         if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse("/auth/login", 302)
 
-        courses = course_service.get_all_courses(db, role="student", search=q)
+        # Lấy tất cả khóa học (public/published)
+        courses = course_service.get_all_courses(
+            db=db,
+            user_id=student_id,
+            role="student",
+            search=q
+        )
+
+        enrolled_ids = course_service.get_enrolled_course_ids(db, student_id)
+
+        purchased_ids = {
+            uc.course_id
+            for uc in db.query(course_service.UserCourse)
+            .filter_by(user_id=student_id)
+            .all()
+        }
+
         return templates["student"].TemplateResponse(
             "course/list.html",
             {
                 "request": request,
                 "courses": courses,
+                "enrolled_course_ids": enrolled_ids,
+                "purchased_ids": purchased_ids,
+                "search_query": q or "",
                 "page_title": "🎓 Danh sách khóa học",
                 "active_page": "courses",
-                "search_query": q or "",
             },
         )
+
     except Exception as e:
-        print("❌ [list_courses] Lỗi:", e)
+        print("[Student List] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h3>Lỗi khi tải danh sách khóa học.</h3>", status_code=500)
+        return HTMLResponse("Lỗi tải danh sách.", status_code=500)
 
 
 # =====================================================
-# 🎓 2️⃣ Danh sách khóa học đã đăng ký
+# 🎓 2) Khóa học đã đăng ký
 # =====================================================
-@router.get("/enrolled", response_class=HTMLResponse)
+@router.get("/enrolled", response_class=HTMLResponse, name="student_course_enrolled")
 async def enrolled_courses(request: Request, db: Session = Depends(get_db)):
-    """Hiển thị danh sách khóa học mà học viên đã ghi danh"""
+
     student_id = request.session.get("user_id")
     if not student_id:
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+        return RedirectResponse("/auth/login", 302)
 
-    enrollments = course_service.get_enrolled_courses(db, student_id)
+    # Lấy enrollments có join luôn course
+    enrollments = (
+        db.query(course_service.Enrollment)
+        .join(course_service.Course, course_service.Enrollment.course_id == course_service.Course.id)
+        .filter(course_service.Enrollment.user_id == student_id)
+        .all()
+    )
+
     return templates["student"].TemplateResponse(
         "course/enrolled_courses.html",
         {
@@ -82,30 +100,38 @@ async def enrolled_courses(request: Request, db: Session = Depends(get_db)):
 
 
 # =====================================================
-# 📘 3️⃣ Chi tiết khóa học + Gợi ý liên quan
+# 📘 3) Chi tiết khóa học
 # =====================================================
 @router.get("/detail/{course_id}", response_class=HTMLResponse, name="student_course_detail")
 async def course_detail(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Hiển thị chi tiết khóa học và gợi ý khóa học liên quan"""
+
     try:
         student_id = request.session.get("user_id")
         if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse("/auth/login", 302)
 
-        course = course_service.get_course_detail(db, course_id, role="student", user_id=student_id)
+        # Lấy chi tiết course
+        course = course_service.get_course_detail(
+            db=db,
+            course_id=course_id,
+            role="student",
+            user_id=student_id
+        )
+
         if not course:
             return templates["student"].TemplateResponse(
                 "error.html",
-                {"request": request, "message": "❌ Không tìm thấy khóa học."},
+                {"request": request, "message": "❌ Không tìm thấy khóa học hoặc bạn không có quyền xem."},
                 status_code=404,
             )
 
-        # ✅ Lấy danh sách khóa học liên quan
-        related_courses = course_service.get_related_courses(db, course_id)
-
         teacher = course.teacher
         modules = course.modules
+        related = course_service.get_related_courses(db, course_id)
+
         enrolled = course_service.is_student_enrolled(db, student_id, course_id)
+        purchased = course_service.is_course_purchased(db, student_id, course_id)
+        in_cart = course_service.is_in_cart(db, student_id, course_id)
 
         return templates["student"].TemplateResponse(
             "course/detail.html",
@@ -114,90 +140,97 @@ async def course_detail(request: Request, course_id: str, db: Session = Depends(
                 "course": course,
                 "teacher": teacher,
                 "modules": modules,
+                "related_courses": related,
                 "enrolled": enrolled,
-                "related_courses": related_courses,
-                "page_title": f"📖 {course.course_name}",
+                "purchased": purchased,
+                "in_cart": in_cart,
+                "page_title": f"📘 {course.course_name}",
                 "active_page": "courses",
             },
         )
 
     except Exception as e:
-        print("❌ [course_detail] Lỗi:", e)
+        print("[Course Detail] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải chi tiết khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi tải chi tiết.", status_code=500)
 
 
 # =====================================================
-# 📈 4️⃣ Tiến độ học tập
+# 📈 4) Tiến độ học
 # =====================================================
 @router.get("/progress/{course_id}", response_class=HTMLResponse, name="student_course_progress")
 async def course_progress(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Hiển thị tiến độ học tập của học viên trong khóa học"""
+
     try:
         student_id = request.session.get("user_id")
         if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse("/auth/login", 302)
 
-        progress_data = course_service.get_course_progress(db, course_id, student_id)
+        # Chỉ xem nếu enrolled hoặc purchased
+        if not course_service.is_student_enrolled(db, student_id, course_id) and \
+           not course_service.is_course_purchased(db, student_id, course_id):
+            return HTMLResponse("Bạn chưa tham gia khóa học này.", status_code=403)
+
+        result = course_service.get_course_progress(db, course_id, student_id)
+
         return templates["student"].TemplateResponse(
             "course/course_progress.html",
             {
                 "request": request,
-                "course": progress_data.get("course"),
-                "modules": progress_data.get("modules"),
-                "progress": progress_data.get("progress"),
+                "course": result["course"],
+                "modules": result["modules"],
+                "progress": result["progress"],
                 "page_title": "📈 Tiến độ học tập",
                 "active_page": "courses",
             },
         )
+
     except Exception as e:
-        print("❌ [course_progress] Lỗi:", e)
+        print("[Progress] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải tiến độ học tập.</h4>", status_code=500)
+        return HTMLResponse("Lỗi tải tiến độ.", status_code=500)
 
 
 # =====================================================
-# 🌟 5️⃣ Trang đánh giá khóa học
+# ⭐ 5) Trang danh sách đánh giá
 # =====================================================
 @router.get("/feedback/{course_id}", response_class=HTMLResponse, name="student_course_feedback")
 async def course_feedback(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Trang xem và gửi đánh giá khóa học"""
-    try:
-        student_id = request.session.get("user_id")
-        if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
 
-        feedback = course_service.get_course_feedback(db, course_id)
-        enrolled = course_service.is_student_enrolled(db, student_id, course_id)
+    student_id = request.session.get("user_id")
+    if not student_id:
+        return RedirectResponse("/auth/login", 302)
 
-        course = feedback.get("course")
-        teacher = course.teacher if course else None
+    result = course_service.get_course_feedback(db, course_id)
+    course = result["course"]
 
-        return templates["student"].TemplateResponse(
-            "course/course_feedback.html",
-            {
-                "request": request,
-                "course": course,
-                "teacher": teacher,
-                "reviews": feedback.get("reviews"),
-                "average_rating": feedback.get("average_rating"),
-                "enrolled": enrolled,
-                "page_title": "⭐ Đánh giá khóa học",
-                "active_page": "courses",
-            },
-        )
+    if not course:
+        return HTMLResponse("Không tìm thấy khóa học.", status_code=404)
 
-    except Exception as e:
-        print("❌ [course_feedback] Lỗi:", e)
-        traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi tải trang đánh giá.</h4>", status_code=500)
+    teacher = course.teacher
+    enrolled = course_service.is_student_enrolled(db, student_id, course_id)
+    purchased = course_service.is_course_purchased(db, student_id, course_id)
+
+    return templates["student"].TemplateResponse(
+        "course/course_feedback.html",
+        {
+            "request": request,
+            "course": course,
+            "teacher": teacher,
+            "reviews": result["reviews"],
+            "average_rating": result["average_rating"],
+            "enrolled": enrolled or purchased,
+            "page_title": "⭐ Đánh giá khóa học",
+            "active_page": "courses",
+        },
+    )
 
 
 # =====================================================
-# 🧾 6️⃣ Gửi đánh giá khóa học (POST)
+# ⭐ 6) Submit đánh giá
 # =====================================================
 @router.post("/feedback/{course_id}", name="student_course_feedback_submit")
-async def course_feedback_submit(
+async def submit_feedback(
     request: Request,
     course_id: str,
     title: str = Form(...),
@@ -208,17 +241,17 @@ async def course_feedback_submit(
     rating_support: int = Form(...),
     db: Session = Depends(get_db),
 ):
-    """Học viên gửi hoặc cập nhật đánh giá khóa học"""
     try:
         student_id = request.session.get("user_id")
         if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse("/auth/login", 302)
 
-        enrolled = course_service.is_student_enrolled(db, student_id, course_id)
-        if not enrolled:
-            return HTMLResponse("<h4>Bạn cần đăng ký khóa học trước khi đánh giá.</h4>", status_code=403)
+        # Chỉ đánh giá nếu enrolled hoặc purchased
+        if not course_service.is_student_enrolled(db, student_id, course_id) and \
+           not course_service.is_course_purchased(db, student_id, course_id):
+            return HTMLResponse("Bạn cần tham gia khóa học trước khi đánh giá.", status_code=403)
 
-        result = course_service.add_course_feedback(
+        course_service.add_course_feedback(
             db=db,
             course_id=course_id,
             user_id=student_id,
@@ -230,45 +263,32 @@ async def course_feedback_submit(
             rating_support=rating_support,
         )
 
-        if result:
-            print(f"✅ [Feedback] Sinh viên {student_id} đã đánh giá khóa {course_id}")
-
-        return RedirectResponse(
-            url=request.url_for("student_course_feedback", course_id=course_id),
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+        return RedirectResponse(f"/student/course/feedback/{course_id}", status_code=303)
 
     except Exception as e:
         db.rollback()
-        print("❌ [course_feedback_submit] Lỗi:", e)
+        print("[Submit Feedback] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi gửi đánh giá khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi gửi đánh giá.", status_code=500)
 
 
 # =====================================================
-# 📝 7️⃣ Đăng ký khóa học
+# 📝 7) Đăng ký khóa học (enroll)
 # =====================================================
 @router.post("/enroll/{course_id}", name="student_course_enroll")
 async def enroll_course(request: Request, course_id: str, db: Session = Depends(get_db)):
-    """Học viên đăng ký khóa học và chuyển đến danh sách đã ghi danh"""
+
     try:
         student_id = request.session.get("user_id")
         if not student_id:
-            return RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse("/auth/login", 302)
 
-        result = course_service.enroll_course(db, student_id, course_id)
-        if isinstance(result, dict) and result.get("error"):
-            print(f"⚠️ [Enroll] Lỗi đăng ký: {result['error']}")
-        else:
-            print(f"✅ [Enroll] Sinh viên {student_id} đã đăng ký khóa học {course_id}")
+        course_service.enroll_course(db, student_id, course_id)
 
-        return RedirectResponse(
-            url="/student/course/enrolled",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
+        return RedirectResponse("/student/course/enrolled", status_code=303)
 
     except Exception as e:
         db.rollback()
-        print("❌ [enroll_course] Lỗi:", e)
+        print("[Enroll] Lỗi:", e)
         traceback.print_exc()
-        return HTMLResponse("<h4>Lỗi khi đăng ký khóa học.</h4>", status_code=500)
+        return HTMLResponse("Lỗi đăng ký khóa học.", status_code=500)

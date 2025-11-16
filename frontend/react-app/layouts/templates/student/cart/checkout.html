@@ -1,0 +1,201 @@
+{% extends "layout_student.html" %}
+{% block title %}💳 Thanh toán{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <h3 class="fw-bold mb-4">
+    <i class="bi bi-wallet2"></i> Thanh toán khóa học
+  </h3>
+
+  <div class="card shadow-sm p-4">
+
+    <!-- ===================== -->
+    <!-- DANH SÁCH KHÓA HỌC -->
+    <!-- ===================== -->
+    <h5 class="fw-semibold mb-2">Danh sách khóa học</h5>
+    <hr>
+
+    <ul class="list-group mb-4">
+      {% for item in items %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+
+        <div>
+          <span class="fw-semibold">{{ item.course.course_name }}</span><br>
+          <small class="text-muted">Mã: {{ item.course.course_code }}</small>
+        </div>
+
+        <div class="text-end">
+          {% if item.course.discount_percent %}
+            <span class="fw-bold text-danger">
+              {{ "{:,.0f}".format(item.course.final_price) }}₫
+            </span><br>
+            <small class="text-muted text-decoration-line-through">
+              {{ "{:,.0f}".format(item.course.price or 0) }}₫
+            </small>
+          {% else %}
+            <span class="fw-bold text-primary">
+              {{ "{:,.0f}".format(item.course.final_price) }}₫
+            </span>
+          {% endif %}
+        </div>
+
+      </li>
+      {% endfor %}
+    </ul>
+
+    <!-- ===================== -->
+    <!-- MÃ GIẢM GIÁ -->
+    <!-- ===================== -->
+    <h5 class="fw-semibold">🎁 Mã giảm giá</h5>
+    <div class="input-group mb-4">
+      <input type="text" id="couponInput" class="form-control" placeholder="Nhập mã giảm giá (VD: GIAM50)">
+      <button class="btn btn-outline-primary" onclick="applyCoupon()">Áp dụng</button>
+    </div>
+
+    <!-- ===================== -->
+    <!-- PHƯƠNG THỨC THANH TOÁN -->
+    <!-- ===================== -->
+    <h5 class="fw-semibold mb-2">💳 Phương thức thanh toán</h5>
+
+    <div class="list-group mb-4">
+      <label class="list-group-item d-flex align-items-center gap-3">
+        <input type="radio" name="pay_method" value="momo" checked>
+        <img src="/static/img/pay/momo.png" height="26"> Ví MoMo
+      </label>
+
+      <label class="list-group-item d-flex align-items-center gap-3">
+        <input type="radio" name="pay_method" value="zalopay">
+        <img src="/static/img/pay/zalopay.png" height="26"> ZaloPay
+      </label>
+
+      <label class="list-group-item d-flex align-items-center gap-3">
+        <input type="radio" name="pay_method" value="vnpay">
+        <img src="/static/img/pay/vnpay.png" height="26"> VNPay (2% phí)
+      </label>
+
+      <label class="list-group-item d-flex align-items-center gap-3">
+        <input type="radio" name="pay_method" value="card">
+        <i class="bi bi-credit-card-2-front text-primary fs-4"></i> Thẻ nội địa / Quốc tế (3% phí)
+      </label>
+    </div>
+
+    <!-- FORM NHẬP THẺ -->
+    <div id="cardForm" class="border rounded p-3 mb-4" style="display:none;">
+      <h6 class="fw-bold mb-3">Thông tin thẻ</h6>
+
+      <div class="mb-3">
+        <label class="form-label">Tên chủ thẻ</label>
+        <input type="text" class="form-control" placeholder="NGUYEN VAN A">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Số thẻ</label>
+        <input type="text" class="form-control" placeholder="1234 5678 9999 0000" maxlength="19">
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Ngày hết hạn</label>
+          <input type="text" class="form-control" placeholder="MM/YY">
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">CVV</label>
+          <input type="password" class="form-control" maxlength="3" placeholder="***">
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================== -->
+    <!-- TỔNG TIỀN -->
+    <!-- ===================== -->
+    <div class="text-end mb-4">
+
+      <h5 class="fw-bold">
+        Tạm tính: <span id="subtotal">{{ "{:,.0f}".format(subtotal) }}</span>₫
+      </h5>
+
+      <h5 class="fw-bold text-danger">
+        Phụ phí: <span id="fee">0</span>₫
+      </h5>
+
+      <h4 class="fw-bold text-success mt-2">
+        Tổng tiền: <span id="totalPrice">{{ "{:,.0f}".format(subtotal) }}</span>₫
+      </h4>
+
+      <div id="discountNote" class="text-success fw-semibold mt-2"></div>
+
+    </div>
+
+    <!-- FORM SUBMIT -->
+    <form method="post" action="/student/cart/checkout">
+      <input type="hidden" id="couponHidden" name="coupon_code">
+      <input type="hidden" id="methodHidden" name="pay_method" value="momo">
+      <button class="btn btn-success px-4 py-2 fw-semibold">
+        <i class="bi bi-check2-circle"></i> Xác nhận thanh toán
+      </button>
+    </form>
+
+  </div>
+
+</div>
+
+<!-- ===================== -->
+<!-- JAVA SCRIPT -->
+<!-- ===================== -->
+<script>
+
+  const baseTotal = parseFloat("{{ subtotal }}");
+  let finalTotal = baseTotal;
+
+  function updateFee() {
+    const method = document.querySelector("input[name='pay_method']:checked").value;
+    document.getElementById("methodHidden").value = method;
+
+    let fee = 0;
+
+    if (method === "vnpay") fee = Math.round(finalTotal * 0.02);
+    if (method === "card") fee = Math.round(finalTotal * 0.03);
+
+    document.getElementById("fee").textContent = fee.toLocaleString();
+    document.getElementById("totalPrice").textContent = (finalTotal + fee).toLocaleString();
+  }
+
+  function applyCoupon() {
+    const code = document.getElementById("couponInput").value.trim().toUpperCase();
+    const noteTag = document.getElementById("discountNote");
+
+    const discounts = {
+      "GIAM50": 0.5,
+      "GIAM20": 0.2,
+      "GIAM10": 0.1,
+    };
+
+    if (!discounts[code]) {
+      noteTag.innerHTML = "<span class='text-danger'>❌ Mã không hợp lệ!</span>";
+      finalTotal = baseTotal;
+      updateFee();
+      return;
+    }
+
+    finalTotal = Math.round(baseTotal * (1 - discounts[code]));
+
+    noteTag.innerHTML = `✔ Đã áp dụng mã: <b>${code}</b>`;
+    document.getElementById("couponHidden").value = code;
+
+    updateFee();
+  }
+
+  document.querySelectorAll("input[name='pay_method']").forEach(radio => {
+    radio.addEventListener("change", () => {
+      document.getElementById("cardForm").style.display = (radio.value === "card") ? "block" : "none";
+      updateFee();
+    });
+  });
+
+  updateFee();
+
+</script>
+
+{% endblock %}

@@ -2,55 +2,91 @@
 {% block title %}📘 Danh sách bài quiz{% endblock %}
 
 {% block content %}
+
 <style>
   .quiz-card {
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    transition: 0.3s ease;
+    border-radius: 14px;
+    border: 1px solid #eef1f5;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    transition: all 0.25s ease;
   }
   .quiz-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+  .quiz-icon {
+    font-size: 1.4rem;
+    color: #0d6efd;
   }
 </style>
 
 <div class="container py-4 fade-in">
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-list-task"></i> Danh sách bài quiz
     </h4>
-    <a href="/student/quiz/history" class="btn btn-outline-primary btn-sm">
+
+    <a href="/student/quiz/history" class="btn btn-outline-primary btn-sm shadow-sm">
       <i class="bi bi-clock-history"></i> Lịch sử làm bài
     </a>
   </div>
 
   {% if quizzes and quizzes|length > 0 %}
-    <div class="row">
-      {% for q in quizzes %}
-      <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card quiz-card border-0 h-100">
-          <div class="card-body">
-            <h5 class="fw-semibold text-dark mb-2">
-              <i class="bi bi-patch-question text-primary"></i> {{ q.title }}
-            </h5>
-            <p class="text-muted small mb-3">{{ q.description or "Không có mô tả." }}</p>
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="text-secondary small">
-                ⏱️ {{ q.time_limit or 10 }} phút • {{ q.total_questions or 0 }} câu
-              </span>
-              <a href="/student/quiz/attempt/{{ q.id }}" class="btn btn-sm btn-primary">
-                <i class="bi bi-play-circle"></i> Làm bài
-              </a>
-            </div>
+
+  <!-- Quiz List -->
+  <div class="row g-4">
+    {% for q in quizzes %}
+    <div class="col-md-6 col-lg-4">
+
+      <div class="card quiz-card h-100">
+        <div class="card-body">
+
+          <!-- Title -->
+          <h5 class="fw-semibold text-dark mb-2">
+            <i class="bi bi-patch-question quiz-icon"></i>
+            {{ q.title }}
+          </h5>
+
+          <!-- Description -->
+          <p class="text-muted small mb-3">
+            {{ q.description or "Không có mô tả." }}
+          </p>
+
+          <!-- Meta info -->
+          <div class="d-flex justify-content-between align-items-center mt-auto">
+            <span class="text-secondary small">
+              ⏱ {{ q.time_limit_minutes or 10 }} phút • {{ q.total_questions or 0 }} câu
+            </span>
+
+            <a href="/student/quiz/attempt/{{ q.id }}" 
+               class="btn btn-sm btn-primary shadow-sm">
+              <i class="bi bi-play-circle"></i> Làm bài
+            </a>
           </div>
+
         </div>
       </div>
-      {% endfor %}
+
     </div>
+    {% endfor %}
+  </div>
+
   {% else %}
-    <div class="alert alert-info text-center mt-4">
-      <i class="bi bi-info-circle me-2"></i>Hiện chưa có bài quiz nào.
-    </div>
+
+  <!-- Empty state -->
+  <div class="alert alert-info text-center py-4 shadow-sm">
+    <i class="bi bi-info-circle fs-4"></i>
+    <div class="mt-2 fw-semibold">Hiện chưa có bài quiz nào khả dụng.</div>
+    <p class="text-muted small mb-2">Giảng viên có thể chưa tạo hoặc chưa mở bài kiểm tra.</p>
+    <a href="/student/dashboard" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-house-door"></i> Về trang chính
+    </a>
+  </div>
+
   {% endif %}
+
 </div>
+
 {% endblock %}

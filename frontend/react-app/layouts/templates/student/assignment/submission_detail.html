@@ -1,43 +1,112 @@
 {% extends "layout_student.html" %}
 {% block title %}📎 Chi tiết bài nộp{% endblock %}
 {% block content %}
-<div class="container py-4 fade-in">
-  <h3 class="fw-bold mb-3"><i class="bi bi-file-earmark-richtext me-2"></i>{{ page_title }}</h3>
 
+<div class="container py-4 fade-in">
+
+  <h3 class="fw-bold mb-3">
+    <i class="bi bi-file-earmark-richtext me-2"></i>{{ page_title }}
+  </h3>
+
+  <!-- =============================== -->
+  <!-- 🔹 THÔNG TIN BÀI NỘP -->
+  <!-- =============================== -->
   <div class="card shadow-sm border-0 mb-3">
     <div class="card-body">
-      <p><strong>Bài tập:</strong> {{ submission.assignment_title }}</p>
-      <p><strong>Ngày nộp:</strong> {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") if submission.submission_time else "—" }}</p>
+
+      <p><strong>Bài tập:</strong> {{ submission.assignment.title }}</p>
+
+      <p>
+        <strong>Ngày nộp:</strong> 
+        {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") if submission.submission_time else "—" }}
+      </p>
+
       <p><strong>Trạng thái:</strong>
         {% if submission.status == 'graded' %}
           <span class="badge bg-success">Đã chấm</span>
         {% elif submission.status == 'late' %}
           <span class="badge bg-warning text-dark">Nộp trễ</span>
+        {% elif submission.status == 'resubmitted' %}
+          <span class="badge bg-primary">Nộp lại</span>
         {% else %}
           <span class="badge bg-info">Đã nộp</span>
         {% endif %}
       </p>
-      {% if submission.grade %}
-      <p><strong>Điểm:</strong> {{ submission.grade }}/{{ submission.total_points }}</p>
-      <p><strong>Nhận xét:</strong> {{ submission.feedback or "Không có nhận xét" }}</p>
+
+      <!-- ======= ĐIỂM ======= -->
+      {% if submission.grade is not none %}
+      <p><strong>Điểm:</strong>
+        <span class="text-success fw-bold">{{ submission.grade }}</span>
+        / {{ submission.assignment.total_points or 10 }}
+      </p>
+
+      <p><strong>Nhận xét:</strong>
+        {{ submission.feedback or "Không có nhận xét" }}
+      </p>
+      {% else %}
+      <p class="text-muted"><em>Chưa được chấm điểm</em></p>
       {% endif %}
+
+      <!-- ======= NỘI DUNG TEXT ======= -->
+      {% if submission.submission_text %}
+      <hr>
+      <p><strong>Nội dung bài nộp:</strong></p>
+      <div class="p-3 bg-light rounded border" style="white-space: pre-wrap;">
+        {{ submission.submission_text }}
+      </div>
+      {% endif %}
+
     </div>
   </div>
 
+  <!-- =============================== -->
+  <!-- 🔹 DANH SÁCH FILE ĐÃ NỘP -->
+  <!-- =============================== -->
   {% if submission.files %}
-  <div class="card shadow-sm border-0">
-    <div class="card-header fw-semibold bg-light"><i class="bi bi-paperclip me-2"></i>Tệp đã nộp</div>
+  <div class="card shadow-sm border-0 mb-4">
+    <div class="card-header fw-semibold bg-light">
+      <i class="bi bi-paperclip me-2"></i>File đã nộp
+    </div>
+
     <ul class="list-group list-group-flush">
       {% for f in submission.files %}
-      <li class="list-group-item d-flex justify-content-between align-items-center">
-        <span><i class="bi bi-file-earmark me-2"></i>{{ f.file_name }}</span>
-        <a href="/student/assignment/download/{{ f.id }}" class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-download"></i> Tải xuống
-        </a>
+      <li class="list-group-item">
+
+        <div class="d-flex justify-content-between align-items-center">
+          <span>
+            <i class="bi bi-file-earmark me-2"></i>{{ f.file_name }}
+          </span>
+
+          <a href="/student/assignment/download/{{ f.id }}"
+             class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download"></i> Tải xuống
+          </a>
+        </div>
+
+        <!-- ======= PREVIEW FILE ======= -->
+        {% set ext = f.file_name.split('.')[-1].lower() %}
+        {% if ext in ["jpg", "jpeg", "png", "gif"] %}
+          <div class="mt-3">
+            <img src="/{{ f.file_url }}" class="img-fluid rounded shadow-sm" alt="preview">
+          </div>
+        {% elif ext == "pdf" %}
+          <div class="mt-3">
+            <iframe src="/{{ f.file_url }}" class="w-100" style="height: 400px; border-radius: 6px;"></iframe>
+          </div>
+        {% endif %}
+
       </li>
       {% endfor %}
     </ul>
   </div>
   {% endif %}
+
+  <!-- Nút quay lại -->
+  <a href="/student/assignment/result/{{ submission.assignment_id }}"
+     class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Quay lại
+  </a>
+
 </div>
+
 {% endblock %}

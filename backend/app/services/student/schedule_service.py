@@ -1,8 +1,7 @@
 """
 ============================================================
-📅 SERVICE: STUDENT - SCHEDULE
-Xử lý logic lấy thời khóa biểu, lịch học, và hiển thị dạng
-calendar hoặc list cho sinh viên.
+📅 SERVICE: STUDENT - SCHEDULE (FINAL 2025)
+Tổng hợp lịch học: Lesson + ClassSchedule + Quiz/Exam
 ============================================================
 """
 
@@ -12,87 +11,159 @@ from app.models.course import Course
 from app.models.module import Module
 from app.models.lesson import Lesson
 from app.models.enrollment import Enrollment
+from app.models.course_section import CourseSection
+from app.models.class_schedule import ClassSchedule
 from app.models.user import User
 import traceback
 
 
 # ============================================================
-# 🔍 1️⃣ LẤY LỊCH HỌC CỦA SINH VIÊN
+# 🔍 1️⃣ LẤY LỊCH HỌC CHÍNH QUY THEO CLASS_SCHEDULES
 # ============================================================
-def get_student_schedule(db: Session, user_id: str):
+def get_class_schedules(db: Session, user_id: str):
     """
-    Lấy thời khóa biểu của sinh viên, gồm các buổi học trong tuần.
-    Trả về list dict để hiển thị trên calendar hoặc list.html
+    Lấy lịch học theo tuần từ bảng class_schedules.
+    (Thời khóa biểu chính quy)
     """
     try:
-        # 🔹 Kiểm tra sinh viên tồn tại
-        student = db.query(User).filter(User.id == user_id).first()
-        if not student:
-            print(f"⚠️ [Schedule] Không tìm thấy sinh viên ID={user_id}")
+        enrolls = db.query(Enrollment).filter(
+            Enrollment.user_id == user_id,
+            Enrollment.enrollment_status.in_(["active", "approved"])
+        ).all()
+
+        if not enrolls:
             return []
 
-        # 🔹 Lấy danh sách khóa học sinh viên đã ghi danh
-        enrollments = db.query(Enrollment).filter(Enrollment.user_id == user_id).all()
-        if not enrollments:
-            print(f"ℹ️ [Schedule] Sinh viên {student.full_name} chưa ghi danh khóa học nào.")
-            return []
+        class_ids = [e.class_id for e in enrolls if e.class_id]
 
-        course_ids = [e.course_id for e in enrollments]
-
-        # 🔹 Lấy toàn bộ bài học (lesson) của các khóa đó
-        lessons = (
-            db.query(Lesson)
-            .join(Module, Lesson.module_id == Module.id)
-            .join(Course, Module.course_id == Course.id)
-            .filter(Course.id.in_(course_ids))
+        # Lấy danh sách section của các class này
+        sections = (
+            db.query(CourseSection)
+            .filter(CourseSection.id.in_(class_ids))
             .all()
         )
-
-        if not lessons:
-            print(f"ℹ️ [Schedule] Không tìm thấy bài học cho user_id={user_id}")
+        if not sections:
             return []
 
-        # 🔹 Chuẩn bị danh sách kết quả
-        schedule_data = []
-        for lesson in lessons:
-            # Xác định ngày bắt đầu (ưu tiên lesson_date nếu có)
-            if hasattr(lesson, "lesson_date") and lesson.lesson_date:
-                date_start = lesson.lesson_date
-            elif hasattr(lesson, "created_at") and lesson.created_at:
-                date_start = lesson.created_at
-            else:
-                continue
+        section_ids = [s.id for s in sections]
 
-            # Thời lượng mặc định: 90 phút
-            date_end = date_start + timedelta(minutes=90)
+        schedules = db.query(ClassSchedule).filter(
+            ClassSchedule.section_id.in_(section_ids)
+        ).all()
 
-            # Màu sắc và loại bài học
-            title_lower = (lesson.title or "").lower()
-            if "quiz" in title_lower:
-                color = "#ffc107"  # vàng
-                type_ = "quiz"
-            elif "thi" in title_lower or "exam" in title_lower:
-                color = "#ff4b5c"  # đỏ
-                type_ = "exam"
-            else:
-                color = "#28a745"  # xanh lá
-                type_ = "lesson"
+        result = []
+        for sch in schedules:
 
-            # Đưa vào danh sách kết quả
-            schedule_data.append({
-                "lesson_id": lesson.id,
-                "course_name": getattr(lesson.module.course, "title", "Không xác định"),
-                "module_name": getattr(lesson.module, "title", "Module không tên"),
-                "lesson_title": lesson.title,
-                "start": date_start.strftime("%Y-%m-%dT%H:%M:%S"),
-                "end": date_end.strftime("%Y-%m-%dT%H:%M:%S"),
-                "location": getattr(lesson, "location", "Trực tuyến"),
-                "color": color,
-                "type": type_,
+            # Convert day_of_week → số (monday = 0)
+            day_map = {
+                "monday": 0,
+                "tuesday": 1,
+                "wednesday": 2,
+                "thursday": 3,
+                "friday": 4,
+                "saturday": 5,
+                "sunday": 6,
+            }
+            dow = day_map.get(sch.day_of_week, 0)
+
+            # tạo ngày tiếp theo của tuần
+            today = datetime.now()
+            start_of_week = today - timedelta(days=today.weekday())
+            date_of_class = start_of_week + timedelta(days=dow)
+
+            start_dt = datetime.combine(date_of_class.date(), sch.start_time)
+            end_dt = datetime.combine(date_of_class.date(), sch.end_time)
+
+            result.append({
+                "course_name": getattr(sch.section.course, "course_name", "Lớp học"),
+                "module_name": None,
+                "lesson_title": "Lịch học định kỳ",
+                "start": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+                "end": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+                "location": f"{sch.building or ''} {sch.room_number or ''}".strip() or "Tại lớp",
+                "color": "#007bff",   # xanh dương – lịch chính quy
+                "type": "class_schedule",
             })
 
-        print(f"✅ [Schedule] Found {len(schedule_data)} lessons for user={user_id}")
-        return schedule_data
+        return result
+
+    except Exception as e:
+        print("❌ [get_class_schedules] Lỗi:", e)
+        traceback.print_exc()
+        return []
+
+
+# ============================================================
+# 🔍 2️⃣ LẤY LỊCH BÀI HỌC (LESSONS)
+# ============================================================
+def get_lesson_schedule(db: Session, user_id: str):
+
+    enrollments = db.query(Enrollment).filter(
+        Enrollment.user_id == user_id
+    ).all()
+    course_ids = [e.course_id for e in enrollments if e.course_id]
+
+    lessons = (
+        db.query(Lesson)
+        .join(Module, Lesson.module_id == Module.id)
+        .join(Course, Module.course_id == Course.id)
+        .filter(Course.id.in_(course_ids))
+        .all()
+    )
+
+    result = []
+    for lesson in lessons:
+
+        # Lấy start_time từ database mới (có cột start_time, end_time)
+        if lesson.start_time:
+            start_dt = lesson.start_time
+            end_dt = lesson.end_time or (start_dt + timedelta(minutes=90))
+        else:
+            continue
+
+        # Xác định màu theo loại nội dung
+        title = (lesson.title or "").lower()
+        if "quiz" in title:
+            color = "#ffc107"
+            type_ = "quiz"
+        elif "thi" in title or "exam" in title:
+            color = "#ff4b5c"
+            type_ = "exam"
+        else:
+            color = "#28a745"
+            type_ = "lesson"
+
+        result.append({
+            "lesson_id": lesson.id,
+            "course_name": lesson.module.course.course_name,
+            "module_name": lesson.module.title,
+            "lesson_title": lesson.title,
+            "start": start_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+            "end": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+            "location": "Trực tuyến",
+            "color": color,
+            "type": type_,
+        })
+
+    return result
+
+
+# ============================================================
+# 🔥 3️⃣ TỔNG HỢP LỊCH (LESSON + CLASS_SCHEDULE)
+# ============================================================
+def get_student_schedule(db: Session, user_id: str):
+    """Tổng hợp toàn bộ lịch học của sinh viên"""
+
+    try:
+        lesson_events = get_lesson_schedule(db, user_id)
+        class_events = get_class_schedules(db, user_id)
+
+        all_events = lesson_events + class_events
+        sorted_events = sorted(all_events, key=lambda x: x["start"])
+
+        print(f"📅 [Schedule] Total events for user={user_id}: {len(sorted_events)}")
+
+        return sorted_events
 
     except Exception as e:
         print("❌ [get_student_schedule] Lỗi:", e)
@@ -101,45 +172,41 @@ def get_student_schedule(db: Session, user_id: str):
 
 
 # ============================================================
-# 🗓️ 2️⃣ LẤY LỊCH THEO NGÀY
-# ============================================================
-def get_schedule_by_date(db: Session, user_id: str, date: datetime):
-    """Lấy danh sách buổi học trong ngày cụ thể."""
-    all_schedule = get_student_schedule(db, user_id)
-    date_str = date.strftime("%Y-%m-%d")
-    return [s for s in all_schedule if s["start"].startswith(date_str)]
-
-
-# ============================================================
-# 📋 3️⃣ LẤY DANH SÁCH CHO LIST.HTML
+# 📋 4️⃣ LIST VIEW
 # ============================================================
 def get_schedule_list(db: Session, user_id: str):
-    """Trả về danh sách buổi học dạng list để hiển thị trên trang list.html."""
-    all_schedule = get_student_schedule(db, user_id)
-    sorted_schedule = sorted(all_schedule, key=lambda x: x["start"])
+    data = get_student_schedule(db, user_id)
 
-    # Thêm định dạng hiển thị
-    for s in sorted_schedule:
+    for s in data:
         try:
             dt = datetime.strptime(s["start"], "%Y-%m-%dT%H:%M:%S")
             s["date_display"] = dt.strftime("%d/%m/%Y")
             s["time_display"] = dt.strftime("%H:%M")
-        except Exception:
+        except:
             s["date_display"] = "-"
             s["time_display"] = "-"
 
-    print(f"📋 [Schedule] Render list view for {len(sorted_schedule)} entries.")
-    return sorted_schedule
+    return data
 
 
 # ============================================================
-# 📆 4️⃣ LẤY LỊCH HỌC TRONG TUẦN
+# 🗓️ 5️⃣ LỊCH THEO NGÀY
+# ============================================================
+def get_schedule_by_date(db: Session, user_id: str, date: datetime):
+    all_events = get_student_schedule(db, user_id)
+    d = date.strftime("%Y-%m-%d")
+    return [e for e in all_events if e["start"].startswith(d)]
+
+
+# ============================================================
+# 📆 6️⃣ LỊCH THEO TUẦN
 # ============================================================
 def get_schedule_for_week(db: Session, user_id: str, start_date: datetime):
-    """Lấy thời khóa biểu cho 1 tuần (7 ngày)."""
+
     end_date = start_date + timedelta(days=7)
-    all_schedule = get_student_schedule(db, user_id)
+    all_events = get_student_schedule(db, user_id)
+
     return [
-        s for s in all_schedule
-        if start_date.strftime("%Y-%m-%d") <= s["start"][:10] <= end_date.strftime("%Y-%m-%d")
+        e for e in all_events
+        if start_date.strftime("%Y-%m-%d") <= e["start"][:10] <= end_date.strftime("%Y-%m-%d")
     ]

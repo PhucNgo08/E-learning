@@ -1,21 +1,21 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 from app.models.backup_history import BackupHistory
 from datetime import datetime
 import uuid
 import os
 from pathlib import Path
 
-# 🧭 Thư mục lưu file backup vật lý (tùy chỉnh theo dự án)
+# 🧭 Thư mục lưu file backup vật lý
 BACKUP_DIR = Path("D:/KhoaHoctructuyen/KHoaHocOnline/backend/backups")
 BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# ============================================================
 # 📋 Lấy danh sách tất cả backup
+# ============================================================
 def get_all_backups(db: Session):
-    """
-    Lấy toàn bộ danh sách bản sao lưu, sắp xếp mới nhất lên đầu.
-    """
     try:
         return (
             db.query(BackupHistory)
@@ -26,22 +26,21 @@ def get_all_backups(db: Session):
         raise RuntimeError(f"Lỗi khi lấy danh sách backup: {str(e)}")
 
 
-# 💾 Tạo bản sao lưu mới (giả lập tạo file .sql)
+# ============================================================
+# 💾 Tạo backup (tạo file + ghi vào DB)
+# ============================================================
 def create_backup(database_name: str, backup_type: str, db: Session):
-    """
-    Tạo một bản sao lưu mới trong hệ thống và ghi vào DB.
-    """
     try:
         now = datetime.now()
         file_name = f"backup_{now.strftime('%Y%m%d_%H%M%S')}.sql"
         file_path = BACKUP_DIR / file_name
 
-        # 🧱 Tạo file rỗng giả lập backup
+        # Giả lập file backup
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(f"-- Backup giả lập cho database: {database_name}\n")
+            f.write(f"-- Backup của database: {database_name}\n")
             f.write(f"-- Thời gian: {now}\n")
 
-        # 🧩 Lưu vào DB
+        # Ghi DB
         new_backup = BackupHistory(
             id=str(uuid.uuid4()),
             backup_type=backup_type or "full",
@@ -63,26 +62,20 @@ def create_backup(database_name: str, backup_type: str, db: Session):
         db.refresh(new_backup)
         return new_backup
 
-    except SQLAlchemyError as e:
-        db.rollback()
-        raise RuntimeError(f"Lỗi khi tạo bản sao lưu: {str(e)}")
-
     except Exception as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi hệ thống khi tạo backup: {str(e)}")
+        raise RuntimeError(f"Lỗi khi tạo backup: {str(e)}")
 
 
-# ❌ Xóa bản sao lưu (DB + file)
+# ============================================================
+# ❌ Xoá backup (DB + file hệ thống)
+# ============================================================
 def delete_backup(backup_id: str, db: Session):
-    """
-    Xóa bản sao lưu khỏi DB và file vật lý (nếu có).
-    """
     backup = db.query(BackupHistory).filter(BackupHistory.id == backup_id).first()
     if not backup:
         raise ValueError("Không tìm thấy bản sao lưu.")
 
     try:
-        # Xóa file vật lý nếu tồn tại
         if backup.file_path and os.path.exists(backup.file_path):
             os.remove(backup.file_path)
 
@@ -90,10 +83,57 @@ def delete_backup(backup_id: str, db: Session):
         db.commit()
         return True
 
-    except SQLAlchemyError as e:
-        db.rollback()
-        raise RuntimeError(f"Lỗi khi xóa backup khỏi DB: {str(e)}")
-
     except Exception as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi hệ thống khi xóa backup: {str(e)}")
+        raise RuntimeError(f"Lỗi khi xóa backup: {str(e)}")
+
+
+# ============================================================
+# 🆕 ① Gọi Stored Procedure: Tạo lịch backup
+# ============================================================
+def create_backup_schedule(schedule_name: str, schedule_type: str, freq: str, retention_days: int, db: Session):
+    """
+    Gọi stored procedure: sp_create_backup_schedule
+    """
+    try:
+        db.execute(
+            text("""
+                CALL sp_create_backup_schedule(
+                    :schedule_name,
+                    :schedule_type,
+                    :frequency,
+                    :retention_days
+                )
+            """),
+            {
+                "schedule_name": schedule_name,
+                "schedule_type": schedule_type,   # 'full' hoặc 'incremental'
+                "frequency": freq,               # 'daily' / 'weekly' / 'monthly'
+                "retention_days": retention_days
+            }
+        )
+        db.commit()
+        return True
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise RuntimeError(f"Lỗi khi tạo lịch sao lưu: {str(e)}")
+
+
+# ============================================================
+# 🆕 ② Gọi Stored Procedure: Dọn backup cũ
+# ============================================================
+def cleanup_old_backups(db: Session):
+    """
+    Gọi stored procedure: sp_cleanup_old_backups
+    """
+    try:
+        result = db.execute(text("CALL sp_cleanup_old_backups()"))
+        db.commit()
+
+        # Lấy message từ stored procedure
+        return list(result)
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise RuntimeError(f"Lỗi khi dọn backup cũ: {str(e)}")

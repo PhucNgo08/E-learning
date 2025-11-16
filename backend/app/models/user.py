@@ -7,6 +7,7 @@ from app.database.connection import Base
 import enum
 import uuid
 
+
 # ============================================
 # 🧩 ENUM DEFINITIONS
 # ============================================
@@ -38,7 +39,6 @@ class StatusEnum(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    # ===== Basic Info =====
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
@@ -47,8 +47,8 @@ class User(Base):
 
     # ===== Academic Info =====
     mssv = Column(String(20), unique=True)
-    academic_year_id = Column(String(36), ForeignKey("academic_years.id"), nullable=True)
-    major_id = Column(String(36), ForeignKey("majors.id"), nullable=True)
+    academic_year_id = Column(String(36), ForeignKey("academic_years.id"))
+    major_id = Column(String(36), ForeignKey("majors.id"))
 
     academic_year = relationship("AcademicYear", back_populates="users")
     major = relationship("Major", back_populates="users")
@@ -63,7 +63,7 @@ class User(Base):
 
     # ===== Security Setting =====
     security_setting = relationship(
-        "SecuritySettings",  # ✅ đồng bộ với models/security_settings.py
+        "SecuritySettings",
         back_populates="user",
         uselist=False,
         cascade="all, delete-orphan"
@@ -93,10 +93,12 @@ class User(Base):
 
     # ===== Timestamp =====
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True),
+                        onupdate=func.now(),
+                        server_default=func.now())
 
     # ============================================
-    # 🔗 RELATIONSHIPS (đã fix cảnh báo overlaps)
+    # 🔗 RELATIONSHIPS
     # ============================================
 
     # === Course Management ===
@@ -113,7 +115,6 @@ class User(Base):
         foreign_keys="CourseReview.user_id",
         overlaps="moderated_reviews"
     )
-
     moderated_reviews = relationship(
         "CourseReview",
         back_populates="moderator",
@@ -121,7 +122,13 @@ class User(Base):
         overlaps="course_reviews"
     )
 
-    # === Enrollment ===
+    teaching_sections = relationship("CourseSection", back_populates="teacher")
+
+    # ======================================================
+    # 🔥 Enrollment (FIX FULL)
+    # ======================================================
+
+    # User → enrollments (FK: user_id)
     enrollments = relationship(
         "Enrollment",
         back_populates="user",
@@ -129,19 +136,26 @@ class User(Base):
         foreign_keys="Enrollment.user_id"
     )
 
+    # User → enrollments (FK: approved_by)
+    approved_enrollments = relationship(
+        "Enrollment",
+        back_populates="approved_user",
+        foreign_keys="Enrollment.approved_by"
+    )
+
+    # ======================================================
+
     # === Assignments ===
     assignments_created = relationship(
         "Assignment",
         back_populates="teacher",
         foreign_keys="Assignment.teacher_id"
     )
-
     assignment_submissions = relationship(
         "AssignmentSubmission",
         back_populates="student",
         foreign_keys="AssignmentSubmission.student_id"
     )
-
     assignment_groups_led = relationship(
         "AssignmentGroup",
         back_populates="leader",
@@ -155,7 +169,6 @@ class User(Base):
         foreign_keys="QuizAttempt.user_id",
         overlaps="graded_quiz_attempts"
     )
-
     graded_quiz_attempts = relationship(
         "QuizAttempt",
         back_populates="graded_by_user",
@@ -170,8 +183,38 @@ class User(Base):
         cascade="all, delete"
     )
 
-    # ============================================
-    # 🧾 Representation
-    # ============================================
+    # === Cart / Orders / Purchased Courses ===
+    cart_items = relationship("CartItem", back_populates="user", cascade="all, delete-orphan")
+    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    user_courses = relationship("UserCourse", back_populates="user", cascade="all, delete-orphan")
+
+    # === Messages ===
+    messages_sent = relationship(
+        "Message",
+        back_populates="sender",
+        foreign_keys="Message.sender_id",
+        cascade="all, delete-orphan"
+    )
+    messages_received = relationship(
+        "Message",
+        back_populates="receiver",
+        foreign_keys="Message.receiver_id",
+        cascade="all, delete-orphan"
+    )
+
+    # === Notifications ===
+    notifications = relationship(
+        "Notification",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
+    # === AI Chat History ===
+    ai_chat_history = relationship(
+        "AIChatHistory",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     def __repr__(self):
         return f"<User(username='{self.username}', role='{self.role}', status='{self.status}')>"

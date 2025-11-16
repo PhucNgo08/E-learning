@@ -1,14 +1,16 @@
 """
-=========================================================
-🎓 SERVICE: Student - Assignment
-Xử lý logic bài tập và bài nộp của học viên
-=========================================================
+==========================================================
+🎓 SERVICE: Student - Assignment (FULL 100%)
+Xử lý logic bài tập & bài nộp của học viên
+==========================================================
 """
 
 from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.assignment_file import AssignmentFile
+from app.services.student.notification_service import create_notification
+
 from datetime import datetime
 from pathlib import Path
 import uuid
@@ -27,7 +29,6 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # 📘 LẤY DANH SÁCH BÀI TẬP TRONG KHÓA HỌC
 # ==========================================================
 def get_assignments_by_course(db: Session, course_id: str):
-    """📘 Lấy danh sách bài tập thuộc một khóa học"""
     try:
         return (
             db.query(Assignment)
@@ -45,7 +46,6 @@ def get_assignments_by_course(db: Session, course_id: str):
 # 🔍 LẤY CHI TIẾT 1 BÀI TẬP
 # ==========================================================
 def get_assignment_detail(db: Session, assignment_id: str):
-    """🔍 Lấy chi tiết một bài tập"""
     try:
         return db.query(Assignment).filter(Assignment.id == assignment_id).first()
     except Exception as e:
@@ -55,24 +55,87 @@ def get_assignment_detail(db: Session, assignment_id: str):
 
 
 # ==========================================================
-# 📤 SINH VIÊN NỘP BÀI (CÓ THỂ KÈM FILE)
+# 📤 NỘP BÀI — FULL VALIDATE + THÔNG BÁO
 # ==========================================================
-def submit_assignment(db: Session, assignment_id: str, student_id: str, submission_text: str = "", files: list = None):
-    """📤 Sinh viên nộp bài (lưu cả file vào thư mục uploads/assignments/)"""
+def submit_assignment(
+    db: Session,
+    assignment_id: str,
+    student_id: str,
+    submission_text: str = "",
+    files: list = None
+):
     try:
+        # ---------------------------
+        # 1. Kiểm tra bài tập có tồn tại
+        # ---------------------------
+        assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        if not assignment:
+            raise Exception("Không tìm thấy bài tập.")
+
+        # ---------------------------
+        # 2. Kiểm tra hạn nộp
+        # ---------------------------
+        now = datetime.utcnow()
+        if now > assignment.due_date:
+            if assignment.allow_late_submission == 1:
+                submission_status = "late"
+            else:
+                raise Exception("Đã quá hạn nộp bài và không cho phép nộp muộn.")
+        else:
+            submission_status = "submitted"
+
+        # ---------------------------
+        # 3. Validate file upload
+        # ---------------------------
+        if files:
+            # Kiểm tra số lượng file
+            if assignment.max_files and len(files) > assignment.max_files:
+                raise Exception(f"Chỉ được nộp tối đa {assignment.max_files} file.")
+
+            # Allowed file types
+            allowed_types = []
+            if assignment.allowed_file_types:
+                allowed_types = [
+                    ext.strip().lower()
+                    for ext in assignment.allowed_file_types.split(",")
+                ]
+
+            for f in files:
+                # Kiểm tra loại file
+                ext = f.filename.split(".")[-1].lower()
+                if allowed_types and ext not in allowed_types:
+                    raise Exception(f"Loại file '{ext}' không hợp lệ.")
+
+                # Kiểm tra kích thước file
+                f.file.seek(0, 2)
+                size = f.file.tell()
+                f.file.seek(0)
+
+                size_mb = size / (1024 * 1024)
+                if size_mb > assignment.max_file_size_mb:
+                    raise Exception(
+                        f"File '{f.filename}' vượt quá {assignment.max_file_size_mb}MB."
+                    )
+
+        # ---------------------------
+        # 4. Tạo bài nộp
+        # ---------------------------
         submission = AssignmentSubmission(
             id=str(uuid.uuid4()),
             assignment_id=assignment_id,
             student_id=student_id,
             submission_text=submission_text or "",
-            submission_time=datetime.utcnow(),
-            status="submitted"
+            submission_time=now,
+            status=submission_status,
         )
+
         db.add(submission)
         db.commit()
         db.refresh(submission)
 
-        # ✅ Lưu file nếu có
+        # ---------------------------
+        # 5. Lưu FILE
+        # ---------------------------
         if files:
             student_folder = UPLOAD_DIR / student_id
             student_folder.mkdir(parents=True, exist_ok=True)
@@ -97,7 +160,19 @@ def submit_assignment(db: Session, assignment_id: str, student_id: str, submissi
 
             db.commit()
 
-        print(f"✅ [submit_assignment] Sinh viên {student_id} đã nộp bài {assignment_id}")
+        # ---------------------------
+        # 6. Gửi thông báo cho GIẢNG VIÊN
+        # ---------------------------
+        create_notification(
+            db=db,
+            user_id=assignment.teacher_id,
+            title="📥 Có bài tập mới được nộp",
+            message=f"Sinh viên đã nộp bài: {assignment.title}",
+            notification_type="assignment",
+            link_url=f"/teacher/assignment/submission/{submission.id}"
+        )
+
+        print(f"✅ [submit_assignment] SV {student_id} đã nộp bài {assignment_id}")
         return submission
 
     except Exception as e:
@@ -111,7 +186,6 @@ def submit_assignment(db: Session, assignment_id: str, student_id: str, submissi
 # 📋 LẤY DANH SÁCH BÀI NỘP CỦA SINH VIÊN
 # ==========================================================
 def get_my_submissions(db: Session, student_id: str):
-    """📋 Lấy danh sách bài nộp của sinh viên"""
     try:
         return (
             db.query(AssignmentSubmission)
@@ -126,12 +200,15 @@ def get_my_submissions(db: Session, student_id: str):
 
 
 # ==========================================================
-# 🔎 LẤY CHI TIẾT 1 BÀI NỘP (KÈM FILE)
+# 🔎 LẤY CHI TIẾT MỘT BÀI NỘP
 # ==========================================================
 def get_submission_detail(db: Session, submission_id: str):
-    """🔎 Lấy chi tiết một bài nộp, bao gồm file đính kèm"""
     try:
-        submission = db.query(AssignmentSubmission).filter(AssignmentSubmission.id == submission_id).first()
+        submission = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.id == submission_id)
+            .first()
+        )
         if not submission:
             return None
 
@@ -141,6 +218,7 @@ def get_submission_detail(db: Session, submission_id: str):
             .all()
         )
         return submission
+
     except Exception as e:
         print("❌ [get_submission_detail] Lỗi:", e)
         traceback.print_exc()
@@ -148,10 +226,9 @@ def get_submission_detail(db: Session, submission_id: str):
 
 
 # ==========================================================
-# 📎 LẤY THÔNG TIN FILE NỘP BÀI (TẢI XUỐNG)
+# 📎 LẤY FILE ĐỂ TẢI XUỐNG
 # ==========================================================
 def get_submission_file(db: Session, file_id: str):
-    """📎 Lấy thông tin chi tiết file nộp bài để tải xuống"""
     try:
         return db.query(AssignmentFile).filter(AssignmentFile.id == file_id).first()
     except Exception as e:
@@ -161,17 +238,20 @@ def get_submission_file(db: Session, file_id: str):
 
 
 # ==========================================================
-# 📝 CẬP NHẬT BÀI NỘP (THÊM FILE HOẶC SỬA NỘI DUNG)
+# 📝 CẬP NHẬT BÀI NỘP
 # ==========================================================
 def update_submission(db: Session, submission_id: str, new_text: str = "", new_files: list = None):
-    """📝 Cập nhật bài nộp (sửa nội dung hoặc thêm file mới)"""
     try:
-        submission = db.query(AssignmentSubmission).filter(AssignmentSubmission.id == submission_id).first()
+        submission = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.id == submission_id)
+            .first()
+        )
         if not submission:
             print("⚠️ [update_submission] Không tìm thấy bài nộp.")
             return None
 
-        # Cập nhật nội dung
+        # Cập nhật nội dung text
         if new_text:
             submission.submission_text = new_text.strip()
             submission.submission_time = datetime.utcnow()
@@ -179,7 +259,7 @@ def update_submission(db: Session, submission_id: str, new_text: str = "", new_f
         db.commit()
         db.refresh(submission)
 
-        # Thêm file mới nếu có
+        # Lưu file mới
         if new_files:
             student_folder = UPLOAD_DIR / submission.student_id
             student_folder.mkdir(parents=True, exist_ok=True)
@@ -218,28 +298,35 @@ def update_submission(db: Session, submission_id: str, new_text: str = "", new_f
 # 🗑️ XÓA BÀI NỘP
 # ==========================================================
 def delete_submission(db: Session, submission_id: str):
-    """🗑️ Xóa bài nộp và tất cả file liên quan"""
     try:
-        submission = db.query(AssignmentSubmission).filter(AssignmentSubmission.id == submission_id).first()
+        submission = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.id == submission_id)
+            .first()
+        )
         if not submission:
             print("⚠️ [delete_submission] Không tìm thấy bài nộp.")
             return False
 
-        # Xóa file vật lý và bản ghi file
-        files = db.query(AssignmentFile).filter(AssignmentFile.submission_id == submission_id).all()
+        # Xóa file vật lý
+        files = (
+            db.query(AssignmentFile)
+            .filter(AssignmentFile.submission_id == submission_id)
+            .all()
+        )
         for f in files:
             try:
                 if os.path.exists(f.file_url):
                     os.remove(f.file_url)
-            except Exception as file_err:
-                print(f"⚠️ [delete_submission] Không thể xóa file {f.file_url}: {file_err}")
+            except:
+                pass
             db.delete(f)
 
         # Xóa bài nộp
         db.delete(submission)
         db.commit()
 
-        print(f"✅ [delete_submission] Đã xóa bài nộp {submission_id}")
+        print(f"🗑️ [delete_submission] Đã xóa bài nộp {submission_id}")
         return True
 
     except Exception as e:
