@@ -5,7 +5,7 @@
 
 <style>
 /* =====================================================
-✏️ EDIT PROFILE – Glass Neo 2025
+✏️ EDIT PROFILE – Glass Neo 2025 (Premium)
 ===================================================== */
 
 .edit-area {
@@ -119,19 +119,21 @@ body.dark-mode .form-label {
 <div class="edit-area">
   <div class="edit-box">
 
-    <h3><i class="bi bi-person-lines-fill"></i> Chỉnh sửa hồ sơ</h3>
+    <h3><i class="bi bi-person-lines-fill"></i> Chỉnh sửa thông tin hồ sơ</h3>
 
-    <!-- 🔔 Notifications -->
+    <!-- 🔔 Thông báo lỗi -->
     {% if request.query_params.get("error") == "update_failed" %}
-    <div class="alert alert-danger text-center py-2">❌ Cập nhật thất bại, vui lòng thử lại.</div>
+    <div class="alert alert-danger text-center py-2">
+      ❌ Không thể cập nhật. Vui lòng thử lại sau.
+    </div>
     {% endif %}
 
-    <!-- 📝 FORM EDIT -->
+    <!-- 📝 Form chỉnh sửa -->
     <form method="post" action="/student/profile/edit">
 
       <div class="row">
         <div class="col-md-6 mb-3">
-          <label class="form-label">👤 Họ tên</label>
+          <label class="form-label">👤 Họ và tên</label>
           <input type="text" class="form-control" name="full_name"
                  value="{{ user.full_name }}" required>
         </div>
@@ -147,7 +149,7 @@ body.dark-mode .form-label {
         <div class="col-md-6 mb-3">
           <label class="form-label">📱 Số điện thoại</label>
           <input type="text" class="form-control" name="phone"
-                 value="{{ user.phone or '' }}" placeholder="Nhập số điện thoại...">
+                 value="{{ user.phone or '' }}" placeholder="Nhập số điện thoại">
         </div>
 
         <div class="col-md-6 mb-3">
@@ -187,7 +189,7 @@ body.dark-mode .form-label {
         </div>
 
         <div class="col-md-6 mb-4">
-          <label class="form-label">🆔 MSSV</label>
+          <label class="form-label">🆔 Mã số sinh viên</label>
           <input type="text" class="form-control"
                  value="{{ user.mssv or 'Chưa có' }}" disabled>
         </div>

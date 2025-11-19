@@ -2,51 +2,190 @@
 {% block title %}🕓 Lịch sử làm bài{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+
+<style>
+/* ==========================================================
+   🕓 QUIZ HISTORY – GLASS NEO 2025 FINAL PRO
+=========================================================== */
+
+/* Header */
+.history-header {
+  margin-bottom: 1.5rem;
+}
+
+/* Glass Table */
+.glass-table {
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.55);
+  box-shadow:
+    0 4px 18px rgba(0,0,0,0.06),
+    0 0 40px rgba(13,110,253,0.06);
+  overflow: hidden;
+}
+
+/* Table Header */
+.table thead th {
+  font-weight: 600 !important;
+  color: #0d6efd;
+  background: rgba(13,110,253,0.12) !important;
+  border-bottom: none !important;
+}
+
+/* Row Hover */
+.quiz-row-pro {
+  transition: 0.25s ease;
+}
+.quiz-row-pro:hover {
+  background: rgba(13,110,253,0.12) !important;
+}
+
+/* Title truncate */
+.title-limit {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* View button */
+.btn-view-pro {
+  padding: 5px 14px;
+  border-radius: 10px;
+  transition: .25s ease;
+}
+.btn-view-pro:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(13,110,253,0.25);
+}
+
+/* Empty State */
+.empty-card-pro {
+  max-width: 520px;
+  margin: auto;
+  padding: 2rem;
+  background: rgba(255,255,255,0.90);
+  border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.45);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  animation: fadeInUp .5s ease;
+  text-align: center;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.empty-icon-pro {
+  font-size: 3rem;
+  color: #94a3b8;
+  animation: softPulse 1.8s infinite;
+}
+
+@keyframes softPulse {
+  0% { opacity: .5; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.09); }
+  100% { opacity: .5; transform: scale(1); }
+}
+
+/* DARK MODE */
+body.dark-mode .glass-table {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.07);
+  box-shadow:
+    0 4px 18px rgba(0,0,0,0.35),
+    0 0 40px rgba(13,110,253,0.12);
+}
+
+body.dark-mode .table thead th {
+  background: rgba(13,110,253,0.22) !important;
+  color: #bfdbfe !important;
+}
+
+body.dark-mode .quiz-row-pro:hover {
+  background: rgba(13,110,253,0.20) !important;
+}
+
+body.dark-mode .empty-card-pro {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .empty-icon-pro {
+  color: #cbd5e1 !important;
+}
+</style>
+
+<div class="container mt-4 fade-in">
 
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center history-header">
     <h4 class="fw-bold text-primary mb-0">
-      <i class="bi bi-clock-history"></i> Lịch sử làm bài kiểm tra
+      <i class="bi bi-clock-history"></i> Lịch sử làm bài
     </h4>
+
+    <a class="btn btn-outline-primary btn-sm shadow-sm" href="/student/quiz">
+      <i class="bi bi-journal-text"></i> Danh sách quiz
+    </a>
   </div>
 
   {% if history and history|length > 0 %}
 
-  <!-- Table -->
-  <div class="table-responsive shadow-sm rounded">
+  <!-- TABLE -->
+  <div class="table-responsive glass-table">
     <table class="table table-hover align-middle mb-0">
-      <thead class="table-primary text-center">
+      <thead class="text-center">
         <tr>
           <th>#</th>
           <th>Bài kiểm tra</th>
+          <th>Lần</th>
           <th>Điểm</th>
           <th>Đúng / Tổng</th>
-          <th>Ngày nộp</th>
+          <th>Nộp lúc</th>
+          <th>Thời gian</th>
           <th>Trạng thái</th>
-          <th>Chi tiết</th>
+          <th></th>
         </tr>
       </thead>
 
       <tbody>
         {% for attempt in history %}
-        <tr class="text-center">
+        <tr class="text-center quiz-row-pro">
 
-          <!-- Index -->
           <td>{{ loop.index }}</td>
 
           <!-- Quiz Title -->
-          <td class="fw-semibold">
-            {% if attempt.quiz and attempt.quiz.title %}
+          <td class="fw-semibold title-limit"
+              title="{{ attempt.quiz.title if attempt.quiz else 'Quiz ID: ' ~ attempt.quiz_id }}">
+            {% if attempt.quiz %}
               {{ attempt.quiz.title }}
             {% else %}
-              <span class="text-muted fst-italic">Quiz ID: {{ attempt.quiz_id }}</span>
+              <span class="text-muted">Quiz ID: {{ attempt.quiz_id }}</span>
             {% endif %}
+          </td>
+
+          <!-- Attempt number -->
+          <td>
+            <span class="badge bg-light text-dark">
+              {{ attempt.attempt_number or 1 }}
+            </span>
           </td>
 
           <!-- Score -->
           <td>
-            <span class="fw-bold 
+            <span class="fw-bold
               {% if attempt.score >= 80 %} text-success
               {% elif attempt.score >= 50 %} text-warning
               {% else %} text-danger
@@ -55,10 +194,9 @@
             </span>
           </td>
 
-          <!-- Correct / Total -->
           <td>{{ attempt.correct_answers or 0 }}/{{ attempt.total_questions or 0 }}</td>
 
-          <!-- Submitted At -->
+          <!-- Submitted -->
           <td>
             {% if attempt.submitted_at %}
               {{ attempt.submitted_at.strftime('%d/%m/%Y %H:%M') }}
@@ -67,30 +205,38 @@
             {% endif %}
           </td>
 
+          <!-- Time spent -->
+          <td>
+            {% if attempt.time_spent_seconds %}
+              {{ attempt.time_spent_seconds // 60 }}'
+              {{ attempt.time_spent_seconds % 60 }}s
+            {% else %}
+              <span class="text-muted">-</span>
+            {% endif %}
+          </td>
+
           <!-- Status -->
           <td>
             {% if attempt.status == 'graded' %}
-              <span class="badge bg-success">
+              <span class="status-badge bg-success text-white">
                 <i class="bi bi-check-circle"></i> Đã chấm
               </span>
-
             {% elif attempt.status == 'submitted' %}
-              <span class="badge bg-info text-dark">
+              <span class="status-badge bg-info text-dark">
                 <i class="bi bi-hourglass-split"></i> Đã nộp
               </span>
-
             {% else %}
-              <span class="badge bg-secondary">
-                <i class="bi bi-question-circle"></i> {{ attempt.status or 'Không rõ' }}
+              <span class="status-badge bg-secondary text-white">
+                {{ attempt.status or 'Không rõ' }}
               </span>
             {% endif %}
           </td>
 
-          <!-- View Button -->
+          <!-- View -->
           <td>
-            <a href="/student/quiz/result/{{ attempt.id }}" 
-               class="btn btn-outline-primary btn-sm px-3 shadow-sm">
-              <i class="bi bi-eye"></i> Xem
+            <a href="/student/quiz/result/{{ attempt.id }}"
+               class="btn btn-outline-primary btn-sm btn-view-pro">
+              <i class="bi bi-eye"></i>
             </a>
           </td>
 
@@ -102,12 +248,25 @@
 
   {% else %}
 
-  <!-- Empty State -->
-  <div class="alert alert-info shadow-sm text-center py-4">
-    <i class="bi bi-info-circle fs-4"></i>
-    <div class="mt-2 fw-semibold">Bạn chưa làm bài kiểm tra nào.</div>
+  <!-- EMPTY -->
+  <div class="empty-card-pro mt-5">
+
+    <i class="bi bi-journal-x empty-icon-pro"></i>
+
+    <h5 class="fw-bold text-muted mt-3">Chưa có lịch sử làm bài</h5>
+
+    <p class="text-muted small mb-3">
+      Bạn chưa thực hiện bài kiểm tra nào.
+      <br>Bắt đầu thử sức ngay hôm nay!
+    </p>
+
+    <a href="/student/quiz"
+       class="btn btn-primary px-4 shadow-sm mt-2">
+      <i class="bi bi-list-task"></i> Xem danh sách quiz
+    </a>
   </div>
 
   {% endif %}
 </div>
+
 {% endblock %}

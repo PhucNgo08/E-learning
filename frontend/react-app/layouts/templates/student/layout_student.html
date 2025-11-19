@@ -3,180 +3,284 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a0a0a">
+
   <title>{% block title %}🎓 Student Panel – E-Learning{% endblock %}</title>
 
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- Student UI -->
+  <!-- Student CSS -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student.css" />
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/wallet_system.css" />
 
   {% block head_extra %}{% endblock %}
 </head>
 
 <body>
 
-  <!-- ======================================================
-       SIDEBAR
-  ====================================================== -->
-  <nav id="sidebar" class="student-sidebar shadow-lg">
-    <div class="sidebar-header text-center py-4">
-      <img
-        src="{{ request.session.get('user_avatar') or '/uploads/avatars/default-avatar.png' }}"
-        class="rounded-circle border border-2 border-light shadow-sm"
-        onerror="this.src='/uploads/avatars/default-avatar.png'"
-      />
-      <span class="fw-semibold d-block mt-2 text-white sidebar-name">
-        {{ request.session.get('user_full_name', 'Học viên E-Learning') }}
-      </span>
-      <small class="text-light opacity-75">Học viên</small>
-    </div>
+<!-- ======================================================
+     SIDEBAR — GLASS NEO v8
+====================================================== -->
+<nav id="sidebar" class="student-sidebar shadow-lg">
 
-    <div class="sidebar-inner">
-      {% for item in [
-        ('dashboard','speedometer2','Bảng điều khiển','/student/dashboard'),
-        ('course','journal-bookmark','Khóa học của tôi','/student/course'),
-        ('lesson','easel','Bài học','/student/lesson'),
-        ('assignment','journal-check','Bài tập','/student/assignment'),
-        ('quiz','question-circle','Trắc nghiệm','/student/quiz'),
-        ('material','folder2-open','Tài liệu','/student/material'),
-        ('discussion','chat-dots','Thảo luận','/student/discussion'),
-        ('schedule','calendar3','Lịch học','/student/schedule'),
+  <div class="sidebar-header text-center py-4">
+    <img
+      src="{{ request.session.get('user_avatar') or '/uploads/avatars/default-avatar.png' }}"
+      width="78" height="78"
+      class="rounded-circle border border-3 border-light shadow-sm"
+      onerror="this.src='/uploads/avatars/default-avatar.png'"
+      alt="Avatar">
+    <span class="fw-semibold d-block mt-3 text-white fs-5">
+      {{ request.session.get('user_fullname') or 'Học viên E-Learning' }}
+    </span>
+    <small class="text-white-50">Học viên</small>
+  </div>
 
-        ('profile','person-circle','Hồ sơ cá nhân','/student/profile')
-      ] %}
-        <a href="{{ item[3] }}" class="{% if active_page==item[0] %}active{% endif %}">
-          <i class="bi bi-{{ item[1] }}"></i>
-          <span>{{ item[2] }}</span>
-        </a>
-      {% endfor %}
+  <div class="sidebar-inner">
+    {% for item in [
+      ('dashboard','speedometer2','Bảng điều khiển','/student/dashboard'),
+      ('course','journal-bookmark','Khóa học của tôi','/student/course'),
+      ('lesson','easel','Bài học','/student/lesson'),
+      ('assignment','journal-check','Bài tập','/student/assignment'),
+      ('quiz','question-circle','Trắc nghiệm','/student/quiz'),
+      ('material','folder2-open','Tài liệu','/student/material'),
+      ('discussion','chat-dots','Thảo luận','/student/discussion'),
+      ('schedule','calendar3','Lịch học','/student/schedule'),
+      ('profile','person-circle','Hồ sơ cá nhân','/student/profile')
+    ] %}
 
-      <a href="/auth/logout" class="logout-link">
-        <i class="bi bi-box-arrow-right"></i> <span>Đăng xuất</span>
+      <a href="{{ item[3] }}" class="{% if active_page==item[0] %}active{% endif %}">
+        <i class="bi bi-{{ item[1] }}"></i>
+        <span>{{ item[2] }}</span>
       </a>
-    </div>
 
-    <div class="sidebar-footer small text-center py-3 text-white-50">
-      © {{ now.year }} E-Learning
-    </div>
-  </nav>
+    {% endfor %}
 
-  <div id="sidebar-overlay"></div>
+    <a href="/auth/logout" class="logout-link">
+      <i class="bi bi-box-arrow-right"></i>
+      <span>Đăng xuất</span>
+    </a>
+  </div>
 
-  <!-- ======================================================
-       HEADER
-  ====================================================== -->
-  <header class="student-header d-flex justify-content-end align-items-center px-4 py-2 shadow-sm">
+  <div class="sidebar-footer small text-center py-3 text-white-50">
+    © {{ now.year }} E-Learning
+  </div>
 
-    <div class="nav-icons">
+</nav>
 
-      <!-- Notification -->
-      <a href="/student/notifications" title="Thông báo" class="me-3 nav-icon">
+<!-- Overlay -->
+<div id="sidebar-overlay"></div>
+
+<!-- ======================================================
+     HEADER — FIXED GLASS v8 + Dark Mode Button FIXED
+====================================================== -->
+<header class="student-header d-flex justify-content-end align-items-center px-4 py-2 shadow-sm">
+
+  <div class="nav-icons">
+
+    <!-- Notification -->
+    <a href="/student/notifications" title="Thông báo" class="me-3 nav-icon">
         <i class="bi bi-bell fs-5"></i>
-      </a>
+    </a>
 
-      <!-- Messages -->
-      <a href="/student/message" title="Tin nhắn" class="me-3 nav-icon">
+    <!-- Message -->
+    <a href="/student/message" title="Tin nhắn" class="me-3 nav-icon">
         <i class="bi bi-envelope fs-5"></i>
-      </a>
+    </a>
 
-      <!-- Cart -->
-      <a href="/student/cart" title="Giỏ hàng" class="me-3 nav-cart position-relative nav-icon">
+    <!-- Cart -->
+    <a href="/student/cart" title="Giỏ hàng" class="me-3 nav-cart nav-icon position-relative">
         <i class="bi bi-cart3 fs-5"></i>
-
         {% if request.session.get('cart_count', 0) > 0 %}
         <span class="cart-badge">{{ request.session.get('cart_count') }}</span>
         {% endif %}
-      </a>
+    </a>
 
-    </div>
-  </header>
+    <!-- Wallet -->
+    <a href="/student/wallet/page" class="wallet-header-btn d-flex align-items-center" title="Ví học sinh">
 
-  <!-- FLOATING BUTTONS -->
-  <button id="toggleSidebarBtn" class="btn-floating glass-btn sidebar-btn">
-    <i class="bi bi-list"></i>
-  </button>
+      <div class="wallet-icon-box">
+        <i class="bi bi-wallet2"></i>
+      </div>
 
-  <button id="toggleModeBtn" class="btn-floating glass-btn mode-btn">
-    <i class="bi bi-moon-fill"></i>
-  </button>
+      <span class="wallet-balance-mini">
+        {{ "{:,.0f}".format(student_globals(request).wallet_balance) }}đ
+      </span>
 
-  <button id="chatBotToggle" title="Trợ lý AI" class="btn-floating glass-btn chat-btn">
-    <i class="bi bi-robot"></i>
-  </button>
+    </a>
 
-  <!-- CONTENT -->
-  <main id="content">{% block content %}{% endblock %}</main>
+    <!-- 🌙 Dark Mode — FIXED POSITION -->
+    <button id="toggleModeBtn" class="nav-darkmode-btn" title="Chế độ tối">
+        <i class="bi bi-moon-fill"></i>
+    </button>
 
-  <footer class="text-center py-3 small text-muted border-top mt-4">
-    © {{ now.year }} E-Learning – Student Panel
-  </footer>
+  </div>
+</header>
 
-<!-- CHATBOT -->
+<!-- ======================================================
+     FLOATING BUTTONS
+====================================================== -->
+<button id="toggleSidebarBtn" class="btn-floating sidebar-btn">
+  <i class="bi bi-list"></i>
+</button>
+
+<button id="chatBotToggle" class="btn-floating chat-btn" title="Trợ lý AI">
+  <i class="bi bi-robot"></i>
+</button>
+
+
+<!-- ======================================================
+     CONTENT AREA
+====================================================== -->
+<main id="content" class="fade">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="text-center py-3 small text-muted border-top mt-4">
+  © {{ now.year }} E-Learning – Student Panel
+</footer>
+
+
+<!-- ======================================================
+     CHATBOT POPUP
+====================================================== -->
 <div id="chatBotWindow">
+
   <div id="chatBotHeader">
     <span><i class="bi bi-stars me-1"></i> Trợ lý học tập AI</span>
-    <i class="bi bi-x-lg" style="cursor:pointer" id="closeChatBot"></i>
+    <i class="bi bi-x-lg" id="closeChatBot"></i>
   </div>
 
   <div id="chatBotMessages"></div>
 
   <form id="chatBotForm">
     <input id="chatInput" type="text" placeholder="Nhập câu hỏi..." required />
-    <button id="sendBtn" type="submit"><i class="bi bi-send"></i></button>
+    <button id="sendBtn"><i class="bi bi-send"></i></button>
   </form>
+
 </div>
 
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- ======================================================
+     DARK MODE (v8 FIXED)
+====================================================== -->
 <script>
-/* CHATBOT FIXED TOGGLE */
-const chatToggle = document.getElementById("chatBotToggle");
-const chatWindow = document.getElementById("chatBotWindow");
-const closeChat = document.getElementById("closeChatBot");
-const chatForm = document.getElementById("chatBotForm");
-const chatBox = document.getElementById("chatBotMessages");
-const chatInput = document.getElementById("chatInput");
+(() => {
+  const body = document.body;
+  const btn = document.getElementById("toggleModeBtn");
+  const icon = btn.querySelector("i");
 
-// Toggle chatbot bằng class "show" (CSS opacity + transform)
-chatToggle.addEventListener("click", () => {
-  chatWindow.classList.toggle("show");
-});
-
-// Đóng chatbot
-closeChat.addEventListener("click", () => {
-  chatWindow.classList.remove("show");
-});
-
-// Gửi tin nhắn
-chatForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const msg = chatInput.value.trim();
-  if(!msg) return;
-
-  chatInput.value = "";
-
-  // Hiển thị tin nhắn người dùng
-  chatBox.innerHTML += `<div class="msg-user">${msg}</div><div style="clear:both"></div>`;
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  // Gửi request đến AI
-  try {
-    const res = await fetch("/student/chat-ai/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `message=${encodeURIComponent(msg)}`
-    });
-    const data = await res.json();
-    chatBox.innerHTML += `<div class="msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</div><div style="clear:both"></div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
-  } catch(err) {
-    chatBox.innerHTML += `<div class="msg-ai text-danger">⚠️ Lỗi kết nối AI.</div><div style="clear:both"></div>`;
-    chatBox.scrollTop = chatBox.scrollHeight;
+  if (localStorage.getItem("student_dark_mode") === "1") {
+    body.classList.add("dark-mode");
+    icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
   }
+
+  btn.onclick = () => {
+    body.classList.toggle("dark-mode");
+
+    if (body.classList.contains("dark-mode")) {
+      icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
+      localStorage.setItem("student_dark_mode", "1");
+    } else {
+      icon.classList.replace("bi-brightness-low-fill", "bi-moon-fill");
+      localStorage.setItem("student_dark_mode", "0");
+    }
+  };
+})();
+</script>
+
+<!-- ======================================================
+     SIDEBAR MOBILE — v8 NO CLICK-BLOCK
+====================================================== -->
+<script>
+(() => {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebar-overlay");
+  const toggle = document.getElementById("toggleSidebarBtn");
+
+  toggle.onclick = () => {
+    const collapsed = sidebar.classList.toggle("collapsed");
+
+    if (window.innerWidth <= 992) {
+      const opened = !collapsed;
+
+      if (opened) {
+        sidebar.classList.add("show");
+        overlay.style.display = "block";
+        overlay.style.pointerEvents = "auto";
+      } else {
+        sidebar.classList.remove("show");
+        overlay.style.display = "none";
+        overlay.style.pointerEvents = "none";
+      }
+    }
+  };
+
+  overlay.onclick = () => {
+    sidebar.classList.add("collapsed");
+    sidebar.classList.remove("show");
+    overlay.style.display = "none";
+    overlay.style.pointerEvents = "none";
+  };
+})();
+</script>
+
+<!-- ======================================================
+     CHATBOT
+====================================================== -->
+<script>
+(() => {
+  const toggle = document.getElementById("chatBotToggle");
+  const win = document.getElementById("chatBotWindow");
+  const close = document.getElementById("closeChatBot");
+  const form = document.getElementById("chatBotForm");
+  const box = document.getElementById("chatBotMessages");
+  const input = document.getElementById("chatInput");
+
+  toggle.onclick = () => win.classList.toggle("show");
+  close.onclick = () => win.classList.remove("show");
+
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    input.value = "";
+    box.innerHTML += `<div class="msg-user">${msg}</div>`;
+
+    try {
+      const res = await fetch("/student/chat-ai/ask", {
+        method:"POST",
+        headers:{"Content-Type":"application/x-www-form-urlencoded"},
+        body:`message=${encodeURIComponent(msg)}`
+      });
+
+      const data = await res.json();
+      box.innerHTML += `<div class="msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</div>`;
+    } catch {
+      box.innerHTML += `<div class="msg-ai text-danger">⚠️ Lỗi kết nối AI.</div>`;
+    }
+
+    box.scrollTop = box.scrollHeight;
+  };
+})();
+</script>
+
+<!-- ======================================================
+     FADE IN PAGE
+====================================================== -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll(".fade").forEach(e => e.classList.add("show"));
 });
 </script>
 
-
+{% block scripts %}{% endblock %}
 
 </body>
 </html>

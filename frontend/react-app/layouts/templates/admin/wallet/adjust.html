@@ -1,0 +1,65 @@
+{% extends "layout_admin.html" %}
+{% block title %}⚖ Điều chỉnh số dư{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-3">⚖ Điều chỉnh số dư cho User: {{ user_id }}</h3>
+
+    <div class="card p-4 shadow-sm glass-card">
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center py-2">
+            <i class="bi bi-x-circle-fill me-2"></i>
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        {% if success %}
+        <div class="alert alert-success d-flex align-items-center py-2">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>{{ success }}</strong>
+        </div>
+        {% endif %}
+
+        <form method="post" action="/admin/wallets/adjust">
+
+            <!-- User -->
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+
+            <!-- Amount -->
+            <label class="form-label fw-semibold">
+                Số tiền cần điều chỉnh (có thể + hoặc -)
+            </label>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text fw-bold">đ</span>
+                <input type="number"
+                       name="amount"
+                       required
+                       class="form-control form-control-lg"
+                       placeholder="VD: +50000 hoặc -75000">
+            </div>
+
+            <!-- Description -->
+            <label class="form-label fw-semibold">Lý do điều chỉnh</label>
+            <input type="text"
+                   name="description"
+                   class="form-control mb-4"
+                   placeholder="VD: Chỉnh sai số dư, cộng thưởng, phạt...">
+
+            <!-- Button -->
+            <button class="btn btn-warning fw-semibold w-100 py-2">
+                ⚖ Xác nhận điều chỉnh
+            </button>
+
+        </form>
+
+        <a href="/admin/wallets/info?user_id={{ user_id }}" class="btn btn-link mt-3">
+            ← Quay về trang ví
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

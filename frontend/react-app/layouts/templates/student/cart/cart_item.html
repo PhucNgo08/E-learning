@@ -1,14 +1,12 @@
-<div class="card cart-item-card shadow-sm border-0 h-100">
+<div class="card cart-item-card glass glass-hover shadow-sm border-0 h-100">
 
     <div class="position-relative">
 
-        <!-- ẢNH -->
         <img src="{{ item.course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.src='/uploads/course_thumbnails/default-course.png'"
              class="card-img-top course-thumb">
 
-        <!-- Badge giảm giá -->
-        {% if item.course.discount_percent and item.course.discount_percent > 0 %}
+        {% if item.course.discount_percent > 0 %}
         <span class="discount-badge">
             -{{ item.course.discount_percent }}%
         </span>
@@ -17,26 +15,23 @@
 
     <div class="card-body d-flex flex-column">
 
-        <!-- TIÊU ĐỀ -->
         <h5 class="card-title fw-semibold text-dark text-truncate"
             title="{{ item.course.course_name }}">
             {{ item.course.course_name }}
         </h5>
 
-        <!-- MÔ TẢ -->
         <p class="text-muted small mb-3">
             {% if item.course.description %}
-              {{ item.course.description[:100] }}{% if item.course.description|length > 100 %}...{% endif %}
+                {{ item.course.description[:100] }}{% if item.course.description|length > 100 %}...{% endif %}
             {% else %}
-              Khoá học chưa có mô tả.
+                Khóa học chưa có mô tả.
             {% endif %}
         </p>
 
-        <!-- GIÁ + NÚT XÓA -->
         <div class="mt-auto d-flex justify-content-between align-items-center">
 
             <div>
-                {% if item.course.discount_percent and item.course.discount_percent > 0 %}
+                {% if item.course.discount_percent > 0 %}
                     <div class="fw-bold price-final">
                         {{ "{:,.0f}".format(item.course.final_price) }}₫
                     </div>
@@ -51,86 +46,28 @@
                 {% endif %}
             </div>
 
-            <!-- NÚT XÓA -->
             <a href="/student/cart/remove/{{ item.id }}"
-               class="btn btn-light border btn-sm rounded-circle remove-btn shadow-sm"
+               class="btn btn-soft border btn-sm rounded-circle remove-btn shadow-sm"
                title="Xóa khỏi giỏ">
                 <i class="bi bi-trash-fill text-danger"></i>
             </a>
+
         </div>
     </div>
 
 </div>
 
-
 <style>
-/* CARD */
 .cart-item-card {
-    border-radius: 14px;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    border-radius: 16px;
 }
-
-.cart-item-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0px 12px 25px rgba(0,0,0,0.15);
-}
-
-/* ẢNH */
 .course-thumb {
     height: 165px;
     width: 100%;
     object-fit: cover;
-    border-radius: 14px 14px 0 0;
+    border-radius: 16px 16px 0 0;
 }
-
-/* BADGE GIẢM GIÁ */
-.discount-badge {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    padding: 4px 10px;
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
-    letter-spacing: -0.5px;
-}
-
-/* GIÁ */
-.price-final {
-    background: linear-gradient(135deg, #dc2626, #f87171);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-size: 1.1rem;
-}
-
-.price-main {
-    background: linear-gradient(135deg, #0284c7, #2563eb);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    font-size: 1.1rem;
-}
-
-/* NÚT XÓA */
-.remove-btn {
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.2s ease;
-}
-
 .remove-btn:hover {
-    background: #ffe5e5 !important;
-    box-shadow: 0 0 12px rgba(255, 0, 0, 0.25) !important;
+    background: #ffe8e8 !important;
 }
-
 </style>

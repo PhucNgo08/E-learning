@@ -2,42 +2,145 @@
 {% block title %}🎯 Kết quả bài kiểm tra{% endblock %}
 
 {% block content %}
+
+<style>
+/* ==========================================================
+   🎯 QUIZ RESULT – GLASS NEO PRO 2025
+=========================================================== */
+
+.result-card-pro {
+  border-radius: 22px;
+  padding: 2.3rem;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 28px rgba(0,0,0,0.12),
+    0 0 50px rgba(13,110,253,0.10);
+  animation: fadeInUp .55s ease;
+}
+
+.chart-card-pro {
+  border-radius: 20px;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+/* Chi tiết câu hỏi */
+.q-detail-pro {
+  background: rgba(255,255,255,0.85);
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,0.05);
+  backdrop-filter: blur(14px);
+  transition: .25s ease;
+}
+
+.q-detail-pro:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+}
+
+/* Animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode */
+body.dark-mode .result-card-pro,
+body.dark-mode .chart-card-pro,
+body.dark-mode .q-detail-pro {
+  background: rgba(30,41,59,0.60);
+  border-color: rgba(255,255,255,0.10);
+}
+
+body.dark-mode .alert-info {
+  background: rgba(59, 130, 246, .25) !important;
+  color: #dbeafe;
+  border: none;
+}
+</style>
+
 <div class="container mt-4 fade-in">
 
   <!-- ===================================================== -->
-  <!-- 🎯 TỔNG QUAN KẾT QUẢ -->
+  <!-- 🎯 TỔNG QUAN -->
   <!-- ===================================================== -->
-  <div class="card shadow-sm border-0 mb-4 rounded-3">
-    <div class="card-body text-center py-4">
+  <div class="result-card-pro text-center mb-4">
 
-      <h4 class="fw-bold text-primary mb-3">
-        <i class="bi bi-clipboard-check"></i> Kết quả bài kiểm tra
-      </h4>
+    <h3 class="fw-bold text-primary mb-3">
+      <i class="bi bi-clipboard-check"></i> Kết quả bài kiểm tra
+    </h3>
 
-      {% set score = result.attempt.score or 0 %}
+    {% set score = result.score or 0 %}
 
-      {% if score >= 80 %}
-        <i class="bi bi-emoji-laughing text-success fs-1"></i>
-        <h1 class="fw-bold text-success mt-2">{{ score }}%</h1>
-        <p class="fw-semibold text-success">Xuất sắc! Bạn làm rất tốt 🎉</p>
+    {% if score >= 80 %}
+      <i class="bi bi-emoji-laughing text-success display-5"></i>
+      <h1 class="fw-bold text-success mt-2">{{ score }}%</h1>
+      <p class="fw-semibold text-success">Xuất sắc! Tiếp tục phát huy nhé 🎉</p>
 
-      {% elif score >= 50 %}
-        <i class="bi bi-emoji-neutral text-warning fs-1"></i>
-        <h1 class="fw-bold text-warning mt-2">{{ score }}%</h1>
-        <p class="fw-semibold text-warning">Khá tốt! Hãy luyện thêm để tiến bộ 💪</p>
+    {% elif score >= 50 %}
+      <i class="bi bi-emoji-neutral text-warning display-5"></i>
+      <h1 class="fw-bold text-warning mt-2">{{ score }}%</h1>
+      <p class="fw-semibold text-warning">Khá ổn! Cố gắng thêm nữa 💪</p>
 
-      {% else %}
-        <i class="bi bi-emoji-frown text-danger fs-1"></i>
-        <h1 class="fw-bold text-danger mt-2">{{ score }}%</h1>
-        <p class="fw-semibold text-danger">Bạn cần cố gắng thêm nhé 💡</p>
-      {% endif %}
+    {% else %}
+      <i class="bi bi-emoji-frown text-danger display-5"></i>
+      <h1 class="fw-bold text-danger mt-2">{{ score }}%</h1>
+      <p class="fw-semibold text-danger">Chưa đạt… nhưng bạn vẫn có thể cải thiện! 💡</p>
+    {% endif %}
 
-      <!-- Info -->
-      <p class="text-muted mt-3 mb-0">
-        <strong>{{ result.attempt.correct_answers or 0 }}/{{ result.attempt.total_questions or 0 }}</strong> câu đúng • 
-        Nộp lúc <strong>{{ result.attempt.submitted_at.strftime('%H:%M %d/%m/%Y') if result.attempt.submitted_at else 'Không rõ' }}</strong>
-      </p>
+    <!-- Thông tin tóm tắt -->
+    <p class="text-muted mt-3 mb-1">
+      <strong>{{ result.correct_answers }}/{{ result.total_questions }}</strong> câu đúng •
+      Nộp lúc
+      <strong>
+        {% if result.submitted_at %}
+          {{ result.submitted_at.strftime('%H:%M %d/%m/%Y') }}
+        {% else %}
+          -
+        {% endif %}
+      </strong>
+    </p>
 
+    <p class="text-muted">
+      ⏱ Thời gian làm bài:
+      <strong>
+        {% if result.time_spent_seconds %}
+          {{ (result.time_spent_seconds // 60) }} phút
+          {{ (result.time_spent_seconds % 60) }} giây
+        {% else %}-{% endif %}
+      </strong>
+      • ⚡ Trung bình:
+      <strong>
+        {% if result.time_spent_seconds and result.total_questions > 0 %}
+          {{ (result.time_spent_seconds / result.total_questions)|round(1) }}s/câu
+        {% else %}-{% endif %}
+      </strong>
+    </p>
+
+  </div>
+
+
+  <!-- ===================================================== -->
+  <!-- 📊 BIỂU ĐỒ -->
+  <!-- ===================================================== -->
+  <div class="chart-card-pro p-3 mb-4">
+    <h6 class="fw-bold text-primary mb-3">
+      <i class="bi bi-bar-chart-line"></i> Thống kê nhanh
+    </h6>
+
+    <div class="row">
+      <div class="col-md-6 text-center mb-3">
+        <canvas id="pieChart" style="max-height: 240px;"></canvas>
+      </div>
+
+      <div class="col-md-6 text-center mb-3">
+        <canvas id="barChart" style="max-height: 240px;"></canvas>
+      </div>
     </div>
   </div>
 
@@ -45,52 +148,137 @@
   <!-- ===================================================== -->
   <!-- 📋 CHI TIẾT TỪNG CÂU -->
   <!-- ===================================================== -->
-  <div class="card shadow-sm border-0 rounded-3">
-    <div class="card-header bg-light text-primary fw-bold">
+  <div class="chart-card-pro p-3">
+
+    <h6 class="fw-bold text-primary mb-3">
       <i class="bi bi-list-check"></i> Chi tiết bài làm
-    </div>
+    </h6>
 
-    <div class="card-body">
+    {% if result.answers %}
+      {% for ans in result.answers %}
+      {% set q = ans.question %}
+      {% set selected = ans.selected_option_id %}
 
-      {% if result.answers %}
-        {% for ans in result.answers %}
-        <div class="py-3 border-bottom d-flex justify-content-between align-items-center">
-          <div class="fw-semibold">
-            Câu {{ loop.index }}
-          </div>
+      <div class="q-detail-pro p-3 mb-3">
 
-          {% if ans.is_correct %}
-            <span class="badge bg-success px-3 py-2">
-              <i class="bi bi-check-circle"></i> Đúng
-            </span>
+        <!-- Tiêu đề câu hỏi -->
+        <h6 class="fw-bold text-dark mb-2">
+          Câu {{ loop.index }}:
+          <span>{{ q.question_text }}</span>
+
+          {% if q.difficulty_level == 'hard' %}
+            <span class="badge bg-danger ms-2">Khó</span>
+          {% elif q.difficulty_level == 'medium' %}
+            <span class="badge bg-warning text-dark ms-2">TB</span>
           {% else %}
-            <span class="badge bg-danger px-3 py-2">
-              <i class="bi bi-x-circle"></i> Sai
-            </span>
+            <span class="badge bg-success ms-2">Dễ</span>
           {% endif %}
-        </div>
-        {% endfor %}
-      {% else %}
-        <div class="alert alert-info mb-0">
-          <i class="bi bi-info-circle"></i> Không có dữ liệu chi tiết cho bài làm này.
-        </div>
-      {% endif %}
+        </h6>
 
-    </div>
+        <!-- Đáp án -->
+        {% for op in q.options %}
+          {% set is_selected = (op.id == selected) %}
+          {% set is_correct = op.is_correct %}
+
+          <div class="p-2 rounded mb-2
+            {% if is_correct %} bg-success bg-opacity-10 border border-success {% endif %}
+            {% if is_selected and not is_correct %} bg-danger bg-opacity-10 border border-danger {% endif %}
+          ">
+            <i class="bi 
+              {% if is_selected %}
+                {% if is_correct %} bi-check-circle-fill text-success
+                {% else %} bi-x-circle-fill text-danger
+                {% endif %}
+              {% else %} bi-circle {% endif %}
+            "></i>
+
+            <span class="ms-2">{{ op.option_text }}</span>
+
+            {% if is_correct %}
+              <span class="badge bg-success rounded-pill ms-2">Đáp án đúng</span>
+            {% endif %}
+            {% if is_selected and not is_correct %}
+              <span class="badge bg-danger rounded-pill ms-2">Bạn đã chọn</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+
+        {% if q.explanation %}
+        <div class="alert alert-info mt-3 mb-0">
+          <i class="bi bi-lightbulb"></i>
+          <strong>Giải thích:</strong><br>
+          {{ q.explanation }}
+        </div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+
+    {% else %}
+      <div class="alert alert-info mb-0">
+        <i class="bi bi-info-circle"></i> Không có dữ liệu chi tiết.
+      </div>
+    {% endif %}
+
   </div>
 
 
   <!-- ===================================================== -->
   <!-- 🔙 NÚT QUAY LẠI -->
   <!-- ===================================================== -->
-  <div class="text-center mt-4">
+  <div class="text-center mt-4 mb-5">
     <a href="/student/quiz/history" class="btn btn-outline-primary px-4 me-2 shadow-sm">
       <i class="bi bi-clock-history"></i> Lịch sử làm bài
     </a>
     <a href="/student/quiz" class="btn btn-secondary px-4 shadow-sm">
-      <i class="bi bi-arrow-left"></i> Danh sách kiểm tra
+      <i class="bi bi-arrow-left"></i> Danh sách quiz
     </a>
   </div>
 
 </div>
+
+
+<!-- Biểu đồ – Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const correct = parseInt("{{ result.correct_answers or 0 }}");
+  const total = parseInt("{{ result.total_questions or 0 }}");
+  const wrong = Math.max(0, total - correct);
+  const score = parseFloat("{{ result.score or 0 }}");
+
+  /* PIE CHART */
+  new Chart(document.getElementById("pieChart"), {
+    type: "pie",
+    data: {
+      labels: ["Đúng", "Sai"],
+      datasets: [{
+        data: [correct, wrong],
+        backgroundColor: ["#28a745", "#dc3545"],
+      }]
+    },
+    options: { plugins: { legend: { position: "bottom" } } }
+  });
+
+  /* BAR CHART */
+  new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: ["Điểm %"],
+      datasets: [{
+        label: "Điểm số",
+        data: [score],
+        backgroundColor: ["#0d6efd"]
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
+
+});
+</script>
+
 {% endblock %}

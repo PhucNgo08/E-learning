@@ -1,51 +1,207 @@
 {% extends "layout_teacher.html" %}
-{% block title %}✏️ Chỉnh sửa Quiz{% endblock %}
+{% block title %}✏️ Chỉnh sửa Bài Quiz{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <h4 class="fw-bold text-primary mb-4">✏️ Chỉnh sửa Quiz: {{ quiz.title }}</h4>
 
-  <form method="post" action="/teacher/quizzes/edit/{{ quiz.id }}">
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Chọn khóa học</label>
-      <select name="course_id" class="form-select" required>
-        {% for course in courses %}
-        <option value="{{ course.id }}" {% if quiz.course_id == course.id %}selected{% endif %}>
-          {{ course.course_name }}
-        </option>
-        {% endfor %}
-      </select>
-    </div>
+<style>
+/* ==========================================================
+   ✏️ CHỈNH SỬA QUIZ – GLASS NEO PRO 2025 (VIỆT HÓA)
+=========================================================== */
 
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Tên Quiz</label>
-      <input type="text" name="title" class="form-control" value="{{ quiz.title }}" required>
-    </div>
+.edit-wrapper {
+  max-width: 720px;
+  margin: auto;
+}
 
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Mô tả</label>
-      <textarea name="description" class="form-control" rows="3">{{ quiz.description }}</textarea>
-    </div>
+.edit-card-pro {
+  padding: 2rem 2.2rem;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(18px);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.10),
+    0 0 40px rgba(13,110,253,0.06);
+  animation: fadeInUp 0.55s ease;
+}
 
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label fw-semibold">Thời lượng (phút)</label>
-        <input type="number" name="duration_minutes" class="form-control" value="{{ quiz.duration_minutes }}" required>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label fw-semibold">Tổng điểm</label>
-        <input type="number" name="total_marks" class="form-control" value="{{ quiz.total_marks }}" required>
-      </div>
-    </div>
+.page-title-pro {
+  font-weight: 700;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 1.55rem;
+}
 
-    <div class="text-end">
-      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-save"></i> Cập nhật
-      </button>
+.form-label { font-weight: 600; }
+
+.form-control, .form-select {
+  border-radius: 12px !important;
+  transition: .25s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.18);
+}
+
+.btn-pro {
+  border-radius: 12px;
+  padding: 10px 22px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover { transform: translateY(-3px); }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌙 DARK MODE */
+body.dark-mode .edit-card-pro {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.1);
+}
+
+body.dark-mode .page-title-pro { color: #93c5fd !important; }
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background: rgba(30,41,59,0.65);
+  border-color: rgba(255,255,255,0.12);
+  color: #f8fafc;
+}
+</style>
+
+<div class="container py-4 fade-in">
+  <div class="edit-wrapper">
+    <div class="edit-card-pro">
+
+      <!-- TITLE -->
+      <h4 class="page-title-pro mb-4">
+        <i class="bi bi-pencil-square"></i> Chỉnh sửa Bài Quiz: {{ quiz.title }}
+      </h4>
+
+      <!-- FORM -->
+      <form method="post" action="/teacher/quizzes/edit/{{ quiz.id }}">
+
+        <!-- COURSE -->
+        <div class="mb-3">
+          <label class="form-label">Thuộc khóa học</label>
+          <select name="course_id" class="form-select" required>
+            {% for course in courses %}
+            <option value="{{ course.id }}"
+              {% if quiz.course_id == course.id %}selected{% endif %}>
+              {{ course.course_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- TITLE -->
+        <div class="mb-3">
+          <label class="form-label">Tên bài Quiz</label>
+          <input type="text" name="title" class="form-control"
+                 value="{{ quiz.title }}" required>
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-3">
+          <label class="form-label">Mô tả</label>
+          <textarea name="description" class="form-control" rows="3"
+                    placeholder="Nhập mô tả...">{{ quiz.description or "" }}</textarea>
+        </div>
+
+        <!-- TIME + TOTAL QUESTIONS -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Thời lượng (phút)</label>
+            <input type="number" name="time_limit_minutes" class="form-control"
+                   value="{{ quiz.time_limit_minutes or 30 }}" min="1" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Số câu trong bài</label>
+            <input type="number" name="total_questions" class="form-control"
+                   value="{{ quiz.total_questions or 10 }}" min="1" required>
+          </div>
+        </div>
+
+        <!-- MAX ATTEMPTS + PASSING SCORE -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Số lần làm tối đa</label>
+            <input type="number" name="max_attempts" class="form-control"
+                   value="{{ quiz.max_attempts or 1 }}" min="1" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Điểm đạt tối thiểu (%)</label>
+            <input type="number" name="passing_score" class="form-control"
+                   value="{{ quiz.passing_score or 60 }}" min="0" max="100" required>
+          </div>
+        </div>
+
+        <!-- TYPE DISPLAY (Không cho sửa) -->
+        <div class="mb-3">
+          <label class="form-label">Loại Quiz</label>
+          <div class="form-control bg-light">
+            {% if quiz.quiz_type == 'graded' %}
+              <span class="badge bg-danger">Bài thi (Graded)</span>
+            {% else %}
+              <span class="badge bg-primary">Ôn tập (Practice)</span>
+            {% endif %}
+          </div>
+          <input type="hidden" name="quiz_type" value="{{ quiz.quiz_type }}">
+        </div>
+
+        <!-- IF GRADED: SHOW AVAILABLE TIME -->
+        {% if mode == "graded" %}
+        <div class="border rounded p-3 mb-4">
+          <h6 class="fw-bold mb-3">
+            <i class="bi bi-clock"></i> Thời gian mở – đóng bài thi
+          </h6>
+
+          <div class="mb-3">
+            <label class="form-label">Mở từ</label>
+            <input type="datetime-local" name="available_from" class="form-control"
+                   value="{{ quiz.available_from.strftime('%Y-%m-%dT%H:%M') if quiz.available_from }}">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Đóng lúc</label>
+            <input type="datetime-local" name="available_to" class="form-control"
+                   value="{{ quiz.available_to.strftime('%Y-%m-%dT%H:%M') if quiz.available_to }}">
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- DIFFICULTY -->
+        <div class="mb-4">
+          <label class="form-label">Độ khó</label>
+          <select name="difficulty_level" class="form-select">
+            <option value="easy"   {% if quiz.difficulty_level == 'easy' %}selected{% endif %}>Dễ</option>
+            <option value="medium" {% if quiz.difficulty_level == 'medium' %}selected{% endif %}>Trung bình</option>
+            <option value="hard"   {% if quiz.difficulty_level == 'hard' %}selected{% endif %}>Khó</option>
+          </select>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="text-end">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary btn-pro">
+            <i class="bi bi-arrow-left"></i> Quay lại
+          </a>
+
+          <button type="submit" class="btn btn-primary btn-pro ms-2">
+            <i class="bi bi-save"></i> Lưu thay đổi
+          </button>
+        </div>
+
+      </form>
+
     </div>
-  </form>
+  </div>
 </div>
+
 {% endblock %}

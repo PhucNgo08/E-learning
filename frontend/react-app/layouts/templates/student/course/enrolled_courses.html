@@ -32,7 +32,7 @@
       </thead>
 
       <tbody>
-        {% for item in enrollments %}
+        {% for item in courses %}
         {% set level = item.course.difficulty_level|lower %}
 
         <tr class="course-row">
@@ -80,9 +80,9 @@
 
           <!-- ▶️ Hành động -->
           <td class="text-end" data-label="Hành động">
-            {% if item.progress_percent < 100 and item.next_lesson_id %}
+            {% if item.progress_percent < 100 %}
               <a class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
-                 href="/student/lesson/view/{{ item.next_lesson_id }}">
+                 href="/student/course/progress/{{ item.course.id }}">
                 <i class="bi bi-play-circle"></i> Học tiếp
               </a>
             {% else %}

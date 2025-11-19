@@ -1,113 +1,147 @@
-# =====================================
-# 🍀 PYTHON / FASTAPI BACKEND
-# =====================================
-__pycache__/
-*.py[cod]
-*$py.class
+############################################################
+#         KHoaHocOnline - E-Learning Platform 2025
+#     AUTO-GENERATED .gitignore for FASTAPI + REACT
+############################################################
 
-# Virtual environment
+############################
+# PYTHON / FASTAPI
+############################
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
 venv/
 env/
 .venv/
+ENV/
 
-# IDE specific
-.vscode/
-.idea/
-
-# Environment & secrets
-.env
-.env.local
-*.env
-
-# Logs
-*.log
-logs/
-error.log
-
-# Byte-compiled files
-*.pyo
-*.pyd
-*.pdb
-
-# MyPy / pytest / coverage
-.mypy_cache/
-.pytest_cache/
-.coverage
-htmlcov/
-
-# SQLite (nếu dùng)
-*.sqlite3
-*.db
-
-# Compiled
+# Build & Packaging
+*.egg-info/
 build/
 dist/
 
-# =====================================
-# 🖼 UPLOAD / MEDIA FILES
-# Không đẩy ảnh/video/tài liệu lên GitHub
-# =====================================
-uploads/
-media/
-static/uploads/
-static/avatars/
-static/thumbnails/
-static/materials/
-static/videos/*
-!static/videos/.gitkeep
+# Temp directories
+tmp/
+temp/
 
-# To avoid giant file push
-*.mp4
-*.avi
-*.mov
-*.mkv
+############################
+# BACKEND
+############################
+
+# Uploaded files (avatars, thumbnails, materials, assignments)
+backend/uploads/
+backend/app/uploads/
+uploads/**
+!uploads/**/.gitkeep
+
+# Cache
+backend/__pycache__/
+backend/app/__pycache__/
+
+# Logs
+backend/logs/
+*.log
+
+# Environment variables
+backend/.env
+.env
+.env.*
+
+# Uvicorn PID, cache
+*.pid
+.cache/
+
+############################
+# ALEMBIC (Migration)
+############################
+backend/alembic/versions/*.pyc
+backend/alembic/versions/*_temp.py
+backend/alembic/versions/*_backup.py
+
+############################
+# DATABASE
+############################
+*.sql
+*.bak
+*.dump
+*.backup
+
+############################
+# FRONTEND (REACT)
+############################
+
+# Node modules
+frontend/react-app/node_modules/
+frontend/react-app/.cache/
+frontend/react-app/.vite/
+
+# Build outputs
+frontend/react-app/build/
+frontend/react-app/dist/
+
+# Environment files
+frontend/react-app/.env
+frontend/react-app/.env.local
+frontend/react-app/.env.production
+frontend/react-app/.env.development
+
+# Extra OS files in frontend
+frontend/react-app/.DS_Store
+
+############################
+# STATIC / AUTO-GENERATED
+############################
+
+# React → FastAPI copied builds
+backend/app/static/
+backend/static/
+
+# Auto-generated CSS maps
+frontend/react-app/layouts/styles/*.map
+
+# General static builds
+frontend/react-app/static/
+static/
+
+############################
+# EDITOR / IDE
+############################
+.vscode/
+.idea/
+*.swp
+
+############################
+# OPERATING SYSTEM FILES
+############################
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+############################
+# COMPRESSED / EXPORTS
+############################
 *.zip
 *.rar
 *.7z
-*.iso
-*.tar
-*.gz
 
-# =====================================
-# ⚛️ REACT FRONTEND
-# =====================================
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnp/
-.pnp.js
+############################
+# NOTEBOOKS
+############################
+*.ipynb_checkpoints/
 
-# Build output
-frontend/react-app/build/
-frontend/react-app/.cache/
-frontend/react-app/dist/
-*.map
+############################
+# BACKUPS
+############################
+backup/
+backups/
 
-# React local env
-frontend/react-app/.env.local
-frontend/react-app/.env.development.local
-frontend/react-app/.env.test.local
-frontend/react-app/.env.production.local
-
-# =====================================
-# 🌐 FRONTEND STATIC + EDITOR CONFIG
-# =====================================
-.DS_Store
-Thumbs.db
-
-# =====================================
-# 🧩 GIT LFS / LARGE FILE SUPPORT
-# =====================================
-*.psd
-*.ai
-*.fig
-*.blend
-
-# =====================================
-# ⚙️ OTHER IGNORES
-# =====================================
-*.bak
-*.tmp
-tmp/
-cache/
+############################################################
+# END OF FILE
+############################################################

@@ -1,7 +1,8 @@
 """
 ==========================================================
-🎓 ROUTER: Student - Profile (PRODUCTION 2025)
-Quản lý hồ sơ cá nhân của học viên – FULL 100%
+🎓 ROUTER: Student - Profile (PRODUCTION 2025 - FINAL)
+Quản lý hồ sơ cá nhân, avatar, password
+Tối ưu bảo mật – tốc độ – sạch – không rác
 ==========================================================
 """
 
@@ -11,9 +12,10 @@ from fastapi import (
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
-import uuid, shutil, os
 from typing import Optional
-import traceback
+import uuid, os, traceback
+from PIL import Image
+from io import BytesIO
 
 # Database & templates
 from app.database.connection import get_db
@@ -26,8 +28,9 @@ from app.models.quiz_attempt import QuizAttempt
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.academic_year import AcademicYear
 from app.models.major import Major
+from app.models.security_setting import SecuritySettings
 
-# Change password service
+# Services
 from app.services.common.password_service import change_user_password
 
 # Upload folder
@@ -35,12 +38,37 @@ from app.config.paths import UPLOAD_AVATARS
 
 
 # =====================================================
-# ⚙️ Router
+# ⚙️ Router init
 # =====================================================
 router = APIRouter(
     prefix="/student/profile",
     tags=["Student - Profile"]
 )
+
+
+# =====================================================
+# 🧩 Helper Functions
+# =====================================================
+
+def resize_image(image_bytes: bytes, size=(512, 512)) -> bytes:
+    """Resize ảnh về 512x512 để tối ưu sidebar & storage."""
+    image = Image.open(BytesIO(image_bytes)).convert("RGB")
+    image = image.resize(size, Image.LANCZOS)
+
+    output = BytesIO()
+    image.save(output, format="JPEG", quality=92)
+    return output.getvalue()
+
+
+def delete_old_avatar(path: str):
+    """Xoá avatar cũ (trừ avatar mặc định)."""
+    try:
+        if path and "default-avatar.png" not in path:
+            abs_path = "." + path
+            if os.path.exists(abs_path):
+                os.remove(abs_path)
+    except:
+        pass  # Không để crash ứng dụng
 
 
 # =====================================================
@@ -56,18 +84,14 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/auth/login", 303)
 
-    # Session avatar auto-sync
+    # Đồng bộ avatar vào session để sidebar load đúng
     avatar = user.avatar_url or "/uploads/avatars/default-avatar.png"
     if request.session.get("user_avatar") != avatar:
         request.session["user_avatar"] = avatar
 
-    major = db.query(Major).filter(Major.id == user.major_id).first() if user.major_id else None
-    academic_year = (
-        db.query(AcademicYear).filter(AcademicYear.id == user.academic_year_id).first()
-        if user.academic_year_id else None
-    )
+    major = db.query(Major).filter_by(id=user.major_id).first() if user.major_id else None
+    academic_year = db.query(AcademicYear).filter_by(id=user.academic_year_id).first() if user.academic_year_id else None
 
-    # 🧮 Tối ưu count bằng subquery để giảm tải
     total_lessons = db.query(LessonProgress).filter_by(user_id=user_id).count()
     completed_lessons = (
         db.query(LessonProgress)
@@ -99,59 +123,68 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
 
 
 # =====================================================
-# 🖼️ 2️⃣ Upload avatar – FULL VALIDATION
+# 🖼️ 2️⃣ Upload avatar – Resize + Delete Old + Validation
 # =====================================================
+
 MAX_AVATAR_SIZE_MB = 5
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 
 @router.post("/upload-avatar")
 async def upload_avatar(
     request: Request,
-    files: list[UploadFile] = File(...),
+    files: Optional[list[UploadFile]] = File(None),
     db: Session = Depends(get_db),
 ):
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse("/auth/login", 303)
 
+    if not files:
+        return RedirectResponse("/student/profile?error=no_file", 303)
+
     os.makedirs(UPLOAD_AVATARS, exist_ok=True)
 
-    last_url = None
+    user = db.query(User).filter_by(id=user_id).first()
+    if not user:
+        return RedirectResponse("/auth/login", 303)
+
+    new_avatar_url = None
 
     for file in files:
         ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in ALLOWED_EXT:
-            continue
 
-        if file.content_type not in ALLOWED_IMAGE_TYPES:
+        if ext not in ALLOWED_EXT or file.content_type not in ALLOWED_TYPES:
             continue
 
         contents = await file.read()
         size_mb = len(contents) / (1024 * 1024)
 
         if size_mb > MAX_AVATAR_SIZE_MB:
-            return RedirectResponse(
-                "/student/profile?error=avatar_too_large",
-                status_code=303,
-            )
+            return RedirectResponse("/student/profile?error=avatar_too_large", 303)
 
-        filename = f"{uuid.uuid4()}{ext}"
+        # Resize ảnh về 512x512
+        resized = resize_image(contents)
+
+        filename = f"{uuid.uuid4()}.jpg"  # Lưu chuẩn JPG
         filepath = os.path.join(UPLOAD_AVATARS, filename)
 
         with open(filepath, "wb") as f:
-            f.write(contents)
+            f.write(resized)
 
-        last_url = f"/uploads/avatars/{filename}"
+        new_avatar_url = f"/uploads/avatars/{filename}"
 
-    if last_url:
-        user = db.query(User).filter_by(id=user_id).first()
-        user.avatar_url = last_url
+    if new_avatar_url:
+        # Xoá avatar cũ
+        delete_old_avatar(user.avatar_url)
+
+        user.avatar_url = new_avatar_url
         user.updated_at = datetime.now()
         db.commit()
 
-        request.session["user_avatar"] = last_url
+        # Đồng bộ session
+        request.session["user_avatar"] = new_avatar_url
 
     return RedirectResponse("/student/profile?success=avatar_updated", 303)
 
@@ -185,7 +218,7 @@ def edit_profile_page(request: Request, db: Session = Depends(get_db)):
 
 
 # =====================================================
-# 💾 4️⃣ Xử lý cập nhật thông tin cá nhân (POST)
+# 💾 4️⃣ Xử lý cập nhật thông tin hồ sơ (POST)
 # =====================================================
 @router.post("/edit")
 def update_profile(
@@ -195,6 +228,8 @@ def update_profile(
     phone: Optional[str] = Form(None),
     date_of_birth: Optional[str] = Form(None),
     gender: Optional[str] = Form(None),
+    major_id: Optional[str] = Form(None),
+    academic_year_id: Optional[str] = Form(None),
 ):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -202,23 +237,25 @@ def update_profile(
 
     try:
         user = db.query(User).filter_by(id=user_id).first()
+
         user.full_name = full_name
         user.phone = phone
         user.gender = gender
         user.date_of_birth = date_of_birth or None
+        user.major_id = major_id or user.major_id
+        user.academic_year_id = academic_year_id or user.academic_year_id
         user.updated_at = datetime.now()
 
         db.commit()
         return RedirectResponse("/student/profile?success=updated", 303)
 
     except Exception:
-        print("❌ [Profile Update Error]")
         traceback.print_exc()
         return RedirectResponse("/student/profile/edit?error=update_failed", 303)
 
 
 # =====================================================
-# 🔐 5️⃣ Đổi mật khẩu – (GET)
+# 🔐 5️⃣ Trang đổi mật khẩu (GET)
 # =====================================================
 @router.get("/change-password", response_class=HTMLResponse)
 def change_password_page(request: Request):
@@ -232,7 +269,7 @@ def change_password_page(request: Request):
 
 
 # =====================================================
-# 💾 6️⃣ Đổi mật khẩu – (POST)
+# 💾 6️⃣ Xử lý đổi mật khẩu (POST)
 # =====================================================
 @router.post("/change-password")
 def change_password(
@@ -264,6 +301,12 @@ def change_password(
             },
             status_code=400,
         )
+
+    # Log security: cập nhật ngày đổi mật khẩu
+    security = db.query(SecuritySettings).filter_by(user_id=user_id).first()
+    if security:
+        security.last_password_change = datetime.now()
+        db.commit()
 
     print(f"🔐 Student {user_id} đổi mật khẩu thành công.")
     request.session.clear()

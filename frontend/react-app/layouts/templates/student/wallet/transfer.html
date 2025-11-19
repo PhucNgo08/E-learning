@@ -1,0 +1,96 @@
+{% extends "layout_student.html" %}
+{% block title %}🔁 Chuyển tiền{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4 fade show" style="max-width: 650px;">
+
+    <div class="glass-card shadow-lg p-4" style="border-radius: 22px;">
+
+        <!-- HEADER -->
+        <div class="text-center mb-4">
+            <div class="mx-auto mb-3"
+                 style="width: 85px; height: 85px; border-radius: 50%;
+                        background: linear-gradient(135deg, #2563eb, #1e3a8a);
+                        display:flex; justify-content:center; align-items:center;
+                        box-shadow:0 10px 22px rgba(37,99,235,0.38);">
+                <i class="bi bi-arrow-left-right text-white" style="font-size: 2.6rem;"></i>
+            </div>
+
+            <h2 class="fw-bold mb-1">🔁 Chuyển tiền</h2>
+            <p class="text-muted mb-0">
+                Hãy nhập thông tin người nhận và số tiền cần chuyển.
+            </p>
+        </div>
+
+        <!-- ERROR -->
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center mb-3">
+            <i class="bi bi-x-circle-fill me-2"></i>
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- FORM -->
+        <form action="/student/wallet/transfer" method="post">
+
+            <!-- Email -->
+            <label class="form-label fw-semibold">Email người nhận</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text text-primary fw-bold"
+                      style="background: rgba(37,99,235,0.12); border-radius:12px 0 0 12px;">
+                    <i class="bi bi-envelope-fill"></i>
+                </span>
+
+                <input type="email"
+                       name="recipient_email"
+                       value="{{ recipient_email or '' }}"
+                       class="form-control"
+                       style="border-radius:0 12px 12px 0;"
+                       placeholder="Ví dụ: user@gmail.com"
+                       required>
+            </div>
+
+            <!-- Amount -->
+            <label class="form-label fw-semibold">Số tiền muốn chuyển</label>
+            <div class="input-group">
+                <span class="input-group-text text-success fw-bold"
+                      style="background: rgba(22,163,74,0.12); border-radius:12px 0 0 12px;">
+                    <i class="bi bi-cash-coin"></i>
+                </span>
+
+                <input type="number"
+                       name="amount"
+                       min="1000"
+                       value="{{ amount or '' }}"
+                       class="form-control"
+                       style="border-radius:0 12px 12px 0;"
+                       placeholder="Ví dụ: 50.000"
+                       required>
+            </div>
+
+            <!-- BUTTON -->
+            <button class="btn btn-primary w-100 fw-semibold py-3 mt-4"
+                    style="border-radius: 12px;
+                           background: linear-gradient(135deg, #2563eb, #1e40af);
+                           box-shadow: 0 6px 18px rgba(37,99,235,0.32);">
+                <i class="bi bi-arrow-right-circle me-1"></i>
+                Xác nhận chuyển tiền
+            </button>
+
+        </form>
+
+        <!-- BACK -->
+        <div class="text-center mt-4">
+            <a href="/student/wallet/page"
+               class="fw-semibold"
+               style="text-decoration:none; color:#2563eb;">
+                ← Quay về ví
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

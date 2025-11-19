@@ -2,24 +2,130 @@
 {% block title %}🗑️ Xóa Quiz{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card border-danger shadow-sm">
-    <div class="card-header bg-danger text-white fw-bold">
-      <i class="bi bi-exclamation-triangle"></i> Xác nhận xóa Quiz
+
+<style>
+/* ===========================================================
+   🗑️ DELETE QUIZ – GLASS NEO PRO 2025 (v14.1)
+=========================================================== */
+
+.delete-wrapper {
+  max-width: 640px;
+  margin: auto;
+  padding: 40px 0;
+}
+
+.delete-card-pro {
+  padding: 2.2rem;
+  border-radius: 24px;
+
+  background: rgba(255,255,255,0.86);
+  backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.10),
+    0 0 42px rgba(255, 0, 0, 0.14);
+
+  animation: fadeInUp .55s ease;
+}
+
+.delete-icon {
+  font-size: 3.6rem;
+  animation: pulseRed 1.6s infinite ease-in-out;
+}
+
+@keyframes pulseRed {
+  0%   { transform: scale(1);   opacity: 0.75; }
+  50%  { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1);   opacity: 0.75; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.btn-pro {
+  border-radius: 12px;
+  padding: 10px 22px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover {
+  transform: translateY(-3px);
+}
+
+/* 🌙 Dark Mode Support */
+body.dark-mode .delete-card-pro {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .delete-icon {
+  color: #f87171 !important;
+}
+
+body.dark-mode .text-danger {
+  color: #f87171 !important;
+}
+</style>
+
+<div class="container delete-wrapper fade-in">
+
+  <div class="delete-card-pro text-center">
+
+    <!-- Icon -->
+    <div class="mb-3">
+      <i class="bi bi-exclamation-octagon-fill text-danger delete-icon"></i>
     </div>
-    <div class="card-body">
-      <p>Bạn có chắc chắn muốn xóa <strong class="text-danger">{{ quiz.title }}</strong> khỏi hệ thống không?</p>
-      <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}">
-        <div class="text-end">
-          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left"></i> Hủy
-          </a>
-          <button type="submit" class="btn btn-danger">
-            <i class="bi bi-trash"></i> Xóa
-          </button>
-        </div>
-      </form>
-    </div>
+
+    <!-- Title -->
+    <h4 class="fw-bold text-danger mb-3">
+      Xác nhận xóa Quiz
+    </h4>
+
+    <!-- Message -->
+    <p class="text-muted mb-4">
+      Bạn có chắc chắn muốn xóa quiz này?
+      <br>
+      <strong class="text-danger fs-5">{{ quiz.title }}</strong>
+      <br><br>
+
+      <small class="text-muted">
+        {% if quiz.quiz_type == "graded" %}
+          Đây là <b>bài thi (graded)</b> — hành động này sẽ xóa:
+          <br>• Toàn bộ câu hỏi  
+          • Toàn bộ phương án  
+          • Thống kê & lượt làm liên quan  
+        {% else %}
+          Đây là <b>practice quiz</b> — sẽ bị xóa ngay lập tức cùng các câu hỏi.
+        {% endif %}
+      </small>
+
+      <br><br>
+      <span class="fw-bold text-danger">Hành động này không thể hoàn tác.</span>
+    </p>
+
+    <!-- Form -->
+    <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}">
+      <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
+
+        <a href="/teacher/quizzes/list"
+           class="btn btn-outline-secondary btn-pro">
+          <i class="bi bi-arrow-left"></i> Hủy
+        </a>
+
+        <button type="submit"
+                onclick="return confirm('Bạn chắc chắn muốn xóa quiz này?')"
+                class="btn btn-danger btn-pro shadow-sm">
+          <i class="bi bi-trash"></i> Xóa Quiz
+        </button>
+
+      </div>
+    </form>
+
   </div>
+
 </div>
+
 {% endblock %}

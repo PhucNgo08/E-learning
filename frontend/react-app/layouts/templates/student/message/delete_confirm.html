@@ -5,7 +5,7 @@
 
 <style>
 /* ================================================
-💎 Delete Message – Glass Neo v3.1
+💎 Delete Message – Glass Neo v3.2 (Final 2025)
 ================================================ */
 .delete-wrapper {
   min-height: calc(100vh - 100px);
@@ -32,21 +32,16 @@
   box-shadow: 0 12px 32px rgba(0,0,0,.18);
 }
 
-.delete-card .icon-danger {
+.icon-danger {
   font-size: 3.2rem;
   color: #dc3545;
   text-shadow: 0 4px 12px rgba(220,53,69,.35);
 }
 
-/* Buttons */
 .btn-danger {
   padding: .55rem 1.4rem;
   font-weight: 600;
   border-radius: 10px;
-}
-
-.btn-danger:hover i {
-  transform: scale(1.15);
 }
 
 .btn-outline-secondary {
@@ -55,41 +50,36 @@
   font-weight: 600;
 }
 
-.btn-outline-secondary:hover i {
-  transform: translateX(-3px);
-}
-
 /* Floating back */
 .fab-back {
   position: fixed;
-  bottom: 40px;
-  left: 40px;
+  bottom: 24px;
+  left: 24px;
   background: linear-gradient(135deg,#64748b,#334155);
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   color: white;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 22px;
+  font-size: 20px;
   box-shadow: 0 8px 20px rgba(0,0,0,.25);
   transition: all .3s ease;
   z-index: 999;
 }
 
 .fab-back:hover {
+  transform: scale(1.1);
   background: linear-gradient(135deg,#475569,#1e293b);
-  transform: scale(1.12);
 }
 
-/* Fade-in effect */
+/* Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; transform: translateY(0);}
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* 🔥 Dark Mode (chuẩn nhất – không cần Jinja) */
 body.dark-mode .delete-card {
   background: rgba(15,23,42,0.7);
   border-color: rgba(255,255,255,0.1);
@@ -110,19 +100,20 @@ body.dark-mode .delete-card {
     </h5>
 
     <p class="text-muted mb-4">
-      Hành động này <strong>không thể hoàn tác</strong>.  
-      Tin nhắn và tệp đính kèm sẽ bị xoá vĩnh viễn.
+      Hành động này <strong>không thể hoàn tác</strong>.<br>
+      Tin nhắn và tệp đính kèm sẽ bị xóa vĩnh viễn.
     </p>
 
-    <div class="d-flex justify-content-center gap-3 mt-3">
-      <a href="/student/message/delete/{{ message.id }}" class="btn btn-danger">
+    <!-- Form POST xoá an toàn -->
+    <form method="post" action="/student/message/delete/{{ message.id }}">
+      <button class="btn btn-danger me-2">
         <i class="bi bi-trash me-1"></i> Xóa ngay
-      </a>
+      </button>
 
       <a href="javascript:history.back()" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left-circle me-1"></i> Hủy
       </a>
-    </div>
+    </form>
 
   </div>
 </div>

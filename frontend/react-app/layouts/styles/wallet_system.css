@@ -1,0 +1,195 @@
+/* ============================================================
+   🌟 WALLET SYSTEM — GLASS NEO 2025 v5.1
+   FULL FIX — No Overlay • No Click Block • 100% Modal Safe
+   ============================================================ */
+
+:root {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+
+  --success: #16a34a;
+  --success-light: #22c55e;
+
+  --danger: #dc2626;
+  --danger-light: #ef4444;
+
+  --warning: #f59e0b;
+
+  --card-bg: rgba(255,255,255,0.78);
+  --card-bg-strong: rgba(255,255,255,0.92);
+
+  --text-dark: #1e293b;
+
+  --border-glass: rgba(255,255,255,0.32);
+  --shadow: 0 6px 18px rgba(0,0,0,0.09);
+}
+
+/* =======================================
+   GLASS FIX — NO CLICK BLOCK
+======================================= */
+.glass,
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 16px;
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--shadow);
+  transition: .25s;
+
+  /* 💎 FIX CLICK */
+  position: relative;
+  pointer-events: auto;
+}
+
+.glass-card::before,
+.glass::before {
+  /* 🚫 XOÁ HOÀN TOÀN lớp phủ gây block-click */
+  content: none !important;
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* =======================================
+   HOVER EFFECT
+======================================= */
+.glass-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.15);
+}
+
+/* =======================================
+   ANIMATIONS
+======================================= */
+@keyframes fadeInUp {
+  from {opacity:0; transform:translateY(12px);}
+  to   {opacity:1; transform:translateY(0);}
+}
+.fade { animation: fadeInUp .55s ease-out; }
+
+@keyframes floatItem {
+  0%,100% { transform:translateY(0); }
+  50%     { transform:translateY(-6px); }
+}
+.float { animation: floatItem 2.6s infinite ease-in-out; }
+
+/* =======================================
+   PRICE SYSTEM
+======================================= */
+.price-main {
+  background: linear-gradient(135deg, #0284c7, #2563eb);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+.price-final {
+  background: linear-gradient(135deg, #dc2626, #f87171);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-weight: 700;
+}
+
+/* Discount Badge */
+.discount-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  border-radius: 10px;
+  font-size: .8rem;
+  font-weight: 700;
+  box-shadow: 0 4px 8px rgba(220,38,38,0.3);
+}
+
+/* =======================================
+   EMPTY CART
+======================================= */
+.empty-cart-box {
+  max-width: 520px;
+  margin: 80px auto;
+  text-align: center;
+}
+.icon-wrap {
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  background:var(--card-bg);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border:1px solid rgba(255,255,255,0.35);
+  box-shadow:0 6px 14px rgba(0,0,0,0.1);
+}
+
+/* =======================================
+   WALLET TRANSACTION TABLE
+======================================= */
+.table-hover tbody tr:hover {
+  background: rgba(0,0,0,0.03);
+  transition:.15s;
+}
+
+.table-light th {
+  font-weight:600;
+  color: var(--text-dark);
+}
+
+.badge-success {background:#16a34a !important;}
+.badge-danger {background:#dc2626 !important;}
+.badge-secondary {background:#6b7280 !important;}
+.badge-info {background:#0ea5e9 !important;}
+.badge-warning {background:#f59e0b !important;}
+
+/* =======================================
+   TITLE GRADIENT
+======================================= */
+.title-gradient {
+  background: linear-gradient(135deg, #0284c7, #3b82f6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* =======================================
+   QR ANIMATION
+======================================= */
+.qr-bounce { animation: floatItem 2.6s infinite ease-in-out; }
+
+/* =======================================
+   CART ITEM CARD
+======================================= */
+.cart-item-card { border-radius:16px; }
+
+.course-thumb {
+  height:165px;
+  width:100%;
+  border-radius:16px 16px 0 0;
+  object-fit:cover;
+}
+
+.remove-btn:hover {
+  background:#ffe8e8 !important;
+}
+
+/* =======================================
+   MODAL SAFE Z-INDEX (KHÔNG BỊ CHE)
+======================================= */
+
+.modal {
+  z-index: 4000 !important;
+}
+.modal-backdrop {
+  z-index: 3500 !important;
+}
+.modal-content {
+  z-index: 4500 !important;
+  pointer-events: auto !important;
+  position: relative !important;
+}

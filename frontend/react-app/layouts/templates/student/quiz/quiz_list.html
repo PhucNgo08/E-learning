@@ -1,23 +1,61 @@
 {% extends "layout_student.html" %}
-{% block title %}📘 Danh sách bài quiz{% endblock %}
+{% block title %}📘 Danh sách bài Quiz{% endblock %}
 
 {% block content %}
 
+<!-- ==== STYLE GIỮ NGUYÊN ==== -->
 <style>
-  .quiz-card {
-    border-radius: 14px;
-    border: 1px solid #eef1f5;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    transition: all 0.25s ease;
-  }
-  .quiz-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-  }
-  .quiz-icon {
-    font-size: 1.4rem;
-    color: #0d6efd;
-  }
+/* ==========================================================
+   📘 DANH SÁCH QUIZ — GIAO DIỆN GLASS NEO 2025 (THUẦN VIỆT)
+=========================================================== */
+
+.quiz-card-pro {
+  border-radius: 20px;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08), 0 0 40px rgba(13,110,253,0.06);
+  transition: 0.25s ease;
+  height: 100%;
+}
+
+.quiz-card-pro:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.12), 0 0 50px rgba(13,110,253,0.08);
+}
+
+.quiz-icon-pro {
+  font-size: 1.45rem;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;              /* ⭐ THÊM DÒNG NÀY */
+  -webkit-background-clip: text;
+  -moz-background-clip: text;         /* (tùy chọn) */
+  color: transparent;
+}
+
+
+.status-badge-pro {
+  padding: 4px 12px;
+  font-size: .75rem;
+  border-radius: 30px;
+  font-weight: 600;
+}
+
+.meta-small {
+  line-height: 1.3;
+  color: #64748b;
+  font-size: .83rem;
+}
+
+body.dark-mode .quiz-card-pro {
+  background: rgba(30,41,59,0.65);
+  border-color: rgba(255,255,255,0.12);
+}
+
+body.dark-mode .meta-small {
+  color: #d1d5db;
+}
 </style>
 
 <div class="container py-4 fade-in">
@@ -35,54 +73,106 @@
 
   {% if quizzes and quizzes|length > 0 %}
 
-  <!-- Quiz List -->
+  <!-- Danh sách quiz -->
   <div class="row g-4">
+
     {% for q in quizzes %}
     <div class="col-md-6 col-lg-4">
+      <div class="quiz-card-pro p-3">
 
-      <div class="card quiz-card h-100">
-        <div class="card-body">
+        <!-- Tiêu đề -->
+        <h5 class="fw-semibold text-dark mb-2 d-flex align-items-center">
+          <i class="bi bi-patch-question quiz-icon-pro me-2"></i>
+          {{ q.title }}
+        </h5>
 
-          <!-- Title -->
-          <h5 class="fw-semibold text-dark mb-2">
-            <i class="bi bi-patch-question quiz-icon"></i>
-            {{ q.title }}
-          </h5>
+        <!-- Mô tả -->
+        <p class="text-muted small mb-3" style="min-height: 40px;">
+          {{ q.description or "Không có mô tả cho bài quiz này." }}
+        </p>
 
-          <!-- Description -->
-          <p class="text-muted small mb-3">
-            {{ q.description or "Không có mô tả." }}
-          </p>
-
-          <!-- Meta info -->
-          <div class="d-flex justify-content-between align-items-center mt-auto">
-            <span class="text-secondary small">
-              ⏱ {{ q.time_limit_minutes or 10 }} phút • {{ q.total_questions or 0 }} câu
+        <!-- Độ khó -->
+        <div class="mb-2">
+          {% if q.difficulty_level == 'easy' %}
+            <span class="badge bg-success-subtle text-success border small">
+              <i class="bi bi-speedometer"></i> Dễ
             </span>
 
-            <a href="/student/quiz/attempt/{{ q.id }}" 
-               class="btn btn-sm btn-primary shadow-sm">
-              <i class="bi bi-play-circle"></i> Làm bài
-            </a>
-          </div>
+          {% elif q.difficulty_level == 'medium' %}
+            <span class="badge bg-warning-subtle text-warning border small">
+              <i class="bi bi-speedometer"></i> Trung bình
+            </span>
+
+          {% else %}
+            <span class="badge bg-danger-subtle text-danger border small">
+              <i class="bi bi-speedometer"></i> Khó
+            </span>
+          {% endif %}
+        </div>
+
+        <!-- Trạng thái quiz -->
+        <div class="mb-3">
+
+          {% if q.status != 'published' %}
+            <span class="status-badge-pro bg-secondary text-white">
+              <i class="bi bi-lock"></i> Chưa mở
+            </span>
+
+          {% elif q.available_to and q.available_to < now %}
+            <span class="status-badge-pro bg-danger text-white">
+              <i class="bi bi-x-circle"></i> Đã kết thúc
+            </span>
+
+          {% elif q.available_from and q.available_from > now %}
+            <span class="status-badge-pro bg-warning text-dark">
+              <i class="bi bi-hourglass-split"></i> Chưa mở
+            </span>
+
+          {% else %}
+            <span class="status-badge-pro bg-success text-white">
+              <i class="bi bi-unlock"></i> Đang mở
+            </span>
+          {% endif %}
 
         </div>
-      </div>
 
+        <!-- Meta + Nút làm -->
+        <div class="d-flex justify-content-between align-items-end pt-2">
+          <div class="meta-small">
+            ⏱ {{ q.time_limit_minutes or 10 }} phút<br>
+            🔢 {{ q.total_questions or 0 }} câu
+          </div>
+
+          <a href="/student/quiz/attempt/{{ q.id }}"
+             class="btn btn-primary btn-sm px-3 shadow-sm">
+            <i class="bi bi-play-circle"></i> Làm bài
+          </a>
+        </div>
+
+      </div>
     </div>
     {% endfor %}
+
   </div>
 
   {% else %}
 
   <!-- Empty state -->
-  <div class="alert alert-info text-center py-4 shadow-sm">
-    <i class="bi bi-info-circle fs-4"></i>
-    <div class="mt-2 fw-semibold">Hiện chưa có bài quiz nào khả dụng.</div>
-    <p class="text-muted small mb-2">Giảng viên có thể chưa tạo hoặc chưa mở bài kiểm tra.</p>
-    <a href="/student/dashboard" class="btn btn-outline-primary btn-sm">
+  <div class="text-center mt-5">
+
+    <i class="bi bi-journal-x text-secondary" style="font-size: 3rem;"></i>
+
+    <h5 class="fw-bold text-muted mt-3">Không có bài quiz nào</h5>
+
+    <p class="text-muted small mb-3">
+      Có thể giảng viên chưa mở hoặc chưa tạo bài quiz cho khóa học này.
+    </p>
+
+    <a href="/student/dashboard"
+       class="btn btn-outline-primary btn-sm px-4 shadow-sm">
       <i class="bi bi-house-door"></i> Về trang chính
     </a>
+
   </div>
 
   {% endif %}

@@ -1,10 +1,11 @@
 """
 ==========================================================
-🔵 SOCIAL LOGIN ROUTER — Google + Microsoft (PRO MAX v3.2)
-Giữ nguyên logic cũ, chỉ nâng cấp:
-✔ Remember Me
-✔ Auto-map role theo domain email
-✔ Tối ưu session và bảo mật
+🔵 SOCIAL LOGIN ROUTER — PRO MAX v4.0 (Google + Microsoft)
+✔ PKCE + Email Verification
+✔ Auto-create user + auto role mapping
+✔ Secure session + remember me
+✔ Dynamic redirect by role
+✔ Avatar fallback (Google/Microsoft/Gravatar)
 ==========================================================
 """
 
@@ -13,105 +14,123 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from authlib.integrations.starlette_client import OAuth
 from decouple import config
+import hashlib
 
 from app.database.connection import get_db
 from app.services.common.auth_service import (
     create_user_session,
-    get_or_create_social_user,   # ⭐ Hàm mới trong auth_service
+    get_or_create_social_user,
 )
+from app.models.user import User
 
 router = APIRouter(prefix="/auth", tags=["Auth - Social Login"])
+
 oauth = OAuth()
 
+# ======================================================
+# 🔧 DOMAIN CONFIG
+# ======================================================
+DOMAIN = config("DOMAIN", default="http://localhost:8000")
+
+GOOGLE_REDIRECT_URI = f"{DOMAIN}/auth/google/callback"
+MS_REDIRECT_URI      = f"{DOMAIN}/auth/microsoft/callback"
 
 # ======================================================
-# GOOGLE LOGIN
+# 🔵 GOOGLE LOGIN
 # ======================================================
-GOOGLE_REDIRECT_URI = "http://localhost:8000/auth/google/callback"
-
 oauth.register(
     name="google",
     client_id=config("GOOGLE_CLIENT_ID"),
     client_secret=config("GOOGLE_CLIENT_SECRET"),
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
+    pkce=True,
 )
 
 
 @router.get("/google")
 async def google_login(request: Request):
-    """Chuyển hướng người dùng sang Google để đăng nhập."""
+    """Chuyển đến Google (OAuth2 + PKCE)."""
     return await oauth.google.authorize_redirect(request, GOOGLE_REDIRECT_URI)
 
 
 @router.get("/google/callback")
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    """Xử lý callback sau khi Google xác thực."""
+    """Xử lý callback của Google."""
 
-    token = await oauth.google.authorize_access_token(request)
+    try:
+        token = await oauth.google.authorize_access_token(request)
+    except Exception:
+        return RedirectResponse("/auth/login?error=Google+Login+Failed", 303)
+
     info = token.get("userinfo")
-
     if not info:
-        return RedirectResponse("/auth/login?error=Google+Login+Failed")
+        return RedirectResponse("/auth/login?error=Google+không+có+userinfo", 303)
 
-    email = info.get("email")
-    full_name = info.get("name", "Người dùng Google")
+    # Google verify
+    if not info.get("email_verified", True):
+        return RedirectResponse("/auth/login?error=Email+chưa+xác+thực", 303)
+
+    email = info["email"].lower()
+    full_name = info.get("name", "Google User")
     avatar = info.get("picture") or "/uploads/avatars/default-avatar.png"
 
-    if not email:
-        return RedirectResponse("/auth/login?error=Google+không+có+email")
+    # ⭐ Auto create or find user
+    user: User = get_or_create_social_user(db, email, full_name, avatar)
 
-    # ⭐ Dùng hàm chung – auto tạo user + auto gán role theo domain
-    user = get_or_create_social_user(db, email, full_name, avatar)
-
-    # ⭐ Social login → mặc định remember me = True
+    # ⭐ Create session
     create_user_session(request, user, remember_me=True)
 
-    return RedirectResponse("/student/dashboard", status_code=303)
+    return RedirectResponse(f"/{user.role}/dashboard", 303)
 
 
 # ======================================================
-# MICROSOFT LOGIN (AZURE AD v2)
+# 🟣 MICROSOFT LOGIN (Azure AD v2)
 # ======================================================
-MS_REDIRECT_URI = "http://localhost:8000/auth/microsoft/callback"
-
 oauth.register(
     name="microsoft",
     client_id=config("MICROSOFT_CLIENT_ID"),
     client_secret=config("MICROSOFT_CLIENT_SECRET"),
     server_metadata_url="https://login.microsoftonline.com/common/v2.0/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
+    pkce=True,
 )
 
 
 @router.get("/microsoft")
 async def microsoft_login(request: Request):
-    """Chuyển hướng đến Microsoft login."""
+    """Chuyển đến Microsoft Login."""
     return await oauth.microsoft.authorize_redirect(request, MS_REDIRECT_URI)
 
 
 @router.get("/microsoft/callback")
 async def microsoft_callback(request: Request, db: Session = Depends(get_db)):
-    """Xử lý callback của Microsoft."""
 
-    token = await oauth.microsoft.authorize_access_token(request)
+    try:
+        token = await oauth.microsoft.authorize_access_token(request)
+    except Exception:
+        return RedirectResponse("/auth/login?error=Microsoft+Login+Failed", 303)
+
     info = token.get("userinfo")
-
     if not info:
-        return RedirectResponse("/auth/login?error=Microsoft+Login+Failed")
+        return RedirectResponse("/auth/login?error=Microsoft+không+có+userinfo", 303)
 
-    # Microsoft có thể trả email hoặc preferred_username
+    # Microsoft trả email khác với Google
     email = info.get("email") or info.get("preferred_username")
-    full_name = info.get("name", "Người dùng Microsoft")
-    avatar = "/uploads/avatars/default-avatar.png"
-
     if not email:
-        return RedirectResponse("/auth/login?error=Microsoft+không+có+email")
+        return RedirectResponse("/auth/login?error=Không+có+email", 303)
 
-    # ⭐ Auto create user
-    user = get_or_create_social_user(db, email, full_name, avatar)
+    email = email.lower()
+    full_name = info.get("name", "Microsoft User")
 
-    # ⭐ Remember Me mặc định
+    # ⭐ Microsoft không trả avatar → dùng Gravatar
+    gravatar_hash = hashlib.md5(email.encode()).hexdigest()
+    avatar = f"https://www.gravatar.com/avatar/{gravatar_hash}?d=identicon"
+
+    # ⭐ Create or get user
+    user: User = get_or_create_social_user(db, email, full_name, avatar)
+
+    # ⭐ Create session
     create_user_session(request, user, remember_me=True)
 
-    return RedirectResponse("/student/dashboard", status_code=303)
+    return RedirectResponse(f"/{user.role}/dashboard", 303)

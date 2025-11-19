@@ -77,6 +77,7 @@ class Course(Base):
     cart_items = relationship("CartItem", back_populates="course", cascade="all, delete-orphan")
     order_items = relationship("OrderItem", back_populates="course", cascade="all, delete-orphan")
     sections = relationship("CourseSection", back_populates="course", cascade="all, delete")
-
+    # ⭐ THÊM DÒNG NÀY
+    quizzes = relationship("Quiz", back_populates="course", cascade="all, delete-orphan")
     def __repr__(self):
         return f"<Course(code='{self.course_code}', name='{self.course_name}')>"

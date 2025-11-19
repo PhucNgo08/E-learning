@@ -213,3 +213,22 @@ def get_questions_by_quiz(db: Session, quiz_id: str):
         .order_by(Question.created_at.asc())
         .all()
     )
+from app.models.course import Course
+from app.models.user import User
+from sqlalchemy.orm import joinedload
+
+def get_all_quizzes_for_admin(db: Session):
+    """
+    Lấy tất cả quiz + tên khóa học + tên giáo viên.
+    Dùng cho Admin xem danh sách đầy đủ.
+    """
+    return (
+        db.query(Quiz)
+        .join(Course, Quiz.course_id == Course.id)
+        .join(User, Course.teacher_id == User.id)
+        .options(
+            joinedload(Quiz.course).joinedload(Course.teacher)
+        )
+        .order_by(Quiz.created_at.desc())
+        .all()
+    )

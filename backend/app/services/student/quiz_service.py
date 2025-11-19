@@ -1,13 +1,14 @@
 """
 ==========================================================
-📘 SERVICE: Student - Quiz (FULL 100% Production-Ready)
-Xử lý quiz cho học viên: lấy quiz, làm bài, nộp bài, xem kết quả
+📘 SERVICE: Student - Quiz (PRODUCTION READY V2)
+Dành cho Quiz kiểu PRACTICE (không bao gồm exam graded)
 ==========================================================
 """
 
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 import uuid
+import random
 import traceback
 
 from app.models.quiz import Quiz
@@ -19,7 +20,7 @@ from app.models.lesson_progress import LessonProgress
 
 
 # ======================================================
-# 📗 LẤY DANH SÁCH QUIZ HOẠT ĐỘNG
+# 📗 1) LẤY DANH SÁCH QUIZ PRACTICE
 # ======================================================
 def get_all_quizzes_for_student(db: Session):
     try:
@@ -27,21 +28,21 @@ def get_all_quizzes_for_student(db: Session):
         return (
             db.query(Quiz)
             .filter(
+                Quiz.quiz_type == "practice",                     # ⭐ FIX
+                Quiz.status == "published",
                 (Quiz.available_from == None) | (Quiz.available_from <= now),
                 (Quiz.available_to == None) | (Quiz.available_to >= now),
-                Quiz.status == "published"
             )
             .order_by(Quiz.created_at.desc())
             .all()
         )
-    except Exception as e:
-        print("❌ [get_all_quizzes_for_student] Lỗi:", e)
+    except:
         traceback.print_exc()
         return []
 
 
 # ======================================================
-# 📘 LẤY QUIZ THEO KHÓA HỌC
+# 📘 2) QUIZ PRACTICE THEO KHÓA HỌC
 # ======================================================
 def get_quizzes_by_course(db: Session, course_id: str):
     try:
@@ -49,29 +50,29 @@ def get_quizzes_by_course(db: Session, course_id: str):
         return (
             db.query(Quiz)
             .filter(
+                Quiz.quiz_type == "practice",                     # ⭐ FIX
                 Quiz.course_id == course_id,
+                Quiz.status == "published",
                 (Quiz.available_from == None) | (Quiz.available_from <= now),
                 (Quiz.available_to == None) | (Quiz.available_to >= now),
-                Quiz.status == "published"
             )
             .order_by(Quiz.created_at.desc())
             .all()
         )
-    except Exception as e:
-        print("❌ [get_quizzes_by_course] Lỗi:", e)
+    except:
         traceback.print_exc()
         return []
 
 
 # ======================================================
-# 🧩 LẤY QUIZ + CÂU HỎI + OPTIONS
+# 🧩 3) LẤY QUIZ + CÂU HỎI + OPTIONS
 # ======================================================
 def get_quiz_with_questions(db: Session, quiz_id: str):
     try:
         quiz = (
             db.query(Quiz)
             .options(joinedload(Quiz.questions).joinedload(Question.options))
-            .filter(Quiz.id == quiz_id)
+            .filter(Quiz.id == quiz_id, Quiz.quiz_type == "practice")   # ⭐ FIX
             .first()
         )
 
@@ -80,52 +81,66 @@ def get_quiz_with_questions(db: Session, quiz_id: str):
 
         # Random câu hỏi
         if quiz.randomize_questions:
-            quiz.questions.sort(key=lambda x: uuid.uuid4())
+            quiz.questions = list(quiz.questions)
+            random.shuffle(quiz.questions)
 
         # Random đáp án
         if quiz.randomize_options:
             for q in quiz.questions:
-                q.options.sort(key=lambda x: uuid.uuid4())
+                q.options = list(q.options)
+                random.shuffle(q.options)
 
         return quiz
 
-    except Exception as e:
-        print("❌ [get_quiz_with_questions] Lỗi:", e)
+    except:
         traceback.print_exc()
         return None
 
 
 # ======================================================
-# 📝 NỘP BÀI QUIZ
+# ⛔ 4) CHỐNG DOUBLE SUBMIT
+# ======================================================
+def has_recent_attempt(db: Session, user_id: str, quiz_id: str):
+    latest = (
+        db.query(QuizAttempt)
+        .filter(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
+        .order_by(QuizAttempt.created_at.desc())
+        .first()
+    )
+
+    if not latest:
+        return False
+
+    return (datetime.utcnow() - latest.created_at).total_seconds() < 2
+
+
+# ======================================================
+# 📝 5) NỘP BÀI QUIZ PRACTICE
 # ======================================================
 def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
-    """Xử lý khi sinh viên nộp bài quiz."""
     try:
-        if not user_id:
-            raise ValueError("User ID không được để trống")
-
         quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
         if not quiz:
-            raise ValueError("Quiz không tồn tại")
+            return {"error": "Quiz không tồn tại"}
 
-        # ===== CHECK MAX ATTEMPTS =====
-        previous_attempts = (
+        # ===== Chống spam =====
+        if has_recent_attempt(db, user_id, quiz_id):
+            return {"error": "Đang xử lý bài làm… vui lòng đợi 1–2 giây."}
+
+        # ===== Check số lần làm =====
+        prev = (
             db.query(QuizAttempt)
-            .filter(QuizAttempt.quiz_id == quiz_id,
-                    QuizAttempt.user_id == user_id)
+            .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.user_id == user_id)
             .count()
         )
+        if quiz.max_attempts and prev >= quiz.max_attempts:
+            return {"error": "Bạn đã hết lượt làm bài."}
 
-        if quiz.max_attempts and previous_attempts >= quiz.max_attempts:
-            return {"error": "Bạn đã đạt số lần làm bài tối đa."}
-
-        attempt_number = previous_attempts + 1
-
-        # ===== TẠO ATTEMPT =====
-        attempt_id = str(uuid.uuid4())
-        started_at = datetime.utcnow()
+        attempt_number = prev + 1
+        started_at = datetime.fromisoformat(form_data["started_at"]) if "started_at" in form_data else datetime.utcnow()
         submitted_at = datetime.utcnow()
 
+        attempt_id = str(uuid.uuid4())
         attempt = QuizAttempt(
             id=attempt_id,
             quiz_id=quiz_id,
@@ -138,77 +153,58 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
         db.add(attempt)
         db.flush()
 
-        # ===== CHẤM BÀI =====
-        correct = 0
-        total = 0
+        # ===== Chấm điểm =====
+        total_points = 0
+        earned_points = 0
+        correct_count = 0
 
-        for key, value in form_data.items():
-            if key.startswith("question_"):
-                question_id = key.replace("question_", "")
-                selected_id = value
+        for q in quiz.questions:
+            qid = str(q.id)
+            selected = form_data.get(f"question_{qid}", None)
 
-                option = db.query(QuestionOption).filter(
-                    QuestionOption.id == selected_id
-                ).first()
+            total_points += float(q.points or 1)
 
-                is_correct = bool(option and option.is_correct)
-                total += 1
-                if is_correct:
-                    correct += 1
+            option = None
+            if selected:
+                option = db.query(QuestionOption).filter(QuestionOption.id == selected).first()
 
-                db.add(
-                    AttemptAnswer(
-                        id=str(uuid.uuid4()),
-                        attempt_id=attempt_id,
-                        question_id=question_id,
-                        selected_option_id=selected_id,
-                        is_correct=is_correct,
-                        points_earned=1 if is_correct else 0,
-                    )
+            is_correct = bool(option and option.is_correct)
+            if is_correct:
+                earned_points += float(q.points or 1)
+                correct_count += 1
+
+            db.add(
+                AttemptAnswer(
+                    id=str(uuid.uuid4()),
+                    attempt_id=attempt_id,
+                    question_id=qid,
+                    selected_option_id=selected,
+                    is_correct=is_correct,
+                    points_earned=float(q.points or 1) if is_correct else 0,
                 )
+            )
 
-        score = round((correct / max(total, 1)) * 100, 2)
-
-        # Tính thời gian
+        score = round((earned_points / max(total_points, 1)) * 100, 2)
         time_spent = int((submitted_at - started_at).total_seconds())
 
-        # ===== UPDATE ATTEMPT =====
         attempt.score = score
-        attempt.correct_answers = correct
-        attempt.total_questions = total
+        attempt.correct_answers = correct_count
+        attempt.total_questions = len(quiz.questions)      # ⭐ FIX
         attempt.time_spent_seconds = time_spent
 
         db.commit()
         db.refresh(attempt)
 
-        # ===== CẬP NHẬT LESSON PROGRESS (nếu quiz gắn vào bài học) =====
-        if quiz.lesson_id:
-            lp = (
-                db.query(LessonProgress)
-                .filter(
-                    LessonProgress.user_id == user_id,
-                    LessonProgress.lesson_id == quiz.lesson_id,
-                )
-                .first()
-            )
-            if lp:
-                lp.progress_status = "completed"
-                lp.completion_percentage = 100
-                lp.completed_at = datetime.utcnow()
-                db.commit()
-
-        print(f"✅ [submit_quiz] User={user_id} Quiz={quiz_id} Score={score}%")
         return {"attempt_id": attempt_id, "score": score}
 
-    except Exception as e:
+    except:
         db.rollback()
-        print("❌ [submit_quiz] Lỗi:", e)
         traceback.print_exc()
-        return None
+        return {"error": "Lỗi khi nộp bài, vui lòng thử lại."}
 
 
 # ======================================================
-# 🎯 XEM CHI TIẾT KẾT QUẢ QUIZ
+# 🎯 6) LẤY KẾT QUẢ CHI TIẾT
 # ======================================================
 def get_quiz_result(db: Session, attempt_id: str):
     try:
@@ -223,14 +219,13 @@ def get_quiz_result(db: Session, attempt_id: str):
             .filter(QuizAttempt.id == attempt_id)
             .first()
         )
-    except Exception as e:
-        print("❌ [get_quiz_result] Lỗi:", e)
+    except:
         traceback.print_exc()
         return None
 
 
 # ======================================================
-# 🕓 LỊCH SỬ LÀM QUIZ
+# 🕓 7) LỊCH SỬ LÀM QUIZ
 # ======================================================
 def get_quiz_history_for_student(db: Session, user_id: str):
     try:
@@ -241,13 +236,15 @@ def get_quiz_history_for_student(db: Session, user_id: str):
             .order_by(QuizAttempt.started_at.desc())
             .all()
         )
-    except Exception as e:
-        print("❌ [get_quiz_history_for_student] Lỗi:", e)
+    except:
         traceback.print_exc()
         return []
 
 
-def get_quiz_history_for_student_by_course(db: Session, user_id: str, course_id: str):
+# ======================================================
+# 🔎 8) LỊCH SỬ QUIZ THEO KHOÁ HỌC
+# ======================================================
+def get_quiz_history_for_student_by_course(db, user_id, course_id):
     try:
         return (
             db.query(QuizAttempt)
@@ -256,50 +253,26 @@ def get_quiz_history_for_student_by_course(db: Session, user_id: str, course_id:
             .order_by(QuizAttempt.started_at.desc())
             .all()
         )
-    except Exception as e:
-        print("❌ [get_quiz_history_for_student_by_course] Lỗi:", e)
+    except:
         traceback.print_exc()
         return []
 
 
-def get_quiz_attempt_count_for_student(db: Session, user_id: str, quiz_id: str):
+# ======================================================
+# 📌 9) UTILS
+# ======================================================
+def get_quiz_attempt_count_for_student(db, user_id, quiz_id):
     try:
         return (
             db.query(QuizAttempt)
             .filter(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
             .count()
         )
-    except Exception as e:
-        traceback.print_exc()
-        return 0
-
-
-def has_student_attempted_quiz(db: Session, user_id: str, quiz_id: str):
-    try:
-        return (
-            db.query(QuizAttempt)
-            .filter(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
-            .first()
-            is not None
-        )
-    except:
-        return False
-
-
-def get_highest_score_for_student_quiz(db: Session, user_id: str, quiz_id: str):
-    try:
-        high = (
-            db.query(QuizAttempt)
-            .filter(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
-            .order_by(QuizAttempt.score.desc())
-            .first()
-        )
-        return high.score if high else 0
     except:
         return 0
 
 
-def get_latest_quiz_attempt_for_student(db: Session, user_id: str, quiz_id: str):
+def get_latest_quiz_attempt_for_student(db, user_id, quiz_id):
     try:
         return (
             db.query(QuizAttempt)

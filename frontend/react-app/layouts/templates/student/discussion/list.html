@@ -39,13 +39,14 @@
     color: #444;
     margin-top: 6px;
   }
-  .text-gradient {
+.text-gradient {
     background: linear-gradient(90deg, #2563eb, #0ea5e9);
-    -webkit-background-clip: text;
-    background-clip: text;
+    background-clip: text;              /* chuẩn */
+    -webkit-background-clip: text;      /* safari + chrome cũ */
     color: transparent;
     -webkit-text-fill-color: transparent;
-  }
+}
+
 </style>
 {% endblock %}
 
@@ -57,9 +58,9 @@
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-gradient mb-0">
       {% if course %}
-      <i class="bi bi-chat-dots me-2"></i> Thảo luận – {{ course.course_name }}
+        <i class="bi bi-chat-dots me-2"></i> Thảo luận – {{ course.course_name }}
       {% else %}
-      <i class="bi bi-chat-dots me-2"></i> Thảo luận học viên
+        <i class="bi bi-chat-dots me-2"></i> Thảo luận học viên
       {% endif %}
     </h3>
 
@@ -68,7 +69,6 @@
       <i class="bi bi-plus-circle me-1"></i> Tạo bài mới
     </a>
   </div>
-
 
   <!-- SEARCH -->
   {% if not course %}
@@ -88,25 +88,28 @@
     <a href="/student/discussion/detail/{{ d.id }}" class="text-decoration-none text-dark">
       <div class="discussion-card mb-3 bg-white">
 
-        <!-- Row: Avatar + Username + Time -->
+        <!-- Avatar + Name -->
         <div class="d-flex align-items-center">
           <img src="{{ d.author.avatar_url if d.author and d.author.avatar_url else '/static/img/default_avatar.png' }}"
                class="avatar-discuss">
 
           <div>
-            <strong class="d-block">{{ d.author.full_name if d.author else "Người dùng" }}</strong>
+            <strong class="d-block">
+              {{ d.author.full_name if d.author else "Người dùng" }}
+            </strong>
             <small class="text-muted">
-              <i class="bi bi-clock"></i> {{ d.created_at.strftime('%d/%m/%Y %H:%M') }}
+              <i class="bi bi-clock"></i>
+              {{ d.created_at.strftime('%d/%m/%Y %H:%M') }}
             </small>
           </div>
         </div>
 
-        <!-- CONTENT PREVIEW -->
+        <!-- Content Preview -->
         <div class="text-preview">
           {{ d.content[:200] ~ ('...' if d.content|length > 200) }}
         </div>
 
-        <!-- COURSE BADGE -->
+        <!-- Course -->
         <div class="mt-2">
           <span class="course-badge">
             <i class="bi bi-book"></i>
@@ -114,26 +117,28 @@
           </span>
         </div>
 
-        <!-- STATS -->
+        <!-- Stats (reply + like) -->
         <div class="d-flex justify-content-end text-muted mt-3">
+
           <small class="me-4">
             <i class="bi bi-reply"></i>
-            {{ d.reply_count if d.reply_count else 0 }} phản hồi
+            {{ d.reply_count if d.reply_count is defined else 0 }} phản hồi
           </small>
 
           <small>
             <i class="bi bi-hand-thumbs-up"></i>
-            {{ d.like_count if d.like_count else 0 }} thích
+            {{ d.like_count if d.like_count is defined else 0 }} thích
           </small>
+
         </div>
+
       </div>
     </a>
     {% endfor %}
 
 
-    <!-- PAGINATION -->
+    <!-- Pagination -->
     <div class="mt-4 d-flex justify-content-center">
-
       <nav>
         <ul class="pagination">
 
@@ -155,7 +160,6 @@
 
         </ul>
       </nav>
-
     </div>
 
   {% else %}

@@ -1,0 +1,73 @@
+{% extends "layout_teacher.html" %}
+{% block title %}🎉 Nhập câu hỏi thành công – {{ quiz.title }}{% endblock %}
+
+{% block content %}
+
+<style>
+.confirm-wrapper {
+  max-width: 760px;
+  margin: auto;
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+.confirm-card {
+  padding: 2.2rem;
+  background: rgba(255,255,255,0.88);
+  border-radius: 22px;
+  border: 1px solid rgba(230,230,230,0.65);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+  text-align: center;
+  animation: fadeIn .45s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.icon-success {
+  font-size: 62px;
+  color: #22c55e;
+}
+
+body.dark-mode .confirm-card {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.1);
+}
+</style>
+
+<div class="container confirm-wrapper fade-in">
+
+  <div class="confirm-card">
+
+    <div class="icon-success mb-3">
+      <i class="bi bi-check-circle-fill"></i>
+    </div>
+
+    <h2 class="fw-bold text-success mb-3">
+      Nhập câu hỏi thành công!
+    </h2>
+
+    <p class="text-muted">
+      Bạn đã nhập <strong>{{ total }}</strong> câu hỏi mới vào bài Quiz:
+    </p>
+
+    <h4 class="fw-semibold text-primary mt-2 mb-4">
+      {{ quiz.title }}
+    </h4>
+
+    <div class="d-flex justify-content-center gap-3 mt-4">
+
+      <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-success px-4">
+        <i class="bi bi-eye"></i> Xem bài Quiz
+      </a>
+
+      <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-secondary px-4">
+        <i class="bi bi-arrow-repeat"></i> Nhập thêm câu hỏi
+      </a>
+
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

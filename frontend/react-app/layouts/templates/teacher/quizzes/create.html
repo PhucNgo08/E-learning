@@ -2,49 +2,221 @@
 {% block title %}➕ Tạo Quiz mới{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <h4 class="fw-bold text-primary mb-4">➕ Tạo Quiz mới</h4>
 
-  <form method="post" action="/teacher/quizzes/create">
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Chọn khóa học</label>
-      <select name="course_id" class="form-select" required>
-        <option value="">— Chọn khóa học —</option>
-        {% for course in courses %}
-        <option value="{{ course.id }}">{{ course.course_name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+<style>
+/* ==========================================================
+   ➕ TẠO QUIZ – GLASS NEO PRO 2025 (VIỆT HÓA FULL)
+=========================================================== */
 
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Tên Quiz</label>
-      <input type="text" name="title" class="form-control" required>
-    </div>
+.create-wrapper {
+  max-width: 720px;
+  margin: auto;
+}
 
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Mô tả</label>
-      <textarea name="description" class="form-control" rows="3"></textarea>
-    </div>
+.create-card-pro {
+  padding: 2rem 2.2rem;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.10),
+    0 0 40px rgba(13,110,253,0.06);
+  animation: fadeInUp .55s ease;
+}
 
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label class="form-label fw-semibold">Thời lượng (phút)</label>
-        <input type="number" name="duration_minutes" class="form-control" value="30" min="1" required>
-      </div>
-      <div class="col-md-6 mb-3">
-        <label class="form-label fw-semibold">Tổng điểm</label>
-        <input type="number" name="total_marks" class="form-control" value="10" min="1" required>
-      </div>
-    </div>
+.page-title-pro {
+  font-weight: 700;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: 1.6rem;
+}
 
-    <div class="text-end">
-      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-check-circle"></i> Tạo Quiz
-      </button>
+.form-label {
+  font-weight: 600;
+}
+
+.form-control, .form-select {
+  border-radius: 12px !important;
+  transition: .25s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.15);
+}
+
+.btn-pro {
+  border-radius: 12px;
+  padding: 10px 22px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover {
+  transform: translateY(-3px);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌙 Dark Mode */
+body.dark-mode .create-card-pro {
+  background: rgba(30, 41, 59, 0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .page-title-pro {
+  color: #93c5fd !important;
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background: rgba(30,41,59,0.65);
+  border-color: rgba(255,255,255,0.1);
+  color: #f1f5f9;
+}
+</style>
+
+
+<div class="container py-4 fade-in">
+
+  <div class="create-wrapper">
+
+    <div class="create-card-pro">
+
+      <!-- Page Title -->
+      <h4 class="page-title-pro mb-4">
+        <i class="bi bi-plus-circle"></i> Tạo Quiz mới
+      </h4>
+
+      <!-- FORM -->
+      <form method="post" action="/teacher/quizzes/create">
+
+        <!-- COURSE SELECT -->
+        <div class="mb-3">
+          <label class="form-label">Thuộc khóa học</label>
+          <select name="course_id" class="form-select" required>
+            <option value="">— Chọn khóa học —</option>
+            {% for course in courses %}
+            <option value="{{ course.id }}">{{ course.course_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- TITLE -->
+        <div class="mb-3">
+          <label class="form-label">Tên Quiz</label>
+          <input type="text" name="title" class="form-control" required placeholder="Nhập tên bài Quiz">
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="mb-3">
+          <label class="form-label">Mô tả</label>
+          <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn (không bắt buộc)"></textarea>
+        </div>
+
+        <!-- GRID INPUTS -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Thời lượng (phút)</label>
+            <input type="number" name="time_limit_minutes" class="form-control" value="30" min="1" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Số câu hỏi</label>
+            <input type="number" name="total_questions" class="form-control" value="10" min="1" required>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Số lần làm tối đa</label>
+            <input type="number" name="max_attempts" class="form-control" value="1" min="1" required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Điểm đạt (tối thiểu %)</label>
+            <input type="number" name="passing_score" class="form-control" value="60" min="0" max="100" required>
+          </div>
+        </div>
+
+        <!-- TYPE -->
+        <div class="mb-3">
+          <label class="form-label">Loại Quiz</label>
+          <select name="quiz_type" class="form-select" id="quizTypeSelect">
+            <option value="practice">Ôn tập (Practice)</option>
+            <option value="graded">Bài thi chấm điểm (Graded)</option>
+          </select>
+        </div>
+
+        <!-- GRADED OPTION: AVAILABLE TIME -->
+        <div id="gradedFields" class="border rounded p-3 mb-4" style="display:none;">
+          <h6 class="fw-bold mb-3"><i class="bi bi-clock"></i> Thời gian mở – đóng bài thi</h6>
+
+          <div class="mb-3">
+            <label class="form-label">Mở từ</label>
+            <input type="datetime-local" name="available_from" class="form-control">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Đóng lúc</label>
+            <input type="datetime-local" name="available_to" class="form-control">
+          </div>
+        </div>
+
+        <!-- DIFFICULTY -->
+        <div class="mb-4">
+          <label class="form-label">Độ khó</label>
+          <select name="difficulty_level" class="form-select">
+            <option value="easy">Dễ</option>
+            <option value="medium" selected>Trung bình</option>
+            <option value="hard">Khó</option>
+          </select>
+        </div>
+
+        <!-- BUTTONS -->
+        <div class="text-end">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary btn-pro">
+            <i class="bi bi-arrow-left"></i> Hủy
+          </a>
+          <button type="submit" class="btn btn-primary btn-pro ms-2">
+            <i class="bi bi-check-circle"></i> Tạo Quiz
+          </button>
+        </div>
+
+      </form>
+
     </div>
-  </form>
+  </div>
+
 </div>
+
+<script>
+/* ============================================================
+   HIỂN THỊ / ẨN TRƯỜNG DÀNH CHO BÀI THI CHẤM ĐIỂM
+============================================================ */
+
+const quizTypeSelect = document.getElementById("quizTypeSelect");
+const gradedFields = document.getElementById("gradedFields");
+
+quizTypeSelect.addEventListener("change", () => {
+  if (quizTypeSelect.value === "graded") {
+    gradedFields.style.display = "block";
+
+    document.querySelector("[name='available_from']").required = true;
+    document.querySelector("[name='available_to']").required = true;
+
+  } else {
+    gradedFields.style.display = "none";
+
+    document.querySelector("[name='available_from']").required = false;
+    document.querySelector("[name='available_to']").required = false;
+  }
+});
+</script>
+
 {% endblock %}

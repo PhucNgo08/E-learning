@@ -1,0 +1,119 @@
+{% extends "layout_admin.html" %}
+{% block title %}📊 Chi tiết ví{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <!-- Header -->
+    <h3 class="fw-bold mb-3">
+        📊 Chi tiết ví người dùng: <span class="text-primary">{{ user_id }}</span>
+    </h3>
+
+    <!-- Số dư -->
+    <div class="card shadow-sm p-4 mb-4 glass-card">
+        <h5 class="fw-bold text-muted mb-1">Số dư hiện tại</h5>
+        <div class="display-6 fw-bold text-success">
+            {{ "{:,.0f}".format(balance) }} đ
+        </div>
+    </div>
+
+    <!-- Các nút hành động -->
+    <div class="d-flex gap-2 mb-4">
+        <a href="/admin/wallets/deposit?user_id={{ user_id }}" 
+           class="btn btn-success fw-semibold px-4">
+            ➕ Nạp tiền
+        </a>
+
+        <a href="/admin/wallets/refund?user_id={{ user_id }}" 
+           class="btn btn-info text-white fw-semibold px-4">
+            💸 Hoàn tiền
+        </a>
+
+        <a href="/admin/wallets/adjust?user_id={{ user_id }}" 
+           class="btn btn-warning fw-semibold px-4">
+            ⚖ Điều chỉnh
+        </a>
+
+        <a href="/admin/wallets/manage" 
+           class="btn btn-secondary fw-semibold px-4 ms-auto">
+            ← Quay lại quản lý
+        </a>
+    </div>
+
+    <!-- Lịch sử giao dịch -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <h5 class="fw-bold mb-0">📜 Lịch sử giao dịch</h5>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 160px;">Mã GD</th>
+                        <th>Số tiền</th>
+                        <th>Loại</th>
+                        <th>Mô tả</th>
+                        <th>Trước</th>
+                        <th>Sau</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% if transactions|length == 0 %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-3">
+                            Không có giao dịch nào.
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% for tx in transactions %}
+                    <tr>
+                        <!-- Mã giao dịch -->
+                        <td class="text-muted small">{{ tx.id }}</td>
+
+                        <!-- Số tiền -->
+                        <td class="fw-bold 
+                            {% if tx.amount > 0 %} text-success 
+                            {% else %} text-danger {% endif %}">
+                            {{ "+" if tx.amount > 0 else "-" }}{{ "{:,.0f}".format(tx.amount|abs) }} đ
+                        </td>
+
+                        <!-- Loại -->
+                        <td>
+                            {% if tx.type.value == "deposit" %}
+                                <span class="badge bg-success">Nạp tiền</span>
+                            {% elif tx.type.value == "payment" %}
+                                <span class="badge bg-danger">Thanh toán</span>
+                            {% elif tx.type.value == "refund" %}
+                                <span class="badge bg-info">Hoàn tiền</span>
+                            {% elif tx.type.value == "adjust" %}
+                                <span class="badge bg-warning text-dark">Điều chỉnh</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ tx.type.value }}</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Mô tả -->
+                        <td>{{ tx.description }}</td>
+
+                        <!-- Trước & Sau -->
+                        <td>{{ "{:,.0f}".format(tx.balance_before) }} đ</td>
+                        <td>{{ "{:,.0f}".format(tx.balance_after) }} đ</td>
+
+                        <!-- Thời gian -->
+                        <td class="text-muted small">
+                            {{ tx.created_at.strftime("%Y-%m-%d %H:%M:%S") if tx.created_at else "" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

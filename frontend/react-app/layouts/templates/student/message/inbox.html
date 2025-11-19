@@ -2,16 +2,61 @@
 {% block title %}📥 Hộp thư đến{% endblock %}
 
 {% block content %}
+
 <style>
 /* ==========================================================
-📥 INBOX – Student Message UI v3.3 (Final 2025)
+📥 INBOX – Student Message UI v4.0 (Final 2025)
 ========================================================== */
+
+.inbox-item {
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.6);
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  transition: all .25s ease;
+}
+.inbox-item:hover {
+  background: rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+}
+
+body.dark-mode .inbox-item {
+  background: rgba(30,41,59,0.45);
+  border-color: rgba(255,255,255,0.08) !important;
+}
+body.dark-mode .inbox-item:hover {
+  background: rgba(30,41,59,0.65);
+}
+
+/* Avatar */
+.msg-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(0,0,0,0.1);
+}
+body.dark-mode .msg-avatar {
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* "Chưa đọc" highlight */
+.unread-highlight {
+  border-left: 5px solid #0d6efd !important;
+}
+
+/* Icon file */
+.file-icon {
+  font-size: 1rem;
+  color: var(--blue1);
+}
 
 /* Floating Compose Button */
 .fab-compose {
   position: fixed;
   bottom: 30px;
-  right: 100px; /* tránh che chatbot */
+  right: 90px;
   background: linear-gradient(135deg, #0d6efd, #0056d6);
   color: #fff;
   border-radius: 50%;
@@ -28,54 +73,8 @@
 .fab-compose:hover {
   transform: scale(1.12);
   background: linear-gradient(135deg, #0b5ed7, #003c9e);
-  text-decoration: none;
 }
 
-/* List Group */
-.inbox-item {
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.65);
-  border-radius: 14px !important;
-  border: 1px solid rgba(0,0,0,0.05) !important;
-  transition: all .25s ease;
-}
-.inbox-item:hover {
-  background: rgba(255,255,255,0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
-}
-
-/* Dark Mode Support */
-body.dark-mode .inbox-item {
-  background: rgba(30,41,59,0.45);
-  border-color: rgba(255,255,255,0.08) !important;
-  color: #e2e8f0 !important;
-}
-body.dark-mode .inbox-item:hover {
-  background: rgba(30,41,59,0.65);
-}
-
-.msg-avatar {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid rgba(0,0,0,0.1);
-}
-body.dark-mode .msg-avatar {
-  border-color: rgba(255,255,255,0.1);
-}
-
-.unread-badge {
-  background: #dc3545;
-  padding: 4px 8px;
-  font-size: .72rem;
-  border-radius: 6px;
-  color: white;
-  font-weight: 600;
-}
-
-/* Responsive */
 @media(max-width: 576px) {
   .fab-compose {
     right: 20px;
@@ -103,31 +102,39 @@ body.dark-mode .msg-avatar {
 
     {% for msg in messages %}
     <a href="/student/message/view/{{ msg.id }}"
-       class="list-group-item list-group-item-action inbox-item d-flex justify-content-between align-items-center mb-2 py-3">
+       class="list-group-item list-group-item-action inbox-item d-flex justify-content-between align-items-center mb-2 py-3
+              {% if msg.is_read == 0 %} unread-highlight {% endif %}">
 
-      <!-- Avatar + Info Left -->
+      <!-- LEFT SIDE -->
       <div class="d-flex align-items-center gap-3">
-        
+
         <!-- Avatar -->
-        {% if msg.sender.avatar_url %}
-          <img src="{{ msg.sender.avatar_url }}" class="msg-avatar" alt="avatar">
+        {% set sender = msg.sender if msg.sender else None %}
+        {% if sender and sender.avatar_url %}
+          <img src="{{ sender.avatar_url }}" class="msg-avatar" alt="avatar">
         {% else %}
           <img src="/static/img/default_avatar.png" class="msg-avatar" alt="avatar">
         {% endif %}
 
-        <!-- Message text -->
+        <!-- Info -->
         <div>
           <div class="fw-semibold text-dark">
-            {{ msg.sender.full_name if msg.sender else "Người gửi ẩn danh" }}
+            {{ sender.full_name if sender else "Người gửi ẩn danh" }}
           </div>
-          <small class="text-muted">
-            {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
+
+          <!-- content preview -->
+          <small class="text-muted d-block">
+            {% if msg.content %}
+              {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
+            {% else %}
+              <i class="bi bi-paperclip file-icon"></i> Tệp đính kèm
+            {% endif %}
           </small>
         </div>
 
       </div>
 
-      <!-- Right: Time + Unread -->
+      <!-- RIGHT SIDE -->
       <div class="text-end">
 
         <small class="text-secondary d-block">
@@ -135,14 +142,12 @@ body.dark-mode .msg-avatar {
         </small>
 
         {% if msg.is_read == 0 %}
-        <span class="unread-badge mt-1 d-inline-block">Chưa đọc</span>
+        <span class="badge bg-danger mt-1">Chưa đọc</span>
         {% endif %}
-
       </div>
 
     </a>
     {% endfor %}
-
   </div>
 
   {% else %}

@@ -2,77 +2,276 @@
 {% block title %}📘 Danh sách Quiz của bạn{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold text-primary">
-      📘 Danh sách Quiz của bạn
-    </h4>
-    <a href="/teacher/quizzes/create" class="btn btn-success btn-sm">
-      <i class="bi bi-plus-circle"></i> Tạo Quiz mới
-    </a>
+
+<style>
+/* ==========================================================
+   📘 DANH SÁCH QUIZ — THUẦN VIỆT PASTEL 2025
+=========================================================== */
+
+.list-wrapper {
+  max-width: 1300px;
+  margin: auto;
+}
+
+/* Title */
+.section-title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: #3b36e1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: #1763ff;
+  display: inline-block;
+}
+
+/* Search box */
+.search-box {
+  border-radius: 14px !important;
+  padding-left: 40px !important;
+  height: 45px;
+  background: url('https://cdn-icons-png.flaticon.com/512/622/622669.png') no-repeat 12px center;
+  background-size: 16px;
+}
+
+/* Create button */
+.btn-create {
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 600;
+}
+
+/* Table */
+.table-wrapper {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid #e7ecf5;
+  background: white;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+}
+
+.table thead {
+  background: #d8e6ff !important;
+  color: #333;
+}
+
+.quiz-row:hover {
+  background: #f3f8ff !important;
+  transition: .25s ease;
+}
+
+/* Badges */
+.badge-soft {
+  border-radius: 30px;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-practice { background: #007bff20; color: #007bff; }
+.badge-graded   { background: #dc354520; color: #dc3545; }
+
+.badge-easy   { background: #19875420; color: #198754; }
+.badge-medium { background: #ffc10740; color: #c17d00; }
+.badge-hard   { background: #dc354540; color: #dc3545; }
+
+.badge-published { background: #19875420; color:#198754; }
+.badge-pending   { background: #ffc10730; color:#b68400; }
+.badge-rejected  { background: #dc354520; color:#dc3545; }
+
+/* Action buttons */
+.action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+  transition: .25s ease;
+  border: 1px solid transparent;
+}
+
+.action-btn:hover {
+  transform: translateY(-3px);
+}
+
+.btn-view  { background: #e8f1ff; border-color: #b1d0ff; color:#1763ff; }
+.btn-edit  { background: #e8f4ff; border-color: #b6ddff; color:#1f7aff; }
+.btn-stat  { background: #fff7e0; border-color: #ffe8a3; color:#c99700; }
+.btn-import{ background: #eaffea; border-color: #b2f5b2; color:#199f1a; }
+.btn-del   { background: #ffeaea; border-color: #ffc1c1; color:#d63030; }
+</style>
+
+
+
+<div class="container py-4 list-wrapper fade-in">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+
+    <h3 class="section-title">
+      <span class="section-title-icon"></span>
+      Danh sách Quiz của bạn
+    </h3>
+
+    <div class="d-flex align-items-center gap-3">
+      <input id="searchInput" type="text"
+             placeholder="🔍 Tìm kiếm Quiz..."
+             class="form-control search-box shadow-sm">
+
+      <a href="/teacher/quizzes/create"
+         class="btn btn-success btn-create shadow-sm">
+        <i class="bi bi-plus-circle"></i> Tạo Quiz mới
+      </a>
+    </div>
+
   </div>
 
   {% if quizzes %}
-  <div class="table-responsive shadow-sm rounded">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-primary">
+  <div class="table-wrapper">
+    <table class="table table-hover align-middle mb-0" id="quizTable">
+      <thead class="text-center fw-bold">
         <tr>
           <th>#</th>
-          <th>Tên Quiz</th>
-          <th>Khóa học</th>
+          <th style="width:23%">Tên Quiz</th>
+          <th>Thuộc khóa học</th>
+          <th>Loại quiz</th>
           <th>Độ khó</th>
           <th>Thời lượng</th>
-          <th>Tổng câu hỏi</th>
+          <th>Số câu hỏi</th>
+          <th>Trạng thái</th>
           <th>Ngày tạo</th>
-          <th class="text-center">Hành động</th>
+          <th>Hành động</th>
         </tr>
       </thead>
+
       <tbody>
-        {% for quiz in quizzes %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td class="fw-semibold">{{ quiz.title }}</td>
-          <td>{{ quiz.course.course_name if quiz.course else "—" }}</td>
-          <td>
-            {% if quiz.difficulty_level == "easy" %}
-              <span class="badge bg-success">Dễ</span>
-            {% elif quiz.difficulty_level == "medium" %}
-              <span class="badge bg-warning text-dark">Trung bình</span>
+
+      {% for quiz in quizzes %}
+      <tr class="quiz-row text-center">
+
+        <td>{{ loop.index }}</td>
+
+        <td class="fw-semibold text-start">{{ quiz.title }}</td>
+
+        <td>{{ quiz.course.course_name if quiz.course else "—" }}</td>
+
+        <!-- Type -->
+        <td>
+          {% if quiz.quiz_type == "graded" %}
+            <span class="badge-soft badge-graded">Chấm điểm</span>
+          {% else %}
+            <span class="badge-soft badge-practice">Luyện tập</span>
+          {% endif %}
+        </td>
+
+        <!-- Difficulty -->
+        <td>
+          {% if quiz.difficulty_level == "easy" %}
+            <span class="badge-soft badge-easy">Dễ</span>
+          {% elif quiz.difficulty_level == "medium" %}
+            <span class="badge-soft badge-medium">Trung bình</span>
+          {% else %}
+            <span class="badge-soft badge-hard">Khó</span>
+          {% endif %}
+        </td>
+
+        <td>{{ quiz.time_limit_minutes }} phút</td>
+        <td>{{ quiz.total_questions }}</td>
+
+        <!-- Status -->
+        <td>
+          {% if quiz.quiz_type == "practice" %}
+            <span class="badge-soft badge-practice">Luyện tập</span>
+          {% else %}
+            {% if quiz.status == "published" %}
+              <span class="badge-soft badge-published">✔ Đã duyệt</span>
+            {% elif quiz.status == "pending" %}
+              <span class="badge-soft badge-pending">⏳ Chờ duyệt</span>
             {% else %}
-              <span class="badge bg-danger">Khó</span>
+              <span class="badge-soft badge-rejected">❌ Từ chối</span>
             {% endif %}
-          </td>
-          <td>{{ quiz.time_limit_minutes or "—" }} phút</td>
-          <td>{{ quiz.total_questions }}</td>
-          <td>{{ quiz.created_at.strftime('%d/%m/%Y %H:%M') if quiz.created_at else "—" }}</td>
-          <td class="text-center">
-            <div class="btn-group" role="group">
-              <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-info btn-sm" title="Xem chi tiết">
-                <i class="bi bi-eye"></i>
-              </a>
-              <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-outline-primary btn-sm" title="Chỉnh sửa">
-                <i class="bi bi-pencil-square"></i>
-              </a>
-              <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-outline-warning btn-sm" title="Thống kê kết quả">
-                <i class="bi bi-graph-up"></i>
-              </a>
-              <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}" style="display:inline-block;">
-                <button type="submit" class="btn btn-outline-danger btn-sm" title="Xóa"
-                  onclick="return confirm('Bạn có chắc muốn xóa quiz này không?');">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </form>
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
+          {% endif %}
+        </td>
+
+        <td>
+          {{ quiz.created_at.strftime('%d/%m/%Y') if quiz.created_at else '—' }}
+        </td>
+
+        <td>
+          <div class="d-flex justify-content-center">
+
+            <a href="/teacher/quizzes/detail/{{ quiz.id }}"
+               class="action-btn btn-view"
+               title="Xem Quiz">
+              <i class="bi bi-eye"></i>
+            </a>
+
+            <a href="/teacher/quizzes/edit/{{ quiz.id }}"
+               class="action-btn btn-edit"
+               title="Sửa Quiz">
+              <i class="bi bi-pencil"></i>
+            </a>
+
+            {% if quiz.quiz_type == "graded" %}
+            <a href="/teacher/quizzes/statistics/{{ quiz.id }}"
+               class="action-btn btn-stat"
+               title="Xem thống kê">
+              <i class="bi bi-graph-up"></i>
+            </a>
+            {% endif %}
+
+            <a href="/teacher/quizzes/{{ quiz.id }}/import"
+               class="action-btn btn-import"
+               title="Nhập câu hỏi từ file">
+              <i class="bi bi-upload"></i>
+            </a>
+
+            <form method="post"
+                  action="/teacher/quizzes/delete/{{ quiz.id }}"
+                  onsubmit="return confirm('Bạn có chắc chắn muốn xóa quiz này?');">
+              <button type="submit" class="action-btn btn-del" title="Xóa Quiz">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+
+          </div>
+        </td>
+
+      </tr>
+      {% endfor %}
+
       </tbody>
     </table>
   </div>
+
   {% else %}
-  <div class="alert alert-info text-center mt-4">
-    <i class="bi bi-info-circle"></i> Bạn chưa tạo quiz nào.
+  <div class="alert alert-info text-center mt-4 shadow-sm">
+    Bạn chưa tạo quiz nào.
   </div>
   {% endif %}
+
 </div>
+
+
+<!-- Search -->
+<script>
+document.getElementById("searchInput").addEventListener("keyup", function () {
+  let value = this.value.toLowerCase();
+  let rows = document.querySelectorAll("#quizTable tbody tr");
+
+  rows.forEach(row => {
+    let text = row.innerText.toLowerCase();
+    row.style.display = text.includes(value) ? "" : "none";
+  });
+});
+</script>
+
 {% endblock %}

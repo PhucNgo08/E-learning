@@ -2,36 +2,158 @@
 {% block title %}⚠️ Lỗi hệ thống{% endblock %}
 
 {% block content %}
-<div class="container py-5 text-center fade-in">
 
-  <!-- Icon -->
-  <div class="mb-3">
-    <i class="bi bi-exclamation-octagon text-danger display-4"></i>
-  </div>
+<style>
+/* ==========================================================
+   ⚠️ QUIZ ERROR PAGE – Glass Neo 2025 Final
+=========================================================== */
 
-  <!-- Title -->
-  <h4 class="fw-bold text-danger mb-2">
-    Đã xảy ra lỗi khi tải dữ liệu bài kiểm tra
-  </h4>
+.error-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 0;
+  min-height: 75vh;
+  animation: fadeIn .45s ease;
+}
 
-  <!-- Description -->
-  <p class="text-muted mb-4">
-    Có thể do kết nối mạng, bài kiểm tra đã hết thời gian làm hoặc sự cố hệ thống.<br>
-    Vui lòng thử lại sau vài phút.
-  </p>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  <!-- Buttons -->
-  <div class="d-flex justify-content-center gap-2 mt-3 flex-wrap">
+.error-card-pro {
+  width: 100%;
+  max-width: 560px;
+  padding: 2.8rem;
+  border-radius: 22px;
 
-    <a href="/student/quiz" class="btn btn-outline-primary px-4 shadow-sm">
-      <i class="bi bi-arrow-left"></i> Quay lại danh sách
-    </a>
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 
-    <a href="/student/dashboard" class="btn btn-secondary px-4 shadow-sm">
-      <i class="bi bi-house"></i> Trang chính
-    </a>
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.10),
+    0 0 40px rgba(255, 86, 86, 0.12);
+
+  text-align: center;
+  animation: fadeUp .55s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Icon pulse */
+.error-icon {
+  animation: pulseAnim 1.8s infinite;
+  font-size: 3.8rem;
+}
+
+@keyframes pulseAnim {
+  0%   { opacity: .55; transform: scale(1); }
+  50%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: .55; transform: scale(1); }
+}
+
+/* Buttons PRO */
+.btn-pro {
+  padding: 10px 26px;
+  border-radius: 12px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+/* Error detail */
+.error-detail {
+  text-align: left;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.65);
+  border: 1px solid rgba(0,0,0,0.08);
+  word-break: break-word;
+}
+
+/* ===== DARK MODE ===== */
+body.dark-mode .error-card-pro {
+  background: rgba(30, 41, 59, 0.60);
+  border-color: rgba(255,255,255,0.08);
+  color: #f1f5f9;
+  box-shadow:
+    0 8px 20px rgba(0,0,0,0.25),
+    0 0 40px rgba(255, 86, 86, 0.25);
+}
+
+body.dark-mode .error-detail {
+  background: rgba(51, 65, 85, 0.60);
+  border-color: rgba(255,255,255,0.15);
+}
+
+body.dark-mode .error-icon {
+  color: #fca5a5 !important;
+}
+
+body.dark-mode .text-muted {
+  color: #cbd5e1 !important;
+}
+</style>
+
+
+<div class="container error-wrapper">
+
+  <div class="error-card-pro">
+
+    <!-- Icon -->
+    <div class="mb-3">
+      <i class="bi bi-exclamation-octagon text-danger error-icon"></i>
+    </div>
+
+    <!-- Title -->
+    <h4 class="fw-bold text-danger mb-2">
+      Đã xảy ra lỗi khi tải dữ liệu bài kiểm tra
+    </h4>
+
+    <!-- Description -->
+    <p class="text-muted mb-4">
+      Hệ thống hiện không thể xử lý yêu cầu.
+      <br>Vui lòng thử lại sau hoặc kiểm tra kết nối mạng của bạn.
+    </p>
+
+    <!-- Error detail -->
+    {% if error_message %}
+    <div class="error-detail p-3 small mb-3">
+      <strong>Chi tiết lỗi:</strong><br>
+      <span class="text-danger">{{ error_message }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-center gap-3 flex-wrap mt-3">
+
+      <a href="/student/quiz"
+         class="btn btn-outline-primary btn-pro shadow-sm">
+        <i class="bi bi-arrow-left"></i> Danh sách Quiz
+      </a>
+
+      <a href="/student/dashboard"
+         class="btn btn-primary btn-pro shadow-sm">
+        <i class="bi bi-house"></i> Trang chính
+      </a>
+
+      <button onclick="location.reload()"
+              class="btn btn-danger btn-pro shadow-sm">
+        <i class="bi bi-arrow-repeat"></i> Thử lại
+      </button>
+
+    </div>
 
   </div>
 
 </div>
+
 {% endblock %}

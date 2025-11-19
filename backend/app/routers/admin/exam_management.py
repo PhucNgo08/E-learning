@@ -1,19 +1,23 @@
+"""
+==========================================================
+🛡️ ADMIN — EXAM MANAGEMENT ROUTER (FULL v5.2 FIX)
+Quản lý kỳ thi (Quiz graded)
++ Danh sách kỳ thi
++ Tạo / Sửa / Xóa kỳ thi
++ Duyệt / Từ chối
++ Import câu hỏi (XLSX / CSV / TXT)
+  ✔ CSV dạng text-block (không cần bảng) — đã FIX
+==========================================================
+"""
+
 from fastapi import (
-    APIRouter,
-    Request,
-    Depends,
-    Form,
-    HTTPException,
-    UploadFile,
-    File,
+    APIRouter, Request, Depends, Form, UploadFile, File, HTTPException
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 import uuid
-import traceback
 import pandas as pd
-from pandas.errors import ParserError
 import io
 import re
 
@@ -23,25 +27,37 @@ from app.models.course import Course
 from app.models.question import Question
 from app.models.question_option import QuestionOption
 
+from app.services.admin.exam_management_service import (
+    get_exams,
+    create_exam,
+    update_exam,
+    delete_exam,
+    approve_exam,
+    reject_exam
+)
+
 from app.config.template_config import get_template_by_path
 
 
-exam_router = APIRouter(
-    prefix="/admin/exams",
-    tags=["Admin - Exam Management"],
-)
-
-# ================================================
-# 🔹 Helper parse text → block question
-# ================================================
-
+# ==========================================================
+# 🔧 TXT / CSV dạng text-block Parser
+# ==========================================================
 def normalize_question_block(text_block: str) -> dict:
+    """Chuyển block TXT thành object câu hỏi."""
+
     lines = [l.strip() for l in text_block.splitlines() if l.strip()]
     if not lines:
-        return {}
+        return {
+            "question_text": "",
+            "option_a": "",
+            "option_b": "",
+            "option_c": "",
+            "option_d": "",
+            "correct": ""
+        }
 
     q = {
-        "question_text": "",
+        "question_text": lines[0],
         "option_a": "",
         "option_b": "",
         "option_c": "",
@@ -49,260 +65,318 @@ def normalize_question_block(text_block: str) -> dict:
         "correct": "",
     }
 
-    q["question_text"] = re.sub(r"[,\s]+$", "", lines[0])
-
     for line in lines[1:]:
-        if re.match(r"^A[\.\):]\s*", line, re.IGNORECASE):
-            q["option_a"] = re.sub(r"^A[\.\):]\s*", "", line, flags=re.IGNORECASE)
-        elif re.match(r"^B[\.\):]\s*", line, re.IGNORECASE):
-            q["option_b"] = re.sub(r"^B[\.\):]\s*", "", line, flags=re.IGNORECASE)
-        elif re.match(r"^C[\.\):]\s*", line, re.IGNORECASE):
-            q["option_c"] = re.sub(r"^C[\.\):]\s*", "", line, flags=re.IGNORECASE)
-        elif re.match(r"^D[\.\):]\s*", line, re.IGNORECASE):
-            q["option_d"] = re.sub(r"^D[\.\):]\s*", "", line, flags=re.IGNORECASE)
+        if re.match(r"^A[\.\):]\s*", line, re.I):
+            q["option_a"] = re.sub(r"^A[\.\):]\s*", "", line)
 
-        lower_line = line.lower()
-        if "đáp án đúng" in lower_line or "dap an dung" in lower_line or "answer" in lower_line:
-            correct = re.sub(r".*:\s*", "", line)
-            correct = correct.strip().upper()
-            if correct:
-                q["correct"] = correct[0]
+        elif re.match(r"^B[\.\):]\s*", line, re.I):
+            q["option_b"] = re.sub(r"^B[\.\):]\s*", "", line)
+
+        elif re.match(r"^C[\.\):]\s*", line, re.I):
+            q["option_c"] = re.sub(r"^C[\.\):]\s*", "", line)
+
+        elif re.match(r"^D[\.\):]\s*", line, re.I):
+            q["option_d"] = re.sub(r"^D[\.\):]\s*", "", line)
+
+        # Đáp án
+        if "đáp án" in line.lower() or "answer" in line.lower():
+            q["correct"] = line.split(":")[-1].strip().upper()[0:1]
 
     return q
 
 
-def parse_free_text_questions(raw_text: str):
-    blocks = re.split(r"\n\s*\n", raw_text.strip(), flags=re.MULTILINE)
-    questions = []
-    for block in blocks:
-        q = normalize_question_block(block)
-        if q.get("question_text") and (q.get("option_a") or q.get("option_b")):
-            questions.append(q)
-    return questions
+# ==========================================================
+# 📌 ROUTER CONFIG
+# ==========================================================
+exam_router = APIRouter(
+    prefix="/admin/exams",
+    tags=["Admin - Exams"],
+)
 
 
-# ================================================
-# 🔹 Normalize Excel / CSV
-# ================================================
-
-def normalize_questions_from_df(df: pd.DataFrame):
-    df = df.fillna("")
-    raw_columns = list(df.columns)
-    columns = [str(c).strip().lower() for c in raw_columns]
-
-    col_map = {
-        "question_text": None,
-        "option_a": None,
-        "option_b": None,
-        "option_c": None,
-        "option_d": None,
-        "correct": None,
-    }
-
-    for idx, col in enumerate(columns):
-        if col in ["question_text", "question", "câu hỏi", "cau hoi"]:
-            col_map["question_text"] = raw_columns[idx]
-        elif col in ["option_a", "a"]:
-            col_map["option_a"] = raw_columns[idx]
-        elif col in ["option_b", "b"]:
-            col_map["option_b"] = raw_columns[idx]
-        elif col in ["option_c", "c"]:
-            col_map["option_c"] = raw_columns[idx]
-        elif col in ["option_d", "d"]:
-            col_map["option_d"] = raw_columns[idx]
-        elif col in ["correct", "answer", "đáp án", "dap an"]:
-            col_map["correct"] = raw_columns[idx]
-
-    if not col_map["question_text"]:
-        return []
-
-    questions = []
-    for _, row in df.iterrows():
-        q = {
-            "question_text": str(row[col_map["question_text"]]).strip()
-            if col_map["question_text"] else "",
-            "option_a": str(row[col_map["option_a"]]).strip()
-            if col_map["option_a"] else "",
-            "option_b": str(row[col_map["option_b"]]).strip()
-            if col_map["option_b"] else "",
-            "option_c": str(row[col_map["option_c"]]).strip()
-            if col_map["option_c"] else "",
-            "option_d": str(row[col_map["option_d"]]).strip()
-            if col_map["option_d"] else "",
-            "correct": str(row[col_map["correct"]]).strip().upper()
-            if col_map["correct"] else "",
-        }
-        if any(q.values()):
-            questions.append(q)
-
-    return questions
-
-
-# ================================================
-# 📝 Manage list
-# ================================================
-
+# ==========================================================
+# 📋 1) Danh sách kỳ thi
+# ==========================================================
 @exam_router.get("/manage", response_class=HTMLResponse)
-def manage_exams(request: Request, db: Session = Depends(get_db)):
+def exam_manage(request: Request, db: Session = Depends(get_db)):
+
     tpl = get_template_by_path(request.url.path)
-    exams = (
-        db.query(Quiz)
-        .filter(Quiz.quiz_type == "graded")
-        .order_by(Quiz.created_at.desc())
-        .all()
-    )
-    return tpl.TemplateResponse("exams/manage.html", {"request": request, "exams": exams})
-
-
-# ================================================
-# 📥 IMPORT — FORM UPLOAD
-# ================================================
-
-@exam_router.get("/{exam_id}/import", response_class=HTMLResponse)
-def import_questions_form(request: Request, exam_id: str):
-    tpl = get_template_by_path(request.url.path)
-    return tpl.TemplateResponse("exams/import.html", {"request": request, "exam_id": exam_id})
-
-
-# ================================================
-# 📥 IMPORT — UPLOAD FILE (CHẠY OK 50MB)
-# ================================================
-
-@exam_router.post("/{exam_id}/import")
-async def import_questions_upload(request: Request, exam_id: str, file: UploadFile = File(...)):
-    try:
-        content = await file.read()
-        filename = (file.filename or "").lower()
-
-        questions = []
-
-        if filename.endswith(".txt"):
-            raw = content.decode("utf-8", errors="ignore")
-            questions = parse_free_text_questions(raw)
-        else:
-            try:
-                if filename.endswith(".xlsx"):
-                    df = pd.read_excel(io.BytesIO(content))
-                else:
-                    df = pd.read_csv(io.BytesIO(content), encoding="utf-8", engine="python")
-
-                questions = normalize_questions_from_df(df)
-
-                if not questions:
-                    raw = content.decode("utf-8", errors="ignore")
-                    questions = parse_free_text_questions(raw)
-
-            except ParserError:
-                raw = content.decode("utf-8", errors="ignore")
-                questions = parse_free_text_questions(raw)
-
-        if not questions:
-            raise HTTPException(400, "Không đọc được dữ liệu câu hỏi từ file.")
-
-        # 🔥 Lưu cache server-side (cho file 50MB)
-        token = str(uuid.uuid4())
-        request.app.state.import_cache[token] = {
-            "questions": questions,
-            "exam_id": exam_id,
-            "created": datetime.utcnow()
-        }
-
-        # Chỉ lưu token nhỏ vào session
-        request.session["import_token"] = token
-
-        return RedirectResponse(f"/admin/exams/{exam_id}/import/review", 303)
-
-    except Exception:
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", 500)
-
-
-# ================================================
-# 👀 REVIEW IMPORT — (Đọc từ server-side RAM)
-# ================================================
-
-@exam_router.get("/{exam_id}/import/review", response_class=HTMLResponse)
-def review_import_questions(request: Request, exam_id: str):
-    tpl = get_template_by_path(request.url.path)
-
-    token = request.session.get("import_token")
-    if not token:
-        raise HTTPException(400, "Không có dữ liệu import")
-
-    cache = request.app.state.import_cache.get(token)
-    if not cache:
-        raise HTTPException(400, "Không có dữ liệu import")
-
-    questions = cache["questions"]
+    exams = get_exams(db, user_id="admin", role="admin")
 
     return tpl.TemplateResponse(
-        "exams/import_review.html",
-        {"request": request, "questions": questions, "exam_id": exam_id},
+        "exams/manage.html",
+        {"request": request, "exams": exams}
     )
 
 
-# ================================================
-# ✅ CONFIRM IMPORT — LƯU VÀO DB
-# ================================================
+# ==========================================================
+# ➕ 2) Tạo kỳ thi — GET
+# ==========================================================
+@exam_router.get("/create", response_class=HTMLResponse)
+def exam_create_form(request: Request, db: Session = Depends(get_db)):
 
-@exam_router.post("/{exam_id}/import/confirm")
-def confirm_import_questions(exam_id: str, request: Request, db: Session = Depends(get_db)):
+    tpl = get_template_by_path(request.url.path)
+    courses = db.query(Course).all()
 
-    token = request.session.get("import_token")
-    if not token:
-        raise HTTPException(400, "Không có dữ liệu import")
+    return tpl.TemplateResponse(
+        "exams/create.html",
+        {"request": request, "courses": courses}
+    )
 
-    cache = request.app.state.import_cache.get(token)
-    if not cache:
-        raise HTTPException(400, "Không có dữ liệu import")
 
-    questions = cache["questions"]
+# ==========================================================
+# ➕ 3) Tạo kỳ thi — POST
+# ==========================================================
+@exam_router.post("/create")
+def exam_create(
+    request: Request,
+    db: Session = Depends(get_db),
+    title: str = Form(...),
+    description: str = Form(""),
+    course_id: str = Form(...),
+    total_questions: int = Form(...),
+    time_limit: int = Form(...),
+    max_attempts: int = Form(...),
+    passing_score: float = Form(...),
+    available_from: str = Form(None),
+    available_to: str = Form(None)
+):
 
+    af = datetime.fromisoformat(available_from) if available_from else None
+    at = datetime.fromisoformat(available_to) if available_to else None
+
+    create_exam(
+        db=db,
+        user_id="admin",
+        role="admin",
+        title=title,
+        description=description,
+        course_id=course_id,
+        total_questions=total_questions,
+        time_limit=time_limit,
+        max_attempts=max_attempts,
+        passing_score=passing_score,
+        available_from=af,
+        available_to=at,
+    )
+
+    return RedirectResponse("/admin/exams/manage", 303)
+
+
+# ==========================================================
+# ✏️ 4) Edit — GET
+# ==========================================================
+@exam_router.get("/{exam_id}/edit", response_class=HTMLResponse)
+def exam_edit_form(exam_id: str, request: Request, db: Session = Depends(get_db)):
+
+    tpl = get_template_by_path(request.url.path)
+
+    exam = db.query(Quiz).filter(Quiz.id == exam_id).first()
+    if not exam:
+        raise HTTPException(404, "Không tìm thấy kỳ thi.")
+
+    courses = db.query(Course).all()
+
+    return tpl.TemplateResponse(
+        "exams/edit.html",
+        {"request": request, "exam": exam, "courses": courses}
+    )
+
+
+# ==========================================================
+# ✏️ 5) Edit — POST
+# ==========================================================
+@exam_router.post("/{exam_id}/edit")
+def exam_edit(
+    exam_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+
+    title: str = Form(...),
+    description: str = Form(""),
+    total_questions: int = Form(...),
+    time_limit: int = Form(...),
+    max_attempts: int = Form(...),
+    passing_score: float = Form(...),
+    available_from: str = Form(None),
+    available_to: str = Form(None),
+):
+
+    af = datetime.fromisoformat(available_from) if available_from else None
+    at = datetime.fromisoformat(available_to) if available_to else None
+
+    update_exam(
+        db=db,
+        user_id="admin",
+        role="admin",
+        exam_id=exam_id,
+        title=title,
+        description=description,
+        total_questions=total_questions,
+        time_limit=time_limit,
+        max_attempts=max_attempts,
+        passing_score=passing_score,
+        available_from=af,
+        available_to=at,
+    )
+
+    return RedirectResponse("/admin/exams/manage", 303)
+
+
+# ==========================================================
+# ❌ 6) Delete
+# ==========================================================
+@exam_router.get("/{exam_id}/delete")
+def exam_delete(exam_id: str, db: Session = Depends(get_db)):
+
+    delete_exam(db, user_id="admin", role="admin", exam_id=exam_id)
+    return RedirectResponse("/admin/exams/manage", 303)
+
+
+# ==========================================================
+# ✔️ 7) Approve
+# ==========================================================
+@exam_router.get("/{exam_id}/approve")
+def admin_approve(exam_id: str, db: Session = Depends(get_db)):
+    approve_exam(db, exam_id)
+    return RedirectResponse("/admin/exams/manage", 303)
+
+
+# ==========================================================
+# ❌ 8) Reject
+# ==========================================================
+@exam_router.get("/{exam_id}/reject")
+def admin_reject(exam_id: str, db: Session = Depends(get_db)):
+    reject_exam(db, exam_id)
+    return RedirectResponse("/admin/exams/manage", 303)
+
+
+# ==========================================================
+# 📥 9) Import — GET
+# ==========================================================
+@exam_router.get("/{exam_id}/import", response_class=HTMLResponse)
+def exam_import_form(exam_id: str, request: Request, db: Session = Depends(get_db)):
+
+    exam = db.query(Quiz).filter(Quiz.id == exam_id).first()
+    if not exam:
+        raise HTTPException(404, "Không tìm thấy kỳ thi.")
+
+    tpl = get_template_by_path(request.url.path)
+
+    return tpl.TemplateResponse(
+        "exams/import.html",
+        {"request": request, "exam": exam, "exam_id": exam_id}
+    )
+
+
+# ==========================================================
+# 📥 10) Import — POST (FIXED CSV)
+# ==========================================================
+@exam_router.post("/{exam_id}/import")
+async def exam_import_submit(
+    exam_id: str,
+    db: Session = Depends(get_db),
+    file: UploadFile = File(...)
+):
+
+    exam = db.query(Quiz).filter(Quiz.id == exam_id).first()
+    if not exam:
+        raise HTTPException(404, "Không tìm thấy kỳ thi.")
+
+    # --- đọc file
     try:
-        for q in questions:
-            if not q.get("question_text"):
-                continue
+        content = await file.read()
+        filename = file.filename.lower()
 
-            qid = str(uuid.uuid4())
+        # Excel
+        if filename.endswith(".xlsx"):
+            df = pd.read_excel(io.BytesIO(content))
 
-            question = Question(
-                id=qid,
-                quiz_id=exam_id,
-                question_text=q.get("question_text", ""),
-                explanation=q.get("explanation"),
-                question_order=0,
-            )
-            db.add(question)
+        # CSV (NHƯNG KHÔNG CÓ CẤU TRÚC BẢNG) → XỬ LÝ NHƯ TXT
+        elif filename.endswith(".csv"):
+            text = content.decode("utf-8-sig", errors="ignore")
+            blocks = [b for b in text.split("\n\n") if b.strip()]
+            df = pd.DataFrame([normalize_question_block(b) for b in blocks])
 
-            options = [
-                ("A", "option_a"),
-                ("B", "option_b"),
-                ("C", "option_c"),
-                ("D", "option_d"),
-            ]
+        # TXT
+        elif filename.endswith(".txt"):
+            text = content.decode("utf-8-sig", errors="ignore")
+            blocks = [b for b in text.split("\n\n") if b.strip()]
+            df = pd.DataFrame([normalize_question_block(b) for b in blocks])
 
-            for idx, (label, key) in enumerate(options, start=1):
-                text = q.get(key, "")
-                if not text:
-                    continue
+        else:
+            raise HTTPException(400, "Chỉ hỗ trợ XLSX / CSV / TXT.")
 
-                db.add(
-                    QuestionOption(
-                        id=str(uuid.uuid4()),
-                        question_id=qid,
-                        option_text=text,
-                        is_correct=1 if label == q.get("correct", "").upper() else 0,
-                        option_order=idx,
-                    )
+    except Exception as e:
+        raise HTTPException(400, f"Lỗi đọc file ({e})")
+
+    # =======================================================
+    # 🔥 CHUẨN HOÁ TÊN CỘT
+    # =======================================================
+    rename_map = {
+        "question": "question_text",
+        "question_text": "question_text",
+
+        "a": "option_a",
+        "b": "option_b",
+        "c": "option_c",
+        "d": "option_d",
+
+        "option_a": "option_a",
+        "option_b": "option_b",
+        "option_c": "option_c",
+        "option_d": "option_d",
+
+        "correct": "correct",
+        "answer": "correct",
+        "correct_answer": "correct",
+        "đáp án": "correct",
+    }
+
+    df.columns = [c.strip().lower() for c in df.columns]
+    df.rename(columns={c: rename_map.get(c, c) for c in df.columns}, inplace=True)
+
+    # =======================================================
+    # 🔥 CHECK CỘT BẮT BUỘC
+    # =======================================================
+    required = {"question_text", "option_a", "option_b", "option_c", "option_d", "correct"}
+
+    if not required.issubset(df.columns):
+        raise HTTPException(400, f"Thiếu cột bắt buộc: {required - set(df.columns)}")
+
+    # =======================================================
+    # 🔥 LƯU DB
+    # =======================================================
+    for _, row in df.iterrows():
+
+        new_q = Question(
+            id=str(uuid.uuid4()),
+            quiz_id=exam_id,
+            question_text=str(row["question_text"]),
+            difficulty_level=exam.difficulty_level,
+        )
+        db.add(new_q)
+        db.flush()
+
+        options = {
+            "A": row["option_a"],
+            "B": row["option_b"],
+            "C": row["option_c"],
+            "D": row["option_d"]
+        }
+
+        correct_letter = str(row["correct"]).strip().upper()[0]
+
+        for letter, text in options.items():
+            db.add(
+                QuestionOption(
+                    id=str(uuid.uuid4()),
+                    question_id=new_q.id,
+                    option_text=str(text),
+                    is_correct=(letter == correct_letter),
                 )
+            )
 
-        db.commit()
+    db.commit()
 
-        # 🔥 Xoá RAM + session sau khi nhập xong
-        request.app.state.import_cache.pop(token, None)
-        request.session.pop("import_token", None)
-
-        return RedirectResponse("/admin/exams/manage", 303)
-
-    except Exception:
-        db.rollback()
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", 500)
+    return RedirectResponse(f"/admin/exams/{exam_id}/edit", 303)

@@ -1,75 +1,135 @@
 {% extends "layout_student.html" %}
+{% set active_page = "cart" %}
 {% block title %}🛒 Giỏ hàng{% endblock %}
 
 {% block content %}
-<div class="container py-4">
 
-  <h3 class="fw-bold mb-4 text-primary">
-    <i class="bi bi-cart3"></i> Giỏ hàng khóa học
-  </h3>
+<style>
+/* ================================
+   🎨 CART PAGE CSS – Tối ưu chuẩn Student UI
+   ================================ */
 
-  {% if not items or items|length == 0 %}
-      {% include "cart/cart_empty.html" %}
-  {% else %}
+.fade { animation: fadeIn .35s ease; }
 
-  <!-- 🧾 DANH SÁCH KHÓA HỌC -->
-  <div class="row g-4">
-    {% for item in items %}
-    <div class="col-12 col-md-6 col-lg-4">
-      {% include "cart/cart_item.html" %}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Glass Card */
+.glass-card {
+    background: rgba(255,255,255,0.72);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+}
+
+.glass-hover:hover {
+    transform: translateY(-2px);
+    transition: .3s;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+/* Price text */
+.price-main {
+    color: #0ea5e9;
+}
+
+/* Form style */
+.glass {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+}
+
+/* Button */
+.btn-success {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border: none;
+}
+
+.btn-success:hover {
+    opacity: 0.9;
+}
+
+/* Title gradient */
+.title-gradient {
+    background: linear-gradient(90deg, #0ea5e9, #6366f1);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Responsive Fix */
+@media (max-width: 576px) {
+    .price-main { font-size: 1.4rem !important; }
+}
+</style>
+
+
+
+<div class="container py-4 fade">
+
+    <h3 class="fw-bold mb-4 title-gradient">
+        <i class="bi bi-cart3"></i> Giỏ hàng khóa học
+    </h3>
+
+    {% if not items or items|length == 0 %}
+        {% include "cart/cart_empty.html" %}
+    {% else %}
+
+    <!-- LIST -->
+    <div class="row g-4">
+        {% for item in items %}
+        <div class="col-12 col-md-6 col-lg-4">
+            {% include "cart/cart_item.html" %}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
-  </div>
 
-  <!-- ========================================= -->
-  <!-- 🧮 TỔNG TIỀN -->
-  <!-- ========================================= -->
-  <div class="card shadow-sm border-0 mt-4">
-    <div class="card-body">
+    <!-- SUMMARY -->
+    <div class="glass-card glass-hover shadow-sm p-4 mt-4">
 
-      <h5 class="fw-bold mb-3">
-        <i class="bi bi-receipt"></i> Tạm tính
-      </h5>
+        <h5 class="fw-bold mb-3">
+            <i class="bi bi-receipt"></i> Tạm tính
+        </h5>
 
-      <!-- Tổng -->
-      <div class="d-flex justify-content-between mb-2">
-        <span>Tổng cộng:</span>
-        <span class="fw-bold text-dark">
-          {{ "{:,.0f}".format(subtotal or 0) }}₫
-        </span>
-      </div>
-
-      <hr>
-
-      <!-- FORM CHECKOUT -->
-      <form method="post" action="/student/cart/checkout">
-
-        <!-- PHƯƠNG THỨC THANH TOÁN -->
-        <div class="mb-3">
-          <label class="fw-semibold mb-1">Phương thức thanh toán:</label>
-          <select name="pay_method" class="form-select">
-              <option value="momo">Momo (0%)</option>
-              <option value="vnpay">VNPAY (2%)</option>
-              <option value="card">Thẻ quốc tế (3%)</option>
-          </select>
+        <div class="d-flex justify-content-between mb-3">
+            <span class="fw-semibold text-muted">Tổng cộng:</span>
+            <span class="fw-bold price-main fs-4">
+                {{ "{:,.0f}".format(subtotal or 0) }}₫
+            </span>
         </div>
 
-        <!-- MÃ GIẢM GIÁ -->
-        <div class="mb-3">
-          <label class="fw-semibold mb-1">Mã giảm giá:</label>
-          <input type="text" name="coupon_code" class="form-control" placeholder="Nhập mã GIAM10, GIAM20, GIAM50...">
-        </div>
+        <hr>
 
-        <!-- SUBMIT -->
-        <button class="btn btn-success px-4 py-2 mt-2 w-100 fw-semibold">
-          <i class="bi bi-wallet2"></i> Tiến hành thanh toán
-        </button>
+        <!-- CHECKOUT -->
+        <form method="post" action="/student/cart/checkout">
 
-      </form>
+            <div class="mb-3">
+                <label class="fw-semibold mb-2">💳 Phương thức thanh toán:</label>
+                <select name="pay_method" class="form-select glass">
+                    <option value="wallet">Ví nội bộ (0%)</option>
+                    <option value="vnpay">VNPay (2%)</option>
+                    <option value="card">Thẻ quốc tế (3%)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="fw-semibold mb-2">🎁 Mã giảm giá:</label>
+                <input type="text" name="coupon_code"
+                       class="form-control glass"
+                       placeholder="Nhập mã GIAM10, GIAM20, GIAM50...">
+            </div>
+
+            <button class="btn btn-success w-100 fw-semibold py-2 mt-2 rounded-pill shadow-sm">
+                <i class="bi bi-wallet2"></i> Tiến hành thanh toán
+            </button>
+
+        </form>
 
     </div>
-  </div>
 
-  {% endif %}
+    {% endif %}
 </div>
+
 {% endblock %}

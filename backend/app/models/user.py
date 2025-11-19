@@ -215,6 +215,17 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    quiz_templates = relationship(
+    "QuizTemplate",
+    back_populates="creator",
+    foreign_keys="QuizTemplate.created_by",
+    cascade="all, delete-orphan"
+    )
+    wallet = relationship(
+    "WalletAccount",
+    uselist=False,
+    back_populates="user"
+    )
 
     def __repr__(self):
         return f"<User(username='{self.username}', role='{self.role}', status='{self.status}')>"

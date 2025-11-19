@@ -1,0 +1,168 @@
+{% extends "layout_teacher.html" %}
+{% block title %}👀 Kiểm tra dữ liệu import – {{ quiz.title }}{% endblock %}
+
+{% block content %}
+
+<style>
+  body { background: #f7f9fc; }
+  body.dark-mode { background: #1e293b; }
+  body.dark-mode .review-box {
+    background: rgba(30,41,59,0.55);
+    border-color: rgba(255,255,255,0.12);
+  }
+  body.dark-mode table { color: #f1f5f9; }
+
+  .review-box {
+    border-radius: 18px;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(230,230,230,0.7);
+    animation: fadeIn .45s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .row-error { background: #ffe3e3 !important; }
+  .row-ok    { background: #eeffe9 !important; }
+
+  .answer-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #eef2ff;
+    border: 1px solid #cfd8ff;
+    font-size: 14px;
+  }
+  .answer-long {
+    display: block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f8f9fc;
+    border-left: 3px solid #0d6efd;
+    font-size: 14px;
+    word-break: break-word;
+    max-width: 280px;
+  }
+</style>
+
+<div class="container py-5 fade-in">
+
+  <h3 class="fw-bold text-primary text-center mb-4">
+    <i class="bi bi-eye"></i> Kiểm tra dữ liệu câu hỏi đã import
+  </h3>
+
+  <p class="text-center text-muted mb-3">
+    Quiz: <strong class="text-primary">{{ quiz.title }}</strong>
+  </p>
+
+  <div class="review-box p-4 shadow-sm">
+
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i>
+      Kiểm tra danh sách câu hỏi bên dưới.  
+      Nếu đúng hãy nhấn <b>Xác nhận import</b>.
+    </div>
+
+    <form action="/teacher/quizzes/{{ quiz.id }}/import/confirm" method="post">
+
+      <div class="table-responsive mt-4">
+        <table class="table table-bordered table-hover text-center align-middle">
+
+          <thead class="text-white" style="background:#0056d2;">
+            <tr>
+              <th>#</th>
+              <th style="width: 35%">Câu hỏi</th>
+              <th>A</th><th>B</th><th>C</th><th>D</th>
+              <th>Đúng</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {% for q in questions %}
+
+              {% set q_text = q.get("question_text") %}
+              {% set a = q.get("option_a") %}
+              {% set b = q.get("option_b") %}
+              {% set c = q.get("option_c") %}
+              {% set d = q.get("option_d") %}
+              {% set correct = q.get("correct") %}
+
+              {% set errors = [] %}
+              {% if not q_text %}{% set _ = errors.append("Thiếu nội dung câu hỏi") %}{% endif %}
+              {% if not a %}{% set _ = errors.append("Thiếu phương án A") %}{% endif %}
+              {% if not b %}{% set _ = errors.append("Thiếu phương án B") %}{% endif %}
+              {% if not c %}{% set _ = errors.append("Thiếu phương án C") %}{% endif %}
+              {% if not d %}{% set _ = errors.append("Thiếu phương án D") %}{% endif %}
+              {% if not correct %}{% set _ = errors.append("Thiếu đáp án đúng") %}{% endif %}
+
+              {% set has_error = errors|length > 0 %}
+
+              <tr class="{{ 'row-error' if has_error else 'row-ok' }}">
+
+                <td>{{ loop.index }}</td>
+
+                <td class="text-start">
+                  {{ q_text or "❌ thiếu" }}
+                </td>
+
+                {% for opt in [a, b, c, d] %}
+                <td>
+                  {% if opt %}
+                    {% set t = opt|string %}
+                    {% if t|length <= 20 %}
+                      <span class="answer-pill">{{ t }}</span>
+                    {% else %}
+                      <span class="answer-long">{{ t }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="badge bg-danger">❌</span>
+                  {% endif %}
+                </td>
+                {% endfor %}
+
+                <td>
+                  {% if correct %}
+                    <span class="badge bg-success">{{ correct }}</span>
+                  {% else %}
+                    <span class="badge bg-danger">?</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if has_error %}
+                    <span class="badge bg-danger">{{ errors|join(", ") }}</span>
+                  {% else %}
+                    <span class="badge bg-success">OK</span>
+                  {% endif %}
+                </td>
+
+              </tr>
+
+            {% endfor %}
+
+          </tbody>
+
+        </table>
+      </div>
+
+      <div class="mt-4 d-flex justify-content-between">
+        <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Bước trước
+        </a>
+
+        <button type="submit" class="btn btn-success px-4"
+                onclick="return confirm('Xác nhận lưu toàn bộ câu hỏi?')">
+          <i class="bi bi-check2-circle"></i> Xác nhận import
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+{% endblock %}

@@ -147,3 +147,39 @@ def todatetime(value):
 # 🔗 Đăng ký filter cho tất cả template
 for tpl in templates.values():
     tpl.env.filters["todatetime"] = todatetime
+# ==========================================================
+# 📌 9) GLOBAL CONTEXT CHO STUDENT — LẤY SỐ DƯ VÍ
+# ==========================================================
+from starlette.requests import Request
+from app.services.wallet_service import get_balance
+from app.database.connection import get_db
+
+def student_globals(request: Request):
+    """
+    Hàm global cho toàn bộ layout_student.html
+    → Tự động lấy số dư ví mà không cần truyền từ mỗi route.
+    """
+    try:
+        user_id = request.session.get("user_id")
+        role = request.session.get("role")
+
+        if role == "student" and user_id:
+            db = next(get_db())
+            balance = get_balance(db, user_id)
+        else:
+            balance = 0
+
+        return {
+            "wallet_balance": balance
+        }
+
+    except Exception:
+        return {
+            "wallet_balance": 0
+        }
+
+
+# Gắn vào ENV của template student
+templates["student"].env.globals.update({
+    "student_globals": student_globals
+})

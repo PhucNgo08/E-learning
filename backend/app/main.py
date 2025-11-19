@@ -2,20 +2,20 @@ import os
 import traceback
 from datetime import datetime
 from pathlib import Path
+
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
-# ⚠️ SessionMiddleware phải import đúng
+# Session
 from starlette.middleware.sessions import SessionMiddleware
-
-from sqlalchemy import inspect
 
 # DATABASE
 from app.database.connection import Base, engine
 from app.config.paths import UPLOADS_BASE
+
 
 # =====================================================
 # 🚀 KHỞI TẠO ỨNG DỤNG
@@ -26,29 +26,30 @@ app = FastAPI(
     description="🌐 Hệ thống quản lý học tập trực tuyến - FastAPI",
 )
 
-# =====================================================
-# 🧠 SERVER-SIDE IMPORT CACHE (CHO FILE 50MB+)
-# =====================================================
-# Dùng RAM để lưu dữ liệu import câu hỏi lớn (Excel/TXT 50MB)
-# Tránh giới hạn 4KB của cookie session.
+# Server-side RAM import cache
 app.state.import_cache = {}
+
 
 # =====================================================
 # ⚙️ MIDDLEWARE
 # =====================================================
 
-# 1) MUST ADD – SessionMiddleware
+# 1) SESSION
 app.add_middleware(
     SessionMiddleware,
-    secret_key="your-secure-secret-key-123456789-AABBCCDD11223344",
+    secret_key="super-secure-key-123456789-ABCDEF-XYZ",
     session_cookie="elearn_session",
-    max_age=60 * 60 * 24 * 7,  # cookie sống 7 ngày
+    max_age=60 * 60 * 24 * 7,
     same_site="lax",
     https_only=False,
-    path="/",
+    path="/"
 )
 
-# 2) CORS
+# 2) SESSION EXPIRE MIDDLEWARE – phải đứng NGAY sau SessionMiddleware
+from app.middleware.session_expire_checker import SessionExpireMiddleware
+app.add_middleware(SessionExpireMiddleware)
+
+# 3) CORS – để sau
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -57,9 +58,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3) Middleware kiểm tra session hết hạn
-from app.middleware.session_expire_checker import SessionExpireMiddleware
-app.add_middleware(SessionExpireMiddleware)
+
 
 # =====================================================
 # 📁 TEMPLATE & STATIC
@@ -77,10 +76,10 @@ def safe_mount(path: Path, mount_url: str, name: str):
         app.mount(mount_url, StaticFiles(directory=str(path)), name=name)
         print(f"✅ Mounted {name}: {path}")
     else:
-        print(f"⚠️ Bỏ qua {name}: {path} (không tồn tại)")
+        print(f"⚠️ Missing mount: {path}")
 
 
-# STATIC FILES
+# STATIC
 safe_mount(ROOT_STATIC_DIR, "/static", "static")
 safe_mount(LAYOUT_STYLES_DIR, "/frontend/react-app/layouts/styles", "layout_styles")
 
@@ -97,7 +96,18 @@ if ROOT_TEMPLATE_DIR.exists():
     app.student_templates = student_templates
 else:
     templates = None
-    print(f"⚠️ Templates folder missing: {ROOT_TEMPLATE_DIR}")
+    print("❌ Templates folder NOT found!")
+
+# GLOBAL TEMPLATE VARIABLES
+if templates:
+    for env in (
+        templates.env,
+        app.admin_templates.env,
+        app.teacher_templates.env,
+        app.student_templates.env,
+    ):
+        env.globals.update(now=datetime.now)
+
 
 # =====================================================
 # 📦 UPLOADS
@@ -106,7 +116,7 @@ if UPLOADS_BASE.exists():
     app.mount("/uploads", StaticFiles(directory=str(UPLOADS_BASE)), name="uploads")
     print("✅ UPLOADS mounted")
 else:
-    print(f"⚠️ UPLOADS folder missing: {UPLOADS_BASE}")
+    print(f"⚠️ UPLOADS missing: {UPLOADS_BASE}")
 
 DEFAULT_AVATAR_PATH = UPLOADS_BASE / "avatars" / "default-avatar.png"
 
@@ -121,18 +131,8 @@ async def serve_avatar(filename: str):
     return FileResponse(avatar_path)
 
 
-# GLOBAL TEMPLATE VARIABLES
-if templates:
-    for env in (
-        templates.env,
-        app.admin_templates.env,
-        app.teacher_templates.env,
-        app.student_templates.env,
-    ):
-        env.globals.update(now=datetime.now)
-
 # =====================================================
-# 🧭 IMPORT ROUTERS
+# 📡 ROUTERS
 # =====================================================
 
 # AUTH
@@ -161,6 +161,7 @@ from app.routers.admin.majors import router as majors_router
 from app.routers.admin.teacher_management import router as teacher_router
 from app.routers.admin import assignment, course_material, quiz_template, quiz, module_reorder
 from app.routers.admin import discussion, file_storage_management, notification
+from app.routers.admin.wallet_admin import router as admin_wallet_router
 
 # TEACHER
 from app.routers.teacher.teacher_dashboard import router as teacher_dashboard_router
@@ -193,103 +194,76 @@ from app.routers.student.notifications_student import router as student_notifica
 from app.routers.student.message_student import router as student_message_router
 from app.routers.student import chat_ai
 from app.routers.student.cart_student import router as student_cart_router
+from app.routers.student.wallet_student import router as student_wallet_router
+
 
 # =====================================================
-# 🔗 ĐĂNG KÝ ROUTERS
+# 🔗 Include Routers
 # =====================================================
-
 for routers in [
     [
-        login_router,
-        register_router,
-        logout_router,
-        forgot_router,
-        reset_router,
-        social_login_router,
+        login_router, register_router, logout_router,
+        forgot_router, reset_router, social_login_router
     ],
     [
-        dashboard_router,
-        user_router,
-        course_router,
-        section_router,
-        category_router,
-        class_router,
-        enrollment_router,
-        backup_router,
-        exam_router,
-        report_router,
-        review_router,
-        majors_router,
-        academic_year_router,
-        settings_router,
-        teacher_router,
-        assignment.router,
-        course_material.router,
-        quiz_template.router,
-        quiz.router,
-        module_reorder.router,
-        discussion.router,
-        file_storage_management.router,
-        notification.router,
+        dashboard_router, user_router, course_router,
+        section_router, category_router, class_router,
+        enrollment_router, backup_router, exam_router,
+        report_router, review_router, majors_router,
+        academic_year_router, settings_router, teacher_router,
+        assignment.router, course_material.router,
+        quiz_template.router, quiz.router, module_reorder.router,
+        discussion.router, file_storage_management.router,
+        notification.router, admin_wallet_router,
     ],
     [
-        teacher_dashboard_router,
-        teacher_course_router,
-        teacher_module_router,
-        teacher_lesson_router,
-        teacher_material_router,
-        teacher_profile_router,
-        teacher_review_router,
-        teacher_class_router,
-        teacher_schedule_router,
-        teacher_statistics_router,
-        teacher_assignment_router,
-        teacher_message_router,
-        teacher_quiz_router,
-        teacher_notifications_router,
+        teacher_dashboard_router, teacher_course_router,
+        teacher_module_router, teacher_lesson_router,
+        teacher_material_router, teacher_profile_router,
+        teacher_review_router, teacher_class_router,
+        teacher_schedule_router, teacher_statistics_router,
+        teacher_assignment_router, teacher_message_router,
+        teacher_quiz_router, teacher_notifications_router,
     ],
     [
-        student_dashboard_router,
-        student_profile_router,
-        student_course_router,
-        student_lesson_router,
-        student_quiz_router,
-        student_assignment_router,
-        student_material_router,
-        student_discussion_router,
-        student_review_router,
-        student_schedule_router,
-        student_notifications_router,
-        student_message_router,
-        chat_ai.router,
-        student_cart_router,
-
+        student_dashboard_router, student_profile_router,
+        student_course_router, student_lesson_router,
+        student_quiz_router, student_assignment_router,
+        student_material_router, student_discussion_router,
+        student_review_router, student_schedule_router,
+        student_notifications_router, student_message_router,
+        chat_ai.router, student_cart_router, student_wallet_router,
     ],
 ]:
     for r in routers:
         app.include_router(r)
 
+
 # =====================================================
-# 🏠 TRANG CHỦ
+# 🏠 HOME ROUTE
 # =====================================================
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     if not templates:
         return HTMLResponse("<h3>❌ Templates missing.</h3>", status_code=500)
+
     try:
         return templates.TemplateResponse("home.html", {"request": request})
     except Exception:
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
 
+
+# =====================================================
 # HEALTHCHECK
+# =====================================================
 @app.get("/__healthz")
 def healthz():
     return {"status": "ok", "time": datetime.now().isoformat()}
 
+
 # =====================================================
-# 🚀 DEV SERVER
+# DEV SERVER
 # =====================================================
 if __name__ == "__main__":
     import uvicorn
-
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

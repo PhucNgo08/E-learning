@@ -1,137 +1,257 @@
-<!DOCTYPE html>
-<html lang="vi">
+{% extends "layout_admin.html" %}
+{% block title %}📥 Import câu hỏi – PRO 2025{% endblock %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📥 Import câu hỏi</title>
+{% block content %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+<style>
+/* ==========================================================
+   📥 IMPORT EXAM – GLASS NEO ULTRA PRO 2025
+=========================================================== */
 
-  <style>
-    body {
-      background: #f3f6fb;
-    }
+.import-wrapper {
+  max-width: 760px;
+  margin: auto;
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
 
-    .upload-box {
-      background: white;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-      max-width: 650px;
-      margin: 0 auto;
-    }
+.import-card {
+  padding: 2rem 2.2rem;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 32px rgba(0,0,0,0.10),
+    0 0 50px rgba(86,131,255,0.08);
+  animation: fadeInUp .55s ease;
+}
 
-    .dropzone {
-      border: 2px dashed #6c8cff;
-      padding: 35px;
-      border-radius: 10px;
-      text-align: center;
-      background: #f8faff;
-      cursor: pointer;
-      transition: 0.25s;
-    }
+.title-pro {
+  font-weight: 700;
+  font-size: 1.7rem;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
 
-    .dropzone:hover {
-      background: #eef4ff;
-      transform: scale(1.02);
-    }
+.dropzone-pro {
+  border: 2px dashed #6c8cff;
+  padding: 45px;
+  border-radius: 18px;
+  text-align: center;
+  background: rgba(247,249,255,0.85);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: .25s ease;
+}
 
-    /* Khi kéo file vào */
-    .dropzone.dragover {
-      background: #dde8ff;
-      border-color: #3b6bff;
-    }
+.dropzone-pro:hover {
+  background: rgba(234,240,255,0.9);
+  transform: scale(1.02);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
 
-    .file-name {
-      margin-top: 10px;
-      font-style: italic;
-      color: #555;
-    }
-  </style>
-</head>
+.dropzone-pro.dragover {
+  background: rgba(212,226,255,0.9);
+  border-color: #3b6bff;
+  transform: scale(1.03);
+}
 
-<body>
-  <div class="container py-5">
+.file-name {
+  margin-top: 10px;
+  font-style: italic;
+  color: #444;
+}
 
-    <h3 class="fw-bold text-primary mb-4 text-center">
-      <i class="bi bi-upload"></i> Import câu hỏi cho kỳ thi
+/* PREVIEW BLOCK */
+.pre-block {
+  background: rgba(244,245,250,0.9);
+  border-radius: 14px;
+  padding: 1rem;
+  border-left: 4px solid #0d6efd;
+  font-family: "Consolas", monospace;
+  font-size: .85rem;
+}
+
+/* Button PRO */
+.btn-pro {
+  border-radius: 12px;
+  padding: 10px 22px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover {
+  transform: translateY(-3px);
+}
+
+/* Loading section */
+.loading-pro {
+  animation: fadeIn .4s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(26px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* DARK MODE SUPPORT */
+body.dark-mode .import-card {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .pre-block {
+  background: rgba(45,55,72,0.65);
+  border-left-color: #6cb2ff;
+  color: #f1f5f9;
+}
+
+body.dark-mode .dropzone-pro {
+  background: rgba(51,65,85,0.65);
+  border-color: rgba(255,255,255,0.2);
+}
+
+body.dark-mode .dropzone-pro:hover {
+  background: rgba(75,85,99,0.65);
+}
+</style>
+
+
+<div class="container import-wrapper fade-in">
+
+  <div class="import-card">
+
+    <!-- TITLE -->
+    <h3 class="text-center title-pro mb-4">
+      <i class="bi bi-upload"></i> Import câu hỏi vào kỳ thi
     </h3>
 
-    <div class="upload-box">
+    <!-- FORM UPLOAD -->
+    <form id="importForm"
+          action="/admin/exams/{{ exam_id }}/import"
+          method="post"
+          enctype="multipart/form-data">
 
-      <!-- Form Upload -->
-      <form action="/admin/exams/{{ exam_id }}/import" method="post" enctype="multipart/form-data">
+      <label class="form-label fw-semibold">📄 Chọn file Excel / CSV / TXT</label>
 
-        <label class="form-label fw-semibold">📄 Chọn file Excel hoặc CSV</label>
+      <!-- DROPZONE -->
+      <label class="dropzone-pro" id="dropzone">
+        <i class="bi bi-file-earmark-arrow-up text-primary fs-1"></i>
+        <p class="mt-2 mb-1">Kéo thả file vào đây hoặc click để chọn</p>
+        <small class="text-muted">Hỗ trợ: .xlsx / .csv / .txt</small>
 
-        <label class="dropzone" id="dropzone">
-          <i class="bi bi-file-earmark-spreadsheet fs-1 text-primary"></i>
-          <p>Kéo thả file vào đây hoặc click để chọn file</p>
-          <input type="file" name="file" id="fileInput" accept=".xlsx,.csv" class="d-none" required>
-        </label>
+        <input type="file" name="file" id="fileInput"
+               accept=".xlsx,.csv,.txt"
+               class="d-none" required>
+      </label>
 
-        <div id="fileName" class="file-name"></div>
+      <div id="fileName" class="file-name"></div>
 
-        <div class="d-flex justify-content-between mt-4">
-          <a href="/admin/exams/manage" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại
-          </a>
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-cloud-arrow-up"></i> Tải lên
-          </button>
-        </div>
+      <!-- BUTTON -->
+      <div class="d-flex justify-content-between mt-4">
+        <a href="/admin/exams/manage" class="btn btn-secondary btn-pro">
+          <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
 
-      </form>
+        <button type="submit" class="btn btn-primary btn-pro" id="submitBtn">
+          <i class="bi bi-cloud-arrow-up"></i> Tải lên
+        </button>
+      </div>
+    </form>
 
-      <hr class="my-4">
+    <!-- LOADING -->
+    <div id="loading" class="text-center loading-pro mt-3 d-none">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2">Đang xử lý file, vui lòng chờ...</p>
+    </div>
 
-      <h6 class="fw-bold">📘 Mẫu file Excel cần có:</h6>
+    <hr class="my-4">
 
-      <pre class="bg-light p-3 rounded small">
+    <!-- PREVIEW EXCEL FORMAT -->
+    <h6 class="fw-bold">📘 Mẫu file Excel hợp lệ:</h6>
+    <div class="pre-block mb-3">
 question_text | option_a | option_b | option_c | option_d | correct
 Câu hỏi 1     | A1       | B1       | C1       | D1       | A
 Câu hỏi 2     | A2       | B2       | C2       | D2       | C
-      </pre>
-
     </div>
+
+    <!-- PREVIEW TXT FORMAT -->
+    <h6 class="fw-bold">📘 Mẫu file TXT hợp lệ:</h6>
+    <div class="pre-block">
+Câu hỏi 1
+A. Đáp án A
+B. Đáp án B
+C. Đáp án C
+D. Đáp án D
+Đáp án đúng: A
+    </div>
+
   </div>
+</div>
 
-  <script>
-    const dropzone = document.getElementById("dropzone");
-    const fileInput = document.getElementById("fileInput");
-    const fileName = document.getElementById("fileName");
 
-    dropzone.addEventListener("click", () => fileInput.click());
+<script>
+/* ==========================================================
+   JS: Drag & Drop + Auto Preview + Loading
+=========================================================== */
 
-    fileInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (file) fileName.innerText = "Đã chọn: " + file.name;
-    });
+const dropzone = document.getElementById("dropzone");
+const fileInput = document.getElementById("fileInput");
+const fileName = document.getElementById("fileName");
+const submitBtn = document.getElementById("submitBtn");
+const loading = document.getElementById("loading");
+const form = document.getElementById("importForm");
 
-    // Drag & Drop
-    dropzone.addEventListener("dragover", (e) => {
-      e.preventDefault();
-      dropzone.classList.add("dragover");
-    });
+dropzone.addEventListener("click", () => fileInput.click());
 
-    dropzone.addEventListener("dragleave", () => {
-      dropzone.classList.remove("dragover");
-    });
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (file) fileName.innerText = "📌 Đã chọn: " + file.name;
+});
 
-    dropzone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropzone.classList.remove("dragover");
+// Drag Over
+dropzone.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropzone.classList.add("dragover");
+});
 
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        fileInput.files = e.dataTransfer.files;
-        fileName.innerText = "Đã chọn: " + file.name;
-      }
-    });
-  </script>
+// Drag Leave
+dropzone.addEventListener("dragleave", () => {
+  dropzone.classList.remove("dragover");
+});
 
-</body>
+// Drop File
+dropzone.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropzone.classList.remove("dragover");
 
-</html>
+  const file = e.dataTransfer.files[0];
+  if (file) {
+    fileInput.files = e.dataTransfer.files;
+    fileName.innerText = "📌 Đã chọn: " + file.name;
+  }
+});
+
+// Submit validation
+form.addEventListener("submit", (e) => {
+  if (!fileInput.files.length) {
+    alert("Vui lòng chọn 1 file hợp lệ!");
+    e.preventDefault();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = "<i class='bi bi-hourglass-split'></i> Đang tải...";
+  loading.classList.remove("d-none");
+});
+</script>
+
+{% endblock %}

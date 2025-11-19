@@ -1,0 +1,101 @@
+{% extends "layout_admin.html" %}
+{% block title %}🔎 Tìm ví theo Email{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-4">🔎 Tìm ví người dùng theo Email</h3>
+
+    <div class="card shadow-sm p-4 glass-card">
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center py-2 mb-3">
+            <i class="bi bi-exclamation-octagon-fill me-2"></i>
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- Form tìm email -->
+        <form method="get" action="/admin/wallets/search-email/process">
+
+            <label class="form-label fw-semibold">Nhập Email người dùng</label>
+
+            <div class="input-group mb-3" style="position:relative;">
+                <span class="input-group-text">
+                    <i class="bi bi-envelope-at"></i>
+                </span>
+
+                <input type="email"
+                       name="email"
+                       required
+                       autofocus
+                       id="email-input"
+                       class="form-control form-control-lg"
+                       placeholder="VD: hocvien@gmail.com"
+                       autocomplete="off">
+            </div>
+
+            <!-- Autocomplete list -->
+            <ul id="email-suggestions"
+                class="list-group shadow-sm"
+                style="display:none; position:absolute; z-index:1000; width:90%; margin-top:-10px;">
+            </ul>
+
+            <button class="btn btn-primary w-100 fw-semibold py-2 mt-3">
+                Xem ví người dùng
+            </button>
+
+        </form>
+
+        <a href="/admin/wallets/manage" class="btn btn-link mt-3">
+            ← Quay về quản lý
+        </a>
+    </div>
+
+</div>
+
+<!-- JS: Autocomplete email -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const input = document.getElementById("email-input");
+    const suggestions = document.getElementById("email-suggestions");
+
+    input.addEventListener("input", async () => {
+
+        let keyword = input.value.trim();
+        if (keyword.length < 2) {
+            suggestions.style.display = "none";
+            return;
+        }
+
+        // API gợi ý email
+        let res = await fetch(`/admin/users/search-email?keyword=${keyword}`);
+        let data = await res.json();
+
+        suggestions.innerHTML = "";
+
+        if (data.length === 0) {
+            suggestions.style.display = "none";
+            return;
+        }
+
+        data.forEach(item => {
+            let li = document.createElement("li");
+            li.className = "list-group-item list-group-item-action";
+            li.textContent = item.email;
+
+            li.onclick = () => {
+                input.value = item.email;
+                suggestions.style.display = "none";
+            };
+
+            suggestions.appendChild(li);
+        });
+
+        suggestions.style.display = "block";
+    });
+});
+</script>
+
+{% endblock %}

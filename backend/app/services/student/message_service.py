@@ -1,9 +1,10 @@
 """
 ==========================================================
 📘 SERVICE: Student - Message (Tin nhắn nội bộ)
-Xử lý logic gửi, nhận và hiển thị tin nhắn
+Xử lý logic gửi, nhận và hiển thị tin nhắn cho học viên
 ==========================================================
 """
+
 from sqlalchemy.orm import Session
 from app.models.message import Message
 from datetime import datetime
@@ -18,7 +19,10 @@ import traceback
 # 📥 Hộp thư đến (Receiver)
 # ======================================================
 def get_inbox_messages(db: Session, user_id: str):
-    """Lấy tin nhắn đến (receiver_id = user_id)."""
+    """
+    Trả về danh sách tin nhắn mà user nhận được.
+    Sắp xếp theo thời gian mới nhất.
+    """
     try:
         return (
             db.query(Message)
@@ -36,7 +40,9 @@ def get_inbox_messages(db: Session, user_id: str):
 # 📤 Hộp thư đã gửi (Sender)
 # ======================================================
 def get_sent_messages(db: Session, user_id: str):
-    """Lấy tin nhắn đã gửi (sender_id = user_id)."""
+    """
+    Trả về danh sách tin nhắn mà user đã gửi.
+    """
     try:
         return (
             db.query(Message)
@@ -56,9 +62,15 @@ def get_sent_messages(db: Session, user_id: str):
 def send_message(db: Session, sender_id: str, receiver_id: str, content: str, attachment=None):
     """
     Gửi tin nhắn từ sender → receiver.
-    Nếu có file đính kèm, lưu file và ghi lại đường dẫn.
+    Nếu có file đính kèm sẽ upload và lưu metadata.
     """
+
     try:
+        # Không cho gửi tin nhắn rỗng
+        if not content and not (attachment and attachment.filename):
+            print("⚠️ [send_message] Tin nhắn rỗng, không gửi.")
+            return None
+
         uploads_dir = Path("uploads/messages")
         uploads_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,28 +78,36 @@ def send_message(db: Session, sender_id: str, receiver_id: str, content: str, at
         attachment_name = None
         attachment_size = None
 
-        # ✅ Nếu có file upload
-        if attachment:
-            filename = f"{uuid.uuid4().hex}_{attachment.filename}"
+        # ==============================================
+        # 📎 Upload file đính kèm (nếu có)
+        # ==============================================
+        if attachment and attachment.filename:
+            safe_filename = attachment.filename.replace(" ", "_")
+
+            filename = f"{uuid.uuid4().hex}_{safe_filename}"
             file_path = uploads_dir / filename
+
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(attachment.file, buffer)
 
-            attachment_url = str(file_path)
-            attachment_name = attachment.filename
+            attachment_url = f"/uploads/messages/{filename}"
+            attachment_name = safe_filename
             attachment_size = os.path.getsize(file_path)
-            print(f"📎 [send_message] Đã lưu file: {attachment_url}")
 
-        # ✅ Tạo bản ghi tin nhắn
+            print(f"📎 [send_message] Saved file: {file_path}")
+
+        # ==============================================
+        # 📨 Tạo message record
+        # ==============================================
         msg = Message(
             id=str(uuid.uuid4()),
             sender_id=sender_id,
             receiver_id=receiver_id,
             content=(content or "").strip(),
-            sent_at=datetime.utcnow(),
             attachment_url=attachment_url,
             attachment_name=attachment_name,
-            attachment_size=attachment_size
+            attachment_size=attachment_size,
+            sent_at=datetime.utcnow(),
         )
 
         db.add(msg)
@@ -108,7 +128,7 @@ def send_message(db: Session, sender_id: str, receiver_id: str, content: str, at
 # 🔍 Lấy chi tiết tin nhắn
 # ======================================================
 def get_message_detail(db: Session, message_id: str):
-    """Trả về chi tiết 1 tin nhắn cụ thể."""
+    """Lấy thông tin chi tiết một tin nhắn."""
     try:
         return db.query(Message).filter(Message.id == message_id).first()
     except Exception as e:
@@ -118,12 +138,13 @@ def get_message_detail(db: Session, message_id: str):
 
 
 # ======================================================
-# 🗑️ Xóa tin nhắn (logic)
+# 🗑️ Xóa tin nhắn
 # ======================================================
 def delete_message(db: Session, message_id: str, user_id: str):
     """
-    Cho phép người gửi hoặc người nhận xóa tin nhắn của chính mình.
-    Có thể xóa vật lý hoặc logic tùy nhu cầu.
+    Xóa tin nhắn.
+    ✔ Chỉ người gửi hoặc người nhận được phép xóa.
+    ✔ Nếu có file đính kèm thì xóa luôn file vật lý.
     """
     try:
         msg = db.query(Message).filter(Message.id == message_id).first()
@@ -131,20 +152,26 @@ def delete_message(db: Session, message_id: str, user_id: str):
             print("⚠️ [delete_message] Không tìm thấy tin nhắn.")
             return False
 
-        # ✅ Kiểm tra quyền sở hữu
+        # Kiểm tra quyền
         if msg.sender_id != user_id and msg.receiver_id != user_id:
             print("⚠️ [delete_message] Không có quyền xóa.")
             return False
 
-        # ✅ Nếu có file đính kèm, xóa file vật lý (tùy chọn)
-        if msg.attachment_url and Path(msg.attachment_url).exists():
-            try:
-                os.remove(msg.attachment_url)
-            except Exception:
-                pass
+        # Xóa file đính kèm nếu có
+        if msg.attachment_url:
+            physical_path = Path(msg.attachment_url.lstrip("/"))
 
+            if physical_path.exists():
+                try:
+                    os.remove(physical_path)
+                    print(f"🗑️ [delete_message] Đã xóa file: {physical_path}")
+                except Exception as e:
+                    print("⚠️ Không thể xóa file đính kèm:", e)
+
+        # Xóa message trong DB
         db.delete(msg)
         db.commit()
+
         print(f"🗑️ [delete_message] Đã xóa tin nhắn {message_id}")
         return True
 

@@ -1,28 +1,132 @@
 {% extends "layout_student.html" %}
-{% block title %}📭 Chưa có bài kiểm tra{% endblock %}
+{% block title %}📭 Không có bài kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container py-5 text-center fade-in">
 
-  <!-- Icon -->
-  <div class="mb-3">
-    <i class="bi bi-clipboard-x text-secondary display-4"></i>
+<style>
+/* ==========================================================
+   📭 EMPTY QUIZ PAGE – Neo Glass 2025 Edition
+   ----------------------------------------------------------
+   - Blur sâu / bóng gradient
+   - Vendor-prefix fix (background-clip)
+   - Responsive + Dark Mode
+=========================================================== */
+
+.empty-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 0;
+  min-height: 75vh;
+}
+
+.empty-card-pro {
+  max-width: 520px;
+  padding: 2.5rem;
+  border-radius: 24px;
+
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    0 10px 30px rgba(0,0,0,0.12),
+    0 0 50px rgba(86, 106, 255, 0.15);
+
+  animation: fadeInUp 0.55s ease;
+  text-align: center;
+}
+
+/* Fade In */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pulse icon */
+.empty-icon-pro {
+  animation: softPulse 2.2s infinite;
+  font-size: 3.8rem;
+}
+
+@keyframes softPulse {
+  0%   { opacity: .55; transform: scale(1); }
+  50%  { opacity: 1; transform: scale(1.10); }
+  100% { opacity: .55; transform: scale(1); }
+}
+
+/* Button */
+.btn-pro {
+  padding: 10px 26px;
+  border-radius: 12px;
+  transition: .25s ease;
+}
+
+.btn-pro:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+/* Fix background-clip vendor prefix */
+.text-gradient {
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+/* 🌙 DARK MODE SUPPORT */
+body.dark-mode .empty-card-pro {
+  background: rgba(30, 41, 59, 0.55);
+  border-color: rgba(255,255,255,0.08);
+  color: #f1f5f9;
+}
+
+body.dark-mode .empty-icon-pro {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .text-muted {
+  color: #cbd5e1 !important;
+}
+
+</style>
+
+
+<div class="container empty-wrapper fade-in">
+
+  <div class="empty-card-pro">
+
+    <div class="mb-3">
+      <i class="bi bi-clipboard-x empty-icon-pro text-secondary"></i>
+    </div>
+
+    <h4 class="fw-bold text-secondary mb-2 text-gradient">
+      Không có bài kiểm tra khả dụng
+    </h4>
+
+    <p class="text-muted mb-4">
+      Hiện tại chưa có bài kiểm tra nào được mở cho bạn.
+      <br>Hãy quay lại sau hoặc kiểm tra các khóa học bạn đang tham gia.
+    </p>
+
+    <div class="d-flex justify-content-center gap-3 flex-wrap mt-3">
+
+      <a href="/student/quiz"
+         class="btn btn-outline-primary btn-pro shadow-sm">
+        <i class="bi bi-list-task"></i> Danh sách Quiz
+      </a>
+
+      <a href="/student/dashboard"
+         class="btn btn-primary btn-pro shadow-sm">
+        <i class="bi bi-house-door"></i> Trang chính
+      </a>
+
+    </div>
+
   </div>
 
-  <!-- Title -->
-  <h4 class="fw-bold text-muted mb-2">
-    Hiện chưa có bài kiểm tra nào khả dụng
-  </h4>
-
-  <!-- Description -->
-  <p class="text-secondary mb-3">
-    Có thể giảng viên chưa tạo bài kiểm tra hoặc bài kiểm tra vẫn chưa mở.
-  </p>
-
-  <!-- CTA -->
-  <a href="/student/dashboard" class="btn btn-outline-primary px-4 shadow-sm">
-    <i class="bi bi-house-door"></i> Quay về bảng điều khiển
-  </a>
-
 </div>
+
 {% endblock %}

@@ -1,69 +1,35 @@
-<!DOCTYPE html>
-<html lang="vi">
+{% extends "layout_admin.html" %}
+{% block title %}🗑️ Xóa kỳ thi{% endblock %}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🗑️ Xóa kỳ thi</title>
+{% block content %}
+<div class="container py-5">
 
-  <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <div class="card shadow delete-card mx-auto" style="max-width: 650px;">
 
-  <style>
-    body {
-      background: #f7f7f8;
-    }
+    <!-- Header -->
+    <div class="delete-header text-center">
+      <i class="bi bi-exclamation-triangle warning-icon"></i>
+      <h3 class="fw-bold mt-2">Xác nhận xóa kỳ thi</h3>
+    </div>
 
-    .delete-card {
-      border-radius: 15px;
-      overflow: hidden;
-    }
+    <!-- Body -->
+    <div class="delete-body text-center">
 
-    .delete-header {
-      background: #dc3545;
-      color: white;
-      padding: 20px;
-    }
+      <p>Bạn có chắc chắn muốn xóa kỳ thi:</p>
 
-    .delete-body {
-      padding: 35px 30px;
-    }
+      <p class="exam-title">“{{ exam.title }}”</p>
 
-    .warning-icon {
-      font-size: 60px;
-    }
+      <p class="text-muted mb-4">
+        ⚠ Thao tác này <strong>không thể hoàn tác</strong>.<br>
+        Tất cả câu hỏi và dữ liệu liên quan sẽ bị xóa vĩnh viễn.
+      </p>
 
-    .exam-title {
-      color: #333;
-      font-weight: 600;
-      font-size: 1.2rem;
-    }
-  </style>
-</head>
+      <!-- FORM DELETE (POST) -->
+      <form action="/admin/exams/{{ exam.id }}/delete" method="post"
+            onsubmit="return confirm('Bạn chắc chắn muốn xóa kỳ thi này?')">
 
-<body>
+        <div class="d-flex justify-content-center gap-3">
 
-  <div class="container py-5">
-
-    <div class="card shadow delete-card mx-auto" style="max-width: 650px;">
-
-      <!-- Header -->
-      <div class="delete-header text-center">
-        <i class="bi bi-exclamation-triangle warning-icon"></i>
-        <h3 class="fw-bold mt-2">Xác nhận xóa kỳ thi</h3>
-      </div>
-
-      <!-- Body -->
-      <div class="delete-body text-center">
-        <p>Bạn có chắc chắn muốn xóa kỳ thi:</p>
-        <p class="exam-title">“{{ exam.title }}”</p>
-
-        <p class="text-muted mb-4">
-          ⚠ Thao tác này <strong>không thể hoàn tác</strong>. Tất cả câu hỏi và dữ liệu liên quan sẽ bị xóa vĩnh viễn.
-        </p>
-
-        <form action="/admin/exams/delete/{{ exam.id }}" method="post" class="d-flex justify-content-center gap-3">
           <a href="/admin/exams/manage" class="btn btn-outline-secondary px-4 py-2">
             <i class="bi bi-arrow-left"></i> Hủy
           </a>
@@ -71,13 +37,45 @@
           <button type="submit" class="btn btn-danger px-4 py-2">
             <i class="bi bi-trash"></i> Xóa ngay
           </button>
-        </form>
-      </div>
+
+        </div>
+
+      </form>
 
     </div>
 
   </div>
 
-</body>
+</div>
 
-</html>
+<style>
+  body {
+    background: #f7f7f8;
+  }
+
+  .delete-card {
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .delete-header {
+    background: #dc3545;
+    color: white;
+    padding: 20px;
+  }
+
+  .delete-body {
+    padding: 35px 30px;
+  }
+
+  .warning-icon {
+    font-size: 60px;
+  }
+
+  .exam-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "layout_admin.html" %}
+{% block title %}➕ Nạp tiền{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-3">➕ Nạp tiền vào ví người dùng</h3>
+
+    <div class="card p-4 shadow-sm glass-card">
+
+        <!-- ⚠️ Thông báo lỗi -->
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center py-2 mb-3">
+            <i class="bi bi-x-circle-fill me-2"></i>
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- ✔ Thông báo thành công -->
+        {% if success %}
+        <div class="alert alert-success d-flex align-items-center py-2 mb-3">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <strong>{{ success }}</strong>
+        </div>
+        {% endif %}
+
+        <form method="post" action="/admin/wallets/deposit">
+
+            <!-- Hidden user ID -->
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+
+            <!-- Số tiền -->
+            <label class="form-label fw-semibold">Số tiền nạp</label>
+            <div class="input-group mb-3">
+                <span class="input-group-text fw-bold">đ</span>
+                <input type="number"
+                       name="amount"
+                       min="1000"
+                       required
+                       class="form-control form-control-lg"
+                       placeholder="VD: 200000"
+                       value="{{ amount if amount else '' }}">
+            </div>
+
+            <!-- Ghi chú -->
+            <label class="form-label fw-semibold">Ghi chú (tuỳ chọn)</label>
+            <input type="text"
+                   name="description"
+                   class="form-control mb-3"
+                   placeholder="VD: Nạp thưởng – điểm danh tốt"
+                   value="{{ description if description else '' }}">
+
+            <!-- Submit -->
+            <button class="btn btn-success fw-semibold w-100 py-2">
+                <i class="bi bi-plus-circle me-1"></i>
+                Xác nhận nạp tiền
+            </button>
+
+        </form>
+
+        <a href="/admin/wallets/info/{{ user_id }}" class="btn btn-link mt-3">
+            ← Quay lại ví người dùng
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

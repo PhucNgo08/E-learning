@@ -1,24 +1,24 @@
 """
 ==========================================================
 📗 Service: Discussion (Thảo luận học viên)
-Phiên bản FULL – tối ưu hiệu năng – hỗ trợ reply tree vô hạn
+Phiên bản FULL 2025 – Tối ưu hiệu năng – Reply tree nhiều cấp
 ==========================================================
 """
 
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import or_
 from datetime import datetime
 import uuid
-from sqlalchemy import or_
 
 from app.models.discussion import Discussion
 from app.models.user import User
 
 
 # ==========================================================
-# 🧩 Helper: Load dữ liệu đầy đủ (JOIN user, course)
+# 🧩 Helper: Load dữ liệu JOIN sẵn user, course
 # ==========================================================
 def preload(discussion: Discussion):
-    """Điền tác giả vào object (đã joinedload -> không tốn query)."""
+    """Thêm thông tin tác giả vào object (nhanh, không tốn query)."""
     discussion.author = discussion.user
     return discussion
 
@@ -31,7 +31,7 @@ def get_all_discussions_all_courses(db: Session):
         db.query(Discussion)
         .options(
             joinedload(Discussion.user),
-            joinedload(Discussion.course)
+            joinedload(Discussion.course),
         )
         .filter(Discussion.parent_id == None)
         .order_by(Discussion.created_at.desc())
@@ -48,11 +48,11 @@ def get_all_discussions(db: Session, course_id: str):
         db.query(Discussion)
         .options(
             joinedload(Discussion.user),
-            joinedload(Discussion.course)
+            joinedload(Discussion.course),
         )
         .filter(
             Discussion.course_id == course_id,
-            Discussion.parent_id == None
+            Discussion.parent_id == None,
         )
         .order_by(Discussion.created_at.desc())
         .all()
@@ -61,9 +61,10 @@ def get_all_discussions(db: Session, course_id: str):
 
 
 # ==========================================================
-# 🔹 Đệ quy xây cây reply nhiều cấp
+# 🔹 Đệ quy xây dựng cây reply nhiều cấp
 # ==========================================================
 def build_reply_tree(db: Session, parent_id: str):
+    """Tạo reply tree vô hạn cấp độ."""
     children = (
         db.query(Discussion)
         .options(joinedload(Discussion.user))
@@ -74,30 +75,31 @@ def build_reply_tree(db: Session, parent_id: str):
 
     for child in children:
         child.author = child.user
-        child.children = build_reply_tree(db, child.id)
+        child.reply_tree = build_reply_tree(db, child.id)  # KHÔNG ghi đè `children`
 
     return children
 
 
 # ==========================================================
-# 🔹 Lấy bài thảo luận + reply tree
+# 🔹 Lấy bài thảo luận + toàn bộ reply tree
 # ==========================================================
 def get_discussion_with_replies(db: Session, discussion_id: str):
     discussion = (
         db.query(Discussion)
         .options(
             joinedload(Discussion.user),
-            joinedload(Discussion.course)
+            joinedload(Discussion.course),
         )
         .filter(Discussion.id == discussion_id)
         .first()
     )
+
     if not discussion:
         return None, []
 
     discussion.author = discussion.user
-
     replies = build_reply_tree(db, discussion_id)
+
     return discussion, replies
 
 
@@ -117,17 +119,18 @@ def add_discussion(db: Session, course_id: str, user_id: str, content: str):
         db.commit()
         db.refresh(discussion)
         return discussion
+
     except Exception as e:
         db.rollback()
-        print("❌ [add_discussion]:", e)
+        print("❌ [add_discussion] Error:", e)
         return None
 
 
 # ==========================================================
-# 🔹 Thêm reply nhiều cấp
+# 🔹 Thêm reply (nhiều cấp)
 # ==========================================================
 def add_reply(db: Session, discussion_id: str, user_id: str, content: str, parent_id: str = None):
-    # Nếu reply vào bài gốc
+    # nếu parent_id rỗng → reply vào bài gốc
     if parent_id is None:
         parent_id = discussion_id
 
@@ -136,6 +139,7 @@ def add_reply(db: Session, discussion_id: str, user_id: str, content: str, paren
         .filter(Discussion.id == discussion_id)
         .scalar()
     )
+
     if not course_id:
         return {"error": "Không tìm thấy bài thảo luận gốc."}
 
@@ -147,17 +151,20 @@ def add_reply(db: Session, discussion_id: str, user_id: str, content: str, paren
         parent_id=parent_id,
         created_at=datetime.utcnow(),
     )
+
     db.add(reply)
     db.commit()
     db.refresh(reply)
+
     return reply
 
 
 # ==========================================================
-# 🔹 Đệ quy xóa toàn bộ cây phản hồi
+# 🔹 Xóa đệ quy toàn bộ reply tree
 # ==========================================================
 def delete_tree(db: Session, node: Discussion):
     children = db.query(Discussion).filter(Discussion.parent_id == node.id).all()
+
     for child in children:
         delete_tree(db, child)
 
@@ -165,24 +172,27 @@ def delete_tree(db: Session, node: Discussion):
 
 
 def delete_discussion(db: Session, discussion_id: str, user_id: str):
+    """Chỉ cho phép xóa bài viết của chính người dùng."""
     discussion = (
         db.query(Discussion)
         .filter(
             Discussion.id == discussion_id,
-            Discussion.user_id == user_id
+            Discussion.user_id == user_id,
         )
         .first()
     )
+
     if not discussion:
-        return {"error": "Không tìm thấy hoặc không có quyền xóa."}
+        return {"error": "Không tìm thấy bài thảo luận hoặc bạn không có quyền xóa."}
 
     try:
         delete_tree(db, discussion)
         db.commit()
         return {"success": True}
+
     except Exception as e:
         db.rollback()
-        print("❌ [delete_discussion]:", e)
+        print("❌ [delete_discussion] Error:", e)
         return {"error": "Xóa thất bại."}
 
 
@@ -196,7 +206,7 @@ def toggle_like(db: Session, discussion_id: str, user_id: str):
         db.query(DiscussionLike)
         .filter(
             DiscussionLike.discussion_id == discussion_id,
-            DiscussionLike.user_id == user_id
+            DiscussionLike.user_id == user_id,
         )
         .first()
     )
@@ -212,8 +222,10 @@ def toggle_like(db: Session, discussion_id: str, user_id: str):
         user_id=user_id,
         created_at=datetime.utcnow(),
     )
+
     db.add(like)
     db.commit()
+
     return {"liked": True}
 
 
@@ -230,24 +242,25 @@ def search_discussions(db: Session, keyword: str):
         db.query(Discussion)
         .options(
             joinedload(Discussion.user),
-            joinedload(Discussion.course)
+            joinedload(Discussion.course),
         )
         .join(User, User.id == Discussion.user_id)
         .filter(
             Discussion.parent_id == None,
             or_(
                 Discussion.content.like(keyword),
-                User.full_name.like(keyword)
-            )
+                User.full_name.like(keyword),
+            ),
         )
         .order_by(Discussion.created_at.desc())
         .all()
     )
+
     return [preload(d) for d in discussions]
 
 
 # ==========================================================
-# 🔹 Lấy reply cấp 1 (hỗ trợ AJAX)
+# 🔹 Lấy reply cấp 1 (AJAX load)
 # ==========================================================
 def get_replies(db: Session, discussion_id: str):
     replies = (
@@ -260,4 +273,5 @@ def get_replies(db: Session, discussion_id: str):
 
     for r in replies:
         r.author = r.user
+
     return replies

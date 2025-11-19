@@ -2,58 +2,226 @@
 {% block title %}📊 Chi tiết Quiz{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold text-primary">
-      📊 Quiz: {{ quiz.title }}
-    </h4>
-    <a href="/teacher/quizzes/list" class="btn btn-outline-secondary btn-sm">
-      <i class="bi bi-arrow-left"></i> Quay lại
-    </a>
-  </div>
 
-  <div class="card shadow-sm mb-4">
-    <div class="card-body">
-      <p><strong>Khóa học:</strong> {{ quiz.course.course_name if quiz.course else "—" }}</p>
-      <p><strong>Mô tả:</strong> {{ quiz.description or "—" }}</p>
-      <p><strong>Thời lượng:</strong> {{ quiz.duration_minutes }} phút</p>
-      <p><strong>Tổng điểm:</strong> {{ quiz.total_marks }}</p>
-      <p><strong>Ngày tạo:</strong> {{ quiz.created_at|datetime }}</p>
+<style>
+/* ==========================================================
+   📊 CHI TIẾT QUIZ – GLASS NEO VIỆT HÓA 2025
+=========================================================== */
+
+.detail-wrapper {
+  max-width: 980px;
+  margin: auto;
+}
+
+.detail-card-pro {
+  padding: 1.9rem 2rem;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.1),
+    0 0 40px rgba(13,110,253,0.06);
+  animation: fadeInUp .55s ease;
+}
+
+.quiz-title-pro {
+  font-weight: 700;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  font-size: 1.55rem;
+}
+
+.table-pro {
+  border-radius: 14px !important;
+  overflow: hidden;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(11px);
+  box-shadow: 0 4px 22px rgba(0,0,0,0.08);
+}
+
+.q-row:hover {
+  background: rgba(13,110,253,0.07) !important;
+  cursor: pointer;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark Mode */
+body.dark-mode .detail-card-pro,
+body.dark-mode .table-pro {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+
+body.dark-mode .quiz-title-pro {
+  color: #93c5fd !important;
+}
+
+body.dark-mode td,
+body.dark-mode th,
+body.dark-mode p {
+  color: #e2e8f0 !important;
+}
+</style>
+
+
+
+<div class="container py-4 fade-in detail-wrapper">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="quiz-title-pro mb-0">
+      <i class="bi bi-bar-chart-line"></i> {{ quiz.title }}
+    </h4>
+
+    <div class="action-buttons d-flex gap-2">
+
+      {% if quiz.quiz_type == "graded" %}
+      <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-warning btn-sm">
+        <i class="bi bi-graph-up"></i> Xem thống kê
+      </a>
+      {% endif %}
+
+      <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-pencil-square"></i> Chỉnh sửa
+      </a>
+
+      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Trở lại
+      </a>
     </div>
   </div>
 
-  {% if questions %}
-  <h5 class="fw-bold text-primary mb-2">🧩 Danh sách câu hỏi</h5>
+  <!-- QUIZ INFO CARD -->
+  <div class="detail-card-pro mb-4">
+
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <p><strong>Khóa học:</strong> {{ quiz.course.course_name if quiz.course else "—" }}</p>
+        <p><strong>Mô tả:</strong> {{ quiz.description or "—" }}</p>
+
+        <p><strong>Loại Quiz:</strong>
+          {% if quiz.quiz_type == "graded" %}
+            Chấm điểm
+          {% else %}
+            Luyện tập
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="col-md-6">
+        <p><strong>Thời lượng:</strong> {{ quiz.time_limit_minutes or 0 }} phút</p>
+        <p><strong>Số câu hỏi:</strong> {{ quiz.total_questions or 0 }}</p>
+        <p><strong>Ngày tạo:</strong> {{ quiz.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="row mb-2">
+      <div class="col-md-6">
+        <p><strong>Độ khó:</strong>
+          {% if quiz.difficulty_level == "easy" %}
+            Dễ
+          {% elif quiz.difficulty_level == "medium" %}
+            Trung bình
+          {% else %}
+            Khó
+          {% endif %}
+        </p>
+
+        <p><strong>Số lần làm tối đa:</strong> {{ quiz.max_attempts or 1 }}</p>
+        <p><strong>Điểm đạt tối thiểu:</strong> {{ quiz.passing_score or 0 }}%</p>
+      </div>
+
+      {% if quiz.quiz_type == "graded" %}
+      <div class="col-md-6">
+        <p><strong>Mở từ:</strong> 
+          {{ quiz.available_from.strftime("%d/%m/%Y %H:%M") if quiz.available_from else "—" }}
+        </p>
+
+        <p><strong>Đóng lúc:</strong>
+          {{ quiz.available_to.strftime("%d/%m/%Y %H:%M") if quiz.available_to else "—" }}
+        </p>
+
+        <p><strong>Trạng thái:</strong>
+          {% if quiz.status == 'pending' %}
+            <span class="badge bg-warning text-dark">⏳ Chờ duyệt</span>
+          {% elif quiz.status == 'published' %}
+            <span class="badge bg-success">✔ Đã duyệt</span>
+          {% else %}
+            <span class="badge bg-danger">❌ Từ chối</span>
+          {% endif %}
+        </p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+
+  <!-- QUESTION LIST -->
+  {% if quiz.questions %}
+  <h5 class="fw-bold text-primary mb-3 d-flex justify-content-between align-items-center">
+    <span>🧩 Danh sách câu hỏi</span>
+
+    <!-- ⭐ NÚT THÊM CÂU HỎI -->
+    <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success btn-sm">
+      ➕ Thêm câu hỏi
+    </a>
+  </h5>
+
   <div class="table-responsive">
-    <table class="table table-bordered align-middle">
-      <thead class="table-light">
+    <table class="table table-hover align-middle table-pro">
+      <thead class="table-primary text-center">
         <tr>
           <th>#</th>
-          <th>Nội dung câu hỏi</th>
+          <th style="width:55%">Nội dung câu hỏi</th>
           <th>Số đáp án</th>
           <th>Đáp án đúng</th>
         </tr>
       </thead>
+
       <tbody>
-        {% for q in questions %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ q.question_text }}</td>
+        {% for q in quiz.questions %}
+        <tr class="q-row text-center">
+
+          <td class="fw-bold">{{ loop.index }}</td>
+
+          <td class="text-start fw-semibold">{{ q.question_text }}</td>
+
           <td>{{ q.options|length }}</td>
+
           <td>
             {% for o in q.options if o.is_correct %}
               <span class="badge bg-success">{{ o.option_text }}</span>
             {% endfor %}
           </td>
+
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
   {% else %}
-  <div class="alert alert-info">
+
+  <div class="alert alert-info shadow-sm text-center">
     <i class="bi bi-info-circle"></i> Quiz này chưa có câu hỏi nào.
+    <br>
+    <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success btn-sm mt-3">
+      ➕ Thêm câu hỏi đầu tiên
+    </a>
   </div>
+
   {% endif %}
+
 </div>
+
 {% endblock %}

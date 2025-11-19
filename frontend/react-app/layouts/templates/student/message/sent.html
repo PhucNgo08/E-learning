@@ -5,32 +5,48 @@
 
 <style>
 /* ==========================================================
-📤 SENT – Student Message UI v3.3 (Final 2025)
+📤 SENT – Student Message UI v4.0 (Final 2025)
 ========================================================== */
 
 .sent-item {
-  backdrop-filter: blur(10px);
-  background: rgba(255,255,255,0.65);
+  backdrop-filter: blur(14px);
+  background: rgba(255,255,255,0.62);
   border-radius: 14px !important;
-  border: 1px solid rgba(0,0,0,0.05) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
   transition: all .25s ease;
 }
 .sent-item:hover {
-  background: rgba(255,255,255,0.9);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.12);
+  background: rgba(255,255,255,0.92);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.12);
 }
 
 /* Avatar */
 .msg-avatar {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(0,0,0,0.1);
 }
 body.dark-mode .msg-avatar {
-  border-color: rgba(255,255,255,0.1);
+  border-color: rgba(255,255,255,0.12);
+}
+
+/* File badge */
+.file-badge {
+  font-size: .8rem;
+  background: rgba(13,110,253,0.12);
+  color: #0d6efd;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-left: 4px;
+}
+
+body.dark-mode .file-badge {
+  background: rgba(37,99,235,0.25);
+  color: #93c5fd;
 }
 
 /* Dark mode */
@@ -47,7 +63,7 @@ body.dark-mode .sent-item:hover {
 .fab-compose {
   position: fixed;
   bottom: 30px;
-  right: 100px;
+  right: 90px;
   background: linear-gradient(135deg,#0d6efd,#0056d6);
   color: white;
   border-radius: 50%;
@@ -67,7 +83,6 @@ body.dark-mode .sent-item:hover {
   background: linear-gradient(135deg,#0b5ed7,#003c9e);
 }
 
-/* Responsive */
 @media (max-width: 576px) {
   .fab-compose {
     right: 20px;
@@ -96,31 +111,45 @@ body.dark-mode .sent-item:hover {
   <div class="list-group border-0">
 
     {% for m in messages %}
+    {% set rec = m.receiver if m.receiver else None %}
+
     <a href="/student/message/view/{{ m.id }}"
        class="list-group-item list-group-item-action sent-item d-flex justify-content-between align-items-center py-3 mb-2">
 
-      <!-- Left: Avatar + Receiver Info -->
+      <!-- LEFT: Avatar + Receiver Info -->
       <div class="d-flex align-items-center gap-3">
 
-        {% if m.receiver and m.receiver.avatar_url %}
-          <img src="{{ m.receiver.avatar_url }}" class="msg-avatar" alt="avatar">
+        {% if rec and rec.avatar_url %}
+          <img src="{{ rec.avatar_url }}" class="msg-avatar" alt="avatar">
         {% else %}
           <img src="/static/img/default_avatar.png" class="msg-avatar" alt="avatar">
         {% endif %}
 
         <div>
           <div class="fw-semibold text-dark">
-            {{ m.receiver.full_name if m.receiver else "Người nhận ẩn danh" }}
+            {{ rec.full_name if rec else "Người nhận ẩn danh" }}
           </div>
 
           <!-- Content Preview -->
-          <small class="text-muted">
-            {{ m.content[:90] }}{% if m.content|length > 90 %}...{% endif %}
-          </small>
+          {% if m.content %}
+            <small class="text-muted">
+              {{ m.content[:90] }}{% if m.content|length > 90 %}...{% endif %}
+            </small>
+          {% else %}
+            <small class="text-muted">
+              <i class="bi bi-paperclip"></i> Tệp đính kèm
+            </small>
+          {% endif %}
+
+          {% if m.attachment_url %}
+          <span class="file-badge">
+            <i class="bi bi-file-earmark"></i> File đính kèm
+          </span>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Right: Time -->
+      <!-- RIGHT: Time -->
       <div class="text-end small text-secondary">
         <i class="bi bi-clock me-1"></i>
         {{ m.sent_at.strftime("%d/%m/%Y %H:%M") }}

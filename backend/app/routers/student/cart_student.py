@@ -1,13 +1,13 @@
 """
 ==========================================================
-🛒 ROUTER: Student - Cart (PREMIUM 2025 - FINAL 100%)
-Tương thích FULL cart_service FINAL + course_service FINAL
+🛒 ROUTER: Student - Cart (PREMIUM 2025 - WALLET EDITION)
 ==========================================================
 """
 
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+import uuid
 import traceback
 
 from app.database.connection import get_db
@@ -21,12 +21,37 @@ router = APIRouter(
     tags=["Student - Cart"]
 )
 
+# ======================================================
+# ⚡ BUY NOW (Add → Redirect Checkout)
+# ======================================================
+@router.post("/buy-now/{course_id}")
+async def buy_now(
+    request: Request,
+    course_id: str,
+    db: Session = Depends(get_db)
+):
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/auth/login", 302)
+
+    # Xóa giỏ → thêm 1 item duy nhất
+    cart_service.clear_cart(db, user_id)
+    cart_service.add_to_cart(db, user_id, course_id)
+
+    request.session["cart_count"] = 1
+
+    return RedirectResponse("/student/cart/checkout", 303)
+
 
 # ======================================================
-# 🛒 (1) Xem GIỎ HÀNG
+# 🛒 Xem giỏ hàng
 # ======================================================
-@router.get("/", response_class=HTMLResponse, name="student_cart_index")
-async def cart_page(request: Request, db: Session = Depends(get_db)):
+@router.get("/", response_class=HTMLResponse)
+async def cart_page(
+    request: Request,
+    db: Session = Depends(get_db)
+):
 
     user_id = request.session.get("user_id")
     if not user_id:
@@ -34,8 +59,20 @@ async def cart_page(request: Request, db: Session = Depends(get_db)):
 
     try:
         items = cart_service.get_cart(db, user_id)
-        subtotal = cart_service.get_cart_total(db, user_id)
 
+        # Nếu giỏ trống
+        if not items:
+            request.session["cart_count"] = 0
+            return templates["student"].TemplateResponse(
+                "cart/cart_empty.html",
+                {
+                    "request": request,
+                    "page_title": "🛒 Giỏ hàng trống",
+                    "active_page": "courses",
+                },
+            )
+
+        subtotal = cart_service.get_cart_total(db, user_id)
         request.session["cart_count"] = len(items)
 
         return templates["student"].TemplateResponse(
@@ -50,16 +87,19 @@ async def cart_page(request: Request, db: Session = Depends(get_db)):
         )
 
     except Exception as e:
-        print("❌ [Cart][View] Lỗi:", e)
-        traceback.print_exc()
+        print("❌ [Cart View] Lỗi:", e)
         return HTMLResponse("Lỗi tải giỏ hàng.", status_code=500)
 
 
 # ======================================================
-# ➕ (2) Thêm khóa học vào giỏ
+# ➕ Thêm 1 khóa học vào giỏ
 # ======================================================
-@router.get("/add/{course_id}", name="student_cart_add")
-async def cart_add(request: Request, course_id: str, db: Session = Depends(get_db)):
+@router.get("/add/{course_id}")
+async def cart_add(
+    request: Request,
+    course_id: str,
+    db: Session = Depends(get_db)
+):
 
     user_id = request.session.get("user_id")
     if not user_id:
@@ -72,60 +112,58 @@ async def cart_add(request: Request, course_id: str, db: Session = Depends(get_d
         return RedirectResponse("/student/cart", 303)
 
     except Exception as e:
-        print("❌ [Cart][Add] Lỗi:", e)
-        traceback.print_exc()
+        print("❌ [Cart Add] Lỗi:", e)
         return RedirectResponse("/student/course", 303)
 
 
 # ======================================================
-# ❌ (3) Xóa 1 item khỏi giỏ hàng
+# ❌ Xóa 1 item khỏi giỏ
 # ======================================================
-@router.get("/remove/{item_id}", name="student_cart_remove")
-async def cart_remove(request: Request, item_id: str, db: Session = Depends(get_db)):
+@router.get("/remove/{item_id}")
+async def cart_remove(
+    request: Request,
+    item_id: str,
+    db: Session = Depends(get_db)
+):
 
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse("/auth/login", 302)
 
-    try:
-        cart_service.remove_from_cart(db, user_id, item_id)
-        request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
+    cart_service.remove_from_cart(db, user_id, item_id)
+    request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
 
-        return RedirectResponse("/student/cart", 303)
-
-    except Exception as e:
-        print("❌ [Cart][Remove] Lỗi:", e)
-        traceback.print_exc()
-        return RedirectResponse("/student/cart", 303)
+    return RedirectResponse("/student/cart", 303)
 
 
 # ======================================================
-# 🧹 (4) Xóa toàn bộ giỏ hàng
+# 🧹 Xóa toàn bộ giỏ
 # ======================================================
-@router.get("/clear", name="student_cart_clear")
-async def cart_clear(request: Request, db: Session = Depends(get_db)):
+@router.get("/clear")
+async def cart_clear(
+    request: Request,
+    db: Session = Depends(get_db)
+):
 
     user_id = request.session.get("user_id")
     if not user_id:
         return RedirectResponse("/auth/login", 302)
 
-    try:
-        cart_service.clear_cart(db, user_id)
-        request.session["cart_count"] = 0
+    cart_service.clear_cart(db, user_id)
+    request.session["cart_count"] = 0
 
-        return RedirectResponse("/student/cart", 303)
-
-    except Exception as e:
-        print("❌ [Cart][Clear] Lỗi:", e)
-        traceback.print_exc()
-        return RedirectResponse("/student/cart", 303)
+    return RedirectResponse("/student/cart", 303)
 
 
 # ======================================================
-# 🧾 (5) TRANG CHECKOUT
+# 🧾 Trang thanh toán
 # ======================================================
 @router.get("/checkout", response_class=HTMLResponse)
-async def checkout_page(request: Request, db: Session = Depends(get_db)):
+async def checkout_page(
+    request: Request,
+    error: str = None,
+    db: Session = Depends(get_db)
+):
 
     user_id = request.session.get("user_id")
     if not user_id:
@@ -143,19 +181,20 @@ async def checkout_page(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "items": items,
             "subtotal": subtotal,
+            "error": error,   # Hiển thị lỗi ví không đủ
             "active_page": "courses",
         },
     )
 
 
 # ======================================================
-# 💳 (6) Checkout xử lý thanh toán
+# 💳 TIẾN HÀNH THANH TOÁN (Wallet)
 # ======================================================
-@router.post("/checkout", name="student_cart_checkout")
+@router.post("/checkout")
 async def cart_checkout(
     request: Request,
     coupon_code: str = Form(None),
-    pay_method: str = Form("momo"),
+    pay_method: str = Form("wallet"),  # mặc định ví
     db: Session = Depends(get_db)
 ):
 
@@ -171,7 +210,7 @@ async def cart_checkout(
             payment_method=pay_method
         )
 
-        request.session["cart_count"] = 0
+        request.session["cart_count"] = 0  # clear giỏ
 
         return RedirectResponse(
             f"/student/cart/checkout/success?"
@@ -181,18 +220,24 @@ async def cart_checkout(
             f"&total={result['total_paid']}"
             f"&trans={result['transaction_id']}"
             f"&order_id={result['order_id']}",
-            status_code=303,
+            303,
         )
 
     except Exception as e:
-        db.rollback()
-        print("❌ [Cart][Checkout] Lỗi:", e)
-        traceback.print_exc()
-        return HTMLResponse("Lỗi thanh toán.", status_code=500)
+
+        # Lỗi ví không đủ tiền
+        if "không đủ" in str(e).lower():
+            return RedirectResponse(
+                f"/student/cart/checkout?error={str(e)}",
+                status_code=303
+            )
+
+        print("❌ [Checkout] Lỗi:", e)
+        return HTMLResponse(f"Lỗi thanh toán: {str(e)}", status_code=500)
 
 
 # ======================================================
-# 🎉 (7) PAYMENT SUCCESS PAGE
+# 🎉 Payment Success Page
 # ======================================================
 @router.get("/checkout/success", response_class=HTMLResponse)
 async def checkout_success(

@@ -57,7 +57,7 @@
           </button>
         </form>
 
-        <!-- DELETE (POST) -->
+        <!-- DELETE -->
         <form action="/student/discussion/delete/{{ discussion.id }}" method="post">
           <button type="submit" class="btn btn-sm btn-outline-danger">
             <i class="bi bi-trash"></i> Xóa
@@ -76,7 +76,11 @@
   </h6>
 
   <!-- Render reply tree -->
-  {{ render_replies(replies) }}
+  {% if replies %}
+      {{ render_replies(replies) }}
+  {% else %}
+      <p class="text-muted">Chưa có phản hồi nào. Hãy là người đầu tiên!</p>
+  {% endif %}
 
 
   <!-- ====== FORM GỬI PHẢN HỒI ====== -->
@@ -87,7 +91,7 @@
 
         <label class="form-label fw-semibold">Viết phản hồi:</label>
 
-        <!-- parent_id sẽ được gán bởi JS khi click "Trả lời" -->
+        <!-- parent_id sẽ được gán bởi JS khi click reply -->
         <input type="hidden" id="reply-parent-id" name="parent_id">
 
         <textarea name="content"
@@ -108,12 +112,15 @@
 </div>
 
 
-<!-- ====== JS: Gán parent_id khi bấm nút reply ====== -->
+<!-- ====== JS: Gán parent_id khi nhấn "Trả lời" ====== -->
 <script>
   function setReplyParent(id) {
-    const input = document.getElementById("reply-parent-id");
-    input.value = id;
-    input.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("reply-parent-id").value = id;
+
+    // Cuộn xuống form
+    const textarea = document.querySelector("textarea[name='content']");
+    textarea.focus({ preventScroll: false });
+    textarea.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 </script>
 

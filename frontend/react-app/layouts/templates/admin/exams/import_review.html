@@ -1,195 +1,178 @@
-<!DOCTYPE html>
-<html lang="vi">
+{% extends "layout_admin.html" %}
+{% block title %}👀 Kiểm tra dữ liệu import{% endblock %}
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>👀 Kiểm tra dữ liệu import</title>
+{% block content %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+<style>
+  body {
+    background: #f7f9fc;
+  }
 
-  <style>
-    body {
-      background: #f7f9fc;
-    }
+  .review-box {
+    border-radius: 18px;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.85);
+    border: 1px solid rgba(230,230,230,0.7);
+  }
 
-    .review-box {
-      background: white;
-      padding: 25px;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
+  th {
+    white-space: nowrap;
+  }
 
-    th {
-      background: #0056d2;
-      color: white;
-      text-align: center;
-      white-space: nowrap;
-    }
+  .row-error {
+    background: #ffe3e3 !important;
+  }
+  .row-error:hover {
+    background: #ffdbdb !important;
+  }
 
-    td {
-      vertical-align: middle;
-    }
+  .row-ok {
+    background: #eeffe9 !important;
+  }
+  .row-ok:hover {
+    background: #e4ffd9 !important;
+  }
 
-    .row-error {
-      background: #ffe7e7 !important;
-    }
+  .answer-pill {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #eef2ff;
+    border: 1px solid #cfd8ff;
+    font-size: 14px;
+  }
 
-    .row-ok {
-      background: #eaffe3 !important;
-    }
+  .answer-long {
+    display: block;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f8f9fc;
+    border-left: 3px solid #0d6efd;
+    font-size: 14px;
+    word-break: break-word;
+    max-width: 300px;
+  }
 
-    /* Pills ngắn */
-    .answer-pill {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 20px;
-      background: #eef2ff;
-      border: 1px solid #cfd8ff;
-      font-size: 14px;
-      margin: 2px 0;
-      white-space: nowrap;
-    }
+  /* Tooltip PRO */
+  .tooltip-error {
+    cursor: help;
+    text-decoration: underline dotted red;
+  }
 
-    /* Câu dài hiển thị block */
-    .answer-long {
-      display: block;
-      padding: 6px 10px;
-      border-radius: 6px;
-      background: #f8f9fc;
-      border-left: 3px solid #0d6efd;
-      font-size: 14px;
-      word-break: break-word;
-    }
-  </style>
-</head>
+</style>
 
-<body>
+<div class="container py-5 fade-in">
 
-  <div class="container py-5">
-    <h3 class="fw-bold text-primary mb-4 text-center">
-      <i class="bi bi-eye"></i> Kiểm tra dữ liệu câu hỏi đã import
-    </h3>
+  <h3 class="fw-bold text-primary text-center mb-4">
+    <i class="bi bi-eye"></i> Kiểm tra dữ liệu câu hỏi đã import
+  </h3>
 
-    <div class="review-box">
+  <div class="review-box p-4 shadow-sm">
 
-      <!-- ALERT -->
-      <div class="alert alert-info">
-        <i class="bi bi-info-circle"></i>
-        Vui lòng kiểm tra lại danh sách câu hỏi bên dưới.<br>
-        Nếu mọi thứ chính xác → bấm <strong>Xác nhận import</strong>.
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i>
+      Vui lòng kiểm tra danh sách câu hỏi bên dưới.<br>
+      Nếu chính xác → nhấn <strong>Xác nhận import</strong>.
+    </div>
+
+    <form action="/admin/exams/{{ exam_id }}/import/confirm" method="post">
+
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover text-center align-middle">
+
+          <thead class="text-white" style="background:#0056d2;">
+            <tr>
+              <th>#</th>
+              <th style="width: 35%">Câu hỏi</th>
+              <th>A</th>
+              <th>B</th>
+              <th>C</th>
+              <th>D</th>
+              <th>Đáp án đúng</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+
+          <tbody>
+
+            {% for q in questions %}
+
+            {% set missing = [] %}
+            {% if not q['question_text'] %} {% set _ = missing.append("Thiếu câu hỏi") %} {% endif %}
+            {% if not q['option_a'] %} {% set _ = missing.append("Thiếu phương án A") %} {% endif %}
+            {% if not q['option_b'] %} {% set _ = missing.append("Thiếu phương án B") %} {% endif %}
+            {% if not q['option_c'] %} {% set _ = missing.append("Thiếu phương án C") %} {% endif %}
+            {% if not q['option_d'] %} {% set _ = missing.append("Thiếu phương án D") %} {% endif %}
+            {% if not q['correct'] %} {% set _ = missing.append("Thiếu đáp án đúng") %} {% endif %}
+
+            {% set has_error = (missing|length > 0) %}
+
+            <tr class="{{ 'row-error' if has_error else 'row-ok' }}">
+              <td>{{ loop.index }}</td>
+
+              <td class="text-start">
+                {% if q['question_text'] %}
+                  {{ q['question_text'] }}
+                {% else %}
+                  <span class="text-danger fw-bold tooltip-error" title="Thiếu nội dung câu hỏi">❌ thiếu câu hỏi</span>
+                {% endif %}
+              </td>
+
+              {% for opt in ['option_a','option_b','option_c','option_d'] %}
+              <td>
+                {% set val = q[opt] %}
+                {% if val %}
+                  {% if val|length <= 20 %}
+                    <span class="answer-pill">{{ val }}</span>
+                  {% else %}
+                    <span class="answer-long">{{ val }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="badge bg-danger tooltip-error" title="Thiếu dữ liệu">❌</span>
+                {% endif %}
+              </td>
+              {% endfor %}
+
+              <!-- Correct -->
+              <td>
+                {% if q['correct'] %}
+                  <span class="badge bg-success">{{ q['correct'] }}</span>
+                {% else %}
+                  <span class="badge bg-danger tooltip-error" title="Chưa có đáp án đúng">?</span>
+                {% endif %}
+              </td>
+
+              <!-- STATUS -->
+              <td>
+                {% if has_error %}
+                  <span class="badge bg-danger" title="{{ missing|join(', ') }}">Thiếu dữ liệu</span>
+                {% else %}
+                  <span class="badge bg-success">OK</span>
+                {% endif %}
+              </td>
+
+            </tr>
+
+            {% endfor %}
+          </tbody>
+
+        </table>
       </div>
 
-      <form action="/admin/exams/{{ exam_id }}/import/confirm" method="post">
+      <div class="mt-4 d-flex justify-content-between">
+        <a href="/admin/exams/{{ exam_id }}/import" class="btn btn-secondary">
+          <i class="bi bi-arrow-left"></i> Bước trước
+        </a>
 
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover text-center">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th style="width: 35%">Câu hỏi</th>
-                <th>A</th>
-                <th>B</th>
-                <th>C</th>
-                <th>D</th>
-                <th>Đáp án đúng</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
+        <button type="submit" class="btn btn-success px-4"
+                onclick="return confirm('Xác nhận lưu toàn bộ câu hỏi này?')">
+          <i class="bi bi-check2-circle"></i> Xác nhận import
+        </button>
+      </div>
 
-            <tbody>
-              {% for q in questions %}
+    </form>
 
-              {% set has_error = (
-                not q['question_text']
-                or not q['option_a']
-                or not q['option_b']
-                or not q['option_c']
-                or not q['option_d']
-                or not q['correct']
-              ) %}
-
-              <tr class="{{ 'row-error' if has_error else 'row-ok' }}">
-                <td>{{ loop.index }}</td>
-
-                <td class="text-start">{{ q['question_text'] }}</td>
-
-                <!-- A -->
-                <td>
-                  {% if q['option_a']|length <= 20 %}
-                  <span class="answer-pill">{{ q['option_a'] }}</span>
-                  {% else %}
-                  <span class="answer-long">{{ q['option_a'] }}</span>
-                  {% endif %}
-                </td>
-
-                <!-- B -->
-                <td>
-                  {% if q['option_b']|length <= 20 %}
-                  <span class="answer-pill">{{ q['option_b'] }}</span>
-                  {% else %}
-                  <span class="answer-long">{{ q['option_b'] }}</span>
-                  {% endif %}
-                </td>
-
-                <!-- C -->
-                <td>
-                  {% if q['option_c']|length <= 20 %}
-                  <span class="answer-pill">{{ q['option_c'] }}</span>
-                  {% else %}
-                  <span class="answer-long">{{ q['option_c'] }}</span>
-                  {% endif %}
-                </td>
-
-                <!-- D -->
-                <td>
-                  {% if q['option_d']|length <= 20 %}
-                  <span class="answer-pill">{{ q['option_d'] }}</span>
-                  {% else %}
-                  <span class="answer-long">{{ q['option_d'] }}</span>
-                  {% endif %}
-                </td>
-
-                <!-- Đáp án đúng -->
-                <td>
-                  {% if q['correct'] %}
-                  <span class="badge bg-success">{{ q['correct'] }}</span>
-                  {% else %}
-                  <span class="badge bg-danger">?</span>
-                  {% endif %}
-                </td>
-
-                <!-- Trạng thái -->
-                <td>
-                  {% if has_error %}
-                  <span class="badge bg-danger">Thiếu dữ liệu</span>
-                  {% else %}
-                  <span class="badge bg-success">OK</span>
-                  {% endif %}
-                </td>
-
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-
-        <div class="mt-4 d-flex justify-content-between">
-          <a href="/admin/exams/{{ exam_id }}/import" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại import
-          </a>
-
-          <button type="submit" class="btn btn-success px-4">
-            <i class="bi bi-check2-circle"></i> Xác nhận import
-          </button>
-        </div>
-
-      </form>
-
-    </div>
   </div>
+</div>
 
-</body>
-
-</html>
+{% endblock %}

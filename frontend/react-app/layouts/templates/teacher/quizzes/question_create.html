@@ -1,0 +1,123 @@
+{% extends "layout_teacher.html" %}
+{% block title %}➕ Thêm câu hỏi{% endblock %}
+
+{% block content %}
+
+<style>
+/* ================================================
+   ➕ CREATE QUESTION – GLASS FORM Neo 2025
+================================================ */
+
+.form-glass {
+  max-width: 760px;
+  margin: auto;
+  padding: 2rem 2.2rem;
+  background: rgba(255,255,255,0.88);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.45);
+  box-shadow:
+    0 10px 26px rgba(0,0,0,0.1),
+    0 0 40px rgba(13,110,253,0.06);
+  backdrop-filter: blur(16px);
+  animation: fadeInUp .55s ease;
+}
+
+.title-glass {
+  font-weight: 700;
+  background: linear-gradient(135deg, #0d6efd, #6610f2);
+  background-clip: text;              /* thêm dòng này */
+  -webkit-background-clip: text;      /* để Safari + Chrome mobile */
+  color: transparent;
+  font-size: 1.55rem;
+}
+
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode */
+body.dark-mode .form-glass {
+  background: rgba(30,41,59,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+body.dark-mode .title-glass {
+  color: #93c5fd !important;
+}
+body.dark-mode label,
+body.dark-mode p {
+  color: #e2e8f0 !important;
+}
+</style>
+
+
+<div class="container py-4 fade-in">
+
+  <div class="form-glass">
+
+    <h3 class="mb-4 title-glass">
+      ➕ Thêm câu hỏi mới
+    </h3>
+
+    <form method="post">
+
+      <!-- Question text -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Nội dung câu hỏi</label>
+        <textarea class="form-control" name="question_text" required rows="3"></textarea>
+      </div>
+
+      <!-- Option A -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Lựa chọn A</label>
+        <input class="form-control" name="option_a" required>
+      </div>
+
+      <!-- Option B -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Lựa chọn B</label>
+        <input class="form-control" name="option_b" required>
+      </div>
+
+      <!-- Option C -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Lựa chọn C</label>
+        <input class="form-control" name="option_c" required>
+      </div>
+
+      <!-- Option D -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Lựa chọn D</label>
+        <input class="form-control" name="option_d" required>
+      </div>
+
+      <!-- Correct answer -->
+      <div class="mb-3">
+        <label class="form-label fw-bold">Đáp án đúng</label>
+        <select class="form-select" name="correct" required>
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+          <option value="d">D</option>
+        </select>
+      </div>
+
+      <!-- Buttons -->
+      <div class="mt-4">
+        <button class="btn btn-primary">
+          <i class="bi bi-check-circle"></i> Lưu câu hỏi
+        </button>
+
+        <a class="btn btn-secondary" href="/teacher/quizzes/detail/{{ quiz.id }}">
+          <i class="bi bi-x-lg"></i> Hủy
+        </a>
+      </div>
+
+    </form>
+
+  </div>
+
+</div>
+
+{% endblock %}

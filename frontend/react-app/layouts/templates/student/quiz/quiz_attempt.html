@@ -2,112 +2,357 @@
 {% block title %}🧩 Làm bài kiểm tra{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
 
-  <!-- Hidden quiz data for JS -->
+<style>
+/* =======================================================
+   🎨 QUIZ PRO 2025 – GLASS NEO DARK EDITION
+======================================================= */
+
+/* ---------- GRID LAYOUT ---------- */
+.quiz-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 992px) {
+  .quiz-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- SIDEBAR ---------- */
+.quiz-sidebar {
+  position: sticky;
+  top: 80px;
+  height: fit-content;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 18px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.10);
+}
+
+.quiz-sidebar h6 {
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* ---------- QUESTION NAV ---------- */
+.qnav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 10px;
+}
+
+.qnav-item {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 0;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: .2s;
+  background: #e8ecf5;
+  color: #374151;
+}
+
+.qnav-item:hover {
+  background: #d6deef;
+}
+
+.qnav-item.answered {
+  background: #4ade80 !important;
+  color: #fff;
+}
+
+.qnav-item.active {
+  background: #2563eb !important;
+  color: #fff;
+}
+
+.qnav-item.unanswered {
+  background: #f87171 !important;
+  color: white;
+}
+
+/* ---------- QUESTION CARD ---------- */
+.question-card-pro {
+  border-radius: 18px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(0,0,0,0.05);
+  padding: 20px;
+  transition: .25s ease;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+}
+
+.question-card-pro:hover {
+  transform: translateY(-2px);
+}
+
+/* =======================================================
+      🌙 DARK MODE SUPPORT
+======================================================= */
+
+body.dark-mode .quiz-sidebar {
+  background: rgba(30,41,59,0.72);
+  border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 6px 24px rgba(0,0,0,0.40);
+  color: #f1f5f9;
+}
+
+body.dark-mode .qnav-item {
+  background: rgba(51,65,85,0.65);
+  color: #e2e8f0;
+}
+body.dark-mode .qnav-item:hover {
+  background: rgba(71,85,105,0.85);
+}
+body.dark-mode .qnav-item.active {
+  background: #1d4ed8 !important;
+}
+body.dark-mode .qnav-item.answered {
+  background: #22c55e !important;
+}
+
+body.dark-mode .question-card-pro {
+  background: rgba(30,41,59,0.62);
+  border-color: rgba(255,255,255,0.10);
+  color: #f8fafc;
+}
+
+/* Radio input fix */
+body.dark-mode .form-check-label {
+  color: #e2e8f0 !important;
+}
+</style>
+
+<!-- =======================================================
+      HTML STRUCTURE
+======================================================= -->
+<div class="container py-4 fade-in">
+
   <div id="quiz-data"
        data-quiz-id="{{ quiz.id }}"
-       data-timelimit="{{ quiz.time_limit_minutes or 0 }}">
+       data-timelimit="{{ quiz.time_limit_minutes or 0 }}"
+       data-type="{{ quiz.quiz_type }}">
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold text-primary mb-0">
-      <i class="bi bi-pencil-square"></i> {{ quiz.title }}
-    </h4>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold text-primary">
+      <i class="bi bi-pencil-square me-2"></i>{{ quiz.title }}
+    </h3>
 
     {% if quiz.time_limit_minutes %}
-    <div id="timer" class="badge bg-danger fs-6 p-2 shadow-sm">
-      ⏱ Còn lại: <span id="countdown">--:--</span>
+    <div id="timer" class="badge bg-danger fs-5 px-3 py-2 shadow-sm rounded-pill">
+      ⏱ <span id="countdown">--:--</span>
     </div>
     {% endif %}
   </div>
 
-  {% if quiz.description %}
-  <p class="text-muted small mb-4">{{ quiz.description }}</p>
-  {% endif %}
+  <div class="quiz-layout">
 
-  {% if quiz.time_limit_minutes %}
-  <div class="progress mb-4" style="height: 10px;">
-    <div id="timeProgress" class="progress-bar bg-success" role="progressbar"></div>
-  </div>
-  {% endif %}
+    <!-- ===== SIDEBAR ===== -->
+    <div class="quiz-sidebar">
+      <h6 class="text-primary"><i class="bi bi-list-ol"></i> Danh sách câu hỏi</h6>
 
-  <form method="post" action="/student/quiz/submit/{{ quiz.id }}" id="quizForm">
+      <div class="qnav-grid">
+        {% for q in quiz.questions %}
+        <button type="button"
+                class="qnav-item unanswered"
+                data-qindex="{{ loop.index0 }}"
+                data-qid="{{ q.id }}">
+          {{ loop.index }}
+        </button>
+        {% endfor %}
+      </div>
 
-    {% for q in quiz.questions %}
-    <div class="card shadow-sm mb-3 border-0 question-card">
+      <hr class="my-3">
 
-      <div class="card-body">
-        <h6 class="fw-semibold text-dark mb-2">
-          Câu {{ loop.index }}: {{ q.question_text }}
+      <div class="fw-semibold small text-muted">
+        <i class="bi bi-check-circle-fill text-success"></i>
+        Câu đã làm: <span id="doneCount">0</span> / {{ quiz.questions|length }}
+      </div>
+    </div>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <form method="post"
+          action="/student/quiz/submit/{{ quiz.id }}"
+          id="quizForm"
+          class="quiz-main">
+
+      <input type="hidden" name="total_questions" value="{{ quiz.questions|length }}">
+      <input type="hidden" name="started_at" id="startedAtField">
+
+      {% for q in quiz.questions %}
+      {% set qindex = loop.index0 %}
+
+      <div class="question-card-pro mb-4" id="qcard-{{ qindex }}">
+
+        <h6 class="fw-bold mb-3">
+          <span class="text-primary">Câu {{ loop.index }}:</span>
+          {{ q.question_text }}
         </h6>
 
         {% for opt in q.options %}
-        <div class="form-check ms-3 mt-2">
+        <div class="form-check ms-3 mb-2">
           <input class="form-check-input quiz-option"
-                type="radio"
-                name="question_{{ q.id }}"
-                value="{{ opt.id }}"
-                id="opt_{{ opt.id }}"
-                data-question="{{ q.id }}">
+                 type="radio"
+                 name="question_{{ q.id }}"
+                 value="{{ opt.id }}"
+                 id="opt_{{ opt.id }}"
+                 data-question="{{ q.id }}"
+                 data-qindex="{{ qindex }}">
           <label class="form-check-label" for="opt_{{ opt.id }}">
             {{ opt.option_text }}
           </label>
         </div>
         {% endfor %}
+
+      </div>
+      {% endfor %}
+
+      <div class="text-center mt-4">
+        <button type="submit" id="submitBtn" class="btn btn-success px-4">
+          <i class="bi bi-check2-circle"></i> Nộp bài
+        </button>
+
+        <a href="/student/quiz" class="btn btn-outline-secondary ms-2">
+          <i class="bi bi-arrow-left"></i> Thoát
+        </a>
       </div>
 
-    </div>
-    {% endfor %}
-
-    <div class="text-center mt-4">
-      <button type="submit" id="submitBtn" class="btn btn-success px-4">
-        <i class="bi bi-send"></i> Nộp bài
-      </button>
-
-      <a href="/student/quiz" class="btn btn-outline-secondary ms-2">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-    </div>
-
-  </form>
+    </form>
+  </div>
 </div>
 
-<!-- Clean JavaScript (NO Jinja in JS) -->
 <script>
-/* ========================
-   READ QUIZ DATA
-======================== */
-const quizData = document.getElementById("quiz-data").dataset;
-const QUIZ_ID = quizData.quizId;
-const TIME_LIMIT = parseInt(quizData.timelimit);
-const LS_KEY = "quiz_answers_" + QUIZ_ID;
+/* ======================================================
+   🛠 FIX TIMER + LOCALSTORAGE (NO MORE NaN)
+====================================================== */
 
-/* ========================
-   AUTO-LOAD ANSWERS
-======================== */
+const meta = document.getElementById("quiz-data").dataset;
+
+// ---- SAFE PARSE TIME LIMIT ----
+let TIME_LIMIT = parseInt(meta.timelimit);
+if (isNaN(TIME_LIMIT) || TIME_LIMIT <= 0) {
+    TIME_LIMIT = 0;
+}
+
+// ---- SAFE GET QUIZ TYPE ----
+const QUIZ_TYPE = meta.type;
+const QUIZ_ID = meta.quizId;
+
+// ---- LOCAL STORAGE KEYS ----
+const LS_ANS = "quiz_answers_" + QUIZ_ID;
+const LS_START = "quiz_start_" + QUIZ_ID;
+
+const isGraded = QUIZ_TYPE === "graded";
+
+/* ======================================================
+   SET SAFE START TIME
+====================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-  const saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-  for (let qid in saved) {
-    const opt = document.querySelector(`input[value="${saved[qid]}"]`);
-    if (opt) opt.checked = true;
+
+  let startTime = parseInt(localStorage.getItem(LS_START));
+
+  if (isNaN(startTime) || startTime <= 0) {
+      startTime = Date.now();
+      localStorage.setItem(LS_START, startTime);
   }
+
+  document.getElementById("startedAtField").value =
+      new Date(startTime).toISOString();
+
+  updateSidebar();
 });
 
-/* ========================
-   AUTO-SAVE ANSWERS
-======================== */
+/* ======================================================
+   RESTORE ANSWERS (Practice Only)
+====================================================== */
+if (!isGraded) {
+  document.addEventListener("DOMContentLoaded", () => {
+    const saved = JSON.parse(localStorage.getItem(LS_ANS) || "{}");
+
+    Object.entries(saved).forEach(([qid, optId]) => {
+      const opt = document.querySelector(`input[value="${optId}"]`);
+      if (opt) opt.checked = true;
+    });
+
+    updateSidebar();
+  });
+}
+
+/* ======================================================
+   UPDATE SIDEBAR
+====================================================== */
+function updateSidebar() {
+  let done = 0;
+
+  document.querySelectorAll(".qnav-item").forEach(btn => {
+    const qid = btn.dataset.qid;
+    const selected = document.querySelector(`input[name="question_${qid}"]:checked`);
+
+    if (selected) {
+      btn.classList.add("answered");
+      btn.classList.remove("unanswered");
+      done++;
+    } else {
+      btn.classList.add("unanswered");
+      btn.classList.remove("answered");
+    }
+  });
+
+  document.getElementById("doneCount").textContent = done;
+}
+
+/* ======================================================
+   SELECT OPTION
+====================================================== */
 document.querySelectorAll(".quiz-option").forEach(opt => {
   opt.addEventListener("change", e => {
-    let saved = JSON.parse(localStorage.getItem(LS_KEY) || "{}");
-    saved[e.target.dataset.question] = e.target.value;
-    localStorage.setItem(LS_KEY, JSON.stringify(saved));
+
+    const index = e.target.dataset.qindex;
+
+    document.querySelectorAll(".qnav-item").forEach(btn =>
+      btn.classList.remove("active")
+    );
+
+    document.querySelector(`.qnav-item[data-qindex="${index}"]`)
+      .classList.add("active");
+
+    if (!isGraded) {
+      let saved = JSON.parse(localStorage.getItem(LS_ANS) || "{}");
+      saved[e.target.dataset.question] = e.target.value;
+      localStorage.setItem(LS_ANS, JSON.stringify(saved));
+    }
+
+    updateSidebar();
   });
 });
 
-/* ========================
-   PROTECT FROM LEAVING
-======================== */
+/* ======================================================
+   SCROLL TO QUESTION
+====================================================== */
+document.querySelectorAll(".qnav-item").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const index = btn.dataset.qindex;
+
+    document.getElementById("qcard-" + index)
+      .scrollIntoView({ behavior: "smooth", block: "center" });
+
+    document.querySelectorAll(".qnav-item").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  });
+});
+
+/* ======================================================
+   BEFORE UNLOAD PROTECTION
+====================================================== */
 let isSubmitting = false;
 
 window.addEventListener("beforeunload", e => {
@@ -117,66 +362,61 @@ window.addEventListener("beforeunload", e => {
   }
 });
 
-/* ========================
-   SUBMIT BUTTON DISABLE
-======================== */
+/* ======================================================
+   SUBMIT LOCK
+====================================================== */
 document.getElementById("quizForm").addEventListener("submit", () => {
   isSubmitting = true;
+
+  localStorage.removeItem(LS_ANS);
+  localStorage.removeItem(LS_START);
+
   const btn = document.getElementById("submitBtn");
   btn.disabled = true;
   btn.innerHTML = "⏳ Đang nộp...";
-  localStorage.removeItem(LS_KEY);
 });
 
-/* ========================
-   TIMER
-======================== */
+/* ======================================================
+   TIMER – NO NaN
+====================================================== */
 if (TIME_LIMIT > 0) {
 
-  let remaining = TIME_LIMIT * 60;
   const countdown = document.getElementById("countdown");
-  const progressBar = document.getElementById("timeProgress");
-  const form = document.getElementById("quizForm");
+  const TOTAL = TIME_LIMIT * 60;
 
-  function updateTimer() {
-    const m = Math.floor(remaining / 60);
-    const s = remaining % 60;
+  let start = parseInt(localStorage.getItem(LS_START));
 
-    countdown.textContent =
-      (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-
-    const totalSeconds = TIME_LIMIT * 60;
-    const percent = (remaining / totalSeconds) * 100;
-    progressBar.style.width = percent + "%";
-
-    if (percent <= 20) progressBar.className = "progress-bar bg-danger";
-    else if (percent <= 50) progressBar.className = "progress-bar bg-warning";
-    else progressBar.className = "progress-bar bg-success";
-
-    if (remaining <= 0) {
-      clearInterval(timer);
-      isSubmitting = true;
-      localStorage.removeItem(LS_KEY);
-      form.submit();
-    }
-
-    remaining--;
+  if (isNaN(start)) {
+      start = Date.now();
+      localStorage.setItem(LS_START, start);
   }
 
-  const timer = setInterval(updateTimer, 1000);
+  function getRemaining() {
+    const elapsed = Math.floor((Date.now() - start) / 1000);
+    return Math.max(0, TOTAL - elapsed);
+  }
+
+  let t = getRemaining();
+
+  function tick() {
+    const m = Math.floor(t / 60);
+    const s = t % 60;
+
+    countdown.textContent =
+      `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+
+    if (t <= 0) {
+      isSubmitting = true;
+      document.getElementById("quizForm").submit();
+    }
+
+    t = getRemaining();
+  }
+
+  tick();
+  setInterval(tick, 1000);
 }
-
-/* ========================
-   AUTO SCROLL NEXT
-======================== */
-document.querySelectorAll(".quiz-option").forEach(el => {
-  el.addEventListener("change", () => {
-    const card = el.closest(".question-card");
-    const next = card.nextElementSibling;
-    if (next) next.scrollIntoView({ behavior: "smooth" });
-  });
-});
-
 </script>
+
 
 {% endblock %}

@@ -1,0 +1,47 @@
+{% extends "layout_admin.html" %}
+{% block title %}📂 Quản lý ví{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h3 class="fw-bold mb-4">📂 Quản lý ví người dùng</h3>
+
+    <div class="card shadow-sm p-4 glass-card">
+
+        {% if error %}
+        <div class="alert alert-danger d-flex align-items-center py-2">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>{{ error }}</strong>
+        </div>
+        {% endif %}
+
+        <form method="get" action="/admin/wallets/info">
+
+            <label class="form-label fw-semibold">Nhập User ID</label>
+
+            <div class="input-group mb-3">
+                <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                <input type="text"
+                       name="user_id"
+                       required
+                       autofocus
+                       class="form-control form-control-lg"
+                       placeholder="VD: 7 hoặc UUID dài">
+            </div>
+
+            <button class="btn btn-primary w-100 fw-semibold py-2">
+                Xem ví người dùng
+            </button>
+
+        </form>
+
+        <hr class="my-4">
+
+        <a href="/admin/wallets/search-email" class="btn btn-outline-primary w-100 fw-semibold py-2">
+            🔎 Tìm ví theo Email
+        </a>
+
+    </div>
+
+</div>
+{% endblock %}

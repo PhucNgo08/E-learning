@@ -1,149 +1,100 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧠 Danh sách Mẫu Quiz</title>
+{% extends "layout_admin.html" %}
+{% block title %}🧠 Danh sách Mẫu Quiz{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block content %}
 
-  <style>
-    body {
-      background: #f5f7fb;
-      font-family: "Inter", sans-serif;
-      color: #1e293b;
-    }
+<style>
+  body {
+    background: #f5f7fb;
+    font-family: "Inter", sans-serif;
+    color: #1e293b;
+  }
 
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-    }
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+  }
 
-    .page-header h3 {
-      font-weight: 700;
-      color: #0d47a1;
-    }
+  .page-header h3 {
+    font-weight: 700;
+    color: #0d47a1;
+  }
 
-    .btn-create {
-      background: linear-gradient(90deg, #0056d2, #003087);
-      border: none;
-      color: #fff;
-      border-radius: 10px;
-      font-weight: 600;
-      padding: 8px 18px;
-      box-shadow: 0 4px 10px rgba(0, 80, 200, 0.25);
-    }
+  .btn-create {
+    background: linear-gradient(90deg, #0056d2, #003087);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 8px 18px;
+    box-shadow: 0 4px 10px rgba(0, 80, 200, 0.25);
+  }
 
-    .btn-create:hover {
-      opacity: 0.9;
-    }
+  .btn-create:hover {
+    opacity: 0.9;
+  }
 
-    .search-bar {
-      width: 300px;
-      border-radius: 10px;
-    }
+  .search-bar {
+    width: 300px;
+    border-radius: 10px;
+  }
 
-    .card {
-      border-radius: 18px;
-      border: none;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.065);
-    }
+  .card {
+    border-radius: 18px;
+    border: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.065);
+  }
 
-    .table thead {
-      background: linear-gradient(90deg, #007bff, #003087);
-      color: #fff;
-    }
+  .table thead {
+    background: linear-gradient(90deg, #007bff, #003087);
+    color: #fff;
+  }
 
-    .badge-status {
-      font-size: 0.75rem;
-      padding: 6px 10px;
-      border-radius: 8px;
-    }
+  .badge-status {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+  }
 
-    .td-name i {
-      font-size: 1rem;
-      margin-right: 4px;
-      color: #006de3;
-    }
+  .td-name i {
+    font-size: 1rem;
+    margin-right: 4px;
+    color: #006de3;
+  }
 
-    .dropdown-menu a {
-      font-size: 0.9rem;
-    }
+  tbody tr {
+    transition: 0.2s ease;
+  }
 
-    footer {
-      text-align: center;
-      color: #64748b;
-      margin-top: 25px;
-      font-size: 0.9rem;
-    }
+  tbody tr:hover {
+    background: #eef5ff !important;
+  }
+</style>
 
-    /* Hover effect */
-    tbody tr {
-      transition: 0.2s ease;
-    }
+<div class="container py-4 fade-in">
 
-    tbody tr:hover {
-      background: #eef5ff !important;
-    }
-
-    /* Loading overlay */
-    #loadingOverlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.7);
-      backdrop-filter: blur(4px);
-      z-index: 999;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .loader {
-      border: 4px solid #d9d9d9;
-      border-top: 4px solid #0056d2;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 0.8s linear infinite;
-    }
-
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
-    }
-  </style>
-</head>
-
-<body>
-
-<div id="loadingOverlay">
-  <div class="loader"></div>
-</div>
-
-<div class="container py-4">
-
-  <!-- Header -->
+  <!-- Tiêu đề -->
   <div class="page-header">
     <div class="d-flex align-items-center gap-2">
       <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
-        <i class="bi bi-arrow-left"></i> Trang chính
+        <i class="bi bi-arrow-left"></i> Trang quản trị
       </a>
       <h3>🧠 Danh sách Mẫu Quiz</h3>
     </div>
 
     <div class="d-flex gap-2 flex-wrap">
       <input type="text" id="searchInput" class="form-control form-control-sm search-bar"
-             placeholder="🔍 Tìm mẫu quiz...">
+             placeholder="🔍 Tìm theo tên hoặc mô tả...">
       <a href="/admin/quiz-template/create" class="btn btn-create">
-        <i class="bi bi-plus-circle"></i> Tạo mẫu quiz
+        <i class="bi bi-plus-circle"></i> Tạo mẫu mới
       </a>
     </div>
   </div>
 
-  <!-- Table -->
+  <!-- Bảng danh sách -->
   <div class="card p-3">
     {% if templates %}
     <div class="table-responsive">
@@ -153,6 +104,7 @@
             <th>#</th>
             <th>Tên mẫu</th>
             <th>Mô tả</th>
+            <th>Người tạo</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
             <th>Thao tác</th>
@@ -164,10 +116,9 @@
           <tr>
             <td>{{ loop.index }}</td>
 
-            <!-- Tên -->
+            <!-- Tên mẫu -->
             <td class="text-start fw-semibold text-primary td-name">
-              <i class="bi bi-file-earmark-text"></i>
-              {{ t.name }}
+              <i class="bi bi-file-earmark-text"></i> {{ t.name }}
             </td>
 
             <!-- Mô tả -->
@@ -175,39 +126,56 @@
               {{ t.description or "Không có mô tả" }}
             </td>
 
-            <!-- Badge trạng thái -->
+            <!-- Người tạo -->
+            <td class="text-start">
+              {% if t.creator %}
+                <strong>{{ t.creator.full_name }}</strong><br>
+                <span class="text-muted small">{{ t.creator.email }}</span><br>
+                <span class="badge bg-info">{{ t.creator.role.value }}</span>
+              {% else %}
+                <em class="text-muted">Không xác định</em>
+              {% endif %}
+            </td>
+
+            <!-- Trạng thái -->
             <td>
               {% if t.is_public %}
-                <span class="badge bg-success badge-status">Public</span>
+                <span class="badge bg-success badge-status">Công khai</span>
               {% else %}
-                <span class="badge bg-secondary badge-status">Private</span>
+                <span class="badge bg-secondary badge-status">Riêng tư</span>
               {% endif %}
             </td>
 
             <!-- Ngày tạo -->
             <td>{{ t.created_at.strftime('%d/%m/%Y') }}</td>
 
-            <!-- Action menu -->
+            <!-- Thao tác -->
             <td>
               <div class="dropdown text-center">
                 <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
-                  <i class="bi bi-list"></i>
+                  Thao tác
                 </button>
 
                 <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="/admin/quiz-template/edit/{{ t.id }}">
-                    ✏️ Chỉnh sửa
-                  </a></li>
+                  <li>
+                    <a class="dropdown-item" href="/admin/quiz-template/edit/{{ t.id }}">
+                      ✏️ Chỉnh sửa
+                    </a>
+                  </li>
 
-                  <li><a class="dropdown-item text-danger" href="/admin/quiz-template/delete/{{ t.id }}">
-                    🗑 Xóa mẫu
-                  </a></li>
+                  <li>
+                    <a class="dropdown-item text-danger" href="/admin/quiz-template/delete/{{ t.id }}">
+                      🗑 Xóa
+                    </a>
+                  </li>
 
                   <li><hr class="dropdown-divider"></li>
 
-                  <li><a class="dropdown-item text-info" href="/admin/quiz-template/report/{{ t.id }}">
-                    📊 Báo cáo
-                  </a></li>
+                  <li>
+                    <a class="dropdown-item text-info" href="/admin/quiz-template/report/{{ t.id }}">
+                      📊 Xem báo cáo
+                    </a>
+                  </li>
                 </ul>
               </div>
             </td>
@@ -215,26 +183,25 @@
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
     </div>
 
     {% else %}
     <div class="alert alert-info text-center py-4 mb-0">
-      <i class="bi bi-info-circle"></i> Chưa có mẫu quiz nào trong hệ thống.
+      <i class="bi bi-info-circle"></i> Hiện chưa có mẫu quiz nào trong hệ thống.
     </div>
     {% endif %}
   </div>
 
-  <footer>
-    © {{ current_year }} Hệ thống E-Learning — Quản lý Quiz Template
+  <footer class="mt-3 text-center text-muted">
+    © {{ now().year }} Hệ thống E-Learning — Quản lý Mẫu Quiz
   </footer>
+
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  // 🔍 Lọc theo tên + mô tả
+  // Tìm kiếm theo tên hoặc mô tả
   const searchInput = document.getElementById("searchInput");
   const rows = document.querySelectorAll("#quizTable tbody tr");
 
@@ -246,17 +213,6 @@
       row.style.display = (name.includes(keyword) || desc.includes(keyword)) ? "" : "none";
     });
   });
-
-  // ⭐ Loading overlay (optional)
-  const links = document.querySelectorAll("a");
-  links.forEach(link => {
-    link.addEventListener("click", () => {
-      if (link.getAttribute("href")) {
-        document.getElementById("loadingOverlay").style.display = "flex";
-      }
-    });
-  });
 </script>
 
-</body>
-</html>
+{% endblock %}

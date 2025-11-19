@@ -1,0 +1,62 @@
+{% extends "layout_student.html" %}
+{% block title %}🔋 Nạp tiền VietQR{% endblock %}
+
+{% block content %}
+
+<div class="container mt-4 fade show">
+
+    <div class="glass-card shadow-sm p-4">
+
+        <h2 class="fw-bold mb-3 text-center">🔋 Nạp tiền bằng VietQR</h2>
+
+        <p class="text-muted text-center mb-4">
+            Quét mã bằng ứng dụng ngân hàng để nạp tiền vào ví.
+        </p>
+
+        <div class="text-center mb-4">
+            <img src="{{ qr_url }}"
+                 alt="QR VietQR"
+                 class="border rounded shadow-sm qr-bounce"
+                 style="max-width: 260px;">
+        </div>
+
+        <div class="glass-card p-3 mb-3">
+
+            <div class="d-flex justify-content-between py-1">
+                <span class="fw-semibold">Mã giao dịch:</span>
+                <span class="fw-bold text-primary">{{ trans_code }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between py-1">
+                <span class="fw-semibold">Số tiền:</span>
+                <span class="fw-bold text-success">
+                    {{ "{:,.0f}".format(amount) }} đ
+                </span>
+            </div>
+
+            <div class="d-flex justify-content-between py-1">
+                <span class="fw-semibold">Ngân hàng:</span>
+                <span>{{ bank }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between py-1">
+                <span class="fw-semibold">Số tài khoản:</span>
+                <span>{{ account }}</span>
+            </div>
+
+            <div class="d-flex justify-content-between py-1">
+                <span class="fw-semibold">Tên tài khoản:</span>
+                <span>{{ account_name }}</span>
+            </div>
+
+        </div>
+
+        <a href="/student/wallet/page" class="btn btn-outline-secondary w-100 py-2 fw-semibold">
+            ← Quay về ví
+        </a>
+
+    </div>
+
+</div>
+
+{% endblock %}

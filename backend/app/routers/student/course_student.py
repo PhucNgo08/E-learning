@@ -273,22 +273,34 @@ async def submit_feedback(
 
 
 # =====================================================
-# 📝 7) Đăng ký khóa học (enroll)
+# 📝 7) Đăng ký khóa học (ENROLL)
 # =====================================================
 @router.post("/enroll/{course_id}", name="student_course_enroll")
-async def enroll_course(request: Request, course_id: str, db: Session = Depends(get_db)):
-
+async def enroll_course(
+    request: Request,
+    course_id: str,
+    db: Session = Depends(get_db),
+):
     try:
         student_id = request.session.get("user_id")
         if not student_id:
             return RedirectResponse("/auth/login", 302)
 
-        course_service.enroll_course(db, student_id, course_id)
+        # Gọi service đúng tên hàm
+        course_service.enroll_course(
+            db=db,
+            user_id=student_id,
+            course_id=course_id
+        )
 
-        return RedirectResponse("/student/course/enrolled", status_code=303)
+        return RedirectResponse(
+            f"/student/course/detail/{course_id}?success=Đăng ký thành công",
+            status_code=303
+        )
 
     except Exception as e:
-        db.rollback()
-        print("[Enroll] Lỗi:", e)
-        traceback.print_exc()
-        return HTMLResponse("Lỗi đăng ký khóa học.", status_code=500)
+        print("[Enroll] Error:", e)
+        return RedirectResponse(
+            f"/student/course/detail/{course_id}?error={str(e)}",
+            status_code=303
+        )
