@@ -2,9 +2,10 @@
 {% block title %}➕ Tạo kỳ thi mới{% endblock %}
 
 {% block content %}
+
 <div class="container py-4 fade-in">
 
-  <!-- PAGE TITLE -->
+  <!-- PAGE HEADER -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-success m-0">
       <i class="bi bi-plus-circle"></i> Tạo kỳ thi mới
@@ -14,20 +15,18 @@
     </a>
   </div>
 
-  <!-- FORM BOX -->
+  <!-- FORM -->
   <form action="/admin/exams/create" method="post"
-        class="form-box bg-white p-4 rounded-4 shadow-sm border-0">
+        class="bg-white p-4 rounded-4 shadow-sm border-0 form-box">
 
-    <!-- ============================
-         THÔNG TIN CHUNG
-    ============================= -->
-    <h5 class="section-title text-primary mb-3">
+    <!-- THÔNG TIN CHUNG -->
+    <h5 class="section-title mb-3">
       <i class="bi bi-info-circle"></i> Thông tin chung
     </h5>
 
     <div class="mb-3">
-      <label class="form-label fw-semibold">Tên kỳ thi</label>
-      <input type="text" name="title" class="form-control" required />
+      <label class="form-label fw-semibold">Tên kỳ thi *</label>
+      <input type="text" name="title" class="form-control" required>
     </div>
 
     <div class="mb-3">
@@ -36,7 +35,7 @@
     </div>
 
     <div class="mb-3">
-      <label class="form-label fw-semibold">Khóa học</label>
+      <label class="form-label fw-semibold">Khóa học *</label>
       <select name="course_id" class="form-select" required>
         <option value="">-- Chọn khóa học --</option>
         {% for course in courses %}
@@ -46,95 +45,64 @@
     </div>
 
     <div class="mb-3">
-      <label class="form-label fw-semibold">Tổng số câu hỏi</label>
-      <input type="number" name="total_questions" min="1" value="10" class="form-control" required />
+      <label class="form-label fw-semibold">
+        Tổng số câu hỏi * 
+        <span class="text-muted">(sẽ cập nhật tự động sau khi import)</span>
+      </label>
+      <input type="number" name="total_questions" min="1" value="10"
+             class="form-control" required>
     </div>
 
-
-    <!-- ============================
-         CẤU HÌNH KỲ THI
-    ============================= -->
-    <h5 class="section-title text-primary mb-3 mt-4">
+    <!-- CẤU HÌNH KỲ THI -->
+    <h5 class="section-title mb-3 mt-4">
       <i class="bi bi-gear"></i> Cấu hình kỳ thi
     </h5>
 
     <div class="row">
       <div class="col-md-4 mb-3">
-        <label class="form-label fw-semibold">⏱ Thời gian làm bài (phút)</label>
-        <input type="number" name="time_limit" value="45" min="1" class="form-control" required />
+        <label class="form-label fw-semibold">⏱ Thời gian (phút) *</label>
+        <input type="number" name="time_limit" value="45"
+               min="1" class="form-control" required>
       </div>
 
       <div class="col-md-4 mb-3">
-        <label class="form-label fw-semibold">🔁 Số lần làm bài tối đa</label>
-        <input type="number" name="max_attempts" value="1" min="1" class="form-control" required />
+        <label class="form-label fw-semibold">🔁 Số lần làm tối đa *</label>
+        <input type="number" name="max_attempts" value="1"
+               min="1" class="form-control" required>
       </div>
 
       <div class="col-md-4 mb-3">
-        <label class="form-label fw-semibold">📊 Điểm qua môn (%)</label>
-        <input type="number" name="passing_score" value="60" min="1" max="100" class="form-control" required />
+        <label class="form-label fw-semibold">📊 Điểm qua (%) *</label>
+        <input type="number" name="passing_score"
+               value="60" min="0" max="100"
+               class="form-control" required>
       </div>
     </div>
 
-
-    <!-- ============================
-         THỜI GIAN MỞ / ĐÓNG
-    ============================= -->
-    <h5 class="section-title text-primary mb-3 mt-4">
+    <!-- THỜI GIAN MỞ ĐÓNG -->
+    <h5 class="section-title mb-3 mt-4">
       <i class="bi bi-calendar-event"></i> Thời gian mở / đóng
     </h5>
 
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label fw-semibold">Mở từ</label>
-        <input type="datetime-local" name="available_from" class="form-control" />
+        <input type="datetime-local" name="available_from" class="form-control">
       </div>
 
       <div class="col-md-6 mb-3">
         <label class="form-label fw-semibold">Đóng lúc</label>
-        <input type="datetime-local" name="available_to" class="form-control" />
+        <input type="datetime-local" name="available_to" class="form-control">
       </div>
     </div>
 
-
-    <!-- ============================
-         TUỲ CHỌN HIỂN THỊ
-    ============================= -->
-    <h5 class="section-title text-primary mb-3 mt-4">
-      <i class="bi bi-sliders"></i> Tùy chọn hiển thị
-    </h5>
-
-    <div class="row mb-4">
-      <div class="col-md-4">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="randomize_questions" value="1" checked />
-          <label class="form-check-label">Xáo trộn thứ tự câu hỏi</label>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="randomize_options" value="1" checked />
-          <label class="form-check-label">Xáo trộn đáp án</label>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox" name="show_correct_answers" value="1" />
-          <label class="form-check-label">Hiển thị đáp án sau khi nộp bài</label>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================
-         BUTTON
-    ============================= -->
-    <div class="d-flex justify-content-between">
+    <!-- BUTTON -->
+    <div class="d-flex justify-content-between mt-3">
       <a href="/admin/exams/manage" class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Quay lại
       </a>
 
-      <button type="submit" class="btn btn-success px-4">
+      <button type="submit" class="btn btn-success px-4 fw-semibold">
         <i class="bi bi-save"></i> Lưu kỳ thi
       </button>
     </div>
@@ -142,22 +110,24 @@
   </form>
 </div>
 
+
 <style>
 .section-title {
   font-weight: 700;
+  font-size: 1.1rem;
   background: linear-gradient(135deg, #0d6efd, #6610f2);
-  -webkit-background-clip: text;  /* Safari + Chrome */
-  background-clip: text;          /* Standard */
-  -webkit-text-fill-color: transparent; /* Safari fix */
-  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .fade-in {
   animation: fadeIn .45s ease;
 }
+
 @keyframes fadeIn {
-  from { opacity: 0 }
-  to { opacity: 1 }
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 </style>
 

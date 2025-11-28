@@ -25,6 +25,7 @@
     <div class="table-responsive">
       <table class="table table-hover align-middle text-center">
 
+        <!-- HEADER -->
         <thead class="text-white"
           style="background: linear-gradient(90deg, #007bff, #0048b4);">
           <tr>
@@ -42,6 +43,7 @@
           </tr>
         </thead>
 
+        <!-- BODY -->
         <tbody>
           {% for exam in exams %}
           <tr>
@@ -49,12 +51,12 @@
             <!-- STT -->
             <td class="fw-bold text-primary">{{ loop.index }}</td>
 
-            <!-- Tên kỳ thi -->
+            <!-- Title -->
             <td class="text-start fw-semibold text-primary">
               <i class="bi bi-journal-bookmark"></i> {{ exam.title }}
             </td>
 
-            <!-- Khóa học -->
+            <!-- Course -->
             <td>
               {% if exam.course %}
                 <span class="badge bg-secondary">{{ exam.course.course_name }}</span>
@@ -63,28 +65,29 @@
               {% endif %}
             </td>
 
-            <!-- Thời gian -->
+            <!-- Time -->
             <td>
               <span class="badge bg-info text-dark">
-                <i class="bi bi-clock"></i> {{ exam.time_limit_minutes }}’
+                <i class="bi bi-clock"></i>
+                {{ exam.time_limit_minutes or 0 }}’
               </span>
             </td>
 
-            <!-- Lần làm -->
+            <!-- Attempts -->
             <td>
               <span class="badge bg-warning text-dark">
-                {{ exam.max_attempts }}
+                {{ exam.max_attempts or 1 }}
               </span>
             </td>
 
-            <!-- Điểm qua -->
+            <!-- Passing Score -->
             <td>
               <span class="badge bg-success text-light">
-                {{ exam.passing_score }}%
+                {{ exam.passing_score or 0 }}%
               </span>
             </td>
 
-            <!-- Thời gian mở/đóng -->
+            <!-- Available Time -->
             <td class="text-start small">
               {% if exam.available_from %}
               <div>
@@ -122,60 +125,61 @@
               {% endif %}
             </td>
 
-            <!-- Ngày tạo -->
+            <!-- Created At -->
             <td>
               <span class="badge text-bg-light border">
                 {{ exam.created_at.strftime("%d/%m/%Y") if exam.created_at else "-" }}
               </span>
             </td>
 
-            <!-- Tổng số câu -->
+            <!-- Total Questions -->
             <td>
-              <span class="badge bg-primary px-3">
-                {{ exam.total_questions }}
-              </span>
+              <a href="/admin/exams/{{ exam.id }}/questions"
+                class="badge bg-primary px-3 text-decoration-none"
+                title="Xem câu hỏi trong kỳ thi">
+                {{ exam.total_questions or 0 }}
+              </a>
             </td>
 
-            <!-- Thao tác -->
+            <!-- ACTIONS -->
             <td>
-              <div class="d-flex justify-content-center gap-2">
+              <div class="d-flex justify-content-center gap-2 flex-wrap">
 
                 <!-- EDIT -->
                 <a href="/admin/exams/{{ exam.id }}/edit"
-                  class="btn btn-sm btn-warning btn-action"
+                  class="btn btn-sm btn-warning shadow-sm"
                   title="Chỉnh sửa">
                   <i class="bi bi-pencil"></i>
                 </a>
 
                 <!-- IMPORT -->
                 <a href="/admin/exams/{{ exam.id }}/import"
-                  class="btn btn-sm btn-info btn-action text-white"
+                  class="btn btn-sm btn-info text-white shadow-sm"
                   title="Import câu hỏi">
                   <i class="bi bi-upload"></i>
                 </a>
 
                 <!-- APPROVE / REJECT -->
                 {% if exam.status == "pending" %}
+
                   <a href="/admin/exams/{{ exam.id }}/approve"
-                    class="btn btn-sm btn-success btn-action"
-                    title="Phê duyệt"
+                    class="btn btn-sm btn-success shadow-sm"
                     onclick="return confirm('Duyệt kỳ thi này?')">
                     <i class="bi bi-check2-circle"></i>
                   </a>
 
                   <a href="/admin/exams/{{ exam.id }}/reject"
-                    class="btn btn-sm btn-danger btn-action"
-                    title="Từ chối"
+                    class="btn btn-sm btn-danger shadow-sm"
                     onclick="return confirm('Từ chối kỳ thi này?')">
                     <i class="bi bi-x-circle"></i>
                   </a>
+
                 {% endif %}
 
-                <!-- DELETE -->
+                <!-- DELETE (GET) -->
                 <a href="/admin/exams/{{ exam.id }}/delete"
-                  class="btn btn-sm btn-outline-danger btn-action"
-                  title="Xóa"
-                  onclick="return confirm('Bạn có chắc muốn xóa kỳ thi này?')">
+                  class="btn btn-sm btn-outline-danger shadow-sm"
+                  onclick="return confirm('Bạn chắc chắn muốn xóa kỳ thi này?')">
                   <i class="bi bi-trash"></i>
                 </a>
 

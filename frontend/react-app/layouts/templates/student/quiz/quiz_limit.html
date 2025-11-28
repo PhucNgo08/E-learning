@@ -1,0 +1,22 @@
+{% extends "layout_student.html" %}
+{% block title %}🚫 Hết lượt làm bài{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="card shadow-sm p-4 text-center glass-card">
+
+        <h2 class="fw-bold text-danger mb-3">
+            🚫 Bạn đã hết lượt làm bài
+        </h2>
+
+        <p class="text-muted mb-4">
+            Bài kiểm tra này chỉ cho phép <strong>{{ max_attempts }}</strong> lần làm.
+        </p>
+
+        <a href="/student/quiz" class="btn btn-primary fw-semibold">
+            ← Quay lại danh sách quiz
+        </a>
+
+    </div>
+</div>
+{% endblock %}

@@ -4,9 +4,7 @@
 {% block content %}
 
 <style>
-  body {
-    background: #f7f9fc;
-  }
+  body { background: #f7f9fc; }
 
   .review-box {
     border-radius: 18px;
@@ -15,23 +13,13 @@
     border: 1px solid rgba(230,230,230,0.7);
   }
 
-  th {
-    white-space: nowrap;
-  }
+  th { white-space: nowrap; }
 
-  .row-error {
-    background: #ffe3e3 !important;
-  }
-  .row-error:hover {
-    background: #ffdbdb !important;
-  }
+  .row-error { background: #ffe3e3 !important; }
+  .row-error:hover { background: #ffdbdb !important; }
 
-  .row-ok {
-    background: #eeffe9 !important;
-  }
-  .row-ok:hover {
-    background: #e4ffd9 !important;
-  }
+  .row-ok { background: #eeffe9 !important; }
+  .row-ok:hover { background: #e4ffd9 !important; }
 
   .answer-pill {
     display: inline-block;
@@ -53,12 +41,15 @@
     max-width: 300px;
   }
 
-  /* Tooltip PRO */
   .tooltip-error {
     cursor: help;
     text-decoration: underline dotted red;
   }
 
+  .table td {
+    max-width: 350px;
+    white-space: normal !important;
+  }
 </style>
 
 <div class="container py-5 fade-in">
@@ -95,50 +86,98 @@
 
           <tbody>
 
-            {% for q in questions %}
+          {# ============================================================
+             🧠 MACRO: LẤY GIÁ TRỊ AN TOÀN CHO DICT / LIST / SERIES
+          ============================================================ #}
+          {% macro get_raw(raw, key, index) %}
+            {% if raw is mapping %}
+              {{ raw.get(key, '') | string | trim }}
+            {% elif raw is sequence and raw is not string and raw|length > index %}
+              {{ raw[index] | string | trim }}
+            {% else %}
+              ""
+            {% endif %}
+          {% endmacro %}
 
+          {% for raw in questions %}
+
+            {% if raw is string %}
+              {# TXT MODE #}
+              {% set lines = raw.split('\n') %}
+              {% set q = {
+                "question_text": lines[0] if lines|length > 0 else "",
+                "option_a": (lines[1].split(':')[-1] if lines|length > 1 else "") | trim,
+                "option_b": (lines[2].split(':')[-1] if lines|length > 2 else "") | trim,
+                "option_c": (lines[3].split(':')[-1] if lines|length > 3 else "") | trim,
+                "option_d": (lines[4].split(':')[-1] if lines|length > 4 else "") | trim,
+                "correct":  (lines[5].split(':')[-1] if lines|length > 5 else "") | trim
+              } %}
+            {% else %}
+              {# XLSX / CSV MODE #}
+              {% set q = {
+                "question_text": get_raw(raw, 'question_text', 0),
+                "option_a":      get_raw(raw, 'option_a', 1),
+                "option_b":      get_raw(raw, 'option_b', 2),
+                "option_c":      get_raw(raw, 'option_c', 3),
+                "option_d":      get_raw(raw, 'option_d', 4),
+                "correct":       get_raw(raw, 'correct', 5)
+              } %}
+            {% endif %}
+
+            {# Chuẩn hóa #}
+            {% set correct = q.correct|upper|trim %}
+
+            {# ============================================================
+               VALIDATION
+            ============================================================ #}
             {% set missing = [] %}
-            {% if not q['question_text'] %} {% set _ = missing.append("Thiếu câu hỏi") %} {% endif %}
-            {% if not q['option_a'] %} {% set _ = missing.append("Thiếu phương án A") %} {% endif %}
-            {% if not q['option_b'] %} {% set _ = missing.append("Thiếu phương án B") %} {% endif %}
-            {% if not q['option_c'] %} {% set _ = missing.append("Thiếu phương án C") %} {% endif %}
-            {% if not q['option_d'] %} {% set _ = missing.append("Thiếu phương án D") %} {% endif %}
-            {% if not q['correct'] %} {% set _ = missing.append("Thiếu đáp án đúng") %} {% endif %}
+            {% if not q.question_text %} {% set _ = missing.append("Thiếu câu hỏi") %} {% endif %}
+            {% if not q.option_a %} {% set _ = missing.append("Thiếu phương án A") %} {% endif %}
+            {% if not q.option_b %} {% set _ = missing.append("Thiếu phương án B") %} {% endif %}
+            {% if not q.option_c %} {% set _ = missing.append("Thiếu phương án C") %} {% endif %}
+            {% if not q.option_d %} {% set _ = missing.append("Thiếu phương án D") %} {% endif %}
+            {% if not correct %} {% set _ = missing.append("Thiếu đáp án đúng") %} {% endif %}
 
-            {% set has_error = (missing|length > 0) %}
+            {% if correct and correct not in ["A","B","C","D"] %}
+              {% set _ = missing.append("Đáp án không hợp lệ") %}
+            {% endif %}
+
+            {% set has_error = missing|length > 0 %}
 
             <tr class="{{ 'row-error' if has_error else 'row-ok' }}">
               <td>{{ loop.index }}</td>
 
+              <!-- Question -->
               <td class="text-start">
-                {% if q['question_text'] %}
-                  {{ q['question_text'] }}
+                {% if q.question_text %}
+                  {{ q.question_text }}
                 {% else %}
-                  <span class="text-danger fw-bold tooltip-error" title="Thiếu nội dung câu hỏi">❌ thiếu câu hỏi</span>
+                  <span class="text-danger fw-bold tooltip-error">❌ thiếu câu hỏi</span>
                 {% endif %}
               </td>
 
+              <!-- Options -->
               {% for opt in ['option_a','option_b','option_c','option_d'] %}
-              <td>
                 {% set val = q[opt] %}
-                {% if val %}
-                  {% if val|length <= 20 %}
-                    <span class="answer-pill">{{ val }}</span>
+                <td>
+                  {% if val %}
+                    {% if val|length <= 20 %}
+                      <span class="answer-pill">{{ val }}</span>
+                    {% else %}
+                      <span class="answer-long">{{ val }}</span>
+                    {% endif %}
                   {% else %}
-                    <span class="answer-long">{{ val }}</span>
+                    <span class="badge bg-danger tooltip-error">❌</span>
                   {% endif %}
-                {% else %}
-                  <span class="badge bg-danger tooltip-error" title="Thiếu dữ liệu">❌</span>
-                {% endif %}
-              </td>
+                </td>
               {% endfor %}
 
               <!-- Correct -->
               <td>
-                {% if q['correct'] %}
-                  <span class="badge bg-success">{{ q['correct'] }}</span>
+                {% if correct %}
+                  <span class="badge bg-success">{{ correct }}</span>
                 {% else %}
-                  <span class="badge bg-danger tooltip-error" title="Chưa có đáp án đúng">?</span>
+                  <span class="badge bg-danger">?</span>
                 {% endif %}
               </td>
 
@@ -150,12 +189,10 @@
                   <span class="badge bg-success">OK</span>
                 {% endif %}
               </td>
-
             </tr>
 
-            {% endfor %}
+          {% endfor %}
           </tbody>
-
         </table>
       </div>
 

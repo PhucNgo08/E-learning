@@ -4,9 +4,24 @@
 {% block content %}
 <div class="container py-5 fade-in">
 
-  <h2 class="fw-bold mb-4 edit-title">
+  <!-- TITLE -->
+  <h2 class="fw-bold mb-3 edit-title">
     <i class="bi bi-pencil-square"></i> Chỉnh sửa kỳ thi
   </h2>
+
+  <!-- QUICK ACTION BUTTONS -->
+  <div class="d-flex flex-wrap gap-2 mb-4">
+
+    <a href="/admin/exams/{{ exam.id }}/questions"
+       class="btn btn-primary shadow-sm">
+      <i class="bi bi-list-check"></i> Quản lý câu hỏi
+    </a>
+
+ 
+
+ 
+
+  </div>
 
   <!-- ====================================================
        FORM CHỈNH SỬA KỲ THI
@@ -34,10 +49,9 @@
     <!-- KHÓA HỌC -->
     <div class="mb-3">
       <label class="form-label fw-semibold">Khóa học</label>
-      <select name="course_id" class="form-select" required>
+      <select class="form-select" disabled>
         {% for course in courses %}
-          <option value="{{ course.id }}"
-                  {% if course.id == exam.course_id %} selected {% endif %}>
+          <option value="{{ course.id }}" {% if course.id == exam.course_id %} selected {% endif %}>
             {{ course.course_name }}
           </option>
         {% endfor %}
@@ -46,11 +60,13 @@
 
     <!-- Tổng câu hỏi -->
     <div class="mb-3">
-      <label class="form-label fw-semibold">Tổng số câu hỏi</label>
+      <label class="form-label fw-semibold">
+        Tổng số câu hỏi
+        <span class="text-muted">(tự cập nhật sau khi import)</span>
+      </label>
       <input type="number" name="total_questions" class="form-control"
              min="1" value="{{ exam.total_questions }}" required />
     </div>
-
 
     <!-- =============================
          CẤU HÌNH KỲ THI
@@ -62,24 +78,22 @@
     <div class="row">
       <div class="col-md-4 mb-3">
         <label class="form-label">⏱ Thời gian làm bài (phút)</label>
-        <input type="number" name="time_limit" class="form-control" min="1"
-               value="{{ exam.time_limit_minutes }}" required />
+        <input type="number" name="time_limit" class="form-control"
+               min="1" value="{{ exam.time_limit_minutes }}" required />
       </div>
 
       <div class="col-md-4 mb-3">
         <label class="form-label">🔁 Số lần làm bài</label>
-        <input type="number" name="max_attempts" class="form-control" min="1"
-               value="{{ exam.max_attempts }}" required />
+        <input type="number" name="max_attempts" class="form-control"
+               min="1" value="{{ exam.max_attempts }}" required />
       </div>
 
       <div class="col-md-4 mb-3">
         <label class="form-label">📊 Điểm qua môn (%)</label>
         <input type="number" name="passing_score" class="form-control"
-               min="1" max="100"
-               value="{{ exam.passing_score }}" required />
+               min="0" max="100" value="{{ exam.passing_score }}" required />
       </div>
     </div>
-
 
     <!-- =============================
          THỜI GIAN MỞ / ĐÓNG
@@ -91,67 +105,23 @@
     <div class="row">
       <div class="col-md-6 mb-3">
         <label class="form-label">Mở từ</label>
-
         <input type="datetime-local" name="available_from" class="form-control"
                value="{% if exam.available_from %}{{ exam.available_from.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
       </div>
 
       <div class="col-md-6 mb-3">
         <label class="form-label">Đóng lúc</label>
-
         <input type="datetime-local" name="available_to" class="form-control"
                value="{% if exam.available_to %}{{ exam.available_to.strftime('%Y-%m-%dT%H:%M') }}{% endif %}">
       </div>
     </div>
 
-
-    <!-- =============================
-         TÙY CHỌN HIỂN THỊ
-    ============================== -->
-    <h5 class="section-title">
-      <i class="bi bi-sliders"></i> Tùy chọn hiển thị
-    </h5>
-
-    <div class="row mb-4">
-
-      <div class="col-md-4">
-        <input type="hidden" name="randomize_questions" value="0">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox"
-                 name="randomize_questions" value="1"
-                 {% if exam.randomize_questions %} checked {% endif %}>
-          <label class="form-check-label">Xáo trộn câu hỏi</label>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <input type="hidden" name="randomize_options" value="0">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox"
-                 name="randomize_options" value="1"
-                 {% if exam.randomize_options %} checked {% endif %}>
-          <label class="form-check-label">Xáo trộn đáp án</label>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <input type="hidden" name="show_correct_answers" value="0">
-        <div class="form-check">
-          <input class="form-check-input" type="checkbox"
-                 name="show_correct_answers" value="1"
-                 {% if exam.show_correct_answers %} checked {% endif %}>
-          <label class="form-check-label">Hiển thị đáp án đúng</label>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="d-flex justify-content-between">
+    <div class="d-flex justify-content-between mt-4">
       <a href="/admin/exams/manage" class="btn btn-secondary">
         <i class="bi bi-arrow-left"></i> Quay lại
       </a>
 
-      <button type="submit" class="btn btn-warning px-4">
+      <button type="submit" class="btn btn-warning px-4 fw-semibold">
         <i class="bi bi-save"></i> Cập nhật
       </button>
     </div>
@@ -159,84 +129,11 @@
   </form>
 
   <!-- ====================================================
-       DANH SÁCH CÂU HỎI CỦA KỲ THI
+       DANH SÁCH CÂU HỎI
   ==================================================== -->
-  <hr class="my-5">
-
-  <h4 class="fw-bold text-primary mb-3">
-    <i class="bi bi-list-check"></i> Danh sách câu hỏi đã thêm
-  </h4>
-
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-body">
-
-      {% if exam.questions %}
-      <div class="table-responsive">
-        <table class="table table-hover align-middle text-center">
-
-          <thead class="text-white" style="background:#0056d2;">
-            <tr>
-              <th>#</th>
-              <th style="width:38%">Câu hỏi</th>
-              <th>A</th>
-              <th>B</th>
-              <th>C</th>
-              <th>D</th>
-              <th>Đúng</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for q in exam.questions %}
-            <tr>
-              <td>{{ loop.index }}</td>
-
-              <td class="text-start fw-semibold">{{ q.question_text }}</td>
-
-              {% set letters = ['A','B','C','D'] %}
-
-              {% for op in q.options %}
-                {% set idx = loop.index0 %}
-                <td>
-                  <span class="{% if op.is_correct %}fw-bold text-success{% endif %}">
-                    {{ letters[idx] }}. {{ op.option_text }}
-                  </span>
-                </td>
-              {% endfor %}
-
-              <td>
-                {% for op in q.options %}
-                  {% set idx = loop.index0 %}
-                  {% if op.is_correct %}
-                    <span class="badge bg-success">{{ letters[idx] }}</span>
-                  {% endif %}
-                {% endfor %}
-              </td>
-
-            </tr>
-            {% endfor %}
-          </tbody>
-
-        </table>
-      </div>
-
-      {% else %}
-      <div class="alert alert-info text-center m-0">
-        <i class="bi bi-info-circle"></i>
-        Chưa có câu hỏi nào trong kỳ thi này.
-      </div>
-      {% endif %}
-
-    </div>
-  </div>
-
 </div>
-
-
 <style>
-  body {
-    background: #f3f4f7;
-  }
+  body { background: #f3f4f7; }
 
   .edit-title {
     background: linear-gradient(135deg, #f59f00, #d9480f);
@@ -254,7 +151,7 @@
   }
 
   .section-title {
-    font-weight: 600;
+    font-weight: 700;
     padding-bottom: .5rem;
     margin-top: 1.8rem;
     margin-bottom: .8rem;

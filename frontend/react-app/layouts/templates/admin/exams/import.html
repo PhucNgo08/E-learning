@@ -1,13 +1,12 @@
 {% extends "layout_admin.html" %}
-{% block title %}📥 Import câu hỏi – PRO 2025{% endblock %}
+{% block title %}📥 Import câu hỏi – PRO 2025 V8.4{% endblock %}
 
 {% block content %}
 
 <style>
 /* ==========================================================
-   📥 IMPORT EXAM – GLASS NEO ULTRA PRO 2025
+   📥 IMPORT – GLASS NEO ULTRA PRO 2025 (FINAL)
 =========================================================== */
-
 .import-wrapper {
   max-width: 760px;
   margin: auto;
@@ -60,36 +59,32 @@
   transform: scale(1.03);
 }
 
-.file-name {
-  margin-top: 10px;
-  font-style: italic;
-  color: #444;
-}
+.file-name { margin-top: 10px; font-style: italic; color: #444; }
 
-/* PREVIEW BLOCK */
-.pre-block {
-  background: rgba(244,245,250,0.9);
+.preview-block {
+  margin-top: 20px;
+  background: rgba(244,245,250,0.95);
+  border-left: 4px solid #0d6efd;
   border-radius: 14px;
   padding: 1rem;
-  border-left: 4px solid #0d6efd;
-  font-family: "Consolas", monospace;
+  max-height: none !important;
+  overflow: visible !important;
   font-size: .85rem;
-}
-
-/* Button PRO */
-.btn-pro {
-  border-radius: 12px;
-  padding: 10px 22px;
-  transition: .25s ease;
-}
-
-.btn-pro:hover {
-  transform: translateY(-3px);
-}
-
-/* Loading section */
-.loading-pro {
   animation: fadeIn .4s ease;
+}
+
+.preview-table th,
+.preview-table td {
+  padding: 6px 10px !important;
+  border: 1px solid #dbe1f0 !important;
+  font-size: 13px;
+}
+
+.preview-table {
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  min-width: 100%;
 }
 
 @keyframes fadeInUp {
@@ -97,39 +92,21 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* DARK MODE SUPPORT */
-body.dark-mode .import-card {
-  background: rgba(30,41,59,0.55);
-  border-color: rgba(255,255,255,0.08);
-}
-
-body.dark-mode .pre-block {
-  background: rgba(45,55,72,0.65);
-  border-left-color: #6cb2ff;
-  color: #f1f5f9;
-}
-
-body.dark-mode .dropzone-pro {
-  background: rgba(51,65,85,0.65);
-  border-color: rgba(255,255,255,0.2);
-}
-
-body.dark-mode .dropzone-pro:hover {
-  background: rgba(75,85,99,0.65);
+.dark-mode .preview-block {
+  background: rgba(45,55,72,.65);
+  color: #f8fafc;
+  border-color: #6cb2ff;
 }
 </style>
+
 
 
 <div class="container import-wrapper fade-in">
 
   <div class="import-card">
 
-    <!-- TITLE -->
     <h3 class="text-center title-pro mb-4">
       <i class="bi bi-upload"></i> Import câu hỏi vào kỳ thi
     </h3>
@@ -155,6 +132,9 @@ body.dark-mode .dropzone-pro:hover {
 
       <div id="fileName" class="file-name"></div>
 
+      <!-- LIVE PREVIEW -->
+      <div id="previewArea" class="preview-block d-none"></div>
+
       <!-- BUTTON -->
       <div class="d-flex justify-content-between mt-4">
         <a href="/admin/exams/manage" class="btn btn-secondary btn-pro">
@@ -167,30 +147,26 @@ body.dark-mode .dropzone-pro:hover {
       </div>
     </form>
 
-    <!-- LOADING -->
     <div id="loading" class="text-center loading-pro mt-3 d-none">
       <div class="spinner-border text-primary"></div>
-      <p class="mt-2">Đang xử lý file, vui lòng chờ...</p>
+      <p class="mt-2">Đang xử lý file...</p>
     </div>
 
     <hr class="my-4">
 
-    <!-- PREVIEW EXCEL FORMAT -->
-    <h6 class="fw-bold">📘 Mẫu file Excel hợp lệ:</h6>
+    <h6 class="fw-bold">📘 Mẫu file Excel:</h6>
     <div class="pre-block mb-3">
-question_text | option_a | option_b | option_c | option_d | correct
+question_text | option_a | option_b | option_c | option_d | correct  
 Câu hỏi 1     | A1       | B1       | C1       | D1       | A
-Câu hỏi 2     | A2       | B2       | C2       | D2       | C
     </div>
 
-    <!-- PREVIEW TXT FORMAT -->
-    <h6 class="fw-bold">📘 Mẫu file TXT hợp lệ:</h6>
+    <h6 class="fw-bold">📘 Mẫu file TXT dạng block:</h6>
     <div class="pre-block">
-Câu hỏi 1
-A. Đáp án A
-B. Đáp án B
-C. Đáp án C
-D. Đáp án D
+Câu hỏi 1  
+A. Đáp án A  
+B. Đáp án B  
+C. Đáp án C  
+D. Đáp án D  
 Đáp án đúng: A
     </div>
 
@@ -198,58 +174,220 @@ D. Đáp án D
 </div>
 
 
-<script>
-/* ==========================================================
-   JS: Drag & Drop + Auto Preview + Loading
-=========================================================== */
 
+<script>
 const dropzone = document.getElementById("dropzone");
 const fileInput = document.getElementById("fileInput");
 const fileName = document.getElementById("fileName");
+const previewArea = document.getElementById("previewArea");
 const submitBtn = document.getElementById("submitBtn");
 const loading = document.getElementById("loading");
 const form = document.getElementById("importForm");
 
-dropzone.addEventListener("click", () => fileInput.click());
+/* ==========================================================
+   CLICK
+=========================================================== */
+dropzone.onclick = () => fileInput.click();
 
-fileInput.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if (file) fileName.innerText = "📌 Đã chọn: " + file.name;
-});
-
-// Drag Over
-dropzone.addEventListener("dragover", (e) => {
+/* ==========================================================
+   DRAG & DROP
+=========================================================== */
+dropzone.addEventListener("dragover", e => {
   e.preventDefault();
   dropzone.classList.add("dragover");
 });
-
-// Drag Leave
-dropzone.addEventListener("dragleave", () => {
-  dropzone.classList.remove("dragover");
-});
-
-// Drop File
-dropzone.addEventListener("drop", (e) => {
+dropzone.addEventListener("dragleave", () =>
+  dropzone.classList.remove("dragover")
+);
+dropzone.addEventListener("drop", e => {
   e.preventDefault();
   dropzone.classList.remove("dragover");
-
-  const file = e.dataTransfer.files[0];
-  if (file) {
-    fileInput.files = e.dataTransfer.files;
-    fileName.innerText = "📌 Đã chọn: " + file.name;
-  }
+  handleFile(e.dataTransfer.files[0]);
 });
 
-// Submit validation
-form.addEventListener("submit", (e) => {
+/* ==========================================================
+   INPUT CHANGE
+=========================================================== */
+fileInput.addEventListener("change", e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+});
+
+
+
+/* ==========================================================
+   🔥 V9.0 — AUTO ENCODING READER (NO CRASH / NO FREEZE)
+=========================================================== */
+function handleFile(file) {
+  fileName.innerText = "📌 Đã chọn: " + file.name;
+
+  // Excel: không preview
+  if (file.name.toLowerCase().endsWith(".xlsx")) {
+    previewArea.classList.remove("d-none");
+    previewArea.innerHTML =
+      `<div class='text-muted'>📘 File Excel — Preview không khả dụng.</div>`;
+    return;
+  }
+
+  const reader = new FileReader();
+
+  // Đọc bằng raw bytes
+  reader.readAsArrayBuffer(file);
+
+  reader.onload = e => {
+    const bytes = new Uint8Array(e.target.result);
+    const text = autoDecodeToUTF8(bytes);
+
+    previewFile(file.name.toLowerCase(), text);
+  };
+
+  reader.onerror = () => {
+    previewArea.classList.remove("d-none");
+    previewArea.innerHTML =
+      `<div class="text-danger">⚠ Không thể đọc file này.</div>`;
+  };
+}
+
+
+
+/* ==========================================================
+   🔥 AUTO-DECODE BYTE ARRAY → UTF-8 (V9.0)
+=========================================================== */
+function autoDecodeToUTF8(bytes) {
+  // UTF-8 BOM
+  if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder("utf-8").decode(bytes.subarray(3));
+  }
+
+  // UTF-16 LE BOM
+  if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
+    return new TextDecoder("utf-16le").decode(bytes.subarray(2));
+  }
+
+  // UTF-16 BE BOM
+  if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
+    return new TextDecoder("utf-16be").decode(bytes.subarray(2));
+  }
+
+  // Thử UTF-8
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (_) {}
+
+  // Thử Windows-1258 (Tiếng Việt Windows)
+  try {
+    return new TextDecoder("windows-1258").decode(bytes);
+  } catch (_) {}
+
+  // Thử Latin-1 / ANSI
+  try {
+    return new TextDecoder("iso-8859-1").decode(bytes);
+  } catch (_) {}
+
+  // Cuối cùng – fallback thô
+  let fallback = "";
+  for (let i = 0; i < bytes.length; i++) {
+    fallback += String.fromCharCode(bytes[i]);
+  }
+  return fallback;
+}
+
+
+
+/* ==========================================================
+   PREVIEW V9.0 (NO CRASH)
+=========================================================== */
+function previewFile(name, text) {
+  previewArea.classList.remove("d-none");
+  text = (text || "").trim();
+
+  // TXT BLOCK
+  if (name.endsWith(".txt") && !text.includes(",")) {
+    const blocks = text.split(/\r?\n\r?\n/);
+    previewArea.innerHTML = blocks
+      .map(b => `<pre>${escapeHtml(b)}</pre>`)
+      .join("<hr>");
+    return;
+  }
+
+  // Detect delimiter
+  let delimiter = ",";
+  if (text.includes(";")) delimiter = ";";
+  if (text.includes("|")) delimiter = "|";
+  if (text.includes("\t")) delimiter = "\t";
+
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  const maxLines = 80;
+  const rows = lines.slice(0, maxLines).map(l => l.split(delimiter));
+
+  // Vertical
+  if (lines.length > 0) {
+    const first = lines[0].toLowerCase();
+    if (
+      first.includes("question") ||
+      first.includes("câu hỏi") ||
+      first.startsWith("q:")
+    ) {
+      let html = "<table class='preview-table'><tbody>";
+      lines.forEach(ln => {
+        const p = ln.split(/[:\.]/);
+        if (p.length >= 2)
+          html += `<tr><th>${escapeHtml(p[0])}</th><td>${escapeHtml(
+            p.slice(1).join(":")
+          )}</td></tr>`;
+      });
+      html += "</tbody></table>";
+      previewArea.innerHTML = html;
+      return;
+    }
+  }
+
+  // CSV MODE
+  let html = `<table class="preview-table"><tbody>`;
+  rows.forEach(row => {
+    html += "<tr>";
+    row.forEach(cell => html += `<td>${escapeHtml(cell)}</td>`);
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+
+  if (lines.length > maxLines) {
+    html += `<div class="text-muted mt-2">… và còn ${
+      lines.length - maxLines
+    } dòng nữa</div>`;
+  }
+
+  previewArea.innerHTML = html;
+}
+
+
+
+/* ==========================================================
+   ESCAPE HTML
+=========================================================== */
+function escapeHtml(text) {
+  if (!text) return "";
+  return text
+    .toString()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+
+/* ==========================================================
+   SUBMIT (NO FREEZE)
+=========================================================== */
+form.addEventListener("submit", e => {
   if (!fileInput.files.length) {
-    alert("Vui lòng chọn 1 file hợp lệ!");
+    alert("Vui lòng chọn file!");
     e.preventDefault();
     return;
   }
 
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = "<i class='bi bi-hourglass-split'></i> Đang tải...";
+  submitBtn.classList.add("disabled");
   loading.classList.remove("d-none");
 });
 </script>

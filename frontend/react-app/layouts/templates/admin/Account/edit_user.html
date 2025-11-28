@@ -53,8 +53,7 @@
           <select name="role" id="role" class="form-select" required>
             <option value="student" {% if user.role == 'student' %}selected{% endif %}>🎓 Sinh viên</option>
             <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>👩‍🏫 Giáo viên</option>
-            <option value="teaching_assistant" {% if user.role == 'teaching_assistant' %}selected{% endif %}>🧑‍💼 Trợ giảng</option>
-            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>🛡️ Quản trị viên</option>
+           
           </select>
         </div>
 

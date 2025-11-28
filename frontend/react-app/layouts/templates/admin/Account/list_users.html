@@ -73,24 +73,11 @@
       margin-bottom: 10px;
     }
 
-    .filter-active {
-      border: 2px solid #0d6efd !important;
-    }
-
     footer {
       text-align: center;
       margin-top: 30px;
       color: #64748b;
       font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-      .page-header {
-        text-align: center;
-      }
-      .page-header .d-flex {
-        justify-content: center !important;
-      }
     }
   </style>
 </head>
@@ -121,15 +108,17 @@
     <div class="col-sm-12 col-md-4">
       <input type="text" class="form-control" id="searchInput" placeholder="🔍 Tìm kiếm theo tên, email hoặc username...">
     </div>
+
+    <!-- Vai trò (ĐÃ XÓA TRỢ GIẢNG) -->
     <div class="col-md-3">
       <select class="form-select filter-select" id="roleFilter">
         <option value="">🎓 Tất cả vai trò</option>
         <option value="admin">Admin</option>
         <option value="teacher">Giáo viên</option>
         <option value="student">Sinh viên</option>
-        <option value="teaching_assistant">Trợ giảng</option>
       </select>
     </div>
+
     <div class="col-md-3">
       <select class="form-select filter-select" id="statusFilter">
         <option value="">⚙️ Tất cả trạng thái</option>
@@ -141,7 +130,8 @@
 
   <div class="summary-info">
     <i class="bi bi-info-circle"></i>
-    Hiển thị <span id="visibleCount">{{ users|length if users else 0 }}</span> / <strong>{{ users|length if users else 0 }}</strong> người dùng.
+    Hiển thị <span id="visibleCount">{{ users|length if users else 0 }}</span> /
+    <strong>{{ users|length if users else 0 }}</strong> người dùng.
   </div>
 
   {% if users %}
@@ -166,19 +156,23 @@
           <td>{{ user.username }}</td>
           <td>{{ user.full_name }}</td>
           <td>{{ user.email }}</td>
+
+          <!-- Vai trò (ĐÃ XOÁ TRỢ GIẢNG) -->
           <td>
             {% if user.role == 'admin' %}
-              <span class="badge bg-gradient bg-danger">Admin</span>
+              <span class="badge bg-danger">Admin</span>
+
             {% elif user.role == 'teacher' %}
               <span class="badge bg-primary">Giáo viên</span>
+
             {% elif user.role == 'student' %}
               <span class="badge bg-success">Sinh viên</span>
-            {% elif user.role == 'teaching_assistant' %}
-              <span class="badge bg-info text-dark">Trợ giảng</span>
+
             {% else %}
               <span class="badge bg-secondary">Khác</span>
             {% endif %}
           </td>
+
           <td>
             {% if user.status == 'active' %}
               <span class="badge bg-success"><i class="bi bi-check-circle"></i> Hoạt động</span>
@@ -186,12 +180,15 @@
               <span class="badge bg-secondary"><i class="bi bi-slash-circle"></i> Vô hiệu hóa</span>
             {% endif %}
           </td>
+
           <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '' }}</td>
+
           <td class="text-center">
             <div class="btn-group">
               <a href="/admin/Account/edit-user/{{ user.id }}" class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
                 <i class="bi bi-pencil-square"></i>
               </a>
+
               {% if user.status == 'active' %}
                 <a href="/admin/Account/deactivate/{{ user.id }}" class="btn btn-sm btn-outline-warning"
                    onclick="return confirm('Vô hiệu hóa tài khoản này?')" title="Vô hiệu hóa">
@@ -262,7 +259,7 @@
     visibleCount.textContent = visible;
   }
 
-  // ✅ debounce 300ms tránh lag khi gõ nhanh
+  // Debounce 300ms
   let debounceTimer;
   [searchInput, roleFilter, statusFilter].forEach(el =>
     el.addEventListener("input", () => {
