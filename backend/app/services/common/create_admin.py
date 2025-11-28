@@ -1,4 +1,4 @@
-import mysql.connector
+import mysql.connector # type: ignore
 from uuid import uuid4
 import bcrypt
 from datetime import datetime
@@ -7,9 +7,9 @@ from datetime import datetime
 # ⚙️ Thông tin kết nối MySQL
 # =====================================================
 DB_HOST = "localhost"
-DB_PORT = 3309  # đổi nếu bạn dùng port khác (mặc định 3306)
+DB_PORT = 3306  # đổi nếu bạn dùng port khác (mặc định 3306)
 DB_USER = "root"
-DB_PASS = "111004@"   # mật khẩu MySQL
+DB_PASS = "p882004N@@Gg"   # mật khẩu MySQL
 DB_NAME = "e_learning"
 
 # =====================================================

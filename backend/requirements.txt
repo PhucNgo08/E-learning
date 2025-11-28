@@ -91,6 +91,7 @@ flake8>=6.1.0
 mypy>=1.3.0
 pre-commit>=3.4.0
 bandit>=1.7.0
+types-sqlalchemy>=1.4.0
 
 # --- GOOGLE GEMINI AI ---
 google-generativeai>=0.8.5

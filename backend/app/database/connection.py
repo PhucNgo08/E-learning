@@ -1,17 +1,24 @@
 # app/database/connection.py
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
+from urllib.parse import quote_plus 
+import os
+from dotenv import load_dotenv
 
-# ✅ Địa chỉ kết nối MySQL (sửa đúng)
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:111004%40@localhost:3309/e_learning"
-# Nếu mật khẩu MySQL KHÔNG có ký tự đặc biệt, ví dụ 111004123 thì dùng:
-# SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:111004123@localhost:3309/e_learning"
+load_dotenv()
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
+DB_USER = os.getenv("DB_USER", "root")
+DB_PASS = os.getenv("DB_PASS", "")
+DB_NAME = os.getenv("DB_NAME", "e_learning")
 
-# ✅ Khởi tạo engine (sử dụng đúng biến)
+encoded_password = quote_plus(DB_PASS)
+
+SQLALCHEMY_DATABASE_URL = f"mysql+pymysql://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    pool_pre_ping=True,  # giúp tránh lỗi "MySQL server has gone away"
+    pool_pre_ping=True,  
 )
 
 # ✅ Tạo đối tượng base cho ORM models
