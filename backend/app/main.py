@@ -84,16 +84,18 @@ safe_mount(ROOT_STATIC_DIR, "/static", "static")
 safe_mount(LAYOUT_STYLES_DIR, "/frontend/react-app/layouts/styles", "layout_styles")
 
 # TEMPLATES
+templates: Jinja2Templates | None = None
+
 if ROOT_TEMPLATE_DIR.exists():
     templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR))
     admin_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "admin"))
     teacher_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "teacher"))
     student_templates = Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "student"))
 
-    app.templates = templates
-    app.admin_templates = admin_templates
-    app.teacher_templates = teacher_templates
-    app.student_templates = student_templates
+    app.templates = templates # type: ignore
+    app.admin_templates = admin_templates # type: ignore
+    app.teacher_templates = teacher_templates # type: ignore
+    app.student_templates = student_templates # type: ignore
 else:
     templates = None
     print("❌ Templates folder NOT found!")
@@ -102,9 +104,9 @@ else:
 if templates:
     for env in (
         templates.env,
-        app.admin_templates.env,
-        app.teacher_templates.env,
-        app.student_templates.env,
+        app.admin_templates.env, # type: ignore
+        app.teacher_templates.env, # type: ignore
+        app.student_templates.env, # type: ignore
     ):
         env.globals.update(now=datetime.now)
 
