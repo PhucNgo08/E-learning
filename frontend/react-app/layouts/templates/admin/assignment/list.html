@@ -132,23 +132,35 @@
             </td>
 
             <td>
+
+              <!-- Chỉnh sửa -->
               <a href="/admin/assignment/edit/{{ a.id }}"
                  class="btn btn-sm btn-warning"
                  title="Chỉnh sửa">
                 <i class="bi bi-pencil-square"></i>
               </a>
 
+              <!-- Xóa -->
               <a href="/admin/assignment/delete/{{ a.id }}"
                  class="btn btn-sm btn-danger"
                  title="Xóa bài tập">
                 <i class="bi bi-trash3"></i>
               </a>
 
+              <!-- Thống kê theo khóa học -->
               <a href="/admin/assignment/manage/{{ a.course_id }}"
                  class="btn btn-sm btn-info text-white"
                  title="Thống kê khóa học">
                 <i class="bi bi-graph-up"></i>
               </a>
+
+              <!-- 📄 Danh sách bài nộp -->
+              <a href="/admin/assignment/submissions/{{ a.id }}"
+                 class="btn btn-sm btn-primary text-white"
+                 title="Xem bài nộp">
+                <i class="bi bi-folder2-open"></i>
+              </a>
+
             </td>
           </tr>
 

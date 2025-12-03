@@ -1,112 +1,84 @@
 {% extends "layout_student.html" %}
 {% block title %}📎 Chi tiết bài nộp{% endblock %}
-{% block content %}
 
+{% block content %}
 <div class="container py-4 fade-in">
 
   <h3 class="fw-bold mb-3">
-    <i class="bi bi-file-earmark-richtext me-2"></i>{{ page_title }}
+    <i class="bi bi-file-earmark-text"></i> Chi tiết bài nộp
   </h3>
 
-  <!-- =============================== -->
-  <!-- 🔹 THÔNG TIN BÀI NỘP -->
-  <!-- =============================== -->
-  <div class="card shadow-sm border-0 mb-3">
+  <div class="card shadow-sm border-0">
     <div class="card-body">
 
-      <p><strong>Bài tập:</strong> {{ submission.assignment.title }}</p>
+      <p><strong>📄 Bài tập:</strong> {{ submission.assignment.title }}</p>
 
-      <p>
-        <strong>Ngày nộp:</strong> 
-        {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") if submission.submission_time else "—" }}
+      <p><strong>⏰ Thời gian nộp:</strong>
+        {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") }}
       </p>
 
-      <p><strong>Trạng thái:</strong>
+      <p><strong>📌 Trạng thái:</strong>
         {% if submission.status == 'graded' %}
           <span class="badge bg-success">Đã chấm</span>
+        {% elif submission.status == 'submitted' %}
+          <span class="badge bg-info text-dark">Đã nộp</span>
         {% elif submission.status == 'late' %}
           <span class="badge bg-warning text-dark">Nộp trễ</span>
-        {% elif submission.status == 'resubmitted' %}
-          <span class="badge bg-primary">Nộp lại</span>
         {% else %}
-          <span class="badge bg-info">Đã nộp</span>
+          <span class="badge bg-secondary">Chưa nộp</span>
         {% endif %}
       </p>
 
-      <!-- ======= ĐIỂM ======= -->
-      {% if submission.grade is not none %}
-      <p><strong>Điểm:</strong>
-        <span class="text-success fw-bold">{{ submission.grade }}</span>
-        / {{ submission.assignment.total_points or 10 }}
-      </p>
-
-      <p><strong>Nhận xét:</strong>
-        {{ submission.feedback or "Không có nhận xét" }}
-      </p>
-      {% else %}
-      <p class="text-muted"><em>Chưa được chấm điểm</em></p>
-      {% endif %}
-
-      <!-- ======= NỘI DUNG TEXT ======= -->
-      {% if submission.submission_text %}
       <hr>
-      <p><strong>Nội dung bài nộp:</strong></p>
-      <div class="p-3 bg-light rounded border" style="white-space: pre-wrap;">
-        {{ submission.submission_text }}
-      </div>
+
+      <!-- Nội dung -->
+      <p><strong>📝 Nội dung bài nộp:</strong></p>
+      <p class="text-muted">{{ submission.submission_text or "—" }}</p>
+
+      <hr>
+
+      <!-- FILE -->
+      <p><strong>📎 File đã nộp:</strong></p>
+
+      {% if submission.files %}
+        <ul class="list-group">
+          {% for f in submission.files %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              {{ f.file_name }}
+              <a href="/student/assignment/download/{{ f.id }}" class="btn btn-sm btn-primary">
+                <i class="bi bi-download"></i> Tải về
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">Không có file đính kèm.</p>
       {% endif %}
 
-    </div>
-  </div>
+      <hr>
 
-  <!-- =============================== -->
-  <!-- 🔹 DANH SÁCH FILE ĐÃ NỘP -->
-  <!-- =============================== -->
-  {% if submission.files %}
-  <div class="card shadow-sm border-0 mb-4">
-    <div class="card-header fw-semibold bg-light">
-      <i class="bi bi-paperclip me-2"></i>File đã nộp
-    </div>
-
-    <ul class="list-group list-group-flush">
-      {% for f in submission.files %}
-      <li class="list-group-item">
-
-        <div class="d-flex justify-content-between align-items-center">
-          <span>
-            <i class="bi bi-file-earmark me-2"></i>{{ f.file_name }}
-          </span>
-
-          <a href="/student/assignment/download/{{ f.id }}"
-             class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-download"></i> Tải xuống
-          </a>
-        </div>
-
-        <!-- ======= PREVIEW FILE ======= -->
-        {% set ext = f.file_name.split('.')[-1].lower() %}
-        {% if ext in ["jpg", "jpeg", "png", "gif"] %}
-          <div class="mt-3">
-            <img src="/{{ f.file_url }}" class="img-fluid rounded shadow-sm" alt="preview">
-          </div>
-        {% elif ext == "pdf" %}
-          <div class="mt-3">
-            <iframe src="/{{ f.file_url }}" class="w-100" style="height: 400px; border-radius: 6px;"></iframe>
-          </div>
+      <!-- Điểm -->
+      <p><strong>💯 Điểm:</strong>
+        {% if submission.grade is not none %}
+          <span class="text-success fw-bold">{{ submission.grade }}</span>
+        {% else %}
+          —
         {% endif %}
+      </p>
 
-      </li>
-      {% endfor %}
-    </ul>
+      <!-- Feedback -->
+      <p><strong>📝 Nhận xét của giáo viên:</strong></p>
+      <p class="text-muted">{{ submission.feedback or "Chưa có nhận xét." }}</p>
+
+      <div class="mt-3">
+        <a href="/student/assignment/result/{{ submission.assignment_id }}" 
+           class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại kết quả
+        </a>
+      </div>
+
+    </div>
   </div>
-  {% endif %}
-
-  <!-- Nút quay lại -->
-  <a href="/student/assignment/result/{{ submission.assignment_id }}"
-     class="btn btn-secondary">
-    <i class="bi bi-arrow-left"></i> Quay lại
-  </a>
 
 </div>
-
 {% endblock %}

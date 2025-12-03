@@ -157,7 +157,7 @@ from app.database.connection import get_db
 def student_globals(request: Request):
     """
     Hàm global cho toàn bộ layout_student.html
-    → Tự động lấy số dư ví mà không cần truyền từ mỗi route.
+    → Tự động lấy avatar + số dư ví + thông tin realtime.
     """
     try:
         user_id = request.session.get("user_id")
@@ -165,18 +165,42 @@ def student_globals(request: Request):
 
         if role == "student" and user_id:
             db = next(get_db())
+
+            # import ở đây để tránh lỗi vòng import
+            from app.models.user import User
+            from app.services.wallet_service import get_balance
+
+            user = db.query(User).filter(User.id == user_id).first()
+
+            # Ưu tiên avatar theo thứ tự:
+            # 1. session (sau khi upload hình)
+            # 2. avatar_url trong DB
+            # 3. avatar mặc định
+            avatar = (
+                request.session.get("user_avatar")
+                or (user.avatar_url if user and user.avatar_url else None)
+                or "/uploads/avatars/default-avatar.png"
+            )
+
             balance = get_balance(db, user_id)
-        else:
-            balance = 0
 
+            return {
+                "wallet_balance": balance,
+                "avatar_url": avatar
+            }
+
+        # Nếu không phải student
         return {
-            "wallet_balance": balance
+            "wallet_balance": 0,
+            "avatar_url": "/uploads/avatars/default-avatar.png"
         }
 
-    except Exception:
+    except:
         return {
-            "wallet_balance": 0
+            "wallet_balance": 0,
+            "avatar_url": "/uploads/avatars/default-avatar.png"
         }
+
 
 
 # Gắn vào ENV của template student

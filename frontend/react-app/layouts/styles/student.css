@@ -1,15 +1,17 @@
 /* ============================================================
-   🎓 STUDENT PANEL – Glass Neo 2025 PRO MAX (v4.2 FINAL)
-   Stable • No overlay bug • Ultra Smooth • Production Ready
-   ============================================================ */
+🎓 STUDENT PANEL – Glass Neo 2025 PRO MAX (v13 FINAL)
+• Sidebar Collapse PRO (PC-only)
+• Tooltip Ultra
+• Mobile Slide Engine PERFECT
+• Wallet Mini Glass
+• Ultra Glass Header
+• ChatBot PRO MAX
+============================================================ */
 
-/* =======================================
-   ROOT VARIABLES
-======================================= */
+/* ROOT VARIABLES */
 :root {
   --blue1: #2563eb;
   --blue2: #1e3a8a;
-
   --accent: #facc15;
 
   --text: #1e293b;
@@ -19,120 +21,114 @@
   --glass: rgba(255, 255, 255, 0.72);
   --glass-strong: rgba(255, 255, 255, 0.87);
 
-  --header-bg: rgba(255, 255, 255, 0.7);
+  --header-bg: rgba(255, 255, 255, 0.65);
   --card-bg: rgba(255, 255, 255, 0.82);
 
-  --border-glass: rgba(255, 255, 255, 0.30);
-  --shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  --shadow: 0 8px 28px rgba(0,0,0,0.12);
 
   --header-h: 70px;
-  --transition: .32s ease;
+  --transition: 0.32s ease;
 }
 
-/* =======================================
-   DARK MODE
-======================================= */
+/* DARK MODE */
 body.dark-mode {
   --bg: #0f172a;
   --text: #e5e7eb;
   --text-muted: #94a3b8;
 
-  --glass: rgba(30, 41, 59, 0.62);
-  --glass-strong: rgba(30, 41, 59, 0.78);
-
-  --header-bg: rgba(30, 41, 59, 0.78);
-  --card-bg: rgba(30, 41, 59, 0.72);
-
+  --glass: rgba(30,41,59,0.62);
+  --glass-strong: rgba(30,41,59,0.78);
+  --header-bg: rgba(30,41,59,0.72);
+  --card-bg: rgba(30,41,59,0.72);
   --shadow: 0 6px 25px rgba(255,255,255,0.08);
 }
 
-/* =======================================
-   BASE
-======================================= */
+/* BASE */
 html { scroll-behavior: smooth; }
-
 body {
-  font-family: "Inter", "Segoe UI", sans-serif;
+  font-family: "Inter","Segoe UI",sans-serif;
   background: var(--bg);
   color: var(--text);
   margin: 0;
   transition: var(--transition);
 }
-
 a { text-decoration: none; color: inherit; }
 
-/* =======================================
-   GLASS CARD
-======================================= */
-.glass-card {
-  background: var(--glass);
-  backdrop-filter: blur(14px);
-  border-radius: 18px;
-  padding: 20px;
-  border: 1px solid var(--border-glass);
-  box-shadow: var(--shadow);
-  transition: var(--transition);
+/* ============================================================
+WRAPPER
+============================================================ */
+.student-wrapper {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
-.glass-card:hover { transform: translateY(-3px); }
 
-/* =======================================
-   SIDEBAR
-======================================= */
+/* ============================================================
+SIDEBAR – Full & Collapse Engine
+============================================================ */
 .student-sidebar {
-  position: fixed;
-  left: 0;
-  top: 0;
   width: 260px;
-  height: 100vh;
-  background: linear-gradient(180deg, var(--blue1), var(--blue2));
-  color: #fff;
+  background: linear-gradient(180deg,var(--blue1),var(--blue2));
+  color: white;
+
   display: flex;
   flex-direction: column;
   padding-top: 10px;
+
+  transition: width var(--transition);
   box-shadow: 4px 0 18px rgba(0,0,0,0.18);
   z-index: 900;
-  transition: var(--transition);
-  overflow: hidden;
+
+  /* 🔥 FIX TRƯỢT RIÊNG */
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;      /* sidebar có scroll riêng */
+  overflow-x: hidden;
 }
 
+
+/* PC collapse */
 .student-sidebar.collapsed {
-  width: 72px;
+  width: 72px !important;
 }
 
-/* Sidebar header */
+/* HEADER */
 .sidebar-header {
   text-align: center;
   padding: 26px 12px 20px;
 }
-
 .sidebar-header img {
   width: 80px;
   height: 80px;
   border-radius: 50%;
   border: 3px solid #fff;
   object-fit: cover;
-  transition: .25s;
-}
-.sidebar-header img:hover { transform: scale(1.06); }
-
-/* Sidebar menu */
-.sidebar-inner {
-  flex: 1;
-  overflow-y: auto;
-  margin-top: 10px;
+  transition: .25s ease;
 }
 
+.student-sidebar.collapsed .sidebar-header img {
+  width: 45px !important;
+  height: 45px !important;
+}
+
+/* MENU ITEMS */
+.sidebar-inner { flex: 1; overflow-y: auto; margin-top: 10px; }
 .sidebar-inner a {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 20px;
+
   border-left: 4px solid transparent;
   font-weight: 500;
-  color: #fff;
-  transition: .25s ease;
-}
+  color: white;
 
+  transition: 0.25s ease;
+  position: relative;
+}
 .sidebar-inner a:hover,
 .sidebar-inner a.active {
   background: rgba(255,255,255,0.18);
@@ -140,50 +136,64 @@ a { text-decoration: none; color: inherit; }
   transform: translateX(6px);
 }
 
+/* Hide label when collapsed */
 .student-sidebar.collapsed a span {
-  display: none;
+  display: none !important;
 }
 
-/* Sidebar overlay */
-#sidebar-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: none;
+/* ============================================================
+TOOLTIP WHEN COLLAPSED
+============================================================ */
+.student-sidebar.collapsed a::after {
+  content: attr(data-tooltip);
+  position: absolute;
+
+  left: 70px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  background: rgba(0,0,0,0.85);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+
+  opacity: 0;
   pointer-events: none;
-  z-index: 850;
+  transition: .22s ease;
 }
 
-.student-sidebar.show + #sidebar-overlay {
-  display: block;
-  pointer-events: auto;
+.student-sidebar.collapsed a:hover::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(6px);
 }
 
-/* =======================================
-   HEADER
-======================================= */
+/* FOOTER */
+.sidebar-footer {
+  text-align: center;
+  padding: 12px 0;
+  font-size: 0.85rem;
+  opacity: .85;
+}
+
+/* ============================================================
+HEADER
+============================================================ */
 .student-header {
-  position: fixed;
+  position: sticky;
   top: 0;
-  right: 0;
-  left: 260px;
-
   height: var(--header-h);
   background: var(--header-bg);
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(18px);
 
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-
+  justify-content: flex-end;
   padding: 0 40px;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
-  transition: var(--transition);
-  z-index: 1000 !important;
-}
 
-.student-sidebar.collapsed ~ .student-header {
-  left: 72px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  z-index: 1000;
 }
 
 .nav-icons {
@@ -193,167 +203,251 @@ a { text-decoration: none; color: inherit; }
 }
 
 .nav-icon {
-  font-size: 1.4rem;
-  transition: .25s;
+  font-size: 1.35rem;
   color: var(--text);
+  transition: .25s ease;
 }
-.nav-icon:hover { transform: scale(1.1); color: var(--blue1); }
-body.dark-mode .nav-icon:hover { color: var(--accent); }
+.nav-icon:hover {
+  transform: scale(1.08);
+  color: var(--blue1);
+}
 
-/* Cart badge */
-.cart-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #ef4444;
-  color: white;
-  padding: 2px 7px;
+/* WALLET MINI */
+.wallet-header-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 14px;
+  border-radius: 22px;
+
+  background: var(--glass-strong);
+  backdrop-filter: blur(10px);
+
+  box-shadow: var(--shadow);
+  transition: .25s;
+}
+.wallet-header-btn:hover { transform: scale(1.05); }
+
+.wallet-icon-box {
+  width: 28px; height: 28px;
+  display: flex; justify-content: center; align-items: center;
   border-radius: 50%;
-  font-size: .65rem;
-  animation: cartPop .3s ease;
+  background: linear-gradient(135deg,#2563eb,#1e40af);
+  color: white;
 }
 
-@keyframes cartPop {
-  from {transform: scale(.4); opacity: 0;}
-  to {transform: scale(1); opacity: 1;}
+.wallet-balance-mini { font-weight: 600; font-size: .95rem; }
+
+/* ============================================================
+CONTENT
+============================================================ */
+.content-wrapper {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-/* =======================================
-   FLOATING BUTTONS
-======================================= */
+#content {
+  flex: 1;
+  padding: 30px 40px;
+}
+
+.fade { opacity: 0; transition: .45s ease; }
+.fade.show { opacity: 1; }
+
+/* ============================================================
+FLOATING BUTTONS
+============================================================ */
 .btn-floating {
   position: fixed;
-  width: 48px;
-  height: 48px;
+  width: 48px; height: 48px;
   border-radius: 50%;
-  border: none;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
 
   background: var(--glass-strong);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
+
+  display: flex; justify-content: center; align-items: center;
   cursor: pointer;
 
-  z-index: 1300;
-  transition: .22s;
+  transition: .25s ease;
+  z-index: 1500;
 }
-
-.btn-floating:hover {
-  transform: scale(1.1) rotate(5deg);
-}
+.btn-floating:hover { transform: scale(1.1); }
 
 .sidebar-btn { top: 20px; left: 20px; }
-.mode-btn    { top: 20px; right: 22px; }
-.chat-btn    { bottom: 25px; right: 25px; }
+.chat-btn { bottom: 25px; right: 25px; }
 
-/* =======================================
-   CONTENT
-======================================= */
-#content {
-  margin-top: calc(var(--header-h) + 30px);
-  margin-left: 285px;
-  margin-right: 28px;
-  margin-bottom: 40px;
-  transition: var(--transition);
-}
-
-.student-sidebar.collapsed ~ .student-header ~ #content {
-  margin-left: 100px;
-}
-
-/* =======================================
-   CHATBOT
-======================================= */
+/* ============================================================
+CHATBOT PRO MAX
+============================================================ */
 #chatBotWindow {
-  position: fixed;
-  bottom: 90px;
-  right: 25px;
-  width: 350px;
-  height: 460px;
+  position: fixed !important;
+  bottom: 100px !important;
+  right: 30px !important;
+
+  width: 380px; max-width: 92vw;
+  height: 540px;
 
   display: flex;
   flex-direction: column;
 
   background: var(--card-bg);
-  border-radius: 16px;
-  box-shadow: var(--shadow);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.22);
+  backdrop-filter: blur(22px);
+
+  box-shadow: 0 8px 30px rgba(0,0,0,.28);
 
   opacity: 0;
   pointer-events: none;
-  transform: translateY(20px);
+  transform: scale(.86) translateY(30px);
+  transition: all .35s cubic-bezier(.2,.8,.4,1);
 
-  transition: .28s;
-  z-index: 1200;
+  overflow: hidden;
+  z-index: 1600;
 }
 
 #chatBotWindow.show {
   opacity: 1;
+  transform: scale(1) translateY(0);
   pointer-events: auto;
-  transform: translateY(0);
 }
 
-/* =======================================
-   MODAL FIX
-======================================= */
-.modal { z-index: 2000 !important; }
-.modal-backdrop { z-index: 1800 !important; }
+#chatBotHeader {
+  padding: 16px;
+  background: linear-gradient(92deg,#007bff,#6f42c1);
+  color: white;
 
-/* =======================================
-   RESPONSIVE
-======================================= */
-@media (max-width: 992px) {
-  .student-sidebar { transform: translateX(-100%); }
-  .student-sidebar.show { transform: translateX(0); }
-
-  .student-header { left: 0; }
-  #content { margin: 95px 20px 30px; }
-}
-
-@media (max-width: 576px) {
-  .wallet-header-btn span { display: none; }
-  #chatBotWindow { width: 92%; right: 4%; }
-}
-/* ============================================
-   FIX DARK MODE BUTTON — ALIGN WITH HEADER ICONS
-============================================ */
-.nav-darkmode-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.05);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-
-  cursor: pointer;
-  transition: .25s ease;
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
 
-  margin-left: 10px; /* chuẩn spacing */
-  padding: 0;
+  font-weight: 600;
+  border-radius: 22px 22px 0 0;
 }
 
-.nav-darkmode-btn i {
-  font-size: 1.1rem;
-  color: #2563eb;
-  line-height: 0; /* CHỈNH NGANG ICON */
+#chatBotMessages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--glass);
 }
 
-.nav-darkmode-btn:hover {
-  transform: scale(1.08);
-  background: #f1f5f9;
+.msg-wrap {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.msg-wrap.user { justify-content: flex-end; }
+.msg-wrap.ai   { justify-content: flex-start; }
+
+.chat-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
-/* Dark mode style */
-body.dark-mode .nav-darkmode-btn {
-  background: #1e293b;
-  border-color: rgba(255,255,255,0.2);
+.msg-bubble {
+  max-width: 75%;
+  padding: 12px 16px;
+  border-radius: 18px;
+  line-height: 1.4;
+}
+.msg-user {
+  background: linear-gradient(135deg,#007bff,#0056d8);
+  color: white;
+}
+.msg-ai {
+  background: white;
+  color: #222;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+body.dark-mode .msg-ai {
+  background: #2b2e33;
+  color: #eee;
 }
 
-body.dark-mode .nav-darkmode-btn i {
-  color: #facc15;
+#chatBotForm {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  background: var(--glass-strong);
 }
+#chatInput {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 25px;
+}
+
+/* ============================================================
+OVERLAY MOBILE
+============================================================ */
+#sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 899;
+
+  display: none;
+  opacity: 0;
+  transition: .25s ease;
+}
+#sidebar-overlay.show {
+  display: block;
+  opacity: 1;
+}
+
+/* ============================================================
+MOBILE SIDEBAR
+============================================================ */
+@media (max-width: 992px) {
+  .student-sidebar {
+    position: fixed !important;
+    left: -260px;
+    top: 0;
+    height: 100vh;
+    transition: .35s cubic-bezier(.2,.8,.4,1);
+    z-index: 1000;
+  }
+  .student-sidebar.mobile-show {
+    left: 0 !important;
+  }
+
+  /* mobile không collapse */
+  .student-sidebar.collapsed {
+    width: 260px !important;
+  }
+}
+
+/* ============================================================
+PC COLLAPSE
+============================================================ */
+@media (min-width: 992px) {
+
+  .student-sidebar + .content-wrapper {
+    margin-left: 260px !important;  /* Đúng theo chiều rộng sidebar */
+    transition: .28s ease;
+  }
+
+  .student-sidebar.collapsed + .content-wrapper {
+    margin-left: 72px !important;
+  }
+
+  .student-sidebar.collapsed .sidebar-header span,
+  .student-sidebar.collapsed .sidebar-header small,
+  .student-sidebar.collapsed .sidebar-footer,
+  .student-sidebar.collapsed .sidebar-inner a span {
+    display: none !important;
+  }
+
+  /* Fix icon center when collapsed */
+  .student-sidebar.collapsed a {
+    justify-content: center !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+/* END — v13 FINAL */

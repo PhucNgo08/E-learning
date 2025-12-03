@@ -288,3 +288,28 @@ def get_lesson_full_structure(db: Session, lesson_id: str):
         print("❌ [get_lesson_full_structure] Error:", e)
         traceback.print_exc()
         return None
+# =====================================================
+# 🧩 11) Lấy quiz theo bài học (FIX QUAN TRỌNG)
+# =====================================================
+def get_quiz_by_lesson(db: Session, lesson_id: str):
+    try:
+        from app.models.quiz import Quiz
+        from app.models.question import Question
+        from app.models.question_option import QuestionOption
+        from sqlalchemy.orm import joinedload
+
+        quiz = (
+            db.query(Quiz)
+            .filter(Quiz.lesson_id == lesson_id)
+            .options(
+                joinedload(Quiz.questions).joinedload(Question.options)
+            )
+            .first()
+        )
+
+        return quiz
+
+    except Exception as e:
+        print("❌ [get_quiz_by_lesson] Error:", e)
+        traceback.print_exc()
+        return None

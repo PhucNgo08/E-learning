@@ -51,8 +51,13 @@ class Quiz(Base):
     is_approved = Column(Boolean, default=False)
 
     # ======================================
-    # 🔗 Quan hệ khoá ngoại (CHỈ COURSE)
+    # 🔗 Quan hệ khoá ngoại
     # ======================================
+
+    # ❗ Thêm lesson_id (bắt buộc vì backend tạo quiz theo bài học)
+    lesson_id = Column(String(36), ForeignKey("lessons.id"), nullable=True)
+    lesson = relationship("Lesson", back_populates="quizzes")
+
     course_id = Column(String(36), ForeignKey("courses.id"))
     course = relationship("Course", back_populates="quizzes")
 
@@ -84,7 +89,7 @@ class Quiz(Base):
     updated_at = Column(
         DateTime,
         default=datetime.utcnow,
-        onupdate=datetime.utcnow   # ✔
+        onupdate=datetime.utcnow
     )
 
 

@@ -7,12 +7,13 @@
   .notif-item {
     transition: 0.2s ease;
     position: relative;
+    border-left: 4px solid transparent;
   }
   .notif-item:hover {
     background-color: #f8f9fa;
   }
   .notif-unread {
-    border-left: 4px solid #0d6efd;
+    border-left: 4px solid #0d6efd !important;
     background-color: #eef5ff;
   }
   .notif-message {
@@ -20,10 +21,11 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 480px;
+    display: block;
   }
   .notif-badge {
     font-size: 0.7rem;
-    padding: 2px 8px;
+    padding: 2px 7px;
     border-radius: 12px;
     margin-left: 6px;
   }
@@ -79,7 +81,7 @@
     {% endif %}
   </div>
 
-  <!-- Danh sách thông báo -->
+  <!-- Notification List -->
   {% if notifications and notifications|length > 0 %}
   <div class="list-group shadow-sm">
 
@@ -87,7 +89,7 @@
       'system': 'bi-gear',
       'course': 'bi-book',
       'assignment': 'bi-journal-check',
-      'quiz': 'bi-ui-checks',
+      'quiz': 'bi-ui-checks-grid',
       'message': 'bi-chat-dots',
       'other': 'bi-bell'
     } %}
@@ -110,21 +112,20 @@
               </span>
             </h6>
 
-            <!-- Preview Message -->
+            <!-- Message preview -->
             <small class="text-muted notif-message">
               {{ (n.message or '')[:100] ~ ('...' if n.message and n.message|length > 100 else '') }}
             </small>
-
           </div>
 
-          <!-- Thời gian -->
+          <!-- Time -->
           <small class="text-secondary ms-2">
             {{ n.created_at.strftime("%d/%m/%Y %H:%M") if n.created_at else "" }}
           </small>
 
         </div>
 
-        <!-- Nút xóa -->
+        <!-- Delete -->
         <a href="/student/notifications/delete/{{ n.id }}" 
            class="btn btn-outline-danger btn-sm delete-btn"
            title="Xóa thông báo">
@@ -137,7 +138,8 @@
 
   {% else %}
   <div class="alert alert-info text-center mt-4">
-    <i class="bi bi-info-circle me-2"></i>Chưa có thông báo nào.
+    <i class="bi bi-info-circle me-2"></i>
+    Chưa có thông báo nào.
   </div>
   {% endif %}
 

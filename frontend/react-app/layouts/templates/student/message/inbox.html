@@ -5,7 +5,7 @@
 
 <style>
 /* ==========================================================
-📥 INBOX – Student Message UI v4.0 (Final 2025)
+📥 INBOX – Student Message UI v4.5 (Final 2025)
 ========================================================== */
 
 .inbox-item {
@@ -41,39 +41,30 @@ body.dark-mode .msg-avatar {
   border-color: rgba(255,255,255,0.12);
 }
 
-/* "Chưa đọc" highlight */
+/* Unread highlight */
 .unread-highlight {
   border-left: 5px solid #0d6efd !important;
 }
 
-/* Icon file */
-.file-icon {
-  font-size: 1rem;
-  color: var(--blue1);
-}
-
-/* Floating Compose Button */
+/* Floating compose button */
 .fab-compose {
   position: fixed;
   bottom: 30px;
   right: 90px;
-  background: linear-gradient(135deg, #0d6efd, #0056d6);
-  color: #fff;
-  border-radius: 50%;
   width: 60px;
   height: 60px;
+  background: linear-gradient(135deg,#0d6efd,#0056d6);
+  color: #fff;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
   box-shadow: 0 8px 22px rgba(0,0,0,.25);
+  transition: .3s ease;
   z-index: 1050;
-  transition: all .3s ease;
 }
-.fab-compose:hover {
-  transform: scale(1.12);
-  background: linear-gradient(135deg, #0b5ed7, #003c9e);
-}
+.fab-compose:hover { transform: scale(1.12); }
 
 @media(max-width: 576px) {
   .fab-compose {
@@ -82,6 +73,7 @@ body.dark-mode .msg-avatar {
   }
 }
 </style>
+
 
 
 <div class="container py-3 fade-in">
@@ -96,49 +88,49 @@ body.dark-mode .msg-avatar {
     </a>
   </div>
 
-  <!-- Message List -->
+
+  <!-- Message list -->
   {% if messages and messages|length > 0 %}
   <div class="list-group border-0">
 
     {% for msg in messages %}
+    {% set sender = msg.sender %}
+    
     <a href="/student/message/view/{{ msg.id }}"
        class="list-group-item list-group-item-action inbox-item d-flex justify-content-between align-items-center mb-2 py-3
               {% if msg.is_read == 0 %} unread-highlight {% endif %}">
 
+
       <!-- LEFT SIDE -->
       <div class="d-flex align-items-center gap-3">
 
-        <!-- Avatar -->
-        {% set sender = msg.sender if msg.sender else None %}
-        {% if sender and sender.avatar_url %}
-          <img src="{{ sender.avatar_url }}" class="msg-avatar" alt="avatar">
-        {% else %}
-          <img src="/static/img/default_avatar.png" class="msg-avatar" alt="avatar">
-        {% endif %}
+        <!-- Avatar (safe fallback) -->
+        <img src="{{ sender.avatar_url or '/uploads/avatars/default-avatar.png' }}"
+             onerror="this.src='/uploads/avatars/default-avatar.png'"
+             class="msg-avatar">
 
-        <!-- Info -->
         <div>
+          <!-- Sender name -->
           <div class="fw-semibold text-dark">
-            {{ sender.full_name if sender else "Người gửi ẩn danh" }}
+            {{ sender.full_name if sender else "Người gửi" }}
           </div>
 
-          <!-- content preview -->
+          <!-- Preview -->
           <small class="text-muted d-block">
             {% if msg.content %}
               {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
             {% else %}
-              <i class="bi bi-paperclip file-icon"></i> Tệp đính kèm
+              <i class="bi bi-paperclip"></i> Tệp đính kèm
             {% endif %}
           </small>
         </div>
-
       </div>
+
 
       <!-- RIGHT SIDE -->
       <div class="text-end">
-
         <small class="text-secondary d-block">
-          {{ msg.sent_at.strftime("%d/%m/%Y %H:%M") if msg.sent_at else "" }}
+          {{ msg.sent_at | datetime }}
         </small>
 
         {% if msg.is_read == 0 %}
@@ -148,7 +140,9 @@ body.dark-mode .msg-avatar {
 
     </a>
     {% endfor %}
+
   </div>
+
 
   {% else %}
   <!-- Empty -->
@@ -156,6 +150,7 @@ body.dark-mode .msg-avatar {
     <i class="bi bi-envelope-exclamation"></i> Hộp thư trống.
   </div>
   {% endif %}
+
 </div>
 
 

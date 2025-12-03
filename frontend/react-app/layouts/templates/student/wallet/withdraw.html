@@ -3,18 +3,18 @@
 
 {% block content %}
 
-<div class="container mt-4 fade show" style="max-width: 650px;">
+<div class="container fade show" style="max-width: 650px; margin-top: 40px;">
 
     <div class="glass-card shadow-lg p-4" style="border-radius: 22px;">
 
         <!-- HEADER -->
         <div class="text-center mb-4">
             <div class="mx-auto mb-3"
-                 style="width: 85px; height: 85px; border-radius: 50%;
-                        background: linear-gradient(135deg, #dc2626, #b91c1c);
-                        display:flex; justify-content:center; align-items:center;
-                        box-shadow:0 10px 22px rgba(220,38,38,0.35);">
-                <i class="bi bi-bank2 text-white" style="font-size: 2.6rem;"></i>
+                style="width: 85px; height: 85px; border-radius: 50%;
+                       background: linear-gradient(135deg, #ef4444, #b91c1c);
+                       display:flex; justify-content:center; align-items:center;
+                       box-shadow:0 10px 22px rgba(239,68,68,0.35);">
+                <i class="bi bi-bank text-white" style="font-size: 2.6rem;"></i>
             </div>
 
             <h2 class="fw-bold mb-1">💸 Rút tiền</h2>
@@ -29,45 +29,61 @@
         </div>
         {% endif %}
 
+        <!-- CURRENT BALANCE -->
+        <div class="alert alert-info d-flex justify-content-between align-items-center mb-4"
+             style="border-radius: 12px;">
+            <span class="fw-semibold">💰 Số dư hiện tại:</span>
+            <span class="fw-bold text-primary">{{ "{:,.0f}".format(balance) }} đ</span>
+        </div>
+
         <!-- FORM -->
-        <form action="/student/wallet/withdraw" method="post">
+        <form action="/student/wallet/withdraw" method="post" id="withdrawForm">
 
             <!-- Amount -->
             <label class="form-label fw-semibold">Số tiền cần rút</label>
-            <div class="input-group mb-3">
+            <div class="input-group mb-2">
                 <span class="input-group-text fw-bold text-danger"
-                      style="background: rgba(220,38,38,0.12); border-radius:12px 0 0 12px;">
+                    style="background: rgba(220,38,38,0.12); border-radius:12px 0 0 12px;">
                     <i class="bi bi-currency-exchange"></i>
                 </span>
 
-                <input type="number"
-                       name="amount"
-                       min="1000"
-                       class="form-control form-control-lg"
-                       style="border-radius:0 12px 12px 0;"
-                       placeholder="Ví dụ: 100.000"
-                       required>
+                <input type="text" id="withdrawAmount" name="amount"
+                    class="form-control form-control-lg"
+                    style="border-radius:0 12px 12px 0;"
+                    placeholder="VD: 100.000"
+                    required>
             </div>
 
-            <!-- Note -->
+            <!-- QUICK BUTTONS -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                {% set values = [50000,100000,200000,500000] %}
+                {% for v in values %}
+                <button type="button"
+                    class="btn btn-outline-danger fw-semibold quick-btn"
+                    data-amount="{{ v }}">
+                    {{ "{:,.0f}".format(v) }} đ
+                </button>
+                {% endfor %}
+            </div>
+
+            <!-- NOTE -->
             <label class="form-label fw-semibold">Ghi chú (không bắt buộc)</label>
-            <div class="input-group mb-2">
+            <div class="input-group mb-3">
                 <span class="input-group-text text-muted"
-                      style="background: rgba(0,0,0,0.08); border-radius:12px 0 0 12px;">
+                    style="background: rgba(0,0,0,0.08); border-radius:12px 0 0 12px;">
                     <i class="bi bi-pencil-square"></i>
                 </span>
 
-                <input type="text"
-                       name="note"
-                       class="form-control"
+                <input type="text" name="note" class="form-control"
                        style="border-radius:0 12px 12px 0;"
-                       placeholder="Ví dụ: Rút về ngân hàng"
-                >
+                       placeholder="Ví dụ: Rút về ngân hàng">
             </div>
 
             <!-- BUTTON -->
-            <button class="btn btn-danger w-100 fw-semibold py-3 mt-3"
+            <button id="submitBtn"
+                    class="btn btn-danger w-100 fw-semibold py-3 mt-2"
                     style="border-radius: 12px;
+                           font-size:1.05rem;
                            background: linear-gradient(135deg, #dc2626, #991b1b);
                            box-shadow: 0 6px 16px rgba(220,38,38,0.32);">
                 <i class="bi bi-box-arrow-down me-1"></i>
@@ -78,8 +94,7 @@
 
         <!-- BACK -->
         <div class="text-center mt-4">
-            <a href="/student/wallet/page"
-               class="fw-semibold"
+            <a href="/student/wallet/page" class="fw-semibold"
                style="text-decoration:none; color:#2563eb;">
                 ← Quay về ví
             </a>
@@ -88,5 +103,55 @@
     </div>
 
 </div>
+
+
+<!-- ================================
+     JAVASCRIPT — PRO MAX v9
+================================ -->
+<script>
+    const input = document.getElementById("withdrawAmount");
+    const submitBtn = document.getElementById("submitBtn");
+    const BALANCE = parseInt("{{ balance|int }}");
+
+
+    function formatCurrency(num) {
+        return num.toLocaleString("vi-VN");
+    }
+
+    function extractNumber(str) {
+        return parseInt(str.replace(/\D/g, "")) || 0;
+    }
+
+    // Format realtime & validate
+    input.addEventListener("input", () => {
+        let v = extractNumber(input.value);
+        input.value = formatCurrency(v);
+
+        if (v > BALANCE) {
+            input.style.border = "2px solid #dc2626";
+            submitBtn.disabled = true;
+        } else {
+            input.style.border = "";
+            submitBtn.disabled = (v < 1000);
+        }
+    });
+
+    // Quick buttons
+    document.querySelectorAll(".quick-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            let v = parseInt(btn.dataset.amount);
+            if (v > BALANCE) v = BALANCE;
+
+            input.value = formatCurrency(v);
+            submitBtn.disabled = false;
+            input.style.border = "";
+        });
+    });
+
+    // Before submit — convert "100.000" -> 100000
+    document.getElementById("withdrawForm").addEventListener("submit", () => {
+        input.value = extractNumber(input.value);
+    });
+</script>
 
 {% endblock %}

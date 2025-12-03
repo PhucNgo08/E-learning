@@ -8,6 +8,7 @@ import traceback
 from app.models.user import User
 from app.models.course import Course
 from app.models.module import Module
+from app.models.assignment_submission import AssignmentSubmission
 from app.database.connection import get_db
 
 # ===== Service CHUẨN =====
@@ -22,6 +23,7 @@ from app.services.admin.assignment_service import (
     get_student_assignment_summary,
     get_assignment_analytics,
     export_assignment_scores_to_excel,
+    grade_submission,         # <-- ✔ THÊM
 )
 
 # ==== Template ====
@@ -57,8 +59,111 @@ def assignment_list(request: Request, db: Session = Depends(get_db)):
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
 
 
+
 # =========================================================
-# ➕ 2️⃣ Form tạo bài tập (ĐÃ FIX: load courses + modules + teachers)
+# 📤 1.1 Danh sách bài nộp của một assignment
+# =========================================================
+@router.get("/submissions/{assignment_id}", response_class=HTMLResponse)
+def list_submissions(request: Request, assignment_id: str, db: Session = Depends(get_db)):
+    try:
+        tpl = get_template_by_path(request.url.path)
+
+        submissions = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.assignment_id == assignment_id)
+            .all()
+        )
+
+        assignment = get_by_id(db, assignment_id)
+
+        return tpl.TemplateResponse(
+            "assignment/list_submissions.html",
+            {
+                "request": request,
+                "submissions": submissions,
+                "assignment": assignment,
+                "current_year": datetime.now().year
+            }
+        )
+    except Exception:
+        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
+
+
+# =========================================================
+# 📝 1.2 Form chấm bài
+# =========================================================
+@router.get("/grade/{submission_id}", response_class=HTMLResponse)
+def grade_form(request: Request, submission_id: str, db: Session = Depends(get_db)):
+    try:
+        tpl = get_template_by_path(request.url.path)
+
+        submission = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.id == submission_id)
+            .first()
+        )
+
+        if not submission:
+            raise HTTPException(404, "Không tìm thấy bài nộp.")
+
+        return tpl.TemplateResponse(
+            "assignment/grade.html",
+            {
+                "request": request,
+                "submission": submission,
+                "current_year": datetime.now().year
+            }
+        )
+    except Exception:
+        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
+
+
+# =========================================================
+# 📝 1.3 POST chấm bài
+# =========================================================
+@router.post("/grade/{submission_id}")
+def grade_submit(
+    submission_id: str,
+    grade: float = Form(...),
+    feedback: str = Form(""),
+    db: Session = Depends(get_db),
+    request: Request = None
+):
+    try:
+        # Tạm thời: Admin/Teacher ID lấy từ cứng
+        # Nếu bạn có system auth → đổi thành: request.state.user.id
+        teacher_id = "ADMIN-MANUAL-ID"
+
+        grade_submission(
+            db=db,
+            submission_id=submission_id,
+            grade=grade,
+            feedback=feedback,
+            teacher_id=teacher_id
+        )
+
+        # Redirect về danh sách bài nộp
+        sub = db.query(AssignmentSubmission).filter(
+            AssignmentSubmission.id == submission_id
+        ).first()
+
+        return RedirectResponse(
+            f"/admin/assignment/submissions/{sub.assignment_id}",
+            status_code=303
+        )
+
+    except HTTPException as e:
+        return HTMLResponse(f"<h3 style='color:red;'>{e.detail}</h3>", status_code=400)
+
+    except Exception:
+        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
+
+
+# =========================================================
+# ➕ 2️⃣ Form tạo bài tập
 # =========================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_assignment_form(request: Request, db: Session = Depends(get_db)):
@@ -66,7 +171,7 @@ def create_assignment_form(request: Request, db: Session = Depends(get_db)):
 
     teachers = db.query(User).filter(User.role == "teacher").all()
     courses = db.query(Course).filter(Course.status == "published").all()
-    modules = db.query(Module).all()  # module theo khóa học
+    modules = db.query(Module).all()
 
     return tpl.TemplateResponse(
         "assignment/create.html",
@@ -81,7 +186,7 @@ def create_assignment_form(request: Request, db: Session = Depends(get_db)):
 
 
 # =========================================================
-# ➕ POST tạo bài tập (ĐÃ FIX: auto validate)
+# ➕ POST tạo bài tập
 # =========================================================
 @router.post("/create")
 def create_assignment_route(
@@ -119,6 +224,7 @@ def create_assignment_route(
     except Exception:
         db.rollback()
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
 
 
 # =========================================================
@@ -161,16 +267,14 @@ def edit_assignment_route(
     db: Session = Depends(get_db)
 ):
     try:
-        updated = update_assignment(db, assignment_id, title, description)
-
-        if not updated:
-            raise HTTPException(404, "Không tìm thấy bài tập.")
+        update_assignment(db, assignment_id, title, description)
 
         return RedirectResponse(url="/admin/assignment/list", status_code=303)
 
     except Exception:
         db.rollback()
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
 
 
 # =========================================================
@@ -204,15 +308,14 @@ def delete_assignment_route(
     db: Session = Depends(get_db)
 ):
     try:
-        ok = delete_assignment(db, assignment_id)
-        if not ok:
-            raise HTTPException(404, "Không tìm thấy bài tập để xóa.")
+        delete_assignment(db, assignment_id)
 
         return RedirectResponse("/admin/assignment/list", status_code=303)
 
     except Exception:
         db.rollback()
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
 
 
 # =========================================================
@@ -243,8 +346,9 @@ def manage_assignments(
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
 
 
+
 # =========================================================
-# 📈 6️⃣ Dashboard Thống kê tổng hợp
+# 📈 6️⃣ Dashboard thống kê tổng hợp
 # =========================================================
 @router.get("/stats", response_class=HTMLResponse)
 def assignment_stats_dashboard(request: Request, db: Session = Depends(get_db)):
@@ -282,6 +386,7 @@ def assignment_stats_dashboard(request: Request, db: Session = Depends(get_db)):
 
     except Exception:
         return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+
 
 
 # =========================================================

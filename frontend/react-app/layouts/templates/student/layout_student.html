@@ -11,7 +11,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- Student CSS -->
+  <!-- Custom CSS -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student.css" />
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/wallet_system.css" />
 
@@ -20,127 +20,136 @@
 
 <body>
 
-<!-- ======================================================
-     SIDEBAR — GLASS NEO v8
-====================================================== -->
-<nav id="sidebar" class="student-sidebar shadow-lg">
+<div class="student-wrapper d-flex">
 
-  <div class="sidebar-header text-center py-4">
-    <img
-      src="{{ request.session.get('user_avatar') or '/uploads/avatars/default-avatar.png' }}"
-      width="78" height="78"
-      class="rounded-circle border border-3 border-light shadow-sm"
-      onerror="this.src='/uploads/avatars/default-avatar.png'"
-      alt="Avatar">
-    <span class="fw-semibold d-block mt-3 text-white fs-5">
-      {{ request.session.get('user_fullname') or 'Học viên E-Learning' }}
-    </span>
-    <small class="text-white-50">Học viên</small>
-  </div>
+  <!-- ======================================================
+       SIDEBAR
+  ====================================================== -->
+  <nav id="sidebar" class="student-sidebar shadow-lg">
 
-  <div class="sidebar-inner">
-    {% for item in [
-      ('dashboard','speedometer2','Bảng điều khiển','/student/dashboard'),
-      ('course','journal-bookmark','Khóa học của tôi','/student/course'),
-      ('lesson','easel','Bài học','/student/lesson'),
-      ('assignment','journal-check','Bài tập','/student/assignment'),
-      ('quiz','question-circle','Trắc nghiệm','/student/quiz'),
-      ('material','folder2-open','Tài liệu','/student/material'),
-      ('discussion','chat-dots','Thảo luận','/student/discussion'),
-      ('schedule','calendar3','Lịch học','/student/schedule'),
-      ('profile','person-circle','Hồ sơ cá nhân','/student/profile')
-    ] %}
+    <div class="sidebar-header text-center">
 
-      <a href="{{ item[3] }}" class="{% if active_page==item[0] %}active{% endif %}">
-        <i class="bi bi-{{ item[1] }}"></i>
-        <span>{{ item[2] }}</span>
+   <img
+    src="{{ student_globals(request).avatar_url }}"
+    onerror="this.src='/uploads/avatars/default-avatar.png'"
+  >
+
+
+      <span class="fw-semibold d-block mt-3 fs-5 text-white">
+        {{ request.session.get('user_fullname') or 'Học viên E-Learning' }}
+      </span>
+      <small class="text-white-50">Học viên</small>
+
+    </div>
+
+    <div class="sidebar-inner">
+
+      {% for item in [
+        ('dashboard','speedometer2','Bảng điều khiển','/student/dashboard'),
+        ('course','journal-bookmark','Khóa học của tôi','/student/course'),
+        ('lesson','easel','Bài học','/student/lesson'),
+        ('assignment','journal-check','Bài tập','/student/assignment'),
+        ('quiz','question-circle','Trắc nghiệm','/student/quiz'),
+        ('material','folder2-open','Tài liệu','/student/material'),
+        ('discussion','chat-dots','Thảo luận','/student/discussion'),
+        ('schedule','calendar3','Lịch học','/student/schedule'),
+        ('profile','person-circle','Hồ sơ cá nhân','/student/profile')
+      ] %}
+
+        <a 
+          href="{{ item[3] }}"
+          class="{% if active_page==item[0] %}active{% endif %}"
+          data-tooltip="{{ item[2] }}"
+        >
+          <i class="bi bi-{{ item[1] }}"></i>
+          <span>{{ item[2] }}</span>
+        </a>
+
+      {% endfor %}
+
+      <a href="/auth/logout" data-tooltip="Đăng xuất">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Đăng xuất</span>
       </a>
 
-    {% endfor %}
+    </div>
 
-    <a href="/auth/logout" class="logout-link">
-      <i class="bi bi-box-arrow-right"></i>
-      <span>Đăng xuất</span>
-    </a>
-  </div>
+    <div class="sidebar-footer small text-center text-white-50">
+      © {{ now.year }} E-Learning
+    </div>
 
-  <div class="sidebar-footer small text-center py-3 text-white-50">
-    © {{ now.year }} E-Learning
-  </div>
+  </nav>
 
-</nav>
+  <!-- ======================================================
+       CONTENT AREA
+  ====================================================== -->
+  <div class="content-wrapper d-flex flex-column">
 
-<!-- Overlay -->
-<div id="sidebar-overlay"></div>
+    <!-- HEADER -->
+    <header class="student-header shadow-sm">
 
-<!-- ======================================================
-     HEADER — FIXED GLASS v8 + Dark Mode Button FIXED
-====================================================== -->
-<header class="student-header d-flex justify-content-end align-items-center px-4 py-2 shadow-sm">
+      <div class="nav-icons">
 
-  <div class="nav-icons">
+        <a href="/student/notifications" class="nav-icon">
+          <i class="bi bi-bell"></i>
+        </a>
 
-    <!-- Notification -->
-    <a href="/student/notifications" title="Thông báo" class="me-3 nav-icon">
-        <i class="bi bi-bell fs-5"></i>
-    </a>
+        <a href="/student/message" class="nav-icon">
+          <i class="bi bi-envelope"></i>
+        </a>
 
-    <!-- Message -->
-    <a href="/student/message" title="Tin nhắn" class="me-3 nav-icon">
-        <i class="bi bi-envelope fs-5"></i>
-    </a>
+        <!-- Cart -->
+        <a href="/student/cart" class="nav-icon position-relative">
+          <i class="bi bi-cart3"></i>
+          {% if request.session.get('cart_count', 0) > 0 %}
+          <span class="cart-badge">{{ request.session.get('cart_count') }}</span>
+          {% endif %}
+        </a>
 
-    <!-- Cart -->
-    <a href="/student/cart" title="Giỏ hàng" class="me-3 nav-cart nav-icon position-relative">
-        <i class="bi bi-cart3 fs-5"></i>
-        {% if request.session.get('cart_count', 0) > 0 %}
-        <span class="cart-badge">{{ request.session.get('cart_count') }}</span>
-        {% endif %}
-    </a>
+        <!-- Wallet mini -->
+        <a href="/student/wallet/page" class="wallet-header-btn">
+          <div class="wallet-icon-box">
+            <i class="bi bi-wallet2"></i>
+          </div>
+          <span class="wallet-balance-mini">
+            {{ "{:,.0f}".format(student_globals(request).wallet_balance) }}đ
+          </span>
+        </a>
 
-    <!-- Wallet -->
-    <a href="/student/wallet/page" class="wallet-header-btn d-flex align-items-center" title="Ví học sinh">
+        <!-- Dark mode -->
+        <button id="toggleModeBtn" class="nav-icon">
+          <i class="bi bi-moon-fill"></i>
+        </button>
 
-      <div class="wallet-icon-box">
-        <i class="bi bi-wallet2"></i>
       </div>
 
-      <span class="wallet-balance-mini">
-        {{ "{:,.0f}".format(student_globals(request).wallet_balance) }}đ
-      </span>
+    </header>
 
-    </a>
+    <!-- MAIN CONTENT -->
+    <main id="content" class="fade flex-grow-1">
+      {% block content %}{% endblock %}
+    </main>
 
-    <!-- 🌙 Dark Mode — FIXED POSITION -->
-    <button id="toggleModeBtn" class="nav-darkmode-btn" title="Chế độ tối">
-        <i class="bi bi-moon-fill"></i>
-    </button>
+    <!-- FOOTER -->
+    <footer class="text-center py-3 small text-muted border-top">
+      © {{ now.year }} E-Learning – Student Panel
+    </footer>
 
   </div>
-</header>
 
-<!-- ======================================================
-     FLOATING BUTTONS
-====================================================== -->
+</div>
+
+<!-- Floating Buttons -->
 <button id="toggleSidebarBtn" class="btn-floating sidebar-btn">
   <i class="bi bi-list"></i>
 </button>
 
-<button id="chatBotToggle" class="btn-floating chat-btn" title="Trợ lý AI">
+<button id="chatBotToggle" class="btn-floating chat-btn">
   <i class="bi bi-robot"></i>
 </button>
 
-
-<!-- ======================================================
-     CONTENT AREA
-====================================================== -->
-<main id="content" class="fade">
-  {% block content %}{% endblock %}
-</main>
-
-<footer class="text-center py-3 small text-muted border-top mt-4">
-  © {{ now.year }} E-Learning – Student Panel
-</footer>
+<!-- Overlay -->
+<div id="sidebar-overlay"></div>
 
 
 <!-- ======================================================
@@ -162,118 +171,143 @@
 
 </div>
 
-
-<!-- Bootstrap JS -->
+<!-- BOOTSTRAP -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- ======================================================
-     DARK MODE (v8 FIXED)
-====================================================== -->
+<!-- DARK MODE ENGINE -->
 <script>
 (() => {
   const body = document.body;
   const btn = document.getElementById("toggleModeBtn");
   const icon = btn.querySelector("i");
 
-  if (localStorage.getItem("student_dark_mode") === "1") {
+  if (localStorage.student_dark_mode === "1") {
     body.classList.add("dark-mode");
-    icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
+    icon.classList.replace("bi-moon-fill","bi-brightness-low-fill");
   }
 
   btn.onclick = () => {
     body.classList.toggle("dark-mode");
 
     if (body.classList.contains("dark-mode")) {
-      icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
-      localStorage.setItem("student_dark_mode", "1");
+      icon.classList.replace("bi-moon-fill","bi-brightness-low-fill");
+      localStorage.student_dark_mode = "1";
     } else {
-      icon.classList.replace("bi-brightness-low-fill", "bi-moon-fill");
-      localStorage.setItem("student_dark_mode", "0");
+      icon.classList.replace("bi-brightness-low-fill","bi-moon-fill");
+      localStorage.student_dark_mode = "0";
     }
   };
 })();
 </script>
 
-<!-- ======================================================
-     SIDEBAR MOBILE — v8 NO CLICK-BLOCK
-====================================================== -->
+<!-- SIDEBAR ENGINE v12 -->
 <script>
 (() => {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
-  const toggle = document.getElementById("toggleSidebarBtn");
+  const btn = document.getElementById("toggleSidebarBtn");
 
-  toggle.onclick = () => {
-    const collapsed = sidebar.classList.toggle("collapsed");
+  const isMobile = () => window.innerWidth < 992;
 
-    if (window.innerWidth <= 992) {
-      const opened = !collapsed;
-
-      if (opened) {
-        sidebar.classList.add("show");
-        overlay.style.display = "block";
-        overlay.style.pointerEvents = "auto";
-      } else {
-        sidebar.classList.remove("show");
-        overlay.style.display = "none";
-        overlay.style.pointerEvents = "none";
-      }
+  btn.onclick = () => {
+    if (isMobile()) {
+      sidebar.classList.toggle("mobile-show");
+      overlay.classList.toggle("show");
+    } else {
+      sidebar.classList.toggle("collapsed");
     }
   };
 
   overlay.onclick = () => {
-    sidebar.classList.add("collapsed");
-    sidebar.classList.remove("show");
-    overlay.style.display = "none";
-    overlay.style.pointerEvents = "none";
+    sidebar.classList.remove("mobile-show");
+    overlay.classList.remove("show");
+  };
+
+  window.onresize = () => {
+    if (!isMobile()) {
+      sidebar.classList.remove("mobile-show");
+      overlay.classList.remove("show");
+    }
   };
 })();
 </script>
 
-<!-- ======================================================
-     CHATBOT
-====================================================== -->
+<!-- CHATBOT ENGINE v12 -->
 <script>
 (() => {
   const toggle = document.getElementById("chatBotToggle");
   const win = document.getElementById("chatBotWindow");
   const close = document.getElementById("closeChatBot");
+
   const form = document.getElementById("chatBotForm");
   const box = document.getElementById("chatBotMessages");
   const input = document.getElementById("chatInput");
 
+  const USER_AVATAR = "{{ request.session.get('user_avatar') or '/uploads/avatars/default-avatar.png' }}";
+  const AI_AVATAR = "/frontend/react-app/assets/ai_avatar.png";
+
+  if (localStorage.student_chat_history) {
+    box.innerHTML = localStorage.student_chat_history;
+  }
+  const saveHistory = () => localStorage.student_chat_history = box.innerHTML;
+
   toggle.onclick = () => win.classList.toggle("show");
   close.onclick = () => win.classList.remove("show");
+
+  const scrollBottom = () => (box.scrollTop = box.scrollHeight);
 
   form.onsubmit = async (e) => {
     e.preventDefault();
     const msg = input.value.trim();
     if (!msg) return;
 
+    box.innerHTML += `
+    <div class="msg-wrap user">
+      <span class="msg-bubble msg-user">${msg}</span>
+      <img src="${USER_AVATAR}" class="chat-avatar">
+    </div>`;
+    saveHistory(); scrollBottom();
     input.value = "";
-    box.innerHTML += `<div class="msg-user">${msg}</div>`;
+
+    const typingId = "typing-" + Date.now();
+    box.innerHTML += `
+    <div class="msg-wrap ai" id="${typingId}">
+      <img src="${AI_AVATAR}" class="chat-avatar">
+      <div class="typing"><div></div><div></div><div></div></div>
+    </div>`;
+    scrollBottom();
 
     try {
       const res = await fetch("/student/chat-ai/ask", {
-        method:"POST",
-        headers:{"Content-Type":"application/x-www-form-urlencoded"},
-        body:`message=${encodeURIComponent(msg)}`
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: `message=${encodeURIComponent(msg)}`
       });
-
       const data = await res.json();
-      box.innerHTML += `<div class="msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</div>`;
-    } catch {
-      box.innerHTML += `<div class="msg-ai text-danger">⚠️ Lỗi kết nối AI.</div>`;
-    }
 
-    box.scrollTop = box.scrollHeight;
+      document.getElementById(typingId).remove();
+
+      box.innerHTML += `
+      <div class="msg-wrap ai">
+        <img src="${AI_AVATAR}" class="chat-avatar">
+        <span class="msg-bubble msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</span>
+      </div>`;
+      saveHistory(); scrollBottom();
+
+    } catch {
+      document.getElementById(typingId).remove();
+      box.innerHTML += `
+      <div class="msg-wrap ai">
+        <img src="${AI_AVATAR}" class="chat-avatar">
+        <span class="msg-bubble msg-ai text-danger">⚠️ Lỗi kết nối AI.</span>
+      </div>`;
+      saveHistory(); scrollBottom();
+    }
   };
 })();
 </script>
 
-<!-- ======================================================
-     FADE IN PAGE
-====================================================== -->
+<!-- PAGE FADE -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".fade").forEach(e => e.classList.add("show"));

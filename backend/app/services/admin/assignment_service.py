@@ -418,3 +418,40 @@ def get_student_assignment_summary(db: Session, student_id: str):
         "late": late or 0,
         "avg_grade": round(avg_grade or 0, 2)
     }
+# =====================================================
+# 📝 1️⃣2️⃣ Chấm bài (Grade Submission)
+# =====================================================
+def grade_submission(
+    db: Session,
+    submission_id: str,
+    grade: float,
+    feedback: str,
+    teacher_id: str
+):
+    """Giảng viên/Admin chấm điểm bài nộp"""
+
+    submission = db.query(AssignmentSubmission).filter(
+        AssignmentSubmission.id == submission_id
+    ).first()
+
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission không tồn tại!")
+
+    # Cập nhật thông tin chấm điểm
+    submission.grade = grade
+    submission.feedback = feedback
+    submission.status = "graded"
+    submission.graded_by = teacher_id
+    submission.graded_at = datetime.utcnow()
+
+    # Cập nhật thống kê cho giáo viên
+    teacher = db.query(User).filter(User.id == teacher_id).first()
+    if teacher:
+        teacher.total_assignments_graded += 1
+
+    db.commit()
+    db.refresh(submission)
+
+    print(f"✔️ [GRADE] Teacher {teacher_id} graded submission {submission_id}")
+
+    return submission

@@ -1,7 +1,7 @@
 """
 ==========================================================
-🎓 SERVICE: Student - Assignment (FULL 100%)
-Xử lý logic bài tập & bài nộp của học viên
+🎓 SERVICE: Student - Assignment (FINAL PRO MAX 2025)
+Xử lý logic bài tập & bài nộp của Học Viên — FIX HOÀN HẢO
 ==========================================================
 """
 
@@ -9,6 +9,10 @@ from sqlalchemy.orm import Session
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.assignment_file import AssignmentFile
+from app.models.enrollment import Enrollment
+from app.models.course import Course
+from app.models.module import Module
+
 from app.services.student.notification_service import create_notification
 
 from datetime import datetime
@@ -17,6 +21,7 @@ import uuid
 import traceback
 import shutil
 import os
+
 
 # ==========================================================
 # 📁 Cấu hình thư mục upload bài nộp
@@ -30,12 +35,25 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # ==========================================================
 def get_assignments_by_course(db: Session, course_id: str):
     try:
-        return (
+        assignments = (
             db.query(Assignment)
             .filter(Assignment.course_id == course_id)
             .order_by(Assignment.due_date.asc())
             .all()
         )
+
+        if not assignments:
+            return []
+
+        for a in assignments:
+            a.course = db.query(Course).filter(Course.id == a.course_id).first()
+            a.module = (
+                db.query(Module).filter(Module.id == a.module_id).first()
+                if a.module_id else None
+            )
+
+        return assignments
+
     except Exception as e:
         print("❌ [get_assignments_by_course] Lỗi:", e)
         traceback.print_exc()
@@ -43,11 +61,19 @@ def get_assignments_by_course(db: Session, course_id: str):
 
 
 # ==========================================================
-# 🔍 LẤY CHI TIẾT 1 BÀI TẬP
+# 🔍 Lấy chi tiết 1 bài tập
 # ==========================================================
 def get_assignment_detail(db: Session, assignment_id: str):
     try:
-        return db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+        if not assignment:
+            return None
+
+        assignment.course = db.query(Course).filter(Course.id == assignment.course_id).first()
+        assignment.module = db.query(Module).filter(Module.id == assignment.module_id).first()
+
+        return assignment
+
     except Exception as e:
         print("❌ [get_assignment_detail] Lỗi:", e)
         traceback.print_exc()
@@ -55,7 +81,7 @@ def get_assignment_detail(db: Session, assignment_id: str):
 
 
 # ==========================================================
-# 📤 NỘP BÀI — FULL VALIDATE + THÔNG BÁO
+# 📤 NỘP BÀI – VALIDATE FULL + RESUBMIT + NOTIFICATION
 # ==========================================================
 def submit_assignment(
     db: Session,
@@ -65,34 +91,65 @@ def submit_assignment(
     files: list = None
 ):
     try:
-        # ---------------------------
-        # 1. Kiểm tra bài tập có tồn tại
-        # ---------------------------
+        now = datetime.now()
+
+        # 1. Kiểm tra bài tập tồn tại
         assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
         if not assignment:
-            raise Exception("Không tìm thấy bài tập.")
+            return {"status": "error", "message": "Không tìm thấy bài tập."}
 
-        # ---------------------------
-        # 2. Kiểm tra hạn nộp
-        # ---------------------------
-        now = datetime.utcnow()
+        # 2. Kiểm tra học viên thuộc khóa học
+        enrolled = db.query(Enrollment).filter_by(
+            user_id=student_id,                      # 🔥 FIX QUAN TRỌNG
+            course_id=assignment.course_id
+        ).first()
+
+        if not enrolled:
+            return {"status": "error", "message": "Bạn không thuộc khóa học này."}
+
+        # 3. Kiểm tra deadline
         if now > assignment.due_date:
             if assignment.allow_late_submission == 1:
                 submission_status = "late"
             else:
-                raise Exception("Đã quá hạn nộp bài và không cho phép nộp muộn.")
+                return {"status": "error", "message": "Đã quá hạn nộp và không cho phép nộp muộn."}
         else:
             submission_status = "submitted"
 
-        # ---------------------------
-        # 3. Validate file upload
-        # ---------------------------
-        if files:
-            # Kiểm tra số lượng file
-            if assignment.max_files and len(files) > assignment.max_files:
-                raise Exception(f"Chỉ được nộp tối đa {assignment.max_files} file.")
+        # 4. Không được nộp bài trắng
+        if not submission_text and (not files or len(files) == 0):
+            return {"status": "error", "message": "Bạn phải nhập nội dung hoặc upload ít nhất 1 file."}
 
-            # Allowed file types
+        # 5. Kiểm tra nộp lại
+        submission = (
+            db.query(AssignmentSubmission)
+            .filter(AssignmentSubmission.assignment_id == assignment_id)
+            .filter(AssignmentSubmission.student_id == student_id)
+            .first()
+        )
+
+        if submission:
+            # Nộp lại
+            submission.status = "resubmitted"
+            submission.submission_time = now
+            submission.submission_text = submission_text or submission.submission_text
+        else:
+            # Nộp mới
+            submission = AssignmentSubmission(
+                id=str(uuid.uuid4()),
+                assignment_id=assignment_id,
+                student_id=student_id,
+                submission_text=submission_text or "",
+                submission_time=now,
+                status=submission_status,
+            )
+            db.add(submission)
+
+        db.commit()
+        db.refresh(submission)
+
+        # 6. Validate file
+        if files:
             allowed_types = []
             if assignment.allowed_file_types:
                 allowed_types = [
@@ -100,42 +157,30 @@ def submit_assignment(
                     for ext in assignment.allowed_file_types.split(",")
                 ]
 
-            for f in files:
-                # Kiểm tra loại file
-                ext = f.filename.split(".")[-1].lower()
-                if allowed_types and ext not in allowed_types:
-                    raise Exception(f"Loại file '{ext}' không hợp lệ.")
+            if assignment.max_files and len(files) > assignment.max_files:
+                return {"status": "error", "message": f"Tối đa {assignment.max_files} file."}
 
-                # Kiểm tra kích thước file
+            for f in files:
+                if "." not in f.filename:
+                    return {"status": "error", "message": f"File '{f.filename}' không hợp lệ."}
+
+                ext = f.filename.split(".")[-1].lower()
+
+                if allowed_types and ext not in allowed_types:
+                    return {"status": "error", "message": f"File '{ext}' không được phép."}
+
+                # Kiểm tra dung lượng
                 f.file.seek(0, 2)
-                size = f.file.tell()
+                size_mb = f.file.tell() / (1024 * 1024)
                 f.file.seek(0)
 
-                size_mb = size / (1024 * 1024)
                 if size_mb > assignment.max_file_size_mb:
-                    raise Exception(
-                        f"File '{f.filename}' vượt quá {assignment.max_file_size_mb}MB."
-                    )
+                    return {
+                        "status": "error",
+                        "message": f"File '{f.filename}' vượt quá {assignment.max_file_size_mb}MB."
+                    }
 
-        # ---------------------------
-        # 4. Tạo bài nộp
-        # ---------------------------
-        submission = AssignmentSubmission(
-            id=str(uuid.uuid4()),
-            assignment_id=assignment_id,
-            student_id=student_id,
-            submission_text=submission_text or "",
-            submission_time=now,
-            status=submission_status,
-        )
-
-        db.add(submission)
-        db.commit()
-        db.refresh(submission)
-
-        # ---------------------------
-        # 5. Lưu FILE
-        # ---------------------------
+        # 7. Lưu file
         if files:
             student_folder = UPLOAD_DIR / student_id
             student_folder.mkdir(parents=True, exist_ok=True)
@@ -154,53 +199,59 @@ def submit_assignment(
                     file_url=str(file_path),
                     file_type=f.content_type,
                     file_size=os.path.getsize(file_path),
-                    uploaded_at=datetime.utcnow()
+                    uploaded_at=now
                 )
                 db.add(file_record)
 
             db.commit()
 
-        # ---------------------------
-        # 6. Gửi thông báo cho GIẢNG VIÊN
-        # ---------------------------
+        # 8. Gửi thông báo cho giáo viên
         create_notification(
             db=db,
             user_id=assignment.teacher_id,
-            title="📥 Có bài tập mới được nộp",
-            message=f"Sinh viên đã nộp bài: {assignment.title}",
+            title="📥 Có bài nộp mới",
+            message=f"Sinh viên đã nộp bài tập: {assignment.title}",
             notification_type="assignment",
-            link_url=f"/teacher/assignment/submission/{submission.id}"
+            link_url=f"/teacher/assignments/grade/{submission.id}"
         )
 
-        print(f"✅ [submit_assignment] SV {student_id} đã nộp bài {assignment_id}")
-        return submission
+        return {"status": "ok", "submission": submission}
 
     except Exception as e:
         db.rollback()
-        print("❌ [submit_assignment] Lỗi:", e)
         traceback.print_exc()
-        return None
+        return {"status": "error", "message": str(e)}
 
 
 # ==========================================================
-# 📋 LẤY DANH SÁCH BÀI NỘP CỦA SINH VIÊN
+# 📋 Lấy toàn bộ bài nộp của 1 học viên
 # ==========================================================
 def get_my_submissions(db: Session, student_id: str):
     try:
-        return (
+        subs = (
             db.query(AssignmentSubmission)
             .filter(AssignmentSubmission.student_id == student_id)
             .order_by(AssignmentSubmission.submission_time.desc())
             .all()
         )
-    except Exception as e:
-        print("❌ [get_my_submissions] Lỗi:", e)
+
+        if not subs:
+            return []
+
+        for s in subs:
+            s.assignment = db.query(Assignment).filter(Assignment.id == s.assignment_id).first()
+            if s.assignment:
+                s.assignment.course = db.query(Course).filter(Course.id == s.assignment.course_id).first()
+
+        return subs
+
+    except:
         traceback.print_exc()
         return []
 
 
 # ==========================================================
-# 🔎 LẤY CHI TIẾT MỘT BÀI NỘP
+# 🔎 Xem chi tiết bài nộp
 # ==========================================================
 def get_submission_detail(db: Session, submission_id: str):
     try:
@@ -212,33 +263,38 @@ def get_submission_detail(db: Session, submission_id: str):
         if not submission:
             return None
 
+        submission.assignment = db.query(Assignment).filter(Assignment.id == submission.assignment_id).first()
+
         submission.files = (
             db.query(AssignmentFile)
             .filter(AssignmentFile.submission_id == submission_id)
             .all()
         )
+
         return submission
 
-    except Exception as e:
-        print("❌ [get_submission_detail] Lỗi:", e)
+    except:
         traceback.print_exc()
         return None
 
 
 # ==========================================================
-# 📎 LẤY FILE ĐỂ TẢI XUỐNG
+# 📎 Lấy file đính kèm
 # ==========================================================
 def get_submission_file(db: Session, file_id: str):
     try:
-        return db.query(AssignmentFile).filter(AssignmentFile.id == file_id).first()
-    except Exception as e:
-        print("❌ [get_submission_file] Lỗi:", e)
+        return (
+            db.query(AssignmentFile)
+            .filter(AssignmentFile.id == file_id)
+            .first()
+        )
+    except:
         traceback.print_exc()
         return None
 
 
 # ==========================================================
-# 📝 CẬP NHẬT BÀI NỘP
+# 📝 Cập nhật bài nộp (resubmit)
 # ==========================================================
 def update_submission(db: Session, submission_id: str, new_text: str = "", new_files: list = None):
     try:
@@ -248,13 +304,11 @@ def update_submission(db: Session, submission_id: str, new_text: str = "", new_f
             .first()
         )
         if not submission:
-            print("⚠️ [update_submission] Không tìm thấy bài nộp.")
             return None
 
-        # Cập nhật nội dung text
-        if new_text:
-            submission.submission_text = new_text.strip()
-            submission.submission_time = datetime.utcnow()
+        submission.submission_text = new_text.strip()
+        submission.submission_time = datetime.now()
+        submission.status = "resubmitted"
 
         db.commit()
         db.refresh(submission)
@@ -265,55 +319,48 @@ def update_submission(db: Session, submission_id: str, new_text: str = "", new_f
             student_folder.mkdir(parents=True, exist_ok=True)
 
             for f in new_files:
-                safe_name = f"{uuid.uuid4().hex}_{f.filename}"
-                file_path = student_folder / safe_name
+                safe = f"{uuid.uuid4().hex}_{f.filename}"
+                file_path = student_folder / safe
 
                 with open(file_path, "wb") as buffer:
                     shutil.copyfileobj(f.file, buffer)
 
-                file_record = AssignmentFile(
+                rec = AssignmentFile(
                     id=str(uuid.uuid4()),
                     submission_id=submission.id,
                     file_name=f.filename,
                     file_url=str(file_path),
                     file_type=f.content_type,
                     file_size=os.path.getsize(file_path),
-                    uploaded_at=datetime.utcnow()
+                    uploaded_at=datetime.now()
                 )
-                db.add(file_record)
+                db.add(rec)
 
             db.commit()
 
-        print(f"✅ [update_submission] Đã cập nhật bài nộp {submission_id}")
         return submission
 
-    except Exception as e:
+    except Exception:
         db.rollback()
-        print("❌ [update_submission] Lỗi:", e)
         traceback.print_exc()
         return None
 
 
 # ==========================================================
-# 🗑️ XÓA BÀI NỘP
+# 🗑 XÓA BÀI NỘP
 # ==========================================================
 def delete_submission(db: Session, submission_id: str):
     try:
-        submission = (
-            db.query(AssignmentSubmission)
-            .filter(AssignmentSubmission.id == submission_id)
-            .first()
-        )
+        submission = db.query(AssignmentSubmission).filter_by(id=submission_id).first()
         if not submission:
-            print("⚠️ [delete_submission] Không tìm thấy bài nộp.")
             return False
 
-        # Xóa file vật lý
         files = (
             db.query(AssignmentFile)
             .filter(AssignmentFile.submission_id == submission_id)
             .all()
         )
+
         for f in files:
             try:
                 if os.path.exists(f.file_url):
@@ -322,15 +369,17 @@ def delete_submission(db: Session, submission_id: str):
                 pass
             db.delete(f)
 
-        # Xóa bài nộp
         db.delete(submission)
         db.commit()
 
-        print(f"🗑️ [delete_submission] Đã xóa bài nộp {submission_id}")
+        # Dọn thư mục rỗng
+        student_folder = UPLOAD_DIR / submission.student_id
+        if os.path.isdir(student_folder) and not os.listdir(student_folder):
+            os.rmdir(student_folder)
+
         return True
 
-    except Exception as e:
+    except:
         db.rollback()
-        print("❌ [delete_submission] Lỗi:", e)
         traceback.print_exc()
         return False

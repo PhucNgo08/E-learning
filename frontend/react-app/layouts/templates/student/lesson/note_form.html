@@ -1,39 +1,172 @@
 {% extends "layout_student.html" %}
-{% block title %}🖋️ Thêm ghi chú{% endblock %}
+{% block title %}📝 Ghi chú bài học{% endblock %}
 
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <!-- Quay lại danh sách ghi chú -->
+  <!-- Quay lại -->
   <a href="/student/lesson/notes/{{ lesson.id }}" class="btn btn-outline-secondary mb-3">
-    <i class="bi bi-arrow-left"></i> Quay lại ghi chú
+    <i class="bi bi-arrow-left"></i> Quay lại danh sách ghi chú
   </a>
 
-  <div class="card shadow-sm border-0 glass-card p-4">
+  <div class="card border-0 p-4 note-card shadow-sm">
 
     <h4 class="fw-bold text-primary mb-3">
-      <i class="bi bi-pencil-square me-2"></i> Thêm ghi chú
+      <i class="bi bi-pencil me-2"></i> Ghi chú (Notion Style)
     </h4>
 
-    <!-- ❗ ROUTE POST CHUẨN -->
-    <form method="post" action="/student/lesson/notes/{{ lesson.id }}">
-      <textarea name="content" rows="4" required class="form-control mb-3"
-                placeholder="Nhập ghi chú..."></textarea>
+    <form id="noteForm">
 
-      <div class="text-end">
-        <button class="btn btn-success px-4">
+      <div class="notion-wrapper">
+        
+        <textarea 
+          id="noteContent"
+          name="content"
+          required
+          class="notion-textarea"
+          placeholder="✏️ Ghi lại điều bạn muốn nhớ..."
+        >{{ note.content if note else "" }}</textarea>
+
+        <div class="char-counter">
+          <small id="charCount">0 ký tự</small>
+        </div>
+
+      </div>
+
+      <!-- Save status -->
+      <div id="saveStatus" class="autosave-status text-end mt-1"></div>
+
+      <div class="text-end mt-3">
+        <button id="manualSaveBtn" class="btn btn-success px-4">
           <i class="bi bi-save"></i> Lưu ghi chú
         </button>
       </div>
+
     </form>
 
   </div>
+
 </div>
 
+<!-- 🌈 CSS -->
 <style>
-.glass-card {
-  background: rgba(255,255,255,.1);
-  backdrop-filter: blur(20px);
+
+.note-card {
+  background: #fff !important;
+  border-radius: 12px;
+  overflow: visible !important;
 }
+
+/* 120 ký tự ngang */
+.notion-wrapper {
+  width: 120ch !important;
+  max-width: 120ch !important;
+  margin: 0 auto;
+}
+
+.notion-textarea {
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  min-height: 60px;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  transition: 0.18s ease;
+}
+
+.notion-textarea:focus {
+  border-color: #4c8bfd;
+  box-shadow: 0 0 0 2px rgba(76, 139, 253, 0.25);
+}
+
+.char-counter {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 4px;
+  margin-top: 6px;
+}
+
+.autosave-status {
+  font-size: 13px;
+  color: #198754;
+  min-height: 18px;
+}
+
+.fade-in {
+  animation: fadeIn .4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 </style>
+
+<!-- JS Auto-expand + Save thủ công + Ctrl+S -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const textarea = document.getElementById("noteContent");
+  const counter = document.getElementById("charCount");
+  const saveStatus = document.getElementById("saveStatus");
+  const manualSaveBtn = document.getElementById("manualSaveBtn");
+
+  // Auto-expand
+  function autoExpand() {
+    textarea.style.height = "60px";
+    textarea.style.height = textarea.scrollHeight + "px";
+  }
+  autoExpand();
+
+  // Counter
+  textarea.addEventListener("input", () => {
+    counter.textContent = `${textarea.value.length} ký tự`;
+    autoExpand();
+  });
+
+  // Manual Save Button
+  manualSaveBtn.addEventListener("click", function (e) {
+    e.preventDefault();
+    saveNote();
+  });
+
+  // Ctrl + S save
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.key === "s") {
+      e.preventDefault();
+      saveNote();
+    }
+  });
+
+  function saveNote() {
+    fetch(`/student/lesson/notes/{{ lesson.id }}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `content=${encodeURIComponent(textarea.value)}`
+    })
+    .then(res => res.ok ? showSaved() : showError());
+  }
+
+  // ⭐⭐ LƯU XONG → QUAY LẠI
+  function showSaved() {
+    const time = new Date().toLocaleTimeString();
+    saveStatus.innerHTML = `💾 Đã lưu lúc <b>${time}</b> — đang quay lại...`;
+
+    setTimeout(() => {
+      window.location.href = "/student/lesson/notes/{{ lesson.id }}";
+    }, 800);
+  }
+
+  function showError() {
+    saveStatus.innerHTML = `<span class="text-danger">❌ Lỗi khi lưu!</span>`;
+  }
+
+});
+</script>
+
+
 {% endblock %}

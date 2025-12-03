@@ -1,5 +1,5 @@
 {% extends "layout_student.html" %}
-{% block title %}🔋 Nạp tiền VietQR{% endblock %}
+{% block title %}🔋 Nạp tiền VietQR / MoMo{% endblock %}
 
 {% block content %}
 
@@ -7,56 +7,122 @@
 
     <div class="glass-card shadow-sm p-4">
 
-        <h2 class="fw-bold mb-3 text-center">🔋 Nạp tiền bằng VietQR</h2>
+        <h2 class="fw-bold mb-3 text-center">🔋 Nạp tiền vào ví</h2>
 
         <p class="text-muted text-center mb-4">
-            Quét mã bằng ứng dụng ngân hàng để nạp tiền vào ví.
+            Chọn phương thức và quét mã để nạp tiền.
         </p>
 
-        <div class="text-center mb-4">
-            <img src="{{ qr_url }}"
-                 alt="QR VietQR"
-                 class="border rounded shadow-sm qr-bounce"
-                 style="max-width: 260px;">
+        <!-- TAB BUTTONS -->
+        <div class="d-flex justify-content-center mb-4">
+            <button class="btn btn-primary me-2" id="bankTabBtn">🏦 Ngân hàng (VietQR)</button>
+            <button class="btn btn-outline-primary" id="momoTabBtn">💗 Ví MoMo</button>
         </div>
 
-        <div class="glass-card p-3 mb-3">
 
-            <div class="d-flex justify-content-between py-1">
-                <span class="fw-semibold">Mã giao dịch:</span>
-                <span class="fw-bold text-primary">{{ trans_code }}</span>
+        <!-- BANK QR -->
+        <div id="bank-section" class="tab-section">
+
+            <div class="text-center mb-3">
+                <img src="{{ url_for('static', path='QR/bank-sacombank.png') }}"
+                     alt="Sacombank QR"
+                     class="shadow rounded"
+                     style="max-width: 280px;">
             </div>
 
-            <div class="d-flex justify-content-between py-1">
-                <span class="fw-semibold">Số tiền:</span>
-                <span class="fw-bold text-success">
-                    {{ "{:,.0f}".format(amount) }} đ
-                </span>
-            </div>
+            <p class="text-center text-muted">
+                Quét mã VietQR bằng ứng dụng ngân hàng hoặc ví điện tử hỗ trợ Napas 247.
+            </p>
 
-            <div class="d-flex justify-content-between py-1">
-                <span class="fw-semibold">Ngân hàng:</span>
-                <span>{{ bank }}</span>
-            </div>
+            <div class="glass-card p-3 mt-3">
 
-            <div class="d-flex justify-content-between py-1">
-                <span class="fw-semibold">Số tài khoản:</span>
-                <span>{{ account }}</span>
-            </div>
+                <div class="d-flex justify-content-between py-1">
+                    <span class="fw-semibold">Mã giao dịch:</span>
+                    <span class="fw-bold text-primary">{{ trans_code }}</span>
+                </div>
 
-            <div class="d-flex justify-content-between py-1">
-                <span class="fw-semibold">Tên tài khoản:</span>
-                <span>{{ account_name }}</span>
+                <div class="d-flex justify-content-between py-1">
+                    <span class="fw-semibold">Số tiền:</span>
+                    <span class="fw-bold text-success">
+                        {{ "{:,.0f}".format(amount) }} đ
+                    </span>
+                </div>
+
             </div>
 
         </div>
 
-        <a href="/student/wallet/page" class="btn btn-outline-secondary w-100 py-2 fw-semibold">
+
+
+        <!-- MOMO QR -->
+        <div id="momo-section" class="tab-section" style="display:none;">
+
+            <div class="text-center mb-3">
+                <img src="{{ url_for('static', path='QR/ma-qr.jpg') }}"
+                     alt="MoMo QR"
+                     class="shadow rounded"
+                     style="max-width: 260px;">
+            </div>
+
+            <p class="text-center text-muted">
+                Quét mã MoMo để nạp tiền nhanh.
+            </p>
+
+            <div class="glass-card p-3 mt-3">
+
+                <div class="d-flex justify-content-between py-1">
+                    <span class="fw-semibold">Mã giao dịch:</span>
+                    <span class="fw-bold text-primary">{{ trans_code }}</span>
+                </div>
+
+                <div class="d-flex justify-content-between py-1">
+                    <span class="fw-semibold">Số tiền:</span>
+                    <span class="fw-bold text-success">
+                        {{ "{:,.0f}".format(amount) }} đ
+                    </span>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- BACK -->
+        <a href="/student/wallet/page" class="btn btn-outline-secondary w-100 py-2 fw-semibold mt-4">
             ← Quay về ví
         </a>
 
     </div>
 
 </div>
+
+
+<!-- TAB SWITCH JS -->
+<script>
+    const bankBtn = document.getElementById("bankTabBtn");
+    const momoBtn = document.getElementById("momoTabBtn");
+
+    const bankSection = document.getElementById("bank-section");
+    const momoSection = document.getElementById("momo-section");
+
+    bankBtn.onclick = () => {
+        bankSection.style.display = "block";
+        momoSection.style.display = "none";
+
+        bankBtn.classList.add("btn-primary");
+        bankBtn.classList.remove("btn-outline-primary");
+        momoBtn.classList.add("btn-outline-primary");
+        momoBtn.classList.remove("btn-primary");
+    };
+
+    momoBtn.onclick = () => {
+        bankSection.style.display = "none";
+        momoSection.style.display = "block";
+
+        momoBtn.classList.add("btn-primary");
+        momoBtn.classList.remove("btn-outline-primary");
+        bankBtn.classList.add("btn-outline-primary");
+        bankBtn.classList.remove("btn-primary");
+    };
+</script>
 
 {% endblock %}

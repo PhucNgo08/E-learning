@@ -1,7 +1,7 @@
 """
 ==========================================================
-🎓 ROUTER – Student Message (2025)
-Tối ưu tốc độ – bảo mật – clean code – chống lỗi tuyệt đối
+🎓 ROUTER – Student Message (2025 FINAL FIX)
+Tối ưu hóa – Không tạo thông báo 2 lần – Clean code nhất
 ==========================================================
 """
 
@@ -14,53 +14,41 @@ from starlette import status
 from pathlib import Path
 import mimetypes
 import traceback
-import unicodedata
 
 # SERVICES & CONFIG
 from app.database.connection import get_db
 from app.config.template_config import templates
 from app.services.student import message_service
-from app.services.student.notification_service import create_notification
 from app.models.user import User
-
 
 router = APIRouter(
     prefix="/student/message",
     tags=["Student - Message"]
 )
 
-
 # ======================================================
-# 🛡️ Utility: Check Session
+# 🛡️ Utility: Check login
 # ======================================================
 def require_login(request: Request):
-    user_id = request.session.get("user_id")
-    return user_id if user_id else None
+    return request.session.get("user_id")
 
 
 # ======================================================
-# 📥 1) Hộp thư đến (Inbox)
+# 📥 1) Hộp thư đến
 # ======================================================
 @router.get("/", response_class=HTMLResponse)
 async def inbox(request: Request, db: Session = Depends(get_db)):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
         messages = message_service.get_inbox_messages(db, user_id)
-
         return templates["student"].TemplateResponse(
             "message/inbox.html",
-            {
-                "request": request,
-                "messages": messages,
-                "page_title": "📥 Hộp thư đến",
-                "active_page": "message",
-            },
+            {"request": request, "messages": messages, "page_title": "📥 Hộp thư đến", "active_page": "message"},
         )
-
-    except Exception:
+    except:
         traceback.print_exc()
         return HTMLResponse("Lỗi tải hộp thư đến.", 500)
 
@@ -72,34 +60,28 @@ async def inbox(request: Request, db: Session = Depends(get_db)):
 async def sent_messages(request: Request, db: Session = Depends(get_db)):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
         messages = message_service.get_sent_messages(db, user_id)
-
         return templates["student"].TemplateResponse(
             "message/sent.html",
-            {
-                "request": request,
-                "messages": messages,
-                "page_title": "📤 Tin đã gửi",
-                "active_page": "message",
-            },
+            {"request": request, "messages": messages, "page_title": "📤 Tin đã gửi", "active_page": "message"},
         )
-
-    except Exception:
+    except:
         traceback.print_exc()
         return HTMLResponse("Lỗi tải tin đã gửi.", 500)
 
 
 # ======================================================
-# 📨 3) Xem chi tiết tin nhắn
+# 📨 3) Xem chi tiết
 # ======================================================
 @router.get("/view/{message_id}", response_class=HTMLResponse)
 async def view_message(request: Request, message_id: str, db: Session = Depends(get_db)):
+
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
         message = message_service.get_message_detail(db, message_id)
@@ -107,53 +89,40 @@ async def view_message(request: Request, message_id: str, db: Session = Depends(
             return HTMLResponse("Không tìm thấy tin nhắn.", 404)
 
         if user_id not in (message.sender_id, message.receiver_id):
-            return HTMLResponse("Bạn không có quyền xem tin này.", 403)
+            return HTMLResponse("Bạn không có quyền xem.", 403)
 
         return templates["student"].TemplateResponse(
             "message/view_message.html",
-            {
-                "request": request,
-                "message": message,
-                "page_title": "📨 Xem tin nhắn",
-                "active_page": "message",
-            },
+            {"request": request, "message": message, "page_title": "📨 Xem tin nhắn", "active_page": "message"},
         )
 
-    except Exception:
+    except:
         traceback.print_exc()
         return HTMLResponse("Lỗi xem tin nhắn.", 500)
 
 
 # ======================================================
-# ✉️ 4) Soạn tin mới (GET)
+# ✉️ 4) Trang soạn tin
 # ======================================================
 @router.get("/compose", response_class=HTMLResponse)
 async def compose_page(request: Request, db: Session = Depends(get_db)):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
-        # Hiển thị toàn bộ user trừ chính mình
         users = db.query(User).filter(User.id != user_id).all()
-
         return templates["student"].TemplateResponse(
             "message/compose_message.html",
-            {
-                "request": request,
-                "users": users,
-                "page_title": "✉️ Soạn tin nhắn",
-                "active_page": "message",
-            },
+            {"request": request, "users": users, "page_title": "✉️ Soạn tin nhắn", "active_page": "message"},
         )
-
-    except Exception:
+    except:
         traceback.print_exc()
-        return HTMLResponse("Lỗi tải trang soạn tin.", 500)
+        return HTMLResponse("Lỗi tải trang.", 500)
 
 
 # ======================================================
-# 📨 5) Gửi tin nhắn (POST)
+# 📨 5) Gửi tin nhắn (FIX: hỗ trợ Email + Username + ID)
 # ======================================================
 @router.post("/compose")
 async def send_message(
@@ -165,63 +134,49 @@ async def send_message(
 ):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
-        # Clean receiver_id (bỏ dấu tiếng Việt)
-        normalized_receiver = unicodedata.normalize("NFKC", receiver_id.strip())
-
-        # Tìm người nhận (id / email / username)
+        # 🎯 TÌM NGƯỜI NHẬN THEO: ID | Email | Username
         receiver = (
             db.query(User)
             .filter(
-                (User.id == normalized_receiver)
-                | (User.email == normalized_receiver)
-                | (User.username == normalized_receiver)
+                (User.id == receiver_id) |
+                (User.email == receiver_id) |
+                (User.username == receiver_id)
             )
             .first()
         )
 
         if not receiver:
-            return HTMLResponse("❌ Không tìm thấy người nhận.", 400)
+            return HTMLResponse("❌ Người nhận không tồn tại.", 400)
 
-        # Gửi tin nhắn
         msg = message_service.send_message(
             db=db,
             sender_id=user_id,
             receiver_id=receiver.id,
-            content=content.strip(),
+            content=content,
             attachment=attachment,
         )
 
         if not msg:
             return HTMLResponse("❌ Không thể gửi tin nhắn.", 400)
 
-        # 🔔 Tạo thông báo
-        create_notification(
-            db=db,
-            user_id=receiver.id,
-            title="📩 Tin nhắn mới",
-            message=f"Bạn nhận được 1 tin nhắn từ người dùng {user_id}",
-            notification_type="message",
-            link_url=f"/student/message/view/{msg.id}",
-        )
+        return RedirectResponse("/student/message/sent", status.HTTP_303_SEE_OTHER)
 
-        return RedirectResponse("/student/message/sent", 303)
-
-    except Exception:
+    except:
         traceback.print_exc()
-        return HTMLResponse("Lỗi gửi tin nhắn.", 500)
+        return HTMLResponse("Lỗi gửi tin.", 500)
 
 
 # ======================================================
-# ⬇️ 6) Download file đính kèm
+# ⬇️ 6) Download file
 # ======================================================
 @router.get("/download/{message_id}")
 async def download_attachment(request: Request, message_id: str, db: Session = Depends(get_db)):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
         msg = message_service.get_message_detail(db, message_id)
@@ -229,27 +184,21 @@ async def download_attachment(request: Request, message_id: str, db: Session = D
             return HTMLResponse("Không tìm thấy tin nhắn.", 404)
 
         if user_id not in (msg.sender_id, msg.receiver_id):
-            return HTMLResponse("Bạn không có quyền tải file.", 403)
+            return HTMLResponse("Bạn không có quyền.", 403)
 
         if not msg.attachment_url:
-            return HTMLResponse("Tin nhắn không có file đính kèm.", 404)
+            return HTMLResponse("Không có file.", 404)
 
-        # Chuyển URL → Physical path
         file_path = Path(msg.attachment_url.lstrip("/"))
-
         if not file_path.exists():
             return HTMLResponse("File không tồn tại.", 404)
 
         mime, _ = mimetypes.guess_type(str(file_path))
         mime = mime or "application/octet-stream"
 
-        return FileResponse(
-            path=file_path,
-            filename=msg.attachment_name or file_path.name,
-            media_type=mime,
-        )
+        return FileResponse(path=file_path, filename=msg.attachment_name, media_type=mime)
 
-    except Exception:
+    except:
         traceback.print_exc()
         return HTMLResponse("Lỗi tải file.", 500)
 
@@ -261,16 +210,15 @@ async def download_attachment(request: Request, message_id: str, db: Session = D
 async def delete_message(request: Request, message_id: str, db: Session = Depends(get_db)):
     user_id = require_login(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login")
 
     try:
         success = message_service.delete_message(db, message_id, user_id)
-
         if not success:
-            return HTMLResponse("Bạn không có quyền xóa tin nhắn này.", 403)
+            return HTMLResponse("Bạn không có quyền xóa.", 403)
 
-        return RedirectResponse("/student/message/", 303)
+        return RedirectResponse("/student/message/", status.HTTP_303_SEE_OTHER)
 
-    except Exception:
+    except:
         traceback.print_exc()
-        return HTMLResponse("Lỗi xóa tin nhắn.", 500)
+        return HTMLResponse("Lỗi xóa tin.", 500)

@@ -1,12 +1,11 @@
 """
 ===================================================================
-💰 STUDENT WALLET ROUTER — Glass Neo 2025 (v5.0 PRO MAX)
-Fix trắng trang • Auto balance • Uniform Template Data
+💰 STUDENT WALLET ROUTER — Glass Neo 2025 (v6.0 PRO MAX)
+QR Tĩnh • Không phụ thuộc API ngoài • Auto-balance • Auto-check
 ===================================================================
 """
 
 import uuid
-from urllib.parse import quote
 from fastapi import (
     APIRouter, Depends, Request, HTTPException, Form
 )
@@ -70,8 +69,9 @@ def wallet_page(
         }
     )
 
+
 # ============================================================
-# PAGE: Deposit Form (GET)
+# PAGE: Deposit Form
 # ============================================================
 @router.get("/deposit", response_class=HTMLResponse)
 def deposit_page(
@@ -91,83 +91,30 @@ def deposit_page(
         }
     )
 
-# ============================================================
-# 🧾 PAGE: History
-# ============================================================
-@router.get("/history", response_class=HTMLResponse)
-def wallet_history(
-    request: Request,
-    page: int = 1,
-    common=Depends(wallet_common),
-    success: str = None,
-    error: str = None,
-):
-    limit = 20
-    offset = (page - 1) * limit
-
-    tx = get_student_transactions(
-        common["db"], common["student"].id, limit=limit, offset=offset
-    )
-
-    return templates["student"].TemplateResponse(
-        "wallet/history.html",
-        {
-            "request": request,
-            **common,
-            "transactions": tx,
-            "page": page,
-            "success": success,
-            "error": error,
-            "active_page": "wallet",
-        }
-    )
-
 
 # ============================================================
-# 🔵 API: PAY (Cart → Wallet)
-# ============================================================
-@router.post("/pay")
-def wallet_pay(
-    amount: float = Form(...),
-    description: str = Form("Thanh toán khóa học"),
-    common=Depends(wallet_common),
-):
-    try:
-        tx = student_pay(common["db"], common["student"].id, amount, description)
-        return {"success": True, "balance": tx.balance_after, "transaction": tx.id}
-    except Exception as e:
-        raise HTTPException(400, str(e))
-
-
-# ============================================================
-# 🟦 PAGE: QR VietQR Deposit
+# 🟦 PAGE: Deposit QR — Static QR Image
 # ============================================================
 @router.get("/deposit/qr", response_class=HTMLResponse)
 def deposit_qr(
     request: Request,
     amount: float,
-    common=Depends(wallet_common),
+    common=Depends(wallet_common)
 ):
     if amount <= 0:
         raise HTTPException(400, "Số tiền không hợp lệ")
 
     student = common["student"]
 
-    # Tạo mã giao dịch
+    # 🔐 Tạo mã giao dịch duy nhất
     trans_code = f"ELEARN_{student.id[:6]}_{uuid.uuid4().hex[:6]}"
 
-    BANK_ID = "SCB"
+    # 💳 Thông tin hiển thị
+    BANK_NAME = "Sacombank"
     ACCOUNT_NO = "040109231950"
     ACCOUNT_NAME = "LUONG HONG TIEN"
 
-    qr_url = (
-        f"https://img.vietqr.io/image/{BANK_ID}-{ACCOUNT_NO}-compact.png"
-        f"?amount={int(amount)}"
-        f"&addInfo={quote(trans_code)}"
-        f"&accountName={quote(ACCOUNT_NAME)}"
-        f"&template=compact"
-    )
-
+    # 🔥 Không có qr_url – dùng hình tĩnh trong static/QR/
     return templates["student"].TemplateResponse(
         "wallet/deposit_qr.html",
         {
@@ -175,13 +122,24 @@ def deposit_qr(
             **common,
             "amount": amount,
             "trans_code": trans_code,
-            "bank": BANK_ID,
+            "bank": BANK_NAME,
             "account": ACCOUNT_NO,
             "account_name": ACCOUNT_NAME,
-            "qr_url": qr_url,
             "active_page": "wallet",
         }
     )
+
+
+# ============================================================
+# 🟧 API: Check if transaction completed (Auto-check)
+# ============================================================
+@router.get("/check_transaction/{trans_code}")
+def check_transaction(trans_code: str, db: Session = Depends(get_db)):
+    from app.models.wallet import WalletTransaction
+
+    tx = db.query(WalletTransaction).filter_by(transaction_code=trans_code).first()
+
+    return {"exists": bool(tx)}
 
 
 # ============================================================
@@ -300,3 +258,11 @@ def transfer_submit(
                 "active_page": "wallet",
             }
         )
+
+
+# ============================================================
+# 🟦 API: Get current balance (Auto refresh every 3s)
+# ============================================================
+@router.get("/balance")
+def get_wallet_balance(common=Depends(wallet_common)):
+    return {"balance": common["balance"]}

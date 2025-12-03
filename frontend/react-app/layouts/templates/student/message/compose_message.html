@@ -5,7 +5,7 @@
 
 <style>
 /* ==========================================================
-💎 Compose Message – Glass Neo v3.2 (2025 Production)
+💎 Compose Message – Glass Neo PRO MAX v4.0 (2025)
 ========================================================== */
 .compose-wrapper {
   display: flex;
@@ -30,66 +30,28 @@
   box-shadow: 0 12px 32px rgba(0,0,0,.15);
 }
 
-/* Inputs */
 .form-control {
   border-radius: 12px;
   background: rgba(255,255,255,.45);
   border: 1px solid rgba(0,0,0,.12);
   padding: .65rem .9rem;
-  transition: all .25s ease;
 }
 
-body.dark-mode .form-control {
-  background: rgba(30,41,59,.45);
-  border-color: rgba(255,255,255,.08);
-  color: #e2e8f0;
-}
-
-.form-control:focus {
-  border-color: var(--blue1);
-  box-shadow: 0 0 14px rgba(37,99,235,.28);
-}
-
-/* Textarea */
 textarea.form-control {
   min-height: 150px;
   resize: vertical;
   border-radius: 14px;
 }
 
-/* File upload */
 .file-upload {
   border: 2px dashed rgba(180,190,200,.45);
   border-radius: 12px;
   padding: 25px;
-  text-align: center;
   cursor: pointer;
-  background: rgba(255,255,255,.55);
-  transition: all .25s ease;
+  text-align: center;
 }
 
-.file-upload:hover {
-  background: rgba(37,99,235,.06);
-  border-color: var(--blue1);
-}
-
-body.dark-mode .file-upload {
-  background: rgba(15,23,42,.45);
-  border-color: rgba(255,255,255,.1);
-  color: #e2e8f0;
-}
-
-.btn-primary {
-  border-radius: 10px;
-  font-weight: 600;
-  padding: .55rem 1.4rem;
-}
-
-.btn-primary:hover i {
-  transform: translateX(4px);
-}
-
-/* Floating Back Button */
+/* Floating Back */
 .fab-back {
   position: fixed;
   bottom: 34px;
@@ -103,20 +65,6 @@ body.dark-mode .file-upload {
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 6px 15px rgba(0,0,0,.25);
-  transition: transform .3s ease, background .3s ease;
-  z-index: 999;
-}
-
-.fab-back:hover {
-  transform: scale(1.1);
-  background: linear-gradient(135deg,#475569,#1e293b);
-}
-
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 </style>
 
@@ -128,7 +76,7 @@ body.dark-mode .file-upload {
       <i class="bi bi-pencil-square me-2 text-primary"></i> Soạn tin nhắn mới
     </h4>
     <p class="text-muted small mb-4">
-      Nhập người nhận, nội dung tin nhắn và đính kèm tệp nếu cần.
+      Bạn có thể nhập <b>Email</b>, <b>Username</b> hoặc <b>ID</b> để gửi tin nhắn.
     </p>
 
     <!-- FORM GỬI TIN -->
@@ -137,25 +85,28 @@ body.dark-mode .file-upload {
       <!-- Người nhận -->
       <div class="mb-3">
         <label class="form-label fw-semibold">👤 Người nhận</label>
-        <input list="user_suggestions" 
-               type="text" 
+
+        <input list="user_suggestions"
+               type="text"
                class="form-control"
                name="receiver_id"
-               placeholder="Nhập Email, ID hoặc Username"
+               placeholder="Nhập Email, Username hoặc ID người nhận"
                required />
 
         <datalist id="user_suggestions">
           {% for u in users %}
-            <option value="{{ u.email }}">{{ u.full_name }} – @{{ u.username }}</option>
+            <option value="{{ u.email }}">{{ u.full_name }} – ID: {{ u.id }} – @{{ u.username }}</option>
+            <option value="{{ u.username }}">{{ u.full_name }} – Email: {{ u.email }}</option>
+            <option value="{{ u.id }}">{{ u.full_name }} – @{{ u.username }}</option>
           {% endfor %}
         </datalist>
       </div>
 
       <!-- Nội dung -->
       <div class="mb-3">
-        <label class="form-label fw-semibold">💬 Nội dung tin nhắn</label>
+        <label class="form-label fw-semibold">💬 Nội dung</label>
         <textarea name="content" class="form-control shadow-sm"
-                  placeholder="💭 Hãy nhập nội dung muốn gửi..."></textarea>
+                  placeholder="Nhập nội dung tin nhắn..."></textarea>
       </div>
 
       <!-- Upload file -->
@@ -171,7 +122,6 @@ body.dark-mode .file-upload {
                onchange="showFileName(this)">
       </div>
 
-      <!-- Gửi -->
       <div class="d-flex justify-content-end mt-4">
         <button type="submit" class="btn btn-primary" id="sendBtn">
           <i class="bi bi-send-fill me-1"></i> Gửi tin
@@ -182,10 +132,11 @@ body.dark-mode .file-upload {
   </div>
 </div>
 
-<!-- Nút quay lại -->
+<!-- Floating Back -->
 <a href="/student/message/" class="fab-back">
   <i class="bi bi-arrow-left"></i>
 </a>
+
 
 <script>
 function openFilePicker() {
@@ -201,9 +152,8 @@ function showFileName(input) {
   }
 
   const file = input.files[0];
-
-  // Xác định icon theo loại file
   let icon = "bi-file-earmark";
+
   if (file.type.startsWith("image/")) icon = "bi-image";
   else if (file.type === "application/pdf") icon = "bi-file-earmark-pdf";
   else if (file.type.includes("word")) icon = "bi-file-earmark-word";

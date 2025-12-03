@@ -1,12 +1,20 @@
 {% extends "layout_student.html" %}
-{% block title %}📊 Kết quả bài nộp{% endblock %}
+{% block title %}📘 Bài tập đã nộp{% endblock %}
 
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <h3 class="fw-bold mb-4">
-    <i class="bi bi-clipboard-data"></i> Kết quả bài nộp
-  </h3>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0">
+      <i class="bi bi-journal-check"></i> Bài tập đã nộp
+    </h3>
+
+    <!-- 🔥 Nút chuyển sang trang danh sách toàn bộ bài tập -->
+    <a href="/student/assignment/list"
+       class="btn btn-outline-secondary">
+      <i class="bi bi-list-task"></i> Danh sách bài tập
+    </a>
+  </div>
 
   {% if submissions %}
     <div class="table-responsive shadow-sm rounded-3">
@@ -14,10 +22,11 @@
         <thead class="table-light">
           <tr>
             <th>#</th>
+            <th>Bài tập</th>
             <th>Thời gian nộp</th>
             <th>Trạng thái</th>
             <th>Điểm</th>
-            <th class="text-center">Xem</th>
+            <th class="text-center">Chi tiết</th>
           </tr>
         </thead>
 
@@ -26,17 +35,27 @@
           <tr>
             <td>{{ loop.index }}</td>
 
-            <td>
-              {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}
+            <td class="fw-semibold">
+              {{ s.assignment.title }}
             </td>
 
             <td>
-              {% if s.status == 'graded' %}
-                <span class="badge bg-success">Đã chấm</span>
-              {% elif s.status == 'submitted' %}
+              {% if s.submission_time %}
+                {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}
+              {% else %}
+                <em class="text-muted">Chưa nộp</em>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if s.status == 'submitted' %}
                 <span class="badge bg-info text-dark">Đã nộp</span>
+              {% elif s.status == 'graded' %}
+                <span class="badge bg-success">Đã chấm</span>
               {% elif s.status == 'late' %}
                 <span class="badge bg-warning text-dark">Nộp trễ</span>
+              {% elif s.status == 'resubmitted' %}
+                <span class="badge bg-primary">Nộp lại</span>
               {% else %}
                 <span class="badge bg-secondary">Chưa nộp</span>
               {% endif %}
@@ -51,8 +70,8 @@
             </td>
 
             <td class="text-center">
-              <a href="/student/assignment/submission/{{ s.id }}" 
-                 class="btn btn-outline-primary btn-sm">
+              <a href="/student/assignment/submission/{{ s.id }}"
+                 class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-eye"></i> Xem
               </a>
             </td>
@@ -63,16 +82,11 @@
     </div>
 
   {% else %}
-    <div class="alert alert-info text-center">
+    <div class="alert alert-info text-center py-4">
+      <i class="bi bi-info-circle me-2"></i>
       Bạn chưa nộp bài tập nào.
     </div>
   {% endif %}
-
-  <div class="mt-3">
-    <a href="/student/dashboard" class="btn btn-secondary">
-      <i class="bi bi-arrow-left"></i> Quay lại
-    </a>
-  </div>
 
 </div>
 {% endblock %}

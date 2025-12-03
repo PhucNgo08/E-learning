@@ -1,11 +1,10 @@
 {% extends "layout_student.html" %}
 {% block title %}📤 Hộp thư đã gửi{% endblock %}
-
 {% block content %}
 
 <style>
 /* ==========================================================
-📤 SENT – Student Message UI v4.0 (Final 2025)
+📤 SENT – Student Message UI v4.5 (Final 2025)
 ========================================================== */
 
 .sent-item {
@@ -21,7 +20,6 @@
   box-shadow: 0 10px 24px rgba(0,0,0,0.12);
 }
 
-/* Avatar */
 .msg-avatar {
   width: 46px;
   height: 46px;
@@ -29,116 +27,75 @@
   object-fit: cover;
   border: 2px solid rgba(0,0,0,0.1);
 }
-body.dark-mode .msg-avatar {
-  border-color: rgba(255,255,255,0.12);
-}
 
-/* File badge */
 .file-badge {
   font-size: .8rem;
   background: rgba(13,110,253,0.12);
   color: #0d6efd;
   padding: 2px 6px;
   border-radius: 6px;
-  display: inline-block;
   margin-left: 4px;
 }
 
-body.dark-mode .file-badge {
-  background: rgba(37,99,235,0.25);
-  color: #93c5fd;
-}
-
-/* Dark mode */
-body.dark-mode .sent-item {
-  background: rgba(30,41,59,0.45);
-  border-color: rgba(255,255,255,0.08) !important;
-  color: #e2e8f0 !important;
-}
-body.dark-mode .sent-item:hover {
-  background: rgba(30,41,59,0.65);
-}
-
-/* Floating Compose */
+/* Floating compose button */
 .fab-compose {
   position: fixed;
   bottom: 30px;
   right: 90px;
-  background: linear-gradient(135deg,#0d6efd,#0056d6);
-  color: white;
-  border-radius: 50%;
   width: 60px;
   height: 60px;
+  background: linear-gradient(135deg,#0d6efd,#0056d6);
+  color: #fff;
+  border-radius: 50%;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   font-size: 26px;
   box-shadow: 0 8px 22px rgba(0,0,0,.25);
-  transition: all .3s ease;
+  transition: .3s ease;
   z-index: 1050;
 }
+.fab-compose:hover { transform: scale(1.12); }
 
-.fab-compose:hover {
-  transform: scale(1.12);
-  background: linear-gradient(135deg,#0b5ed7,#003c9e);
-}
-
-@media (max-width: 576px) {
-  .fab-compose {
-    right: 20px;
-    bottom: 20px;
-  }
-}
 </style>
-
 
 <div class="container py-4 fade-in">
 
-  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h3 class="fw-bold text-primary mb-0">
       <i class="bi bi-send-check me-2"></i> Hộp thư đã gửi
     </h3>
-
     <a href="/student/message/compose" class="btn btn-success">
       <i class="bi bi-pencil-square me-1"></i> Gửi tin mới
     </a>
   </div>
 
-
-  <!-- Sent Messages -->
   {% if messages and messages|length > 0 %}
   <div class="list-group border-0">
 
     {% for m in messages %}
-    {% set rec = m.receiver if m.receiver else None %}
+    {% set rec = m.receiver %}
 
     <a href="/student/message/view/{{ m.id }}"
        class="list-group-item list-group-item-action sent-item d-flex justify-content-between align-items-center py-3 mb-2">
 
-      <!-- LEFT: Avatar + Receiver Info -->
       <div class="d-flex align-items-center gap-3">
 
-        {% if rec and rec.avatar_url %}
-          <img src="{{ rec.avatar_url }}" class="msg-avatar" alt="avatar">
-        {% else %}
-          <img src="/static/img/default_avatar.png" class="msg-avatar" alt="avatar">
-        {% endif %}
+        <img src="{{ rec.avatar_url or '/uploads/avatars/default-avatar.png' }}"
+             onerror="this.src='/uploads/avatars/default-avatar.png'"
+             class="msg-avatar">
 
         <div>
           <div class="fw-semibold text-dark">
-            {{ rec.full_name if rec else "Người nhận ẩn danh" }}
+            {{ rec.full_name if rec else "Người nhận" }}
           </div>
 
-          <!-- Content Preview -->
           {% if m.content %}
             <small class="text-muted">
               {{ m.content[:90] }}{% if m.content|length > 90 %}...{% endif %}
             </small>
           {% else %}
-            <small class="text-muted">
-              <i class="bi bi-paperclip"></i> Tệp đính kèm
-            </small>
+            <small class="text-muted"><i class="bi bi-paperclip"></i> Tệp đính kèm</small>
           {% endif %}
 
           {% if m.attachment_url %}
@@ -149,10 +106,8 @@ body.dark-mode .sent-item:hover {
         </div>
       </div>
 
-      <!-- RIGHT: Time -->
       <div class="text-end small text-secondary">
-        <i class="bi bi-clock me-1"></i>
-        {{ m.sent_at.strftime("%d/%m/%Y %H:%M") }}
+        <i class="bi bi-clock me-1"></i> {{ m.sent_at|datetime }}
       </div>
 
     </a>
@@ -161,17 +116,14 @@ body.dark-mode .sent-item:hover {
   </div>
 
   {% else %}
-
-  <!-- Empty -->
   <div class="alert alert-info text-center mt-4 shadow-sm py-3">
     <i class="bi bi-info-circle me-2"></i> Bạn chưa gửi tin nhắn nào.
   </div>
-
   {% endif %}
+
 </div>
 
-<!-- Floating Compose -->
-<a href="/student/message/compose" class="fab-compose" title="Soạn tin nhắn">
+<a href="/student/message/compose" class="fab-compose">
   <i class="bi bi-pencil-square"></i>
 </a>
 

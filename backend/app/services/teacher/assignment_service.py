@@ -1,36 +1,29 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime
+import uuid
+
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.assignment_file import AssignmentFile
 from app.models.course import Course
 from app.models.module import Module
 from app.models.user import User
-import uuid
+from app.models.lesson_progress import LessonProgress
+from app.models.quiz_attempt import QuizAttempt
 
 
 # ====================================================
 # 📋 Lấy danh sách bài tập theo giáo viên
 # ====================================================
 def get_assignments_by_teacher(db: Session, teacher_id: str):
-    """
-    Truy vấn tất cả bài tập do giáo viên tạo
-    Trả về kèm thông tin khóa học và module (nếu có)
-    """
-    assignments = (
+    return (
         db.query(Assignment)
+        .options(joinedload(Assignment.course), joinedload(Assignment.module))
         .filter(Assignment.teacher_id == teacher_id)
         .order_by(Assignment.created_at.desc())
         .all()
     )
-
-    # ✅ Gắn tên khóa học và module để hiển thị trong template
-    for a in assignments:
-        a.course = db.query(Course).filter(Course.id == a.course_id).first()
-        a.module = db.query(Module).filter(Module.id == a.module_id).first() if a.module_id else None
-
-    return assignments
 
 
 # ====================================================
@@ -48,27 +41,25 @@ def create_assignment(
     max_files: int = 3,
     max_file_size_mb: int = 50,
 ):
-    """
-    Tạo mới bài tập (Assignment)
-    Kiểm tra:
-    - Khóa học (course_id) phải tồn tại và thuộc về giáo viên
-    - Module (nếu có) phải thuộc khóa học đó
-    """
     try:
-        # ✅ Kiểm tra khóa học
-        course = db.query(Course).filter(Course.id == course_id).first()
+        # 1. Kiểm tra khóa học thuộc giáo viên
+        course = (
+            db.query(Course)
+            .filter(Course.id == course_id, Course.teacher_id == teacher_id)
+            .first()
+        )
         if not course:
-            raise ValueError("❌ Khóa học không tồn tại hoặc không hợp lệ.")
+            raise ValueError("Khóa học không hợp lệ hoặc không thuộc giáo viên.")
 
-        # ✅ Kiểm tra module (nếu có)
+        # 2. Kiểm tra module
         if module_id:
             module = db.query(Module).filter(Module.id == module_id).first()
             if not module:
-                raise ValueError("❌ Module không tồn tại.")
+                raise ValueError("Module không tồn tại.")
             if module.course_id != course_id:
-                raise ValueError("❌ Module không thuộc khóa học được chọn.")
+                raise ValueError("Module không thuộc khóa học được chọn.")
 
-        # ✅ Tạo bài tập
+        # 3. Tạo Assignment
         new_assignment = Assignment(
             id=str(uuid.uuid4()),
             course_id=course_id,
@@ -96,40 +87,32 @@ def create_assignment(
 
 
 # ====================================================
-# 📄 Danh sách bài nộp theo Assignment
+# 📄 Danh sách bài nộp theo bài tập
 # ====================================================
 def get_submissions_by_assignment(db: Session, assignment_id: str):
-    """
-    Lấy danh sách bài nộp kèm thông tin sinh viên (dạng object)
-    Trả về list[AssignmentSubmission] với .student property gắn sẵn
-    """
-    submissions = (
+    return (
         db.query(AssignmentSubmission)
+        .options(joinedload(AssignmentSubmission.student))
         .filter(AssignmentSubmission.assignment_id == assignment_id)
         .order_by(AssignmentSubmission.submission_time.desc())
         .all()
     )
 
-    # ✅ Gắn thêm thông tin sinh viên
-    for s in submissions:
-        s.student = db.query(User).filter(User.id == s.student_id).first()
-    return submissions
-
 
 # ====================================================
-# 🧮 Chấm điểm bài nộp
+# 🧮 Chấm bài nộp
 # ====================================================
 def grade_submission(
     db: Session, submission_id: str, grade: float, feedback: str, teacher_id: str
 ):
-    """Chấm điểm bài nộp"""
-    submission = (
-        db.query(AssignmentSubmission)
-        .filter(AssignmentSubmission.id == submission_id)
-        .first()
-    )
+    submission = db.query(AssignmentSubmission).filter_by(id=submission_id).first()
     if not submission:
         return None
+
+    assignment = db.query(Assignment).filter_by(id=submission.assignment_id).first()
+
+    if not assignment or assignment.teacher_id != teacher_id:
+        raise PermissionError("Bạn không có quyền chấm bài này.")
 
     submission.grade = grade
     submission.feedback = feedback
@@ -143,10 +126,9 @@ def grade_submission(
 
 
 # ====================================================
-# 📦 Lấy file đính kèm của bài nộp
+# 📦 Lấy file đính kèm bài nộp
 # ====================================================
 def get_submission_files(db: Session, submission_id: str):
-    """Lấy danh sách file đính kèm bài nộp"""
     return (
         db.query(AssignmentFile)
         .filter(AssignmentFile.submission_id == submission_id)
@@ -155,24 +137,21 @@ def get_submission_files(db: Session, submission_id: str):
 
 
 # ====================================================
-# 📊 Dữ liệu Export Excel
+# 📊 Lấy dữ liệu export Excel
 # ====================================================
 def get_submission_export_rows(db: Session, assignment_id: str):
-    """
-    Trả về list[dict] chứa dữ liệu cần export Excel:
-    mssv, full_name, email, submission_time, status, grade, feedback, file_count
-    """
-    # Subquery đếm số file mỗi bài nộp
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+    deadline = assignment.due_date if assignment else None
+
     file_count_sq = (
         db.query(
             AssignmentFile.submission_id.label("sid"),
-            func.count(AssignmentFile.id).label("file_count")
+            func.count(AssignmentFile.id).label("file_count"),
         )
         .group_by(AssignmentFile.submission_id)
         .subquery()
     )
 
-    # JOIN submissions + users + file_count
     q = (
         db.query(
             AssignmentSubmission.id,
@@ -183,7 +162,7 @@ def get_submission_export_rows(db: Session, assignment_id: str):
             User.mssv,
             User.full_name,
             User.email,
-            func.coalesce(file_count_sq.c.file_count, 0).label("file_count")
+            func.coalesce(file_count_sq.c.file_count, 0).label("file_count"),
         )
         .join(User, User.id == AssignmentSubmission.student_id, isouter=True)
         .join(file_count_sq, file_count_sq.c.sid == AssignmentSubmission.id, isouter=True)
@@ -193,15 +172,106 @@ def get_submission_export_rows(db: Session, assignment_id: str):
 
     rows = []
     for r in q.all():
-        rows.append({
-            "submission_id": r.id,
-            "submission_time": r.submission_time,
-            "status": r.status,
-            "grade": r.grade,
-            "feedback": r.feedback,
-            "mssv": r.mssv,
-            "full_name": r.full_name,
-            "email": r.email,
-            "file_count": r.file_count,
-        })
+        is_late = False
+        if deadline and r.submission_time:
+            is_late = r.submission_time > deadline
+
+        rows.append(
+            {
+                "submission_id": r.id,
+                "submission_time": r.submission_time,
+                "status": r.status,
+                "grade": r.grade,
+                "feedback": r.feedback,
+                "mssv": r.mssv,
+                "full_name": r.full_name,
+                "email": r.email,
+                "file_count": r.file_count,
+                "is_late": is_late,
+            }
+        )
+
     return rows
+
+
+# ====================================================
+# 🎯 NEW – Tính tiến độ học viên theo khóa học
+# ====================================================
+def get_student_progress_by_course(db: Session, course_id: str):
+    """
+    Trả về list chứa data tiến độ học viên trong khóa học:
+    - lessons_completed
+    - assignments_submitted
+    - quiz_done
+    - overall_progress (%)
+    """
+
+    # ======= Lấy danh sách sinh viên đang học khóa
+    students = (
+        db.query(User)
+        .join(Assignment, Assignment.course_id == course_id)
+        .filter(User.role == "student")
+        .distinct()
+        .all()
+    )
+
+    progress_list = []
+
+    for stu in students:
+
+        # ---------------------------
+        # 1. Tiến độ bài học
+        # ---------------------------
+        lessons_completed = (
+            db.query(LessonProgress)
+            .join(Module, Module.id == LessonProgress.lesson_id)
+            .filter(
+                LessonProgress.user_id == stu.id,
+                LessonProgress.progress_status == "completed",
+            )
+            .count()
+        )
+
+        # ---------------------------
+        # 2. Bài tập đã nộp
+        # ---------------------------
+        assignments_submitted = (
+            db.query(AssignmentSubmission)
+            .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
+            .filter(
+                Assignment.course_id == course_id,
+                AssignmentSubmission.student_id == stu.id,
+            )
+            .count()
+        )
+
+        # ---------------------------
+        # 3. Quiz đã làm
+        # ---------------------------
+        quiz_done = (
+            db.query(QuizAttempt)
+            .filter(
+                QuizAttempt.user_id == stu.id,
+                QuizAttempt.status == "submitted",
+            )
+            .count()
+        )
+
+        # ---------------------------
+        # 4. Tổng hợp phần trăm tiến độ
+        # ---------------------------
+        overall_progress = (
+            lessons_completed * 0.5 + assignments_submitted * 0.3 + quiz_done * 0.2
+        )
+
+        progress_list.append(
+            {
+                "student": stu,
+                "lessons_completed": lessons_completed,
+                "assignments_submitted": assignments_submitted,
+                "quiz_done": quiz_done,
+                "overall_progress": overall_progress,
+            }
+        )
+
+    return progress_list

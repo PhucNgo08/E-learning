@@ -1,153 +1,51 @@
 {% extends "layout_student.html" %}
-{% block title %}📤 Nộp bài tập{% endblock %}
-{% block content %}
+{% block title %}📤 Nộp bài{% endblock %}
 
+{% block content %}
 <div class="container py-4 fade-in">
 
-  <h3 class="fw-bold mb-3">
-    <i class="bi bi-upload me-2"></i>{{ page_title }}
+  <h3 class="fw-bold mb-4">
+    <i class="bi bi-upload"></i> Nộp bài: {{ assignment.title }}
   </h3>
 
-  <!-- =============================== -->
-  <!-- 🔥 Cảnh báo deadline -->
-  <!-- =============================== -->
-  <div class="mb-3">
-    {% if assignment.due_date %}
-      {% if assignment.due_date < now %}
-        <div class="alert alert-danger">
-          <i class="bi bi-exclamation-octagon me-2"></i>
-          <strong>Bài tập đã quá hạn!</strong>
-          {% if assignment.allow_late_submission %}
-            Bạn vẫn có thể nộp muộn (sẽ bị phạt {{ assignment.late_penalty_percent or 0 }}%)
-          {% else %}
-            Bài này <strong>không cho phép nộp muộn</strong>.
-          {% endif %}
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+
+      <form action="/student/assignment/submit/{{ assignment.id }}" 
+            method="post" enctype="multipart/form-data">
+
+        <!-- Nội dung -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">📝 Nội dung</label>
+          <textarea name="submission_text" rows="5" class="form-control"
+            placeholder="Nhập nội dung bài nộp (không bắt buộc nếu có file)..."></textarea>
         </div>
-      {% else %}
-        <div class="alert alert-info">
-          <i class="bi bi-clock-history me-2"></i>
-          Hạn nộp: <strong>{{ assignment.due_date.strftime("%d/%m/%Y %H:%M") }}</strong>
+
+        <!-- Upload file -->
+        <div class="mb-3">
+          <label class="form-label fw-bold">📎 File đính kèm</label>
+          <input type="file" name="files" multiple class="form-control">
+          <small class="text-muted">
+            Tối đa {{ assignment.max_files }} file • Loại file: {{ assignment.allowed_file_types }}
+          </small>
         </div>
-      {% endif %}
-    {% endif %}
+
+        <hr>
+
+        <div class="text-end">
+          <button class="btn btn-success">
+            <i class="bi bi-send-check"></i> Nộp bài
+          </button>
+
+          <a href="/student/assignment/detail/{{ assignment.id }}" 
+             class="btn btn-secondary ms-2">
+            <i class="bi bi-x-circle"></i> Hủy
+          </a>
+        </div>
+
+      </form>
+    </div>
   </div>
 
-  <!-- =============================== -->
-  <!-- 🔹 Form nộp bài -->
-  <!-- =============================== -->
-  <form action="/student/assignment/submit/{{ assignment.id }}"
-        method="post"
-        enctype="multipart/form-data"
-        class="card shadow-sm p-4"
-        id="submitForm">
-
-    <!-- Nội dung / ghi chú -->
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Ghi chú / Nội dung bài nộp</label>
-      <textarea class="form-control"
-                name="submission_text"
-                rows="4"
-                placeholder="Nhập nội dung hoặc ghi chú..."></textarea>
-    </div>
-
-    <!-- Chọn file -->
-    <div class="mb-3">
-      <label class="form-label fw-semibold">
-        Tệp đính kèm (tối đa {{ assignment.max_files or 5 }} tệp)
-      </label>
-
-      <input class="form-control" type="file" name="files" multiple id="fileInput"/>
-
-      <small class="text-muted d-block mt-1">
-        Định dạng cho phép: {{ assignment.allowed_file_types or 'pdf, docx, zip, jpg, png' }}
-      </small>
-
-      <small class="text-muted d-block">
-        Dung lượng tối đa mỗi file: {{ assignment.max_file_size_mb }} MB
-      </small>
-
-      <!-- Preview -->
-      <ul class="mt-3 list-unstyled" id="previewList"></ul>
-    </div>
-
-    <!-- Nút hành động -->
-    <div class="d-flex justify-content-between mt-4">
-      <a href="/student/assignment/detail/{{ assignment.id }}" class="btn btn-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-
-      <button type="submit" class="btn btn-primary" id="submitBtn">
-        <i class="bi bi-send-check"></i> Gửi bài
-      </button>
-    </div>
-
-  </form>
 </div>
-
-<!-- =============================== -->
-<!-- 🔥 Script kiểm tra file client-side -->
-<!-- =============================== -->
-<script>
-  // ⭐ Load config an toàn từ server (không gây lỗi VSCode)
-  const CONFIG = JSON.parse(`{
-    "maxFiles": {{ assignment.max_files or 5 }},
-    "maxSizeMB": {{ assignment.max_file_size_mb }},
-    "allowedTypes": "{{ assignment.allowed_file_types or 'pdf,docx,zip,jpg,png' }}"
-  }`);
-
-  const maxFiles = CONFIG.maxFiles;
-  const maxSizeMB = CONFIG.maxSizeMB;
-  const allowedTypes = CONFIG.allowedTypes.split(",").map(t => t.trim().toLowerCase());
-
-  const fileInput = document.getElementById("fileInput");
-  const previewList = document.getElementById("previewList");
-  const submitBtn = document.getElementById("submitBtn");
-  const form = document.getElementById("submitForm");
-
-  fileInput.addEventListener("change", function () {
-    previewList.innerHTML = "";
-    const files = fileInput.files;
-
-    // Kiểm tra số lượng file
-    if (files.length > maxFiles) {
-      alert(`Bạn chỉ được chọn tối đa ${maxFiles} file!`);
-      fileInput.value = "";
-      return;
-    }
-
-    for (let file of files) {
-      const li = document.createElement("li");
-      li.classList.add("mb-1");
-
-      const ext = file.name.split(".").pop().toLowerCase();
-
-      // Kiểm tra loại file
-      if (!allowedTypes.includes(ext)) {
-        alert(`File "${file.name}" không đúng định dạng!\nChỉ chấp nhận: ${allowedTypes.join(", ")}`);
-        fileInput.value = "";
-        previewList.innerHTML = "";
-        return;
-      }
-
-      // Kiểm tra dung lượng file
-      const sizeMB = file.size / (1024 * 1024);
-      if (sizeMB > maxSizeMB) {
-        alert(`File "${file.name}" vượt quá dung lượng ${maxSizeMB} MB!`);
-        fileInput.value = "";
-        previewList.innerHTML = "";
-        return;
-      }
-
-      li.innerHTML = `<i class="bi bi-file-earmark me-1"></i> ${file.name} (${sizeMB.toFixed(2)} MB)`;
-      previewList.appendChild(li);
-    }
-  });
-
-  // 🚫 Chống double-submit
-  form.addEventListener("submit", () => {
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Đang gửi...';
-  });
-</script>
-
 {% endblock %}

@@ -15,7 +15,8 @@ from app.database.connection import get_db
 from app.config.template_config import templates
 
 from app.services.student import lesson_service
-
+from fastapi.responses import JSONResponse
+from app.models.question_option import QuestionOption
 
 # =====================================================
 # ⚙️ Router config
@@ -91,7 +92,7 @@ async def list_lessons_in_module(request: Request, module_id: str, db: Session =
 
 
 # =====================================================
-# 🔹 4) Xem bài học
+# 🔹 4) Xem bài học + LẤY QUIZ ĐỂ HIỂN THỊ
 # =====================================================
 @router.get("/view/{lesson_id}", response_class=HTMLResponse, name="student_lesson_view")
 async def view_lesson(request: Request, lesson_id: str, db: Session = Depends(get_db)):
@@ -101,6 +102,7 @@ async def view_lesson(request: Request, lesson_id: str, db: Session = Depends(ge
         return RedirectResponse("/auth/login", 302)
 
     try:
+        # Lấy bài học
         lesson = lesson_service.get_lesson_detail(db, lesson_id)
 
         if not lesson:
@@ -110,7 +112,12 @@ async def view_lesson(request: Request, lesson_id: str, db: Session = Depends(ge
                 404,
             )
 
+        # Lấy tiến độ
         progress = lesson_service.get_lesson_progress(db, user_id, lesson_id)
+
+        # 👉 LẤY QUIZ CỦA BÀI HỌC
+        # 👉 LẤY QUIZ CỦA BÀI HỌC
+        quiz = lesson_service.get_quiz_by_lesson(db, lesson_id)
 
         return templates["student"].TemplateResponse(
             "lesson/lesson_view.html",
@@ -118,10 +125,12 @@ async def view_lesson(request: Request, lesson_id: str, db: Session = Depends(ge
                 "request": request,
                 "lesson": lesson,
                 "progress": progress,
+                "quiz": quiz,   # ⭐ TRUYỀN ĐÚNG QUIZ OBJECT ⭐
                 "page_title": f"📕 {lesson.title}",
                 "active_page": "lesson",
             },
         )
+
 
     except Exception as e:
         print("❌ [view_lesson] Lỗi:", e)
@@ -271,3 +280,24 @@ async def view_learning_progress(request: Request, db: Session = Depends(get_db)
     except Exception as e:
         print("❌ [progress] Lỗi:", e)
         return HTMLResponse("Lỗi khi tải tiến độ.", 500)
+
+
+@router.post("/check-answer")
+async def check_answer(
+    question_id: str = Form(...),
+    option_id: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    try:
+        option = db.query(QuestionOption).filter(QuestionOption.id == option_id).first()
+        if not option:
+            return JSONResponse({"status": "error", "message": "Không tìm thấy lựa chọn."})
+
+        return JSONResponse({
+            "status": "ok",
+            "correct": bool(option.is_correct)
+        })
+
+    except Exception as e:
+        traceback.print_exc()
+        return JSONResponse({"status": "error", "message": "Lỗi xử lý."})

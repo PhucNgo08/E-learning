@@ -1,0 +1,71 @@
+{% extends "layout_admin.html" %}
+{% block title %}📄 Danh sách bài nộp{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+    <h2 class="mb-4">📄 Danh sách bài nộp — {{ assignment.title }}</h2>
+
+    <a href="/admin/assignment/list" class="btn btn-secondary mb-3">
+        ⬅ Quay lại danh sách bài tập
+    </a>
+
+    <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Học sinh</th>
+                <th>Thời gian nộp</th>
+                <th>Trạng thái</th>
+                <th>Điểm</th>
+                <th style="width: 150px;">Hành động</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for sub in submissions %}
+            <tr>
+                <td>{{ sub.student.full_name }}</td>
+
+                <td>{{ sub.submission_time.strftime("%d/%m/%Y %H:%M") }}</td>
+
+                <td>
+                    {% if sub.status == "submitted" %}
+                        <span class="badge bg-primary">Đã nộp</span>
+                    {% elif sub.status == "graded" %}
+                        <span class="badge bg-success">Đã chấm</span>
+                    {% elif sub.status == "late" %}
+                        <span class="badge bg-warning text-dark">Nộp trễ</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ sub.status }}</span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if sub.grade %}
+                        <b>{{ sub.grade }}</b>
+                    {% else %}
+                        —
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if sub.status != "graded" %}
+                    <a href="/admin/assignment/grade/{{ sub.id }}" class="btn btn-primary btn-sm">
+                        ✏ Chấm bài
+                    </a>
+                    {% else %}
+                    <span class="badge bg-success">✔ Đã chấm</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    Chưa có bài nộp nào.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

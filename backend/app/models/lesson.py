@@ -19,7 +19,7 @@ class Lesson(Base):
     title = Column(String(200), nullable=False)
 
     content_type = Column(
-        Enum("video", "document", "quiz", "assignment", name="content_type_enum"),
+        Enum("video", "document", "quiz", "assignment", "mixed", name="content_type_enum"),
         default="video",
     )
     description = Column(Text)
@@ -41,6 +41,7 @@ class Lesson(Base):
 
     # === Quan hệ ORM ===
     module = relationship("Module", back_populates="lessons")
-
+    # ⭐ Thêm dòng này:
+    quizzes = relationship("Quiz", back_populates="lesson")
     def __repr__(self):
         return f"<Lesson(id={self.id}, title={self.title}, start={self.start_time}, end={self.end_time})>"

@@ -10,19 +10,15 @@
         <!-- HEADER -->
         <div class="text-center mb-4">
             <div class="mx-auto mb-3"
-                 style="width: 85px; height: 85px; border-radius: 50%;
-                        background: linear-gradient(135deg, #3b82f6, #2563eb);
-                        display:flex; justify-content:center; align-items:center;
-                        box-shadow:0 8px 18px rgba(37,99,235,0.35);">
+                style="width: 85px; height: 85px; border-radius: 50%;
+                       background: linear-gradient(135deg, #3b82f6, #2563eb);
+                       display:flex; justify-content:center; align-items:center;
+                       box-shadow:0 8px 18px rgba(37,99,235,0.35);">
                 <i class="bi bi-credit-card-fill text-white" style="font-size: 2.4rem;"></i>
             </div>
 
-            <h2 class="fw-bold mb-1">
-                🔋 Nạp tiền vào ví
-            </h2>
-            <p class="text-muted mb-0">
-                Vui lòng nhập số tiền muốn nạp vào ví E-Learning.
-            </p>
+            <h2 class="fw-bold mb-1">🔋 Nạp tiền vào ví</h2>
+            <p class="text-muted mb-0">Vui lòng nhập số tiền muốn nạp vào ví E-Learning.</p>
         </div>
 
         <!-- ERROR -->
@@ -34,27 +30,42 @@
         {% endif %}
 
         <!-- FORM -->
-        <form action="/student/wallet/deposit/qr" method="get">
+        <form action="/student/wallet/deposit/qr" method="get" id="depositForm">
 
             <label class="form-label fw-semibold">Số tiền cần nạp</label>
 
             <div class="input-group mb-3">
                 <span class="input-group-text fw-bold text-primary"
-                      style="background: rgba(37,99,235,0.12); border-radius: 12px 0 0 12px;">
+                    style="background: rgba(37,99,235,0.12); border-radius: 12px 0 0 12px;">
                     <i class="bi bi-cash-coin"></i>
                 </span>
 
-                <input type="number" name="amount" min="1000"
-                       class="form-control form-control-lg"
-                       style="border-radius: 0 12px 12px 0;"
-                       placeholder="VD: 50.000"
-                       required>
+                <input type="text" id="amountInput" name="amount"
+                    class="form-control form-control-lg"
+                    style="border-radius: 0 12px 12px 0;"
+                    placeholder="VD: 50.000"
+                    required>
             </div>
 
-            <button class="btn btn-primary w-100 fw-semibold py-3 mt-2"
-                    style="border-radius: 12px; font-size: 1.05rem;
-                           background: linear-gradient(135deg, #2563eb, #1e40af);
-                           box-shadow:0 6px 16px rgba(37,99,235,0.35);">
+            <!-- QUICK SELECT BUTTONS -->
+            <div class="d-flex flex-wrap gap-2 mb-3">
+
+                {% set quick_values = [20000, 50000, 100000, 200000, 500000] %}
+
+                {% for v in quick_values %}
+                <button type="button"
+                    class="btn btn-outline-primary quick-btn fw-semibold"
+                    data-amount="{{ v }}">
+                    {{ "{:,.0f}".format(v) }} đ
+                </button>
+                {% endfor %}
+
+            </div>
+
+            <button id="submitBtn" class="btn btn-primary w-100 fw-semibold py-3 mt-2"
+                style="border-radius: 12px; font-size: 1.05rem;
+                       background: linear-gradient(135deg, #2563eb, #1e40af);
+                       box-shadow:0 6px 16px rgba(37,99,235,0.35);">
                 Tiếp tục →
             </button>
 
@@ -63,8 +74,8 @@
         <!-- BACK -->
         <div class="text-center mt-4">
             <a href="/student/wallet/page"
-               class="fw-semibold"
-               style="text-decoration:none; color:#2563eb;">
+                class="fw-semibold"
+                style="text-decoration:none; color:#2563eb;">
                 ← Quay về ví
             </a>
         </div>
@@ -72,5 +83,44 @@
     </div>
 
 </div>
+
+
+<!-- ================================
+     JAVASCRIPT — PRO MAX v9
+================================ -->
+<script>
+    const input = document.getElementById("amountInput");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function formatCurrency(num) {
+        return num.toLocaleString("vi-VN");
+    }
+
+    function extractNumber(str) {
+        return parseInt(str.replace(/\D/g, "")) || 0;
+    }
+
+    // Khi gõ vào input → tự format tiền
+    input.addEventListener("input", () => {
+        let num = extractNumber(input.value);
+        input.value = formatCurrency(num);
+
+        submitBtn.disabled = (num < 1000);
+    });
+
+    // Nút chọn nhanh
+    document.querySelectorAll(".quick-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            let v = parseInt(btn.dataset.amount);
+            input.value = formatCurrency(v);
+            submitBtn.disabled = false;
+        });
+    });
+
+    // Trước khi submit form → convert "50.000" → 50000
+    document.getElementById("depositForm").addEventListener("submit", () => {
+        input.value = extractNumber(input.value);
+    });
+</script>
 
 {% endblock %}
