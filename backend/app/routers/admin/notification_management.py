@@ -95,40 +95,74 @@ def create_notification_form(
 
 
 # ======================================================
-# 📨 3️⃣ Gửi thông báo mới (POST)
+# 📨 3️⃣ Gửi thông báo mới (POST) — v4.0 (Fix hoàn chỉnh)
 # ======================================================
 @router.post("/create")
 def create_notification_action(
-    user_id: str = Form(...),
-    title: str = Form(...),
-    message: str = Form(...),
+    request: Request,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin),
+
+    # 🟦 Form fields từ UI
+    title: str = Form(...),
+    message: str = Form(...),
+
+    user_ids: str = Form(""),            # danh sách nhiều user (string: "a,b,c")
+    broadcast_all: bool = Form(False),   # checkbox
 ):
-    """Xử lý tạo thông báo"""
+    """
+    Xử lý tạo thông báo:
+    - Broadcast toàn hệ thống
+    - Gửi nhiều người
+    - Gửi 1 người
+    """
     try:
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+        # ==========================
+        # 🔥 1) Broadcast cho tất cả
+        # ==========================
+        if broadcast_all:
+            all_users = db.query(User).all()
+            for u in all_users:
+                db.add(Notification(
+                    user_id=u.id,
+                    title=title.strip(),
+                    message=message.strip(),
+                    created_at=datetime.now(),
+                ))
+            db.commit()
+            return RedirectResponse("/admin/notification/list", status_code=303)
 
-        new_notification = Notification(
-            user_id=user_id,
-            title=title.strip(),
-            message=message.strip(),
-            created_at=datetime.now(),
-        )
-        db.add(new_notification)
+        # =============================================
+        # 🔥 2) Gửi nhiều người (user_ids = "a,b,c")
+        # =============================================
+        user_list = [uid.strip() for uid in user_ids.split(",") if uid.strip()]
+
+        if not user_list:
+            raise HTTPException(
+                status_code=400,
+                detail="Vui lòng chọn người nhận hoặc bật Broadcast."
+            )
+
+        for uid in user_list:
+            user = db.query(User).filter(User.id == uid).first()
+            if not user:
+                continue  # bỏ qua user không tồn tại
+
+            db.add(Notification(
+                user_id=uid,
+                title=title.strip(),
+                message=message.strip(),
+                created_at=datetime.now(),
+            ))
+
         db.commit()
-        db.refresh(new_notification)
-
-        return RedirectResponse(url="/admin/notification/list", status_code=303)
+        return RedirectResponse("/admin/notification/list", status_code=303)
 
     except Exception as e:
         print("❌ Lỗi khi tạo thông báo:", e)
         db.rollback()
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # ======================================================
 # 🗑️ 4️⃣ Xóa thông báo

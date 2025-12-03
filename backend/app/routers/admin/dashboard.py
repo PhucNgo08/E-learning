@@ -1,55 +1,67 @@
 """
 ==========================================================
-🎯 ROUTER: Admin - Dashboard
-Hiển thị trang bảng điều khiển (dashboard) cho quản trị viên
+🎯 ROUTER: Admin - Dashboard (PRO MAX v2.0)
+Hỗ trợ:
+✔ Trình duyệt (Template)
+✔ Postman (JSON)
+✔ Kiểm tra session hợp lệ
 ==========================================================
 """
 
 from fastapi import APIRouter, Request, HTTPException, Depends
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 
-# ✅ Import cấu hình template động
 from app.config.template_config import get_template_by_path
-
-# ✅ Import kết nối DB
 from app.database.connection import get_db
 
 
-# ======================================================
-# ⚙️ Cấu hình Router
-# ======================================================
 dashboard_router = APIRouter(
     prefix="/admin",
     tags=["Admin - Dashboard"]
 )
 
 
-# ======================================================
-# 🧭 Trang Dashboard Admin
-# ======================================================
-@dashboard_router.get("/dashboard", response_class=HTMLResponse)
+@dashboard_router.get("/dashboard")
 async def get_dashboard(request: Request, db: Session = Depends(get_db)):
     """
-    Trang quản trị Admin - hiển thị Dashboard tổng quan.
+    Trang quản trị Admin - web + API support
     """
 
-    # 🧠 Lấy thông tin đăng nhập từ session
     user_role = request.session.get("role")
     username = request.session.get("username")
 
-    # 🔒 Kiểm tra quyền truy cập
+    # ===========================
+    # 🔐 AUTH CHECK
+    # ===========================
     if not user_role:
-        raise HTTPException(status_code=401, detail="Bạn cần đăng nhập để truy cập trang này.")
+        # Nếu là Postman → trả JSON
+        if "PostmanRuntime" in request.headers.get("User-Agent", ""):
+            return JSONResponse(
+                {"error": "Unauthorized — No session provided"},
+                status_code=401
+            )
+
+        raise HTTPException(
+            status_code=401,
+            detail="Bạn cần đăng nhập để truy cập trang này."
+        )
+
     if user_role != "admin":
-        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập trang này.")
+        if "PostmanRuntime" in request.headers.get("User-Agent", ""):
+            return JSONResponse(
+                {"error": "Forbidden — Admin only"},
+                status_code=403
+            )
 
-    # ✅ Lấy template tương ứng theo đường dẫn (admin → templates["admin"])
-    templates = get_template_by_path(request.url.path)
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn không có quyền truy cập trang này."
+        )
 
-    # ======================================================
-    # 📊 Giả lập dữ liệu thống kê (có thể truy vấn thực tế từ DB)
-    # ======================================================
+    # ===========================
+    # 📊 DATA MẪU
+    # ===========================
     stats = {
         "total_users": 152,
         "total_courses": 34,
@@ -58,7 +70,6 @@ async def get_dashboard(request: Request, db: Session = Depends(get_db)):
         "total_students": 120,
     }
 
-    # ✅ Danh sách khóa học mẫu
     courses = [
         {
             "course_name": "Nhập môn Lập trình Python",
@@ -74,11 +85,26 @@ async def get_dashboard(request: Request, db: Session = Depends(get_db)):
         },
     ]
 
-    # ======================================================
-    # 🖼️ Render giao diện Dashboard
-    # ======================================================
+    # ===========================
+    # 🔥 Nếu là POSTMAN → trả JSON
+    # ===========================
+    if "PostmanRuntime" in request.headers.get("User-Agent", ""):
+        return JSONResponse(
+            {
+                "status": "success",
+                "username": username,
+                "stats": stats,
+                "courses": courses,
+            }
+        )
+
+    # ===========================
+    # 🖼️ TRẢ TEMPLATE CHO WEB
+    # ===========================
+    templates = get_template_by_path(request.url.path)
+
     return templates.TemplateResponse(
-        "admin_dashboard.html",  # ⚠️ chỉ cần tên file, vì template admin đã được trỏ sẵn
+        "admin_dashboard.html",
         {
             "request": request,
             "username": username,

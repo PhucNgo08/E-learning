@@ -2,11 +2,53 @@
 {% block title %}💰 Danh sách tài khoản ví{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
 
-    <h3 class="fw-bold mb-3">💰 Danh sách tất cả tài khoản ví</h3>
+<!-- Background full page -->
+<style>
+    body {
+        background: url('/frontend/react-app/assets/admin-bg.jpg') 
+                    no-repeat center center fixed !important;
+        background-size: cover !important;
+        backdrop-filter: blur(6px);
+    }
 
-    <div class="card shadow-sm">
+    /* Glass effect cho card */
+    .glass-card, .card {
+        background: rgba(255, 255, 255, 0.78) !important;
+        backdrop-filter: blur(14px) !important;
+        border-radius: 18px !important;
+        border: 1px solid rgba(255, 255, 255, 0.35) !important;
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.12),
+            0 0 40px rgba(86, 131, 255, 0.15);
+    }
+
+    .fade-in {
+        animation: fadeIn .4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container py-4 fade-in">
+
+    <!-- Title -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="fw-bold text-primary mb-0">
+            <i class="bi bi-wallet2 me-2"></i>Danh sách tài khoản ví
+        </h3>
+
+        <a href="/admin/wallets/search-email"
+           class="btn btn-outline-primary fw-semibold px-4 py-2 rounded-pill">
+            🔎 Tìm ví theo Email
+        </a>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card shadow-sm border-0 rounded-4 glass-card">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
@@ -14,8 +56,8 @@
                         <th>User ID</th>
                         <th>Họ tên</th>
                         <th>Email</th>
-                        <th>Số dư</th>
-                        <th>Trạng thái</th>
+                        <th class="text-end">Số dư</th>
+                        <th class="text-center">Trạng thái</th>
                         <th>Ngày tạo</th>
                         <th></th>
                     </tr>
@@ -25,38 +67,37 @@
                     {% if wallets|length == 0 %}
                     <tr>
                         <td colspan="7" class="text-center text-muted py-3">
-                            Chưa có tài khoản ví nào.
+                            <i class="bi bi-inbox"></i> Chưa có tài khoản ví nào.
                         </td>
                     </tr>
                     {% endif %}
 
                     {% for wa, user in wallets %}
                     <tr>
-                        <td>{{ wa.user_id }}</td>
+                        <td><code>{{ wa.user_id }}</code></td>
 
-                        <td>{{ user.full_name if user else "—" }}</td>
+                        <td><strong>{{ user.full_name if user else "—" }}</strong></td>
+
                         <td>{{ user.email if user else "—" }}</td>
 
-                        <td class="fw-bold text-success">
+                        <td class="fw-bold text-success text-end">
                             {{ "{:,.0f}".format(wa.balance) }} đ
                         </td>
 
-                        <td>
+                        <td class="text-center">
                             {% if wa.status == "active" %}
-                                <span class="badge bg-success">Active</span>
+                                <span class="badge bg-success px-3 py-2 rounded-pill">Active</span>
                             {% else %}
-                                <span class="badge bg-danger">Locked</span>
+                                <span class="badge bg-danger px-3 py-2 rounded-pill">Locked</span>
                             {% endif %}
                         </td>
 
-                        <td>
-                            {{ wa.created_at.strftime("%Y-%m-%d") if wa.created_at else "—" }}
-                        </td>
+                        <td>{{ wa.created_at.strftime("%Y-%m-%d") if wa.created_at else "—" }}</td>
 
-                        <td>
+                        <td class="text-end">
                             <a href="/admin/wallets/info/{{ wa.user_id }}"
-                               class="btn btn-sm btn-primary">
-                                Xem ví
+                               class="btn btn-sm btn-primary rounded-pill px-3">
+                                <i class="bi bi-eye"></i> Xem ví
                             </a>
                         </td>
                     </tr>
@@ -68,4 +109,5 @@
     </div>
 
 </div>
+
 {% endblock %}

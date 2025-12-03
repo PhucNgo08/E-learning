@@ -1,23 +1,31 @@
+"""
+===============================================================
+💰 WALLET SERVICE – OPTION A (2025 FINAL)
+• KHÔNG auto-create ví trong tất cả student/admin actions
+• Ví chỉ được tạo khi:
+    1) Admin tạo thủ công
+    2) (Tùy chọn) Student login lần đầu (nếu bạn muốn thêm)
+===============================================================
+"""
+
 import uuid
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from app.models.wallet_accounts import WalletAccount
 from app.models.wallet_transactions import WalletTransaction, WalletTransactionType
 from app.models.user import User
 
 
 # ============================================================
-# 🧩 Helper: Lấy ví
+# 🔎 Lấy ví (KHÔNG tự tạo)
 # ============================================================
 def get_wallet(db: Session, user_id: str):
     return db.query(WalletAccount).filter_by(user_id=user_id).first()
 
 
-def get_or_create_wallet(db: Session, user_id: str):
-    wallet = get_wallet(db, user_id)
-    if wallet:
-        return wallet
-
+# ============================================================
+# 🟢 Tạo ví thủ công
+# ============================================================
+def create_wallet(db: Session, user_id: str):
     wallet = WalletAccount(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -30,7 +38,7 @@ def get_or_create_wallet(db: Session, user_id: str):
 
 
 # ============================================================
-# 🧠 Core: Transaction generator (FAST & SAFE)
+# 🧠 Core: Tạo giao dịch
 # ============================================================
 def _create_transaction(
     db: Session,
@@ -39,11 +47,10 @@ def _create_transaction(
     tx_type: WalletTransactionType,
     description: str = ""
 ):
-
     before = float(wallet.balance)
     after = before + amount
 
-    # Không cho âm trừ adjust
+    # ❌ Không cho âm trừ adjust
     if after < 0 and tx_type != WalletTransactionType.adjust:
         raise Exception("❌ Số dư ví không đủ!")
 
@@ -75,13 +82,16 @@ def get_balance(db: Session, user_id: str):
 
 
 # ============================================================
-# 🟢 Student – Nạp tiền
+# 🔥🔥🔥 STUDENT – KHÔNG TỰ TẠO VÍ 🔥🔥🔥
 # ============================================================
 def student_deposit(db: Session, user_id: str, amount: float, description="Nạp tiền VietQR"):
     if amount <= 0:
         raise Exception("Số tiền nạp phải > 0")
 
-    wallet = get_or_create_wallet(db, user_id)
+    wallet = get_wallet(db, user_id)
+    if not wallet:
+        raise Exception("User chưa có ví!")
+
     return _create_transaction(
         db, wallet, amount,
         WalletTransactionType.deposit,
@@ -89,14 +99,14 @@ def student_deposit(db: Session, user_id: str, amount: float, description="Nạp
     )
 
 
-# ============================================================
-# 🔵 Student – Thanh toán khóa học
-# ============================================================
 def student_pay(db: Session, user_id: str, amount: float, description="Thanh toán khóa học"):
     if amount <= 0:
         raise Exception("Số tiền phải > 0")
 
-    wallet = get_or_create_wallet(db, user_id)
+    wallet = get_wallet(db, user_id)
+    if not wallet:
+        raise Exception("User chưa có ví!")
+
     return _create_transaction(
         db, wallet, -abs(amount),
         WalletTransactionType.payment,
@@ -104,14 +114,14 @@ def student_pay(db: Session, user_id: str, amount: float, description="Thanh to�
     )
 
 
-# ============================================================
-# 💸 Student – Rút tiền
-# ============================================================
 def student_withdraw(db: Session, user_id: str, amount: float, description="Rút tiền"):
     if amount <= 0:
         raise Exception("Số tiền rút phải > 0")
 
-    wallet = get_or_create_wallet(db, user_id)
+    wallet = get_wallet(db, user_id)
+    if not wallet:
+        raise Exception("User chưa có ví!")
+
     return _create_transaction(
         db, wallet, -abs(amount),
         WalletTransactionType.withdraw,
@@ -119,26 +129,25 @@ def student_withdraw(db: Session, user_id: str, amount: float, description="Rút
     )
 
 
-# ============================================================
-# 🔁 Student – Chuyển tiền (Transfer)
-# ============================================================
 def student_transfer(db: Session, sender_id: str, recipient_email: str, amount: float):
-
     if amount <= 0:
         raise Exception("Số tiền chuyển phải > 0")
 
+    # Người nhận
     recipient = db.query(User).filter_by(email=recipient_email).first()
     if not recipient:
         raise Exception("Người nhận không tồn tại!")
 
     if recipient.id == sender_id:
-        raise Exception("Không thể tự chuyển cho chính mình!")
+        raise Exception("Không thể tự chuyển cho mình!")
 
-    sender_wallet = get_or_create_wallet(db, sender_id)
-    recipient_wallet = get_or_create_wallet(db, recipient.id)
+    sender_wallet = get_wallet(db, sender_id)
+    if not sender_wallet:
+        raise Exception("Người gửi chưa có ví!")
 
-    if sender_wallet.balance < amount:
-        raise Exception("Số dư không đủ!")
+    recipient_wallet = get_wallet(db, recipient.id)
+    if not recipient_wallet:
+        raise Exception("Người nhận chưa có ví!")
 
     sender_email = db.query(User).filter_by(id=sender_id).first().email
 
@@ -175,13 +184,12 @@ def get_student_transactions(db: Session, user_id: str, limit=50, offset=0):
     )
 
 
-# ============================================================
-# 🟡 Admin – Điều chỉnh số dư
+# 🔥🔥🔥 ADMIN – KHÔNG TỰ TẠO VÍ 🔥🔥🔥
 # ============================================================
 def admin_adjust(db: Session, user_id: str, amount: float, description="Admin điều chỉnh"):
     wallet = get_wallet(db, user_id)
     if not wallet:
-        raise Exception("User chưa có ví để điều chỉnh!")
+        raise Exception("User chưa có ví!")
 
     return _create_transaction(
         db, wallet, amount,
@@ -190,9 +198,6 @@ def admin_adjust(db: Session, user_id: str, amount: float, description="Admin đ
     )
 
 
-# ============================================================
-# 🟠 Admin – Hoàn tiền
-# ============================================================
 def admin_refund(db: Session, user_id: str, amount: float, description="Refund Order"):
     wallet = get_wallet(db, user_id)
     if not wallet:
@@ -205,9 +210,6 @@ def admin_refund(db: Session, user_id: str, amount: float, description="Refund O
     )
 
 
-# ============================================================
-# 🟢 Admin – Nạp tiền (Không tạo ví)
-# ============================================================
 def admin_deposit(db: Session, user_id: str, amount: float, description="Admin nạp tiền"):
     if amount <= 0:
         raise Exception("Số tiền phải > 0")
@@ -241,7 +243,7 @@ def admin_get_transactions(db: Session, user_id: str, limit=100):
 
 
 # ============================================================
-# 📜 Admin – Danh sách toàn bộ ví
+# 📜 Admin – Danh sách tất cả ví
 # ============================================================
 def admin_get_all_wallets(db: Session):
     return (

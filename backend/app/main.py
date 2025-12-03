@@ -32,7 +32,7 @@ app = FastAPI(
 app.add_middleware(
     SessionMiddleware,
     secret_key="super-secure-key-123456789-ABCDEF-XYZ",
-    session_cookie="elearn_session",
+    session_cookie="session",     # 🔥 ĐÚNG CHUẨN
     max_age=60 * 60 * 24 * 7,
     same_site="lax",
     https_only=False,

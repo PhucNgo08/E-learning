@@ -1,11 +1,11 @@
 """
 ==========================================================
-🔐 AUTH - LOGIN ROUTER (PRO MAX ENTERPRISE v3.3)
-Giữ nguyên logic cũ, bổ sung:
-✔ Login bằng username / email / identifier (backward support)
-✔ Chống brute-force: 5 lần → khóa 30 phút
-✔ Session bảo mật nâng cao (IP + UserAgent bind)
+🔐 AUTH - LOGIN ROUTER (PRO MAX ENTERPRISE v3.6 FINAL)
+✔ Login Web (session middleware)
+✔ Login Postman (JSON + Set-Cookie)
+✔ Chống brute-force
 ✔ Remember me (7 ngày)
+✔ Auto-create Wallet cho Student khi login LẦN ĐẦU (OPTION A)
 ==========================================================
 """
 
@@ -15,7 +15,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Request, Form, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -23,6 +23,9 @@ from app.models.user import User
 from app.models.security_setting import SecuritySettings
 from app.services.common.password_service import verify_password
 from app.config.template_config import templates
+
+# 🟢 Wallet (OPTION A)
+from app.services.wallet_service import get_wallet, create_wallet
 
 
 login_router = APIRouter(prefix="/auth", tags=["Auth - Login"])
@@ -43,7 +46,7 @@ def get_user_by_identifier(db: Session, identifier: str) -> User | None:
 
 
 # ======================================================
-# 🔐 Kiểm tra password (bcrypt hoặc SHA256)
+# 🔐 Kiểm tra password
 # ======================================================
 def check_credentials(user: User, password: str) -> bool:
     if not user or not user.password_hash:
@@ -55,12 +58,12 @@ def check_credentials(user: User, password: str) -> bool:
     if hashed.startswith("$2a$") or hashed.startswith("$2b$"):
         return verify_password(password, hashed)
 
-    # legacy SHA256
+    # SHA256 legacy
     return hashlib.sha256(password.encode()).hexdigest() == hashed
 
 
 # ======================================================
-# 🔄 HIỂN THỊ FORM LOGIN
+# 🔄 HIỂN THỊ FORM LOGIN (WEB)
 # ======================================================
 @login_router.get("/login", response_class=HTMLResponse)
 async def show_login(request: Request, error: Optional[str] = None):
@@ -81,46 +84,42 @@ async def show_login(request: Request, error: Optional[str] = None):
 
 
 # ======================================================
-# 🔐 SUBMIT LOGIN
+# 🔐 SUBMIT LOGIN — WEB + POSTMAN
 # ======================================================
-@login_router.post("/login", response_class=HTMLResponse)
+@login_router.post("/login")
 async def do_login(
     request: Request,
     db: Session = Depends(get_db),
 
     username: str = Form(None),
     email: str = Form(None),
-    identifier: str = Form(None),   # hỗ trợ template cũ
+    identifier: str = Form(None),
     password: str = Form(...),
-    remember_me: Optional[str] = Form(None)  # ✔ NEW
+    remember_me: Optional[str] = Form(None),
 ):
     """
-    Hỗ trợ login bằng:
-    - username
-    - email
-    - identifier (template cũ)
+    Hỗ trợ login:
+    - WEB: Redirect + Set-Cookie
+    - POSTMAN: JSON + Cookie
     """
 
     login_id = identifier or username or email
-
     if not login_id:
         return templates["auth"].TemplateResponse(
             "login.html",
             {"request": request, "error": "❌ Vui lòng nhập email hoặc username."}
         )
 
-    logger.info(f"🔐 Login attempt: {login_id}")
-
-    # === Lấy user
     user = get_user_by_identifier(db, login_id)
-
     if not user:
         return templates["auth"].TemplateResponse(
             "login.html",
             {"request": request, "error": "❌ Tài khoản không tồn tại."}
         )
 
-    # === Lấy SecuritySettings (hoặc tạo mới)
+    # ======================================================
+    # 🔒 Bảo mật: Kiểm tra số lần sai pass
+    # ======================================================
     security = db.query(SecuritySettings).filter_by(user_id=user.id).first()
     if not security:
         security = SecuritySettings(user_id=user.id)
@@ -128,15 +127,17 @@ async def do_login(
         db.commit()
         db.refresh(security)
 
-    # === Kiểm tra khóa tạm thời
     if security.account_locked_until and security.account_locked_until > datetime.utcnow():
         lock_time = security.account_locked_until.strftime("%H:%M:%S %d/%m/%Y")
         return templates["auth"].TemplateResponse(
             "login.html",
-            {"request": request, "error": f"🔒 Tài khoản bị khóa đến {lock_time}."}
+            {"request": request,
+             "error": f"🔒 Tài khoản bị khóa đến {lock_time}."}
         )
 
-    # === Kiểm tra mật khẩu
+    # ======================================================
+    # 🔑 Check password
+    # ======================================================
     if not check_credentials(user, password):
 
         security.failed_login_attempts += 1
@@ -145,24 +146,26 @@ async def do_login(
             security.account_locked_until = datetime.utcnow() + timedelta(minutes=30)
             security.failed_login_attempts = 0
             db.commit()
-            lock_time = security.account_locked_until.strftime("%H:%M:%S %d/%m/%Y")
 
+            lock_time = security.account_locked_until.strftime("%H:%M:%S %d/%m/%Y")
             return templates["auth"].TemplateResponse(
                 "login.html",
                 {"request": request,
-                 "error": f"🔒 Sai mật khẩu quá 5 lần — bị khóa đến {lock_time}."}
+                 "error": f"🔒 Sai 5 lần — tài khoản bị khóa đến {lock_time}."}
             )
 
         db.commit()
-        remaining = 5 - security.failed_login_attempts
 
+        remaining = 5 - security.failed_login_attempts
         return templates["auth"].TemplateResponse(
             "login.html",
             {"request": request,
-             "error": f"⚠️ Mật khẩu không đúng. Còn {remaining} lần thử."}
+             "error": f"⚠️ Mật khẩu sai. Còn {remaining} lần thử."}
         )
 
-    # === Check account status
+    # ======================================================
+    # 🔍 Kiểm tra trạng thái tài khoản
+    # ======================================================
     status = getattr(user.status, "value", str(user.status)).lower()
     if status not in ["active", "1", "true", "enabled"]:
         return templates["auth"].TemplateResponse(
@@ -170,11 +173,24 @@ async def do_login(
             {"request": request, "error": "🚫 Tài khoản đã bị vô hiệu hóa."}
         )
 
-    # === Login ok
+    # ======================================================
+    # 🟢 LOGIN OK
+    # ======================================================
     security.failed_login_attempts = 0
     security.account_locked_until = None
     user.last_login = datetime.utcnow()
     db.commit()
+
+    # ======================================================
+    # 🌟 AUTO-CREATE WALLET (OPTION A)
+    # ======================================================
+    role_value = getattr(user.role, "value", user.role)
+
+    if role_value == "student":
+        wallet = get_wallet(db, user.id)
+        if not wallet:
+            create_wallet(db, user.id)
+            print(f"[AUTO-WALLET] Tạo ví lần đầu cho học viên {user.email}")
 
     # ======================================================
     # 🟢 TẠO SESSION (PRO MAX)
@@ -195,25 +211,23 @@ async def do_login(
         "username": user.username,
         "full_name": user.full_name,
         "email": user.email,
-        "role": getattr(user.role, "value", user.role),
+        "role": role_value,
         "avatar": user.avatar_url or "/uploads/avatars/default-avatar.png",
 
-        # security
         "session_ip": client_ip,
         "session_ua": user_agent,
         "expires_at": expiry.isoformat(),
         "last_active": datetime.utcnow().timestamp(),
     })
 
-    logger.info(f"🎯 Login success: {user.username} | RememberMe={bool(remember_me)}")
-
     redirect_map = {
         "admin": "/admin/dashboard",
         "teacher": "/teacher/dashboard",
         "student": "/student/dashboard",
     }
+    redirect_target = redirect_map.get(role_value, "/")
 
-    return RedirectResponse(redirect_map.get(request.session["role"], "/"), status_code=303)
+    return RedirectResponse(redirect_target, status_code=303)
 
 
 # ======================================================
