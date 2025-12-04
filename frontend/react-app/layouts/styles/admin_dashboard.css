@@ -1,91 +1,241 @@
+/* =========================================================
+   🎨 GLOBAL + Ambient Particles (Luxury effect)
+   ========================================================= */
 body {
-  background: radial-gradient(circle at top left, #f8faff 0%, #eef2ff 100%);
+  background: radial-gradient(circle at top left, #f9fbff 0%, #eef2ff 100%);
   font-family: "Inter", "Segoe UI", sans-serif;
+  margin: 0;
+  padding: 0;
+  color: #333;
+  overflow-x: hidden;
+  transition: background 0.45s ease;
 }
 
-/* 🎯 Header */
+/* Floating ambient particles */
+body::before {
+  content: "";
+  position: fixed;
+  top: -20%;
+  left: -10%;
+  width: 140%;
+  height: 140%;
+  background: url("https://i.imgur.com/2cOaJ.png") repeat;
+  opacity: 0.06;
+  animation: floatAmbient 18s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes floatAmbient {
+  from { transform: translateY(0); }
+  to   { transform: translateY(80px); }
+}
+
+/* Fade in */
+.fade-in { animation: fadeIn 0.8s ease forwards; opacity: 0; }
+@keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+/* =========================================================
+   🧊 GLASS HEADER — Supreme Glass + Light Reflection
+   ========================================================= */
 .dashboard-header {
-  background: linear-gradient(90deg, #007bff, #0056d6);
-  color: white;
-  border-radius: 14px;
-  padding: 45px 30px;
-  margin-bottom: 50px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  transition: all 0.4s ease;
-}
-.dashboard-header:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
-}
-.dashboard-header h2 {
-  font-weight: 700;
-}
-.dashboard-header p {
-  font-size: 1.1rem;
-  opacity: 0.95;
-}
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(20px) saturate(200%);
+  border-radius: 25px;
+  padding: 40px;
+  margin-bottom: 45px;
+  border: 1px solid rgba(255,255,255,0.45);
 
-/* 💎 Cards */
-.card {
-  border: none;
-  border-radius: 18px;
-  transition: all 0.35s ease;
-  background: white;
+  /* Depth shadow multi-layer */
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.10),
+    0 0 0 1px rgba(255,255,255,0.5) inset,
+    0 0 25px rgba(59,130,246,0.08);
+
   position: relative;
   overflow: hidden;
+  transition: all 0.45s ease;
 }
-.card::before {
+
+/* Reflection strip */
+.dashboard-header::after {
   content: "";
   position: absolute;
-  top: 0;
-  left: -80px;
-  width: 60px;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: skewX(-25deg);
-  transition: 0.75s;
-}
-.card:hover::before {
-  left: 130%;
-}
-.card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.15);
-}
-.card-body {
-  padding: 30px 20px;
-}
-.card-title {
-  font-weight: 700;
-  margin-top: 10px;
-  letter-spacing: 0.3px;
-}
-.card-body p {
-  font-size: 0.93rem;
-  color: #6c757d;
-  margin-bottom: 15px;
+  top: -80%;
+  left: -60%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.05), rgba(255,255,255,0.45), rgba(255,255,255,0.05));
+  transform: rotate(12deg);
+  transition: 0.8s ease;
+  opacity: 0.2;
 }
 
-/* ✨ Button style */
-.btn {
-  border-radius: 10px;
-  font-weight: 500;
+.dashboard-header:hover::after {
+  left: 120%;
+  opacity: 0.35;
+}
+
+.dashboard-header:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 16px 45px rgba(0,0,0,0.18),
+    0 0 12px rgba(59,130,246,0.22);
+}
+
+/* =========================================================
+   ⚡ QUICK BUTTONS — Premium Magnetic Hover
+   ========================================================= */
+.quick-btn {
+  border-radius: 50px;
+  padding: 12px 26px;
+  font-weight: 600;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   transition: all 0.3s ease;
 }
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+
+.quick-btn:hover {
+  transform: translateY(-6px) scale(1.06);
+  box-shadow: 0 20px 28px rgba(0,0,0,0.18);
 }
 
-/* 📱 Responsive grid spacing */
-.row.g-4 {
-  row-gap: 32px;
+/* =========================================================
+   💎 CARD — Ultra Supreme Depth + Aura Glow
+   ========================================================= */
+.card {
+  border: none;
+  border-radius: 24px;
+  position: relative;
+  transform-style: preserve-3d;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(25px);
+  
+  box-shadow:
+    0 12px 30px rgba(0,0,0,0.08),
+    0 0 0 1px rgba(255,255,255,0.6) inset;
+
+  overflow: hidden;
+  transition: all 0.50s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
 }
 
-/* 🩵 Gradient text */
-.text-gradient {
-  background: linear-gradient(45deg, #007bff, #00d4ff);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+/* Premium Glow after Hover */
+.card:hover {
+  transform: translateY(-16px) scale(1.05) rotateX(6deg) rotateY(2deg);
+  box-shadow:
+    0 24px 55px rgba(0,0,0,0.22),
+    0 0 18px rgba(59,130,246,0.18);
+}
+
+/* Dual Shine Layers */
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  top: -70%;
+  left: -70%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    130deg,
+    rgba(255,255,255,0) 20%,
+    rgba(255,255,255,0.28) 45%,
+    rgba(255,255,255,0) 65%
+  );
+  transform: rotate(25deg);
+  transition: 0.9s ease;
+  pointer-events: none;
+}
+
+.card:hover::before { left: 120%; }
+.card:hover::after  { left: 140%; opacity: 0.35; }
+
+/* =========================================================
+   🌟 ICON BOX — Aura Pulse Halo
+   ========================================================= */
+.icon-box {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 2rem;
+  margin: 1.4rem auto;
+
+  transition: transform 0.4s ease, filter 0.35s ease;
+  position: relative;
+}
+
+.icon-box::after {
+  content: "";
+  position: absolute;
+  width: 110%;
+  height: 110%;
+  border-radius: 50%;
+  top: -5%;
+  left: -5%;
+  background: radial-gradient(circle, rgba(255,255,255,0.8), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.card:hover .icon-box {
+  transform: scale(1.25) rotate(8deg);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+}
+
+.card:hover .icon-box::after {
+  opacity: 1;
+}
+
+/* =========================================================
+   📝 TYPOGRAPHY
+   ========================================================= */
+.card-title {
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.card p.text-muted {
+  font-size: 0.92rem;
+  min-height: 45px;
+  color: #64748b !important;
+}
+
+/* =========================================================
+   🌙 DARK MODE — HOLOGRAM NEON EDITION
+   ========================================================= */
+body.dark-mode {
+  background: #060b18;
+  color: #e2e8f0;
+}
+
+body.dark-mode .dashboard-header {
+  background: rgba(20,28,48,0.86);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    0 20px 40px rgba(0,0,0,0.55),
+    0 0 22px rgba(96,165,250,0.22);
+}
+
+body.dark-mode .card {
+  background: rgba(15,22,38,0.86);
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    0 18px 45px rgba(0,0,0,0.75),
+    0 0 12px rgba(96,165,250,0.20);
+}
+
+body.dark-mode .card:hover {
+  box-shadow:
+    0 28px 65px rgba(0,0,0,0.88),
+    0 0 22px rgba(125,211,252,0.35);
+}
+
+body.dark-mode .icon-box::after {
+  background: radial-gradient(circle, rgba(255,255,255,0.3), transparent);
 }
