@@ -1,5 +1,5 @@
 {% extends "layout_student.html" %}
-{% block title %}🎉 Thanh toán thành công{% endblock %}
+{% block title %}🎉 Thanh toán bằng ví thành công{% endblock %}
 
 {% block content %}
 <div class="container py-5 fade" style="max-width: 820px;">
@@ -11,18 +11,16 @@
         <div class="text-center py-4 header-success">
             <i class="bi bi-check-circle-fill text-white" style="font-size: 4rem;"></i>
 
-            <h2 class="mt-3 text-white fw-bold">Thanh toán thành công!</h2>
+            <h2 class="mt-3 text-white fw-bold">Thanh toán bằng ví thành công!</h2>
 
             <p class="text-white-50 mb-0">
-                Cảm ơn bạn đã mua khóa học 🎓
+                Số dư ví của bạn đã được trừ và khóa học đã được kích hoạt 🎓
             </p>
         </div>
 
         <div class="card-body p-4">
 
-            <!-- ============================ -->
             <!-- 🎓 KHÓA HỌC ĐÃ KÍCH HOẠT -->
-            <!-- ============================ -->
             {% if purchased_courses %}
             <h4 class="fw-semibold mb-3 title-gradient">
                 🎓 Khóa học đã kích hoạt
@@ -38,9 +36,7 @@
             </ul>
             {% endif %}
 
-            <!-- ============================ -->
             <!-- 📘 THÔNG TIN GIAO DỊCH -->
-            <!-- ============================ -->
             <h4 class="fw-semibold mb-3 title-gradient">
                 📘 Thông tin giao dịch
             </h4>
@@ -63,12 +59,12 @@
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between py-3 glass-total">
-                    <span class="fw-semibold">Tổng thanh toán:</span>
+                    <span class="fw-semibold">Tổng đã trừ từ ví:</span>
                     <span class="fw-bold text-primary">{{ "{:,.0f}".format(total) }}₫</span>
                 </div>
 
                 <div class="list-group-item d-flex justify-content-between py-3 glass-light">
-                    <span class="fw-semibold">Mã giao dịch:</span>
+                    <span class="fw-semibold">Mã giao dịch ví:</span>
                     <span class="text-primary fw-bold">{{ transaction_id }}</span>
                 </div>
 
@@ -81,39 +77,39 @@
 
             </div>
 
-            <!-- ============================ -->
-            <!-- 📱 QR CODE -->
-            <!-- ============================ -->
-            <div class="text-center my-4">
-                <h5 class="fw-bold title-gradient mb-2">📱 Quét QR để xem giao dịch</h5>
+            <!-- 💰 THÔNG TIN VÍ -->
+            <h4 class="fw-semibold mb-3 title-gradient">
+                💰 Thông tin ví sinh viên
+            </h4>
 
-                <div class="p-3 rounded shadow-sm d-inline-block bg-white">
-                    <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data={{ transaction_id }}"
-                        alt="QR Code"
-                        width="240" height="240">
+            <div class="list-group mb-4 shadow-sm rounded overflow-hidden">
+                <div class="list-group-item d-flex justify-content-between py-3 glass-light">
+                    <span class="fw-semibold">Số dư trước giao dịch:</span>
+                    <span>{{ "{:,.0f}".format(wallet_before) }}₫</span>
                 </div>
 
-                <p class="text-muted small mt-2">
-                    Quét bằng MoMo / ZaloPay / Camera để kiểm tra giao dịch.
-                </p>
+                <div class="list-group-item d-flex justify-content-between py-3 glass-light">
+                    <span class="fw-semibold text-danger">Đã trừ:</span>
+                    <span class="fw-bold text-danger">-{{ "{:,.0f}".format(wallet_delta) }}₫</span>
+                </div>
+
+                <div class="list-group-item d-flex justify-content-between py-3 glass-total">
+                    <span class="fw-semibold">Số dư hiện tại:</span>
+                    <span class="fw-bold text-primary">{{ "{:,.0f}".format(wallet_after) }}₫</span>
+                </div>
             </div>
 
             <hr>
 
-            <!-- ============================ -->
             <!-- 💚 SUCCESS MSG -->
-            <!-- ============================ -->
             <div class="alert alert-success text-center fw-semibold mt-3 shadow-sm">
                 🎓 Khóa học đã được kích hoạt trong mục  
                 <a href="/student/course/enrolled" class="text-success fw-bold">
                     Khóa học của tôi
-                </a>.
+                </a>. Bạn có thể bắt đầu học ngay!
             </div>
 
-            <!-- ============================ -->
             <!-- BUTTONS -->
-            <!-- ============================ -->
             <div class="text-center mt-4 d-flex gap-3 justify-content-center flex-wrap">
 
                 <a href="/student/course/enrolled"
@@ -134,7 +130,6 @@
 </div>
 
 <style>
-
 /* Fade animation */
 .fade {
   animation: fadeIn .55s ease-out;
@@ -180,6 +175,5 @@
 .list-group-item:last-child {
     border-bottom: none !important;
 }
-
 </style>
 {% endblock %}

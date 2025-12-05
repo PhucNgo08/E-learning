@@ -14,6 +14,7 @@ from app.database.connection import get_db
 from app.config.template_config import templates
 
 import app.services.student.cart_service as cart_service
+from app.services.wallet_service import get_balance  # ⭐ NEW
 
 
 router = APIRouter(
@@ -210,7 +211,11 @@ async def cart_checkout(
             payment_method=pay_method
         )
 
-        request.session["cart_count"] = 0  # clear giỏ
+        # 🧹 Clear giỏ
+        request.session["cart_count"] = 0  
+
+        # 💾 Lưu danh sách khóa học để hiển thị ở trang success
+        request.session["purchased_courses"] = result.get("purchased_courses", [])
 
         return RedirectResponse(
             f"/student/cart/checkout/success?"
@@ -237,7 +242,7 @@ async def cart_checkout(
 
 
 # ======================================================
-# 🎉 Payment Success Page
+# 🎉 Payment Success Page (Wallet)
 # ======================================================
 @router.get("/checkout/success", response_class=HTMLResponse)
 async def checkout_success(
@@ -248,7 +253,24 @@ async def checkout_success(
     total: float = 0,
     trans: str = "",
     order_id: str = "",
+    db: Session = Depends(get_db),
 ):
+
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return RedirectResponse("/auth/login", 302)
+
+    # 💰 Số dư sau giao dịch
+    wallet_after = get_balance(db, user_id)
+
+    # 💸 Tổng đã trừ từ ví (total đã là discounted + fee)
+    wallet_delta = float(total) if total else 0.0
+    wallet_before = wallet_after + wallet_delta
+
+    # 🎓 Khóa học đã kích hoạt từ session
+    purchased_courses = request.session.get("purchased_courses") or []
+    # Xóa cho sạch, tránh reuse
+    request.session["purchased_courses"] = []
 
     return templates["student"].TemplateResponse(
         "cart/payment_success.html",
@@ -261,5 +283,13 @@ async def checkout_success(
             "transaction_id": trans,
             "order_id": order_id,
             "page_title": "Thanh toán thành công",
+
+            # 💰 Info ví
+            "wallet_before": wallet_before,
+            "wallet_after": wallet_after,
+            "wallet_delta": wallet_delta,
+
+            "purchased_courses": purchased_courses,
+            "active_page": "courses",
         },
     )

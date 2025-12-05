@@ -55,7 +55,7 @@
     padding: 4px 10px;
     font-size: 0.7rem;
     backdrop-filter: blur(8px);
-    background: rgba(255,255,255,0.55);
+    background: rgba(255,255,255,0.75);
     border-radius: 10px;
     font-weight: 600;
   }
@@ -63,6 +63,12 @@
   .published { color: #0a7f32; }
   .draft { color: #c59e00; }
   .archived { color: #444; }
+
+  .meta-badges span {
+    font-size: 0.7rem;
+    border-radius: 999px;
+    padding: 3px 9px;
+  }
 
   footer {
     background: rgba(255,255,255,0.35);
@@ -120,18 +126,22 @@
              class="thumb"
              onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
 
-        <!-- Status -->
+        <!-- Status (Nghiệp vụ: trạng thái do Admin quyết định) -->
         <span class="status-badge {{ c.status }}">
-          {% if c.status == 'published' %} Đã xuất bản
-          {% elif c.status == 'draft' %} Nháp
-          {% else %} Lưu trữ
+          {% if c.status == 'published' %}
+            Đã xuất bản
+          {% elif c.status == 'draft' %}
+            Nháp / Chờ duyệt
+          {% else %}
+            Lưu trữ
           {% endif %}
         </span>
 
         <div class="p-3 d-flex flex-column flex-grow-1">
 
           <!-- Title -->
-          <h5 class="fw-bold text-primary text-truncate" onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
+          <h5 class="fw-bold text-primary text-truncate"
+              onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
             {{ c.course_name }}
           </h5>
 
@@ -139,9 +149,43 @@
             {{ c.description or "Chưa có mô tả..." }}
           </p>
 
+          <!-- Difficulty & Credit -->
           <div class="d-flex justify-content-between small text-muted mt-2">
-            <span><i class="bi bi-bar-chart"></i> {{ c.difficulty_level }}</span>
+            <span><i class="bi bi-bar-chart"></i>
+              {% if c.difficulty_level == 'beginner' %} Dễ
+              {% elif c.difficulty_level == 'intermediate' %} Trung bình
+              {% elif c.difficulty_level == 'advanced' %} Khó
+              {% else %} {{ c.difficulty_level }}
+              {% endif %}
+            </span>
             <span><i class="bi bi-clock-history"></i> {{ c.credit_hours }} TC</span>
+          </div>
+
+          <!-- Visibility + Status info -->
+          <div class="meta-badges mt-2 d-flex flex-wrap gap-1">
+            {% if c.status == 'draft' %}
+              <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                <i class="bi bi-hourglass-split"></i> Chờ admin duyệt
+              </span>
+            {% elif c.status == 'published' %}
+              <span class="badge bg-success-subtle text-success border border-success-subtle">
+                <i class="bi bi-check-circle"></i> Đang hiển thị
+              </span>
+            {% elif c.status == 'archived' %}
+              <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                <i class="bi bi-archive"></i> Đã lưu trữ
+              </span>
+            {% endif %}
+
+            {% if c.is_public %}
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                <i class="bi bi-globe2"></i> Công khai
+              </span>
+            {% else %}
+              <span class="badge bg-dark-subtle text-dark border border-dark-subtle">
+                <i class="bi bi-lock-fill"></i> Nội bộ
+              </span>
+            {% endif %}
           </div>
 
           <hr class="my-2">

@@ -6,6 +6,12 @@ Tương thích đầy đủ database 2025:
 - cart_items
 - discount_percent
 - class_id (nullable)
+
+🔥 Nghiệp vụ:
+- Giáo viên tạo khóa học → luôn ở trạng thái "draft"
+- Giáo viên KHÔNG được tự đổi status sang "published"
+- Giáo viên KHÔNG được tự bật is_public
+- Admin mới có quyền publish + public
 ==========================================================
 """
 
@@ -120,8 +126,12 @@ def get_all_courses(db: Session, user_id: str | None, role: str, search: str | N
         query = query.filter(Course.teacher_id == user_id)
 
     elif role == "student":
+        # 🆕 Học viên CHỈ thấy khóa học:
+        # - đã publish
+        # - và được public
         query = query.filter(
-            (Course.status == "published") | (Course.is_public == True)
+            Course.status == "published",
+            Course.is_public == True,
         )
 
     if search:
@@ -155,8 +165,7 @@ def get_course_detail(db: Session, course_id: str, role: str, user_id: str | Non
         return None
 
     # ===== Student Check =====
-    if role == "student":
-
+    if role == "student" and user_id:
         # 1) Nếu đã mua => xem full
         purchased = is_course_purchased(db, user_id, course_id)
         if purchased:
@@ -174,7 +183,10 @@ def get_course_detail(db: Session, course_id: str, role: str, user_id: str | Non
             .first()
         )
 
-        if not enrolled and not (course.status == "published" or course.is_public):
+        # 🆕 Nếu chưa enroll / chưa mua thì chỉ xem được khi khóa học đã publish + public
+        if not enrolled and not (
+            course.status == "published" and course.is_public
+        ):
             return None
 
     course.final_price = get_final_price(course)
@@ -411,10 +423,24 @@ async def create_course(
     prerequisites: str | None = None,
     allow_assignments: bool = True,
     default_submission_type: str = "individual",
+    status: str = "draft",   # 🆕 cho phép admin tạo khóa học đã publish nếu cần
 ):
 
     if role == "teacher":
         teacher_id = user_id
+
+    # 🆕 Chuẩn hóa status theo role
+    if role == "teacher":
+        # Giáo viên luôn tạo khóa ở trạng thái "draft"
+        final_status = "draft"
+        final_is_public = False  # GV không tự public được khi tạo
+    else:
+        # Admin có thể set status nếu hợp lệ
+        if status not in ("draft", "published", "archived"):
+            final_status = "draft"
+        else:
+            final_status = status
+        final_is_public = is_public
 
     # Check mã khóa học tồn tại
     if course_code:
@@ -444,11 +470,11 @@ async def create_course(
             discount_percent=discount_percent,
             enrollment_mode=enrollment_mode,
             max_students=max_students,
-            is_public=is_public,
+            is_public=final_is_public,
             prerequisites=prerequisites,
             allow_assignments=1 if allow_assignments else 0,
             default_submission_type=default_submission_type,
-            status="draft",
+            status=final_status,  # 🆕
             thumbnail_url=thumbnail_url,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -500,15 +526,31 @@ async def update_course(
     if not course:
         return {"error": "Không có quyền chỉnh sửa"}
 
+    # 🆕 Xử lý quyền theo role
     if role == "teacher":
+        # GV không tự đổi teacher_id / major_id
         teacher_id = course.teacher_id
         major_id = course.major_id
+
+        # GV KHÔNG được đổi status trực tiếp
+        status_effective = course.status
+
+        # GV KHÔNG được tự public (bật is_public)
+        is_public_effective = course.is_public
+    else:
+        # Admin: được phép chỉnh status + is_public
+        if status_str not in ("draft", "published", "archived"):
+            status_effective = course.status
+        else:
+            status_effective = status_str
+
+        is_public_effective = is_public
 
     try:
         course.course_name = course_name.strip()
         course.description = description.strip()
         course.credit_hours = credit_hours
-        course.status = status_str
+        course.status = status_effective    # 🆕
         course.subject = subject
         course.grade_level = grade_level
 
@@ -522,7 +564,7 @@ async def update_course(
         course.max_students = max_students
         course.academic_year_id = academic_year_id
         course.semester = semester
-        course.is_public = is_public
+        course.is_public = is_public_effective  # 🆕
         course.prerequisites = prerequisites
         course.allow_assignments = 1 if allow_assignments else 0
         course.default_submission_type = default_submission_type

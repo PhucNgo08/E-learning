@@ -2,6 +2,8 @@
 ==========================================================
 📘 TEACHER - COURSE ROUTER (FINAL PRODUCTION 2025 - FIXED)
 Tương thích FULL course_service FINAL + DB 2025
+- Giáo viên tạo khóa: luôn draft + not public
+- Giáo viên không thể tự publish / public khóa học
 ==========================================================
 """
 
@@ -148,7 +150,9 @@ async def create_course(
         raise HTTPException(400, "Giáo viên chưa được gán chuyên ngành (major).")
 
     # Boolean flags
-    is_public_bool = bool(int(is_public))
+    # ❗ Nghiệp vụ: Giáo viên KHÔNG tự public được khi tạo khóa → ép False
+    # (vẫn đọc từ form để không 422, nhưng không dùng)
+    _is_public_from_form = bool(int(is_public))
     allow_assignments_bool = bool(int(allow_assignments))
 
     result = await course_service.create_course(
@@ -167,12 +171,13 @@ async def create_course(
         semester=semester_int,
         enrollment_mode=enrollment_mode,
         max_students=max_students,
-        is_public=is_public_bool,
+        is_public=False,  # 🔒 GV tạo luôn là not public
         prerequisites=prerequisites,
         allow_assignments=allow_assignments_bool,
         default_submission_type=default_submission_type,
         academic_year_id=academic_year_id,
         major_id=major_id,
+        # status param trong service sẽ tự set "draft" cho role teacher
     )
 
     if isinstance(result, dict) and "error" in result:
@@ -224,7 +229,7 @@ async def edit_course(
     course_name: str = Form(...),
     description: str = Form(""),
     credit_hours: str = Form("3"),
-    status_str: str = Form("draft"),
+    status_str: str = Form("draft"),   # sẽ bị override cho teacher
     subject: str = Form("Other"),
     grade_level: str | None = Form(None),
     difficulty_level: str = Form("beginner"),
@@ -245,6 +250,11 @@ async def edit_course(
 
     teacher = current_teacher
 
+    # ✅ Lấy course thực tế để khóa status / is_public theo DB
+    course = course_service.get_course_owned(db, teacher.id, course_id, "teacher")
+    if not course:
+        raise HTTPException(404, "Không tìm thấy khóa học hoặc không có quyền.")
+
     credit_hours_int = safe_int(credit_hours)
     grade_level_int = safe_int(grade_level)
     semester_int = safe_int(semester)
@@ -254,8 +264,14 @@ async def edit_course(
     if prerequisites in ("", " ", None):
         prerequisites = None
 
-    is_public_bool = bool(int(is_public))
+    # Flags từ form (để không lỗi 422)
+    _is_public_from_form = bool(int(is_public))
     allow_assignments_bool = bool(int(allow_assignments))
+
+    # ❗ Nghiệp vụ: Giáo viên KHÔNG được đổi status + is_public
+    # → luôn dùng giá trị từ DB cho an toàn
+    status_effective = course.status
+    is_public_effective = course.is_public
 
     result = await course_service.update_course(
         db=db,
@@ -264,7 +280,7 @@ async def edit_course(
         course_name=course_name,
         description=description,
         credit_hours=credit_hours_int,
-        status_str=status_str,
+        status_str=status_effective,   # 🔒 dùng status từ DB
         subject=subject,
         grade_level=grade_level_int,
         thumbnail=thumbnail,
@@ -275,7 +291,7 @@ async def edit_course(
         semester=semester_int,
         enrollment_mode=enrollment_mode,
         max_students=max_students,
-        is_public=is_public_bool,
+        is_public=is_public_effective,  # 🔒 dùng is_public từ DB
         prerequisites=prerequisites,
         allow_assignments=allow_assignments_bool,
         default_submission_type=default_submission_type,
@@ -326,15 +342,14 @@ def course_detail(
         raise HTTPException(404, "Không tìm thấy khóa học.")
 
     modules = (
-    db.query(Module)
-    .filter(
-        Module.course_id == course.id,
-        Module.deleted_at.is_(None)
+        db.query(Module)
+        .filter(
+            Module.course_id == course.id,
+            Module.deleted_at.is_(None)
+        )
+        .order_by(Module.module_number)
+        .all()
     )
-    .order_by(Module.module_number)
-    .all()
-    )
-
 
     for m in modules:
         m.lessons = (
@@ -374,9 +389,9 @@ def manage_page(
         modules = (
             db.query(Module)
             .filter(
-        Module.course_id == c.id,
-        Module.deleted_at.is_(None)
-    )
+                Module.course_id == c.id,
+                Module.deleted_at.is_(None)
+            )
             .order_by(Module.module_number)
             .all()
         )
