@@ -1,7 +1,9 @@
 """
 ==========================================================
-🔐 ROUTER: AUTH - FORGOT PASSWORD
-Xử lý chức năng quên mật khẩu & gửi email đặt lại
+🔐 ROUTER: AUTH - FORGOT PASSWORD (PRO MAX 2025)
+• Nhập email
+• Gửi mail reset password
+• Hiển thị link reset trực tiếp để test nhanh (LOCALHOST)
 ==========================================================
 """
 
@@ -10,14 +12,20 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 import traceback
 
-# ✅ Import cấu hình template
+# Templates
 from app.config.template_config import get_template_by_path
-# ✅ Import database
+
+# Database
 from app.database.connection import get_db
-# ✅ Import service đúng cách
+
+# Service lấy user
 from app.services import user_service
-# ✅ Import tiện ích gửi mail và token reset
-from app.routers.auth.utils import send_reset_email, generate_reset_token
+
+# Mail + Token utils
+from app.routers.auth.utils import (
+    send_reset_email,
+    generate_reset_token
+)
 
 
 # ============================================================
@@ -27,22 +35,23 @@ router = APIRouter(prefix="/auth", tags=["Auth - Forgot Password"])
 
 
 # ============================================================
-# 🧭 1️⃣ Trang nhập email khôi phục mật khẩu
+# 🧭 1) Trang nhập email khôi phục mật khẩu
 # ============================================================
 @router.get("/forgot-password", response_class=HTMLResponse)
 async def forgot_password_page(request: Request):
-    """
-    Hiển thị form nhập email để khôi phục mật khẩu.
-    """
     tpl = get_template_by_path(request.url.path)
+
     return tpl.TemplateResponse(
         "forgot_password.html",
-        {"request": request, "page_title": "🔑 Quên mật khẩu"}
+        {
+            "request": request,
+            "page_title": "🔑 Quên mật khẩu"
+        }
     )
 
 
 # ============================================================
-# ✉️ 2️⃣ Gửi email khôi phục mật khẩu
+# ✉️ 2) Gửi email + trả link reset trực tiếp
 # ============================================================
 @router.post("/forgot-password", response_class=HTMLResponse)
 async def forgot_password(
@@ -50,14 +59,14 @@ async def forgot_password(
     email: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    """
-    Xử lý gửi email đặt lại mật khẩu.
-    """
     tpl = get_template_by_path(request.url.path)
 
     try:
-        # 🔍 Kiểm tra email có tồn tại trong hệ thống
-        user = user_service.get_user_by_email(email, db)  # ✅ Gọi đúng service
+        # ------------------------------------------------------
+        # 🔍 Kiểm tra email có tồn tại?
+        # ------------------------------------------------------
+        user = user_service.get_user_by_email(email, db)
+
         if not user:
             return tpl.TemplateResponse(
                 "forgot_password.html",
@@ -69,30 +78,43 @@ async def forgot_password(
                 status_code=400
             )
 
-        # 🪄 Sinh token + link reset
+        # ------------------------------------------------------
+        # 🔐 Tạo token reset mật khẩu
+        # ------------------------------------------------------
         token = generate_reset_token(email)
+
+        # ------------------------------------------------------
+        # 🔗 Tạo link đặt lại mật khẩu (Click trực tiếp)
+        # ------------------------------------------------------
         reset_link = f"http://localhost:8000/auth/reset-password?token={token}"
 
-        # ✉️ Gửi email
+        # ------------------------------------------------------
+        # ✉️ Gửi email (kèm link)
+        # ------------------------------------------------------
         send_reset_email(email, reset_link)
-        print(f"📧 Gửi mail đặt lại mật khẩu cho {email}: {reset_link}")
 
+        print(f"📧 Reset link gửi tới {email}: {reset_link}")
+
+        # ------------------------------------------------------
+        # 🟦 Trả link trực tiếp để test nhanh
+        # ------------------------------------------------------
         return tpl.TemplateResponse(
             "forgot_password.html",
             {
                 "request": request,
-                "message": "✅ Hướng dẫn đặt lại mật khẩu đã được gửi qua email.",
+                "message": "📩 Đã gửi hướng dẫn đặt lại mật khẩu.",
+                "reset_link": reset_link,   # ⭐ Chỗ này để HTML hiển thị link
                 "page_title": "🔑 Quên mật khẩu"
             }
         )
 
     except Exception:
-        print("\n❌ Lỗi xử lý quên mật khẩu:\n", traceback.format_exc())
+        print("\n❌ Lỗi xử lý forgot-password:\n", traceback.format_exc())
         return tpl.TemplateResponse(
             "forgot_password.html",
             {
                 "request": request,
-                "error": "⚠️ Có lỗi xảy ra, vui lòng thử lại sau.",
+                "error": "⚠️ Có lỗi xảy ra, vui lòng thử lại.",
                 "page_title": "🔑 Quên mật khẩu"
             },
             status_code=500

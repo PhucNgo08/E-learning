@@ -326,11 +326,15 @@ def course_detail(
         raise HTTPException(404, "Không tìm thấy khóa học.")
 
     modules = (
-        db.query(Module)
-        .filter(Module.course_id == course.id)
-        .order_by(Module.module_number)
-        .all()
+    db.query(Module)
+    .filter(
+        Module.course_id == course.id,
+        Module.deleted_at.is_(None)
     )
+    .order_by(Module.module_number)
+    .all()
+    )
+
 
     for m in modules:
         m.lessons = (
@@ -369,7 +373,10 @@ def manage_page(
     for c in courses:
         modules = (
             db.query(Module)
-            .filter(Module.course_id == c.id)
+            .filter(
+        Module.course_id == c.id,
+        Module.deleted_at.is_(None)
+    )
             .order_by(Module.module_number)
             .all()
         )

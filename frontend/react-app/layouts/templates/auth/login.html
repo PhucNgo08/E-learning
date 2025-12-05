@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Đăng nhập | E-Learning Portal</title>
 
-  <!-- Fonts & Icons -->
+  <!-- Google Fonts + Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
@@ -13,135 +13,175 @@
   <!-- CSS gốc -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/auth.css" />
 
-  <!-- 🌈 CSS nâng cấp giao diện -->
+  <!-- ===============================
+       🌈 CSS tuỳ chỉnh + Nền Cyberpunk
+       =============================== -->
   <style>
-    body {
-      color: #fff;
-    }
 
-    /* LOGO GLOW */
-    .logo-img {
-      width: 95px;
-      filter: drop-shadow(0 0 12px #00d9ff);
-    }
+/* =============================
+   🌄 BACKGROUND HIỆU ỨNG MỀM
+   ============================= */
+body {
+  color: #fff;
 
-    /* Card form */
-    .login-wrapper {
-      max-width: 430px;
-      margin: 5vh auto;
-      padding: 35px 32px;
-      border-radius: 22px;
-      background: rgba(20, 20, 35, 0.65);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 0 25px rgba(0, 200, 255, 0.25);
-      animation: fadeIn 0.8s ease-out;
-    }
+  /* Ảnh nền + lớp phủ nhẹ (đỡ tối hơn bản cũ) */
+  background:
+      linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45)),
+      url("/static/images/nen_dangnhap.png") no-repeat center center fixed;
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
+  background-size: cover;
+  min-height: 100vh;
 
-    /* INPUT NEON EFFECT */
-    .form-control {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 10px;
-      color: #fff;
-      padding: 10px 14px;
-      transition: 0.25s;
-    }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 
-    .form-control:focus {
-      background: rgba(255,255,255,0.12);
-      border-color: #00eaff;
-      box-shadow: 0 0 12px #00eaff;
-      color: #fff;
-    }
 
-    label {
-      color: #dce6ff;
-    }
+/* =============================
+   🟦 FORM GLASS MỜ – SÁNG HƠN
+   ============================= */
+.login-wrapper {
+  width: 430px;
+  padding: 35px 32px;
+  
+  border-radius: 22px;
 
-    /* Toggle password icon */
-    .toggle-password {
-      position: absolute;
-      right: 14px;
-      top: 38px;
-      font-size: 20px;
-      cursor: pointer;
-      color: #cfd3ff;
-      transition: 0.15s ease;
-      padding: 2px;
-    }
-    .toggle-password:hover {
-      transform: scale(1.18);
-      color: #ffffff;
-    }
+  /* Mờ nhẹ + sáng hơn */
+  background: rgba(25, 25, 45, 0.55);
+  backdrop-filter: blur(18px);
 
-    /* Divider */
-    .divider-or {
-      margin: 14px 0;
-      text-align: center;
-      font-size: 0.85rem;
-      color: #d0d7ff;
-      position: relative;
-    }
-    .divider-or::before,
-    .divider-or::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      width: 38%;
-      height: 1px;
-      background: rgba(255,255,255,0.15);
-    }
-    .divider-or::before { left: 0; }
-    .divider-or::after { right: 0; }
+  /* Viền mỏng neon */
+  border: 1px solid rgba(0, 200, 255, 0.25);
 
-    /* Neon Primary Button */
-    #loginBtn {
-      background: linear-gradient(90deg, #00d4ff, #0098ff);
-      border: none;
-      padding: 12px;
-      border-radius: 100px;
-      font-size: 1rem;
-      color: #fff;
-      transition: 0.25s;
-      box-shadow: 0 0 12px rgba(0,180,255,0.5);
-    }
-    #loginBtn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 18px rgba(0,220,255,0.75);
-    }
+  /* Đổ bóng mềm */
+  box-shadow: 0px 0px 30px rgba(0, 255, 255, 0.25);
 
-    /* SOCIAL buttons */
-    .social-login {
-      margin-top: 8px;
-    }
-    .btn-social {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 10px;
-      transition: 0.2s;
-      border: none;
-      font-size: 0.92rem;
-    }
-    .btn-social:hover {
-      transform: translateY(-2px);
-      opacity: 0.9;
-      box-shadow: 0 0 12px rgba(255,255,255,0.25);
-    }
+  animation: fadeIn 0.6s ease-out;
+}
 
-    .btn-google    { background: #ea4335; color: #fff; }
-    .btn-microsoft { background: #0078D4; color: #fff; }
-    .btn-facebook  { background: #1877F2; color: #fff; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+
+/* =============================
+   🐺 LOGO GLOW
+   ============================= */
+.logo-img {
+  width: 95px;
+  filter: drop-shadow(0 0 18px #00eaff) brightness(1.1);
+}
+
+
+/* =============================
+   ✨ INPUT NEON LÀM SÁNG
+   ============================= */
+.form-control {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.30);
+  border-radius: 10px;
+  color: #fff;
+  padding: 10px 14px;
+  transition: 0.25s;
+}
+
+.form-control:focus {
+  background: rgba(255,255,255,0.20);
+  border-color: #00eaff;
+  box-shadow: 0 0 14px #00eaff;
+  color: #fff;
+}
+
+
+/* =============================
+   👁 NÚT HIỆN MẬT KHẨU
+   ============================= */
+.toggle-password {
+  position: absolute;
+  right: 14px;
+  top: 38px;
+  font-size: 20px;
+  cursor: pointer;
+  color: #d0d4ff;
+  transition: 0.2s;
+}
+
+.toggle-password:hover {
+  color: #ffffff;
+  transform: scale(1.18);
+}
+
+
+/* =============================
+   ➖ DIVIDER
+   ============================= */
+.divider-or {
+  margin: 14px 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #cddaff;
+  position: relative;
+}
+
+.divider-or::before,
+.divider-or::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 38%;
+  height: 1px;
+  background: rgba(255,255,255,0.15);
+}
+
+.divider-or::before { left: 0; }
+.divider-or::after  { right: 0; }
+
+
+/* =============================
+   🔷 BUTTON LOGIN — NEON
+   ============================= */
+#loginBtn {
+  background: linear-gradient(90deg, #00d4ff, #008cff);
+  border: none;
+  padding: 12px;
+  border-radius: 100px;
+  font-size: 1rem;
+  color: #fff;
+  width: 100%;
+  box-shadow: 0 0 14px rgba(0,180,255,0.6);
+  transition: 0.25s;
+}
+
+#loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 22px rgba(0,220,255,0.85);
+}
+
+
+/* =============================
+   🔴 BUTTON GOOGLE
+   ============================= */
+.btn-google {
+  background: #ea4335;
+  color: #fff !important;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: 0.25s;
+}
+
+.btn-google:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 14px rgba(255,80,80,0.5);
+}
 
   </style>
 </head>
@@ -150,7 +190,7 @@
 
   <div class="login-wrapper text-center">
 
-    <!-- Logo -->
+    <!-- LOGO FOX -->
     <img src="{{ url_for('static', path='images/fox-logo.png') }}"
          alt="Logo"
          class="logo-img mb-3" />
@@ -159,7 +199,7 @@
       <i class="bi bi-shield-lock-fill me-1"></i> Đăng nhập
     </h2>
 
-    <!-- Messages -->
+    <!-- HIỂN THỊ THÔNG BÁO -->
     {% if error %}
       <div class="alert alert-danger py-2 small">
         <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}
@@ -171,45 +211,43 @@
       </div>
     {% endif %}
 
-    <!-- Login Form -->
+    <!-- FORM LOGIN -->
     <form method="post" id="loginForm">
 
+      <!-- Username / Email -->
       <div class="mb-3 text-start">
         <label class="form-label fw-semibold">Email hoặc Tên đăng nhập</label>
         <input name="identifier" id="identifier" class="form-control" required autofocus>
       </div>
 
+      <!-- Password -->
       <div class="mb-3 text-start position-relative">
-        <label for="password" class="form-label fw-semibold">Mật khẩu</label>
+        <label class="form-label fw-semibold">Mật khẩu</label>
         <input name="password" id="password" type="password" class="form-control" required>
         <i class="bi bi-eye-slash toggle-password"></i>
       </div>
 
+      <!-- Remember + Forgot -->
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="rememberMe">
+          <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me" value="1">
           <label class="form-check-label" for="rememberMe">Ghi nhớ</label>
         </div>
-        <a href="/auth/forgot-password" class="small text-decoration-none text-primary">
-          Quên mật khẩu?
-        </a>
+        <a href="/auth/forgot-password" class="small text-decoration-none text-primary">Quên mật khẩu?</a>
       </div>
 
+      <!-- BUTTON LOGIN -->
       <button type="submit" id="loginBtn">
         <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
       </button>
 
+      <!-- DIVIDER -->
       <div class="divider-or">hoặc</div>
 
-      <!-- Social Login -->
-      <div class="social-login">
-        <a href="/auth/google" class="btn-social btn-google">
-          <i class="bi bi-google"></i> Đăng nhập bằng Google
-        </a>
-
-        
-
-      </div>
+      <!-- SOCIAL LOGIN -->
+      <a href="/auth/google-login" class="btn-social btn-google">
+        <i class="bi bi-google"></i> Đăng nhập bằng Google
+      </a>
 
     </form>
   </div>
@@ -223,19 +261,17 @@
     const passwordInput = document.getElementById("password");
 
     toggleBtn.addEventListener("click", () => {
-      const isHidden = passwordInput.type === "password";
-      passwordInput.type = isHidden ? "text" : "password";
+      const hidden = passwordInput.type === "password";
+      passwordInput.type = hidden ? "text" : "password";
       toggleBtn.classList.toggle("bi-eye");
       toggleBtn.classList.toggle("bi-eye-slash");
     });
 
-    // Loading effect on submit
-    const form = document.getElementById("loginForm");
-    const loginBtn = document.getElementById("loginBtn");
-
-    form.addEventListener("submit", () => {
-      loginBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Đang đăng nhập...`;
-      loginBtn.disabled = true;
+    // Loading button
+    document.getElementById("loginForm").addEventListener("submit", () => {
+      const btn = document.getElementById("loginBtn");
+      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Đang đăng nhập...`;
+      btn.disabled = true;
     });
   </script>
 

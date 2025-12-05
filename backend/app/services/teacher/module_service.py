@@ -22,27 +22,33 @@ def _course_owned(db: Session, teacher_id: str, course_id: str):
 # 📋 Danh sách Module theo khóa học
 # =========================================================
 def list_modules_by_course(db: Session, course_id: str):
-    """Trả về danh sách module của một khóa học."""
     return (
         db.query(Module)
-        .filter(Module.course_id == course_id)
+        .filter(
+            Module.course_id == course_id,
+            Module.deleted_at.is_(None)     # <-- BẮT BUỘC THÊM
+        )
         .order_by(Module.module_number.asc())
         .all()
     )
+
 
 
 # =========================================================
 # 📚 Danh sách tất cả module của giáo viên
 # =========================================================
 def list_all_modules_by_teacher(db: Session, teacher_id: str):
-    """Trả về toàn bộ module mà giáo viên sở hữu."""
     return (
         db.query(Module)
         .join(Course, Module.course_id == Course.id)
-        .filter(Course.teacher_id == teacher_id)
+        .filter(
+            Course.teacher_id == teacher_id,
+            Module.deleted_at.is_(None)     # <-- BẮT BUỘC THÊM
+        )
         .order_by(Course.course_name.asc(), Module.module_number.asc())
         .all()
     )
+
 
 
 # =========================================================
@@ -67,7 +73,11 @@ def create_module(
         # Kiểm tra trùng module_number
         existed = (
             db.query(Module)
-            .filter(Module.course_id == course_id, Module.module_number == module_number)
+            .filter(
+        Module.course_id == course_id,
+        Module.module_number == module_number,
+        Module.deleted_at.is_(None)
+    )
             .first()
         )
         if existed:
@@ -143,10 +153,11 @@ def update_module(
     duplicate = (
         db.query(Module)
         .filter(
-            Module.course_id == module.course_id,
-            Module.module_number == module_number,
-            Module.id != module_id,
-        )
+        Module.course_id == module.course_id,
+        Module.module_number == module_number,
+        Module.id != module_id,
+        Module.deleted_at.is_(None)
+    )
         .first()
     )
     if duplicate:
@@ -182,6 +193,12 @@ def delete_module(db: Session, teacher_id: str, module_id: str):
         print("⛔ [Từ chối] Không có quyền xóa module này.")
         return None
 
+    # 🚫 CHẶN XÓA MODULE ĐÃ ĐĂNG
+    if module.is_published == 1:
+        return {"error": "Chương đã đăng, không thể xóa."}
+
+
+    # Xóa mềm
     if hasattr(module, "deleted_at"):
         module.deleted_at = datetime.utcnow()
         print(f"🕒 [Xóa mềm] Module '{module.title}' đã được đánh dấu xóa.")
@@ -191,7 +208,6 @@ def delete_module(db: Session, teacher_id: str, module_id: str):
 
     db.commit()
     return module.course_id
-
 
 # =========================================================
 # 📢 Đăng / Gỡ đăng module

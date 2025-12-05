@@ -54,14 +54,14 @@
       </h3>
 
       <p class="text-muted mb-4">
-        Chọn module mà bạn muốn thêm bài học vào.
+        Chọn chương mà bạn muốn thêm bài học vào.
       </p>
 
       <form>
         <div class="mb-3">
-          <label class="form-label fw-semibold">Chọn module</label>
+          <label class="form-label fw-semibold">Chọn chương</label>
           <select id="module_id" name="module_id" class="form-select" required>
-            <option value="">-- Chọn module --</option>
+            <option value="">-- Chọn chương --</option>
 
             {% for m in modules %}
             <option value="{{ m.id }}">

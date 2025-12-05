@@ -1,6 +1,6 @@
 """
 ==========================================================
-🔐 ROUTER: AUTH - RESET PASSWORD
+🔐 ROUTER: AUTH - RESET PASSWORD (PRO MAX 2025)
 Xử lý đặt lại mật khẩu từ link email (token JWT)
 ==========================================================
 """
@@ -10,19 +10,25 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 import traceback
 
-# ✅ Import service, DB & template
+# DB + Service
 from app.database.connection import get_db
 from app.services import user_service
+
+# Template config
 from app.config.template_config import get_template_by_path
+
+# Token utils
 from app.routers.auth.utils import verify_reset_token
+
 
 # ============================================================
 # 🚀 Khởi tạo Router
 # ============================================================
 router = APIRouter(prefix="/auth", tags=["Auth - Reset Password"])
 
+
 # ============================================================
-# 🧭 1️⃣ Trang nhập mật khẩu mới
+# 🧭 1) TRANG NHẬP MẬT KHẨU MỚI
 # ============================================================
 @router.get("/reset-password", response_class=HTMLResponse)
 async def reset_password_form(request: Request, token: str):
@@ -31,20 +37,22 @@ async def reset_password_form(request: Request, token: str):
     """
     tpl = get_template_by_path(request.url.path)
 
-    # ✅ Kiểm tra token hợp lệ
+    # 🔍 Kiểm tra token hợp lệ
     email = verify_reset_token(token)
+
     if not email:
         return tpl.TemplateResponse(
-            "reset_password.html",   # ⚠️ Không cần "auth/" nếu template_config tự map
+            "reset_password.html",
             {
                 "request": request,
-                "error": "❌ Liên kết không hợp lệ hoặc đã hết hạn.",
+                "error": "❌ Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.",
                 "disabled": True,
                 "page_title": "🔒 Đặt lại mật khẩu"
             },
             status_code=400
         )
 
+    # Token hợp lệ → Cho nhập mật khẩu mới
     return tpl.TemplateResponse(
         "reset_password.html",
         {
@@ -57,7 +65,7 @@ async def reset_password_form(request: Request, token: str):
 
 
 # ============================================================
-# 🔐 2️⃣ Xử lý đặt lại mật khẩu
+# 🔐 2) XỬ LÝ ĐẶT LẠI MẬT KHẨU
 # ============================================================
 @router.post("/reset-password", response_class=HTMLResponse)
 async def reset_password_submit(
@@ -73,21 +81,21 @@ async def reset_password_submit(
     tpl = get_template_by_path(request.url.path)
 
     try:
-        # 🔍 Xác thực token
+        # 🔍 Kiểm tra token hợp lệ
         email = verify_reset_token(token)
         if not email:
             return tpl.TemplateResponse(
                 "reset_password.html",
                 {
                     "request": request,
-                    "error": "❌ Liên kết đã hết hạn hoặc không hợp lệ.",
+                    "error": "❌ Liên kết không hợp lệ hoặc đã hết hạn.",
                     "disabled": True,
                     "page_title": "🔒 Đặt lại mật khẩu"
                 },
                 status_code=400
             )
 
-        # ⚠️ Kiểm tra mật khẩu nhập lại
+        # ⚠️ Kiểm tra nhập lại mật khẩu
         if new_password != confirm_password:
             return tpl.TemplateResponse(
                 "reset_password.html",
@@ -101,11 +109,13 @@ async def reset_password_submit(
                 status_code=400
             )
 
-        # ✅ Cập nhật mật khẩu trong DB
+        # ======================================================
+        # ✅ CẬP NHẬT MẬT KHẨU
+        # ======================================================
         user_service.update_password(db, email, new_password)
-        print(f"✅ Đặt lại mật khẩu thành công cho {email}")
+        print(f"✅ Mật khẩu đã được đặt lại cho: {email}")
 
-        # ➡️ Chuyển hướng về trang đăng nhập
+        # → Điều hướng về login
         return RedirectResponse(url="/auth/login", status_code=303)
 
     except Exception:
@@ -114,7 +124,7 @@ async def reset_password_submit(
             "reset_password.html",
             {
                 "request": request,
-                "error": "⚠️ Lỗi hệ thống, vui lòng thử lại sau.",
+                "error": "⚠️ Lỗi hệ thống! Vui lòng thử lại sau.",
                 "page_title": "🔒 Đặt lại mật khẩu"
             },
             status_code=500

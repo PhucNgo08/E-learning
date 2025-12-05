@@ -1,11 +1,12 @@
 """
 ==========================================================
-🔐 AUTH - LOGIN ROUTER (PRO MAX ENTERPRISE v3.6 FINAL)
+🔐 AUTH - LOGIN ROUTER (PRO MAX ENTERPRISE v3.6 FINAL – FIXED)
 ✔ Login Web (session middleware)
 ✔ Login Postman (JSON + Set-Cookie)
 ✔ Chống brute-force
 ✔ Remember me (7 ngày)
 ✔ Auto-create Wallet cho Student khi login LẦN ĐẦU (OPTION A)
+✔ FIX role/user_role — Không còn lỗi 401
 ==========================================================
 """
 
@@ -15,7 +16,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Request, Form, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
@@ -68,14 +69,17 @@ def check_credentials(user: User, password: str) -> bool:
 @login_router.get("/login", response_class=HTMLResponse)
 async def show_login(request: Request, error: Optional[str] = None):
 
-    if (role := request.session.get("role")):
-        redirect_map = {
-            "admin": "/admin/dashboard",
-            "teacher": "/teacher/dashboard",
-            "student": "/student/dashboard",
-        }
-        if role in redirect_map:
-            return RedirectResponse(redirect_map[role], status_code=303)
+    # 🔥 Quan trọng: ưu tiên user_role để đồng bộ middlewares
+    role = request.session.get("user_role") or request.session.get("role")
+
+    redirect_map = {
+        "admin": "/admin/dashboard",
+        "teacher": "/teacher/dashboard",
+        "student": "/student/dashboard",
+    }
+
+    if role in redirect_map:
+        return RedirectResponse(redirect_map[role], status_code=303)
 
     return templates["auth"].TemplateResponse(
         "login.html",
@@ -98,11 +102,12 @@ async def do_login(
     remember_me: Optional[str] = Form(None),
 ):
     """
-    Hỗ trợ login:
-    - WEB: Redirect + Set-Cookie
-    - POSTMAN: JSON + Cookie
+    Hỗ trợ login Web + Postman
     """
 
+    # ======================================================
+    # 🔍 Xác định login_id
+    # ======================================================
     login_id = identifier or username or email
     if not login_id:
         return templates["auth"].TemplateResponse(
@@ -118,7 +123,7 @@ async def do_login(
         )
 
     # ======================================================
-    # 🔒 Bảo mật: Kiểm tra số lần sai pass
+    # 🔒 Bảo mật: giới hạn đăng nhập sai
     # ======================================================
     security = db.query(SecuritySettings).filter_by(user_id=user.id).first()
     if not security:
@@ -164,7 +169,7 @@ async def do_login(
         )
 
     # ======================================================
-    # 🔍 Kiểm tra trạng thái tài khoản
+    # 🔍 Kiểm tra trạng thái user
     # ======================================================
     status = getattr(user.status, "value", str(user.status)).lower()
     if status not in ["active", "1", "true", "enabled"]:
@@ -182,7 +187,7 @@ async def do_login(
     db.commit()
 
     # ======================================================
-    # 🌟 AUTO-CREATE WALLET (OPTION A)
+    # 🌟 CREATE WALLET CHO STUDENT
     # ======================================================
     role_value = getattr(user.role, "value", user.role)
 
@@ -190,10 +195,9 @@ async def do_login(
         wallet = get_wallet(db, user.id)
         if not wallet:
             create_wallet(db, user.id)
-            print(f"[AUTO-WALLET] Tạo ví lần đầu cho học viên {user.email}")
 
     # ======================================================
-    # 🟢 TẠO SESSION (PRO MAX)
+    # 🟢 TẠO SESSION — FIX PRO MAX 2025
     # ======================================================
     request.session.clear()
 
@@ -206,28 +210,33 @@ async def do_login(
         else datetime.utcnow() + timedelta(hours=6)
     )
 
+    # ⭐⭐ FIX QUAN TRỌNG NHẤT: thêm user_role cho middleware + router
     request.session.update({
         "user_id": str(user.id),
         "username": user.username,
         "full_name": user.full_name,
         "email": user.email,
-        "role": role_value,
-        "avatar": user.avatar_url or "/uploads/avatars/default-avatar.png",
 
+        "role": role_value,          # giữ nguyên để tránh lỗi UI
+        "user_role": role_value,     # FIX — dùng cho auth dependencies & middleware
+
+        "avatar": user.avatar_url or "/uploads/avatars/default-avatar.png",
         "session_ip": client_ip,
         "session_ua": user_agent,
         "expires_at": expiry.isoformat(),
         "last_active": datetime.utcnow().timestamp(),
     })
 
+    # ======================================================
+    # 🔀 REDIRECT THEO ROLE
+    # ======================================================
     redirect_map = {
         "admin": "/admin/dashboard",
         "teacher": "/teacher/dashboard",
         "student": "/student/dashboard",
     }
-    redirect_target = redirect_map.get(role_value, "/")
 
-    return RedirectResponse(redirect_target, status_code=303)
+    return RedirectResponse(redirect_map.get(role_value, "/"), status_code=303)
 
 
 # ======================================================
@@ -235,7 +244,5 @@ async def do_login(
 # ======================================================
 @login_router.get("/logout")
 async def logout(request: Request):
-    username = request.session.get("username", "Unknown")
     request.session.clear()
-    logger.info(f"🚪 Logged out: {username}")
     return RedirectResponse("/auth/login", status_code=303)

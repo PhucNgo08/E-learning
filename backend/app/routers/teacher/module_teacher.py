@@ -217,22 +217,43 @@ def page_delete(
     )
 
 
-# =========================================================
-# 🗑️ 8️⃣ Xử lý xóa module
-# =========================================================
-@router.post("/delete/{module_id}")
+@router.post("/delete/{module_id}", response_class=HTMLResponse)
 def delete_module(
     module_id: str,
+    request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Xóa module khỏi cơ sở dữ liệu."""
-    course_id = module_service.delete_module(db, current_teacher.id, module_id)
-    if not course_id:
-        raise HTTPException(status_code=404, detail="Không tìm thấy module hoặc không có quyền xóa.")
+    result = module_service.delete_module(db, current_teacher.id, module_id)
 
-    return RedirectResponse(f"/teacher/modules/list/{course_id}", status_code=303)
+    # Lỗi khi không được phép xóa (module đã đăng)
+    if isinstance(result, dict) and "error" in result:
+        templates = get_template_by_path(str(request.url.path))
+        return templates.TemplateResponse(
+            "modules/delete.html",
+            {
+                "request": request,
+                "module": module_service.get_module_owned_with_course(db, current_teacher.id, module_id)[0],
+                "course": module_service.get_module_owned_with_course(db, current_teacher.id, module_id)[1],
+                "error_msg": result["error"]
+            },
+            status_code=400
+        )
 
+    # Không tồn tại hoặc không có quyền
+    if not result:
+        templates = get_template_by_path(str(request.url.path))
+        return templates.TemplateResponse(
+            "modules/delete.html",
+            {
+                "request": request,
+                "error_msg": "Không tìm thấy module hoặc bạn không có quyền xóa."
+            },
+            status_code=404
+        )
+
+    # Thành công
+    return RedirectResponse(f"/teacher/modules/list/{result}", status_code=303)
 
 # =========================================================
 # 📢 9️⃣ Đăng / Gỡ đăng module

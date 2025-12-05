@@ -10,10 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
-# Database
 from app.database.connection import Base, engine
 from app.config.paths import UPLOADS_BASE
-
 
 # =====================================================
 # 🚀 FASTAPI APP
@@ -24,23 +22,25 @@ app = FastAPI(
     description="🌐 Hệ thống quản lý học tập trực tuyến - FastAPI",
 )
 
-
 # =====================================================
-# ⚙️ MIDDLEWARE
+# ⚙️ SESSION MIDDLEWARE — FIX 401 PRO MAX v10.1
 # =====================================================
-
 app.add_middleware(
     SessionMiddleware,
     secret_key="super-secure-key-123456789-ABCDEF-XYZ",
-    session_cookie="session",     # 🔥 ĐÚNG CHUẨN
+    session_cookie="kh_session",      # 🔥 KHÔNG dùng “session” để tránh Chrome chặn
     max_age=60 * 60 * 24 * 7,
-    same_site="lax",
-    https_only=False,
+    same_site="lax",                  # 🔥 Hoạt động ở mọi trình duyệt
+    https_only=False,                 # 🔥 Đúng cho localhost
 )
 
+# 🔥 EXPIRATION MIDDLEWARE
 from app.middleware.session_expire_checker import SessionExpireMiddleware
 app.add_middleware(SessionExpireMiddleware)
 
+# =====================================================
+# 🌍 CORS
+# =====================================================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
@@ -49,13 +49,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # =====================================================
-# 📁 STATIC & TEMPLATE SETUP — FIX CHUẨN V10
+# 📁 STATIC & TEMPLATE SETUP
 # =====================================================
-
-# project/
-#   backend/app/main.py   → cần đi lên 3 cấp
 ROOT = Path(__file__).resolve().parent.parent.parent
 
 FRONTEND_DIR = ROOT / "frontend" / "react-app"
@@ -63,21 +59,15 @@ STATIC_DIR = FRONTEND_DIR / "static"
 TEMPLATE_DIR = FRONTEND_DIR / "layouts" / "templates"
 STYLE_DIR = FRONTEND_DIR / "layouts" / "styles"
 
-print("📌 STATIC_DIR =", STATIC_DIR)
-print("📌 TEMPLATE_DIR =", TEMPLATE_DIR)
-
-# --- Mount Static ---
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.mount("/frontend/react-app/layouts/styles", StaticFiles(directory=str(STYLE_DIR)), name="styles")
 
-# --- Templates ---
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 app.templates = templates
 app.admin_templates = Jinja2Templates(directory=str(TEMPLATE_DIR / "admin"))
 app.teacher_templates = Jinja2Templates(directory=str(TEMPLATE_DIR / "teacher"))
 app.student_templates = Jinja2Templates(directory=str(TEMPLATE_DIR / "student"))
 
-# Inject global variable "now"
 for env in [
     templates.env,
     app.admin_templates.env,
@@ -86,15 +76,13 @@ for env in [
 ]:
     env.globals.update(now=datetime.now)
 
-
 # =====================================================
-# 📦 UPLOADS
+# 📦 UPLOADS DIR
 # =====================================================
 if UPLOADS_BASE.exists():
     app.mount("/uploads", StaticFiles(directory=str(UPLOADS_BASE)), name="uploads")
 else:
-    print("⚠️ UPLOADS directory missing:", UPLOADS_BASE)
-
+    print("⚠️ UPLOADS folder missing:", UPLOADS_BASE)
 
 DEFAULT_AVATAR_PATH = UPLOADS_BASE / "avatars" / "default-avatar.png"
 
@@ -108,10 +96,10 @@ async def serve_avatar(filename: str):
 
 
 # =====================================================
-# 📡 ROUTERS (KEEP ORIGINAL)
+# 📡 ROUTERS
 # =====================================================
 
-# ... (toàn bộ phần routers giữ nguyên, không thay đổi)
+# (Không thay đổi phần include router — giữ nguyên đúng logic)
 
 from app.routers.auth.login import login_router
 from app.routers.auth.register import register_router

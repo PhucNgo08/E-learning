@@ -4,16 +4,16 @@
 {% block content %}
 <div class="container mt-3">
   <h4 class="fw-bold text-primary mb-4">
-    ✏️ Chỉnh sửa Module: {{ module.title }}
+    ✏️ Chỉnh sửa chương: {{ module.title }}
   </h4>
 
   <form method="post" action="/teacher/modules/edit/{{ module.id }}">
     <div class="mb-3">
-      <label class="form-label fw-semibold">Số thứ tự Module</label>
+      <label class="form-label fw-semibold">Số thứ tự chương</label>
       <input type="number" name="module_number" class="form-control" value="{{ module.module_number }}" required>
     </div>
     <div class="mb-3">
-      <label class="form-label fw-semibold">Tên Module</label>
+      <label class="form-label fw-semibold">Tên chương</label>
       <input type="text" name="title" class="form-control" value="{{ module.title }}" required>
     </div>
     <div class="mb-3">
