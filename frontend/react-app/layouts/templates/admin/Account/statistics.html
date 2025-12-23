@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>📊 Thống kê người dùng</title>
+  <title>Thống kê người dùng</title>
 
   <!-- Bootstrap & Chart.js -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -11,19 +11,163 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
-    body { background-color: #f8f9fc; font-family: "Inter", sans-serif; }
-    h3 { font-weight: 700; color: #0d6efd; }
-    .card { border: none; border-radius: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
-    .info-card { transition: 0.25s ease; }
-    .info-card:hover { transform: translateY(-3px); box-shadow: 0 4px 14px rgba(0,0,0,0.15); }
-    .table th { background-color: #e9effd; }
-    .chart-container { display: flex; flex-wrap: wrap; gap: 20px; }
-    .chart-box { flex: 1 1 48%; }
-    .btn-export {
-      background: linear-gradient(90deg,#007bff,#00b4d8); color:#fff;border:none;border-radius:8px;font-weight:500;
+    :root {
+      --blue-1: #0d6efd;
+      --blue-2: #00b4d8;
+      --bg-page: #f4f6fb;
+      --card-radius: 16px;
     }
+
+    body {
+      background-color: var(--bg-page);
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    /* Phần đầu trang */
+    .stats-header {
+      background: linear-gradient(120deg, var(--blue-1), var(--blue-2));
+      border-radius: 18px;
+      padding: 18px 22px;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(13, 110, 253, 0.25);
+    }
+
+    .stats-header-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .stats-header-sub {
+      font-size: 0.9rem;
+      opacity: .93;
+    }
+
+    .stats-header-actions .btn {
+      border-radius: 999px;
+      font-weight: 500;
+      padding-inline: 16px;
+    }
+
+    .btn-export {
+      background: linear-gradient(90deg,#007bff,#00b4d8);
+      color:#fff;
+      border:none;
+    }
+
     .btn-export:hover {
       background: linear-gradient(90deg,#0056d2,#0096c7);
+      color:#fff;
+    }
+
+    /* Thẻ tổng quan */
+    .summary-card {
+      border-radius: var(--card-radius);
+      border: none;
+      background: #fff;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: .25s ease;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+    }
+
+    .summary-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .summary-icon.total    { background: rgba(13,110,253,.08);  color: #0d6efd; }
+    .summary-icon.active   { background: rgba(25,135,84,.08);   color: #198754; }
+    .summary-icon.locked   { background: rgba(220,53,69,.08);   color: #dc3545; }
+
+    .summary-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .summary-label {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+
+    /* Khu vực biểu đồ */
+    .chart-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .chart-card {
+      flex: 1 1 48%;
+      min-width: 260px;
+      border-radius: var(--card-radius);
+      border: none;
+      background: #fff;
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
+      padding: 16px 18px;
+    }
+
+    .chart-title {
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #1f2937;
+    }
+
+    .chart-title i {
+      color: var(--blue-1);
+    }
+
+    .table th {
+      background-color: #e9effd;
+      border-top: none !important;
+    }
+
+    .avatar-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: rgba(13, 110, 253, 0.08);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 8px;
+    }
+
+    .badge-role {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    @media (max-width: 768px) {
+      .stats-header {
+        border-radius: 14px;
+      }
+      .stats-header-actions {
+        margin-top: 10px;
+        width: 100%;
+        justify-content: flex-start !important;
+        gap: 8px;
+      }
+      .chart-card {
+        flex: 1 1 100%;
+      }
     }
   </style>
 </head>
@@ -31,107 +175,189 @@
 <body class="p-4">
 <div class="container">
 
-  <!-- 🔷 Header -->
-  <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
-    <h3 class="mb-2"><i class="bi bi-bar-chart-line"></i> Thống kê người dùng</h3>
-    <div class="d-flex gap-2">
-      <a href="/admin/Account/manage-users" class="btn btn-outline-primary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+  {# Số tài khoản đã khóa = tổng - đang hoạt động #}
+  {% set active_count = stats.by_status.get('active', 0) %}
+  {% set locked_count = stats.total_users - active_count %}
+
+  <!-- Phần đầu trang -->
+  <div class="stats-header mb-4 d-flex flex-wrap justify-content-between align-items-center">
+    <div class="d-flex align-items-start gap-3">
+      <div class="avatar-circle bg-white bg-opacity-10"
+           style="width: 48px; height: 48px;">
+        <i class="bi bi-bar-chart-line-fill fs-4"></i>
+      </div>
+      <div>
+        <div class="stats-header-title">
+          Thống kê người dùng
+        </div>
+        <div class="stats-header-sub">
+          Xem nhanh số lượng tài khoản, vai trò và trạng thái hoạt động trong hệ thống.
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex stats-header-actions align-items-center gap-2">
+      <a href="/admin/Account/manage-users" class="btn btn-outline-light border-0 bg-white bg-opacity-10">
+        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại danh sách
       </a>
       <a href="/admin/Account/export-users" class="btn btn-export">
-        <i class="bi bi-file-earmark-spreadsheet"></i> Tải Excel
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Xuất danh sách
       </a>
     </div>
   </div>
 
-  <!-- 🟦 Tổng quan -->
+  <!-- Thông tin tổng quan -->
   <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <div class="card text-center info-card p-3">
-        <h4 class="fw-bold">{{ stats.total_users }}</h4>
-        <p class="text-muted mb-0">👥 Tổng người dùng</p>
+      <div class="summary-card">
+        <div class="summary-icon total">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div>
+          <div class="summary-value">{{ stats.total_users }}</div>
+          <p class="summary-label">Tổng số người dùng</p>
+        </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card text-center info-card p-3">
-        <h4 class="fw-bold text-success">{{ stats.by_status.get('active', 0) }}</h4>
-        <p class="text-muted mb-0">✅ Đang hoạt động</p>
+      <div class="summary-card">
+        <div class="summary-icon active">
+          <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div>
+          <div class="summary-value text-success">{{ active_count }}</div>
+          <p class="summary-label">Tài khoản đang hoạt động</p>
+        </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card text-center info-card p-3">
-        <h4 class="fw-bold text-danger">{{ stats.by_status.get('inactive', 0) }}</h4>
-        <p class="text-muted mb-0">⛔ Đã khóa</p>
+      <div class="summary-card">
+        <div class="summary-icon locked">
+          <i class="bi bi-slash-circle-fill"></i>
+        </div>
+        <div>
+          <div class="summary-value text-danger">{{ locked_count }}</div>
+          <p class="summary-label">Tài khoản đã khóa / không hoạt động</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 📊 Biểu đồ -->
+  <!-- Biểu đồ -->
   <div class="chart-container mb-4">
-
-    <div class="card p-3 chart-box">
-      <h5 class="fw-semibold mb-3"><i class="bi bi-diagram-3"></i> Phân bố vai trò</h5>
-      <canvas id="roleChart" height="120"></canvas>
+    <div class="chart-card">
+      <div class="chart-title">
+        <i class="bi bi-diagram-3"></i> Phân bố theo vai trò
+      </div>
+      <canvas id="roleChart" height="140"></canvas>
     </div>
 
-    <div class="card p-3 chart-box">
-      <h5 class="fw-semibold mb-3"><i class="bi bi-activity"></i> Trạng thái tài khoản</h5>
-      <canvas id="statusChart" height="120"></canvas>
+    <div class="chart-card">
+      <div class="chart-title">
+        <i class="bi bi-activity"></i> Phân bố theo trạng thái tài khoản
+      </div>
+      <canvas id="statusChart" height="140"></canvas>
     </div>
-
   </div>
 
-  <!-- 🕓 Last login -->
+  <!-- Bảng vai trò -->
+  <div class="card mb-4 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">
+        <i class="bi bi-list-ul me-1 text-primary"></i> Thống kê chi tiết theo vai trò
+      </h5>
+      <span class="text-muted small">Tổng: {{ stats.total_users }} tài khoản</span>
+    </div>
+
+    {% if stats.by_role %}
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Vai trò</th>
+          <th class="text-end">Số lượng</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for role, count in stats.by_role.items() %}
+        <tr>
+          <td>
+            {% if role == 'admin' %}
+              <span class="badge-role bg-danger text-white">Quản trị viên</span>
+            {% elif role == 'teacher' %}
+              <span class="badge-role bg-primary text-white">Giảng viên</span>
+            {% elif role == 'student' %}
+              <span class="badge-role bg-success text-white">Sinh viên</span>
+            {% elif role == 'prospective_student' %}
+              <span class="badge-role bg-info text-dark">Học viên tiềm năng</span>
+            {% elif role == 'teaching_assistant' %}
+              <span class="badge-role bg-secondary text-white">Trợ giảng</span>
+            {% else %}
+              <span class="badge-role bg-secondary text-white">{{ role }}</span>
+            {% endif %}
+          </td>
+          <td class="text-end fw-semibold">{{ count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="text-muted small">Chưa có dữ liệu về vai trò người dùng.</div>
+    {% endif %}
+  </div>
+
+  <!-- Đăng nhập gần đây -->
   <div class="card p-3 mb-4">
-    <h5 class="fw-semibold mb-3"><i class="bi bi-clock-history"></i> 5 người đăng nhập gần nhất</h5>
+    <h5 class="fw-semibold mb-3">
+      <i class="bi bi-clock-history me-1"></i> Năm người đăng nhập gần nhất
+    </h5>
 
     {% if stats.recent_login %}
-    <table class="table table-striped align-middle">
+    <table class="table table-striped align-middle mb-0">
       <thead class="table-light">
         <tr>
           <th>Họ và tên</th>
-          <th>Thời gian đăng nhập</th>
+          <th>Thời điểm đăng nhập</th>
         </tr>
       </thead>
       <tbody>
         {% for r in stats.recent_login %}
         <tr>
-          <td><i class="bi bi-person-circle text-primary me-1"></i>{{ r.name }}</td>
+          <td>
+            <span class="avatar-circle">
+              <i class="bi bi-person-fill text-primary"></i>
+            </span>
+            {{ r.name }}
+          </td>
           <td><i class="bi bi-clock text-secondary me-1"></i>{{ r.time }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
-    <div class="text-muted">Chưa có người dùng nào đăng nhập gần đây.</div>
+      <div class="text-muted">Chưa có bản ghi đăng nhập gần đây.</div>
     {% endif %}
   </div>
+
 </div>
 
-<!-- 📈 Chart.js Script -->
+<!-- Script vẽ biểu đồ -->
 <script>
-  // Nhận dữ liệu JSON từ Jinja
+  // Biểu đồ theo vai trò
   let roleLabels = JSON.parse('{{ stats.by_role.keys() | list | tojson | safe }}');
   let roleValues = JSON.parse('{{ stats.by_role.values() | list | tojson | safe }}');
 
-  // 🚫 LOẠI BỎ TRỢ GIẢNG TRƯỚC KHI VẼ BIỂU ĐỒ
+  // Ẩn trợ giảng nếu không muốn hiển thị trên biểu đồ
   const removedIndexes = [];
-
-  roleLabels.forEach((r, index) => {
-    if (r === "teaching_assistant") {
-      removedIndexes.push(index);
-    }
+  roleLabels.forEach((r, i) => {
+    if (r === "teaching_assistant") removedIndexes.push(i);
   });
-
-  // Xóa theo index
   removedIndexes.reverse().forEach(i => {
     roleLabels.splice(i, 1);
     roleValues.splice(i, 1);
   });
 
-  // 🎓 Biểu đồ vai trò (chỉ còn 3 vai trò hợp lệ)
   new Chart(document.getElementById("roleChart"), {
     type: "bar",
     data: {
@@ -142,7 +368,8 @@
         backgroundColor: [
           "rgba(0, 123, 255, 0.8)",
           "rgba(40, 167, 69, 0.8)",
-          "rgba(255, 193, 7, 0.8)"
+          "rgba(255, 193, 7, 0.8)",
+          "rgba(0, 123, 255, 0.5)"
         ],
         borderRadius: 6
       }]
@@ -150,15 +377,31 @@
     options: {
       responsive: true,
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return " " + ctx.parsed.y + " tài khoản";
+            }
+          }
+        }
       },
-      scales: { y: { beginAtZero: true } }
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1 }
+        }
+      }
     }
   });
 
-  // Trạng thái tài khoản
-  const statusLabels = JSON.parse('{{ stats.by_status.keys() | list | tojson | safe }}');
-  const statusValues = JSON.parse('{{ stats.by_status.values() | list | tojson | safe }}');
+  // Biểu đồ trạng thái tài khoản (đang hoạt động / đã khóa)
+  const totalUsers  = parseInt('{{ stats.total_users | int }}', 10);
+  const activeCount = parseInt('{{ active_count | int }}', 10);
+  const lockedCount = totalUsers - activeCount;
+
+  const statusLabels = ["Đang hoạt động", "Đã khóa / không hoạt động"];
+  const statusValues = [activeCount, lockedCount];
 
   new Chart(document.getElementById("statusChart"), {
     type: "doughnut",
@@ -171,7 +414,19 @@
       }]
     },
     options: {
-      plugins: { legend: { position: "bottom" } }
+      plugins: {
+        legend: { position: "bottom" },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              const total = statusValues.reduce((a,b) => a + b, 0);
+              const val = ctx.parsed;
+              const percent = total ? (val / total * 100).toFixed(1) : 0;
+              return " " + val + " tài khoản (" + percent + "%)";
+            }
+          }
+        }
+      }
     }
   });
 </script>

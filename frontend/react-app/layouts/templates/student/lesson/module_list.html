@@ -1,11 +1,11 @@
 {% extends "layout_student.html" %}
-{% block title %}📘 Danh sách module{% endblock %}
+{% block title %}📘 Danh sách chương{% endblock %}
 
 {% block content %}
 <div class="container py-4 fade-in">
 
   <h3 class="fw-bold text-primary mb-3">
-    <i class="bi bi-collection"></i> Danh sách module
+    <i class="bi bi-collection"></i> Danh sách chương
   </h3>
 
   {% if modules %}
@@ -18,7 +18,7 @@
     </a>
     {% endfor %}
   {% else %}
-    <div class="alert alert-info">Không có module nào.</div>
+    <div class="alert alert-info">Không có chương nào.</div>
   {% endif %}
 
 </div>

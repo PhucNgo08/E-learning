@@ -4,7 +4,7 @@
 {% block content %}
 
 <!-- ============================================================
-🌈 Gemini Chat v6.0 – Ultra Smooth / Error-Free / VSCode-Safe
+🌈 Gemini Chat v6.2 – Ultra Smooth / Error-Free / VSCode-Safe
 ============================================================== -->
 <style>
 .chat-container {
@@ -94,9 +94,9 @@ body.dark-mode .message.assistant .bubble {
 .typing span:nth-child(2){ animation-delay:.2s; }
 .typing span:nth-child(3){ animation-delay:.4s; }
 
-@keyframes blink { 
-  0%,80%,100%{opacity:0;} 
-  40%{opacity:1;} 
+@keyframes blink {
+  0%,80%,100%{opacity:0;}
+  40%{opacity:1;}
 }
 
 .chat-input {
@@ -150,8 +150,12 @@ body.dark-mode .message.assistant .bubble {
     <div class="chat-header">
       <h4><i class="bi bi-stars"></i> Gemini AI Trợ lý học tập</h4>
       <div>
-        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-download"></i></button>
-        <button id="clearBtn" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3"></i></button>
+        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-download"></i>
+        </button>
+        <button id="clearBtn" class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-trash3"></i>
+        </button>
       </div>
     </div>
 
@@ -159,7 +163,12 @@ body.dark-mode .message.assistant .bubble {
     {% if suggestions %}
     <div class="suggestions">
       {% for s in suggestions %}
-      <button onclick="sendQuick('{{ s|escapejs }}')">{{ s }}</button>
+      <!-- Không dùng onclick, dùng data-text để JS bắt sự kiện -->
+      <button type="button"
+              class="suggestion-btn"
+              data-text="{{ s|e }}">
+        {{ s }}
+      </button>
       {% endfor %}
     </div>
     {% endif %}
@@ -169,12 +178,12 @@ body.dark-mode .message.assistant .bubble {
       {% for chat in history|reverse %}
         {% if chat.role == 'user' %}
         <div class="message user">
-          <img src="{{ user.avatar_url or '/uploads/avatars/default-avatar.png' }}" class="avatar">
+          <img src="{{ user.avatar_url or '/uploads/avatars/default-avatar.png' }}" class="avatar" alt="User">
           <div class="bubble">{{ chat.message }}</div>
         </div>
         {% else %}
         <div class="message assistant">
-          <img src="/frontend/react-app/assets/ai_avatar.png" class="avatar">
+          <img src="/frontend/react-app/assets/ai_avatar.png" class="avatar" alt="AI">
           <div class="bubble">{{ chat.response|safe }}</div>
         </div>
         {% endif %}
@@ -183,8 +192,11 @@ body.dark-mode .message.assistant .bubble {
 
     <!-- INPUT -->
     <form id="chatForm" class="chat-input">
-      <input id="messageInput" type="text" name="message" placeholder="Nhập câu hỏi..." autocomplete="off" required>
-      <button class="btn btn-primary"><i class="bi bi-send"></i></button>
+      <input id="messageInput" type="text" name="message"
+             placeholder="Nhập câu hỏi..." autocomplete="off" required>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-send"></i>
+      </button>
     </form>
 
     <div id="typingIndicator" class="typing mt-1" style="display:none;">
@@ -203,8 +215,9 @@ const form = document.getElementById("chatForm");
 const input = document.getElementById("messageInput");
 const typing = document.getElementById("typingIndicator");
 
-const USER_AVATAR = "{{ user.avatar_url or '/uploads/avatars/default-avatar.png' }}";
-const AI_AVATAR = "/frontend/react-app/assets/ai_avatar.png";
+// Các giá trị này sau khi render sẽ trở thành string JS bình thường
+const USER_AVATAR = "{{ (user.avatar_url or '/uploads/avatars/default-avatar.png') }}";
+const AI_AVATAR   = "/frontend/react-app/assets/ai_avatar.png";
 
 /* Tạo message bubble */
 function addMessage(role, content, avatar) {
@@ -212,14 +225,15 @@ function addMessage(role, content, avatar) {
   wrapper.className = "message " + role;
 
   wrapper.innerHTML = `
-    <img src="${avatar}" class="avatar">
+    <img src="${avatar}" class="avatar" alt="${role === 'user' ? 'User' : 'AI'}">
     <div class="bubble"></div>
   `;
 
-  wrapper.querySelector(".bubble").textContent = content;
+  const bubble = wrapper.querySelector(".bubble");
+  bubble.textContent = content;
   chatBox.appendChild(wrapper);
   chatBox.scrollTop = chatBox.scrollHeight;
-  return wrapper.querySelector(".bubble");
+  return bubble;
 }
 
 /* Hiệu ứng gõ */
@@ -273,27 +287,45 @@ function sendQuick(text) {
   form.requestSubmit();
 }
 
+/* Bắt click vào các suggestion button qua event delegation */
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".suggestion-btn");
+  if (!btn) return;
+  const text = btn.getAttribute("data-text") || "";
+  sendQuick(text);
+});
+
 /* Clear chat */
 document.getElementById("clearBtn").onclick = async () => {
   if (!confirm("Bạn có chắc muốn xoá toàn bộ lịch sử?")) return;
-  await fetch("/student/chat-ai/clear", { method: "POST" });
+  try {
+    await fetch("/student/chat-ai/clear", { method: "POST" });
+  } catch (e) {
+    // nếu API lỗi vẫn clear UI cho đỡ khó chịu
+  }
   chatBox.innerHTML = `
     <div class="message assistant">
-      <img src="${AI_AVATAR}" class="avatar">
+      <img src="${AI_AVATAR}" class="avatar" alt="AI">
       <div class="bubble">🧹 Lịch sử đã được xoá.</div>
     </div>`;
 };
 
 /* Download history */
 document.getElementById("downloadBtn").onclick = () => {
-  const text = [...document.querySelectorAll(".bubble")]
+  const text = Array.from(document.querySelectorAll(".bubble"))
     .map(x => x.innerText)
     .join("\n\n-----------------------------\n\n");
 
+  const blob = new Blob([text], { type: "text/plain" });
+  const url  = URL.createObjectURL(blob);
+
   const a = document.createElement("a");
-  a.href = URL.createObjectURL(new Blob([text], { type: "text/plain" }));
+  a.href = url;
   a.download = "Gemini_Chat_History.txt";
+  document.body.appendChild(a);
   a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 };
 </script>
 

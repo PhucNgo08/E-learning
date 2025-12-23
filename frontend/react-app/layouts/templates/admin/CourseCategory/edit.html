@@ -2,7 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>➕ Thêm danh mục khóa học</title>
+  <title>✏️ Sửa danh mục khóa học</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -19,7 +21,7 @@
 
     .form-wrapper {
       width: 100%;
-      max-width: 600px;
+      max-width: 650px;
       background: #fff;
       border-radius: 18px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
@@ -33,8 +35,9 @@
     }
 
     h2 {
-      font-weight: 700;
+      font-weight: 800;
       color: #0d47a1;
+      margin-bottom: 0.25rem;
     }
 
     .lead-text {
@@ -49,7 +52,7 @@
     }
 
     .form-control {
-      border-radius: 8px;
+      border-radius: 10px;
       padding: 10px 14px;
     }
 
@@ -58,20 +61,20 @@
       box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 
-    .btn-success {
-      background: linear-gradient(45deg, #198754, #28a745);
+    .btn-primary {
+      background: linear-gradient(45deg, #0d6efd, #2563eb);
       border: none;
       transition: all 0.25s ease;
-      border-radius: 8px;
+      border-radius: 10px;
     }
 
-    .btn-success:hover {
+    .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+      box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
     }
 
     .btn-secondary {
-      border-radius: 8px;
+      border-radius: 10px;
       transition: all 0.25s ease;
     }
 
@@ -80,21 +83,34 @@
       box-shadow: 0 3px 10px rgba(108, 117, 125, 0.25);
     }
 
+    .icon-header {
+      background: #e9f2ff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      color: #0d47a1;
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .meta-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f1f5ff;
+      color: #1e40af;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
     footer {
       text-align: center;
       color: #999;
       font-size: 0.85rem;
-      margin-top: 2rem;
-    }
-
-    .icon-header {
-      background: #e9f2ff;
-      display: inline-block;
-      padding: 15px;
-      border-radius: 50%;
-      color: #0d47a1;
-      font-size: 1.8rem;
-      margin-bottom: 0.5rem;
+      margin-top: 1.75rem;
     }
   </style>
 </head>
@@ -102,34 +118,55 @@
 <body>
   <div class="form-wrapper">
     <div class="text-center mb-4">
-      <div class="icon-header"><i class="bi bi-tags-fill"></i></div>
-      <h2>Thêm danh mục mới</h2>
-      <p class="lead-text">Điền thông tin bên dưới để tạo danh mục khóa học trong hệ thống.</p>
+      <div class="icon-header"><i class="bi bi-pencil-square"></i></div>
+      <h2>Sửa danh mục</h2>
+      <div class="lead-text">
+        Cập nhật thông tin danh mục khóa học trong hệ thống.
+      </div>
+
+      {# Hiển thị ID để dễ debug (nếu không muốn thì xóa khối này) #}
+      <div class="meta-badge">
+        ID: {{ category.id }}
+      </div>
     </div>
 
-    <form method="post" action="/admin/CourseCategory/add">
+    {# ✅ action phải khớp đúng router POST /edit/{category_id} #}
+    <form method="post" action="/admin/CourseCategory/edit/{{ category.id }}">
       <div class="mb-3">
         <label class="form-label">Tên danh mục <span class="text-danger">*</span></label>
-        <input type="text" name="category_name" class="form-control" placeholder="VD: Lập trình, Thiết kế, Tin học..." required>
+        <input
+          type="text"
+          name="category_name"
+          class="form-control"
+          required
+          placeholder="VD: Lập trình, Thiết kế, Tin học..."
+          value="{{ category.category_name or '' }}"
+        >
       </div>
 
       <div class="mb-3">
         <label class="form-label">Mô tả</label>
-        <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn gọn về danh mục..."></textarea>
+        <textarea
+          name="description"
+          class="form-control"
+          rows="4"
+          placeholder="Nhập mô tả ngắn gọn về danh mục..."
+        >{{ category.description or '' }}</textarea>
       </div>
 
       <div class="d-flex justify-content-between mt-4">
         <a href="/admin/CourseCategory/manage" class="btn btn-secondary px-4">
           <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
         </a>
-        <button type="submit" class="btn btn-success px-4">
-          <i class="bi bi-save2 me-1"></i> Lưu danh mục
+
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-check2-circle me-1"></i> Cập nhật
         </button>
       </div>
     </form>
-  </div>
 
-  <footer>© 2025 E-Learning Admin Dashboard</footer>
+    <footer>© 2025 E-Learning Admin Dashboard</footer>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

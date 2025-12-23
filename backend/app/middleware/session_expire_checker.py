@@ -9,7 +9,7 @@ SESSION_EXPIRE_MINUTES = 60  # 1 giờ
 class SessionExpireMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
 
-        # Nếu không có session (static, file...) → bỏ qua
+        # Không có session scope -> bỏ qua
         if "session" not in request.scope:
             return await call_next(request)
 
@@ -23,60 +23,59 @@ class SessionExpireMiddleware(BaseHTTPMiddleware):
 
         now_ts = datetime.utcnow().timestamp()
 
-        # ------------------------------------------------------
-        # 1) User chưa login → KHÔNG đụng session
-        # ------------------------------------------------------
+        # 1) Chưa login -> không đụng session
         if not user_id:
             return await call_next(request)
 
-        # ------------------------------------------------------
-        # 2) Không kiểm tra UA/IP cho POST upload/import
-        # ------------------------------------------------------
-        content_type = request.headers.get("Content-Type", "")
+        # Helper: lấy IP thực (nếu dùng reverse proxy)
+        xff = request.headers.get("x-forwarded-for", "")
+        ip_now = (xff.split(",")[0].strip() if xff else None) or (request.client.host if request.client else "")
 
-        is_import_post = (
+        # 2) Chỉ bypass UA/IP cho đúng import upload (đừng bypass mọi multipart)
+        content_type = request.headers.get("Content-Type", "")
+        path = request.url.path
+
+        is_import_upload = (
             request.method == "POST"
             and "multipart/form-data" in content_type
+            and "/admin/exams/" in path
+            and path.endswith("/import")
         )
 
-        if not is_import_post:
+        if not is_import_upload:
             # Check IP
-            if ip_saved and ip_saved != request.client.host:
+            if ip_saved and ip_saved != ip_now:
                 session.clear()
-                return RedirectResponse("/auth/login")
+                return RedirectResponse("/auth/login", status_code=303)
 
             # Check User-Agent
-            if ua_saved and ua_saved != request.headers.get("User-Agent", ""):
+            ua_now = request.headers.get("User-Agent", "")
+            if ua_saved and ua_saved != ua_now:
                 session.clear()
-                return RedirectResponse("/auth/login")
+                return RedirectResponse("/auth/login", status_code=303)
 
-        # ------------------------------------------------------
-        # 3) Check expires_at
-        # ------------------------------------------------------
+        # 3) Check expires_at (so sánh timestamp để tránh lỗi timezone-aware)
         if expires_at:
             try:
                 exp_dt = datetime.fromisoformat(expires_at)
-                if datetime.utcnow() > exp_dt:
+                exp_ts = exp_dt.timestamp()
+                if now_ts > exp_ts:
                     session.clear()
-                    return RedirectResponse("/auth/login")
+                    return RedirectResponse("/auth/login", status_code=303)
             except Exception:
+                # Nếu parse lỗi thì đừng logout “oan” ngay, bạn có thể chọn:
+                # A) clear session như cũ (an toàn)
+                # B) bỏ qua expires_at (đỡ logout oan)
                 session.clear()
-                return RedirectResponse("/auth/login")
+                return RedirectResponse("/auth/login", status_code=303)
 
-        # ------------------------------------------------------
         # 4) Check inactivity timeout
-        # ------------------------------------------------------
-        if last_active and (now_ts - last_active) > SESSION_EXPIRE_MINUTES * 60:
+        if last_active and (now_ts - float(last_active)) > SESSION_EXPIRE_MINUTES * 60:
             session.clear()
-            return RedirectResponse("/auth/login")
+            return RedirectResponse("/auth/login", status_code=303)
 
-        # ------------------------------------------------------
-        # 5) Update last_active SAFE
-        # ------------------------------------------------------
+        # 5) Update last_active
         session["last_active"] = now_ts
 
-        # ------------------------------------------------------
         # 6) Continue
-        # ------------------------------------------------------
-        response = await call_next(request)
-        return response
+        return await call_next(request)

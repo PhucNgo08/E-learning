@@ -309,6 +309,21 @@ async def delete_course(course_id: str, request: Request, db: Session = Depends(
         raise HTTPException(404, "Không thể xóa khóa học.")
 
     return RedirectResponse("/admin/Course/manage", status_code=303)
+@course_router.get("/delete/{course_id}", response_class=HTMLResponse)
+async def delete_course_confirm(course_id: str, request: Request, db: Session = Depends(get_db)):
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/auth/login", status_code=303)
+
+    tpl = get_template_by_path(request.url.path)
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(404, "Không tìm thấy khóa học.")
+
+    return tpl.TemplateResponse(
+        "Course/delete.html",
+        {"request": request, "course": course}
+    )
 
 # =====================================================================================
 # 📘 7) Chi tiết khóa học

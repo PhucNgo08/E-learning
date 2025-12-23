@@ -5,229 +5,478 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Đăng nhập | E-Learning Portal</title>
 
-  <!-- Google Fonts + Icons -->
+  <!-- =============================
+       1) Fonts + Bootstrap + Icons
+       ============================= -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- CSS gốc -->
+  <!-- =============================
+       2) CSS gốc (nếu bạn đang dùng)
+       ============================= -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/auth.css" />
 
-  <!-- ===============================
-       🌈 CSS tuỳ chỉnh + Nền Cyberpunk
-       =============================== -->
   <style>
+/* =========================================================
+   A) BACKGROUND nền tổng + chuẩn bị cho FX layer
+   ========================================================= */
+body{
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color:#fff;
 
-/* =============================
-   🌄 BACKGROUND HIỆU ỨNG MỀM
-   ============================= */
-body {
-  color: #fff;
-
-  /* Ảnh nền + lớp phủ nhẹ (đỡ tối hơn bản cũ) */
   background:
-      linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.45)),
-      url("/static/images/nen_dangnhap.png") no-repeat center center fixed;
-
+    linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.45)),
+    url("/static/images/nen_dangnhap.png") no-repeat center center fixed;
   background-size: cover;
-  min-height: 100vh;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  padding: 26px 18px;
+  position:relative;
+  overflow:hidden;
 }
 
+/* =========================================================
+   B) FX LAYER: chứa Starfield + Grid + Mist + Scanline
+   ========================================================= */
+#fx-layer{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
 
-/* =============================
-   🟦 FORM GLASS MỜ – SÁNG HƠN
-   ============================= */
-.login-wrapper {
-  width: 430px;
-  padding: 35px 32px;
-  
+  /* Biến parallax do JS set */
+  --px: 0px;
+  --py: 0px;
+}
+
+/* B1) STARFIELD */
+#starfield{
+  position:absolute;
+  inset:0;
+  transform: translate3d(calc(var(--px) * 0.7), calc(var(--py) * 0.7), 0);
+  opacity:.95;
+}
+.star{
+  position:absolute;
+  left: var(--x);
+  top:  var(--y);
+  width: var(--s);
+  height: var(--s);
+  border-radius:999px;
+  background: radial-gradient(circle, rgba(255,255,255,.95), rgba(255,255,255,.12) 60%, transparent 72%);
+  opacity: var(--o);
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.12));
+  animation: starFloat var(--d) linear infinite;
+  animation-delay: var(--delay);
+  transform: translateZ(0);
+}
+@keyframes starFloat{
+  0%   { transform: translate3d(0, 20vh, 0); }
+  100% { transform: translate3d(var(--dx), -120vh, 0); }
+}
+
+/* B2) GRID */
+#fx-layer::before{
+  content:"";
+  position:absolute;
+  inset:-30%;
+  background:
+    linear-gradient(to right, rgba(0,234,255,0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,234,255,0.08) 1px, transparent 1px);
+  background-size: 80px 80px;
+
+  transform: translate3d(var(--px), var(--py), 0) rotate(12deg);
+  opacity:.22;
+  animation: gridShift 18s linear infinite;
+  filter: drop-shadow(0 0 12px rgba(0,234,255,.14));
+}
+@keyframes gridShift{
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: -240px -240px, -240px -240px; }
+}
+
+/* B3) MIST */
+#fx-layer::after{
+  content:"";
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(0,234,255,.18), transparent 45%),
+    radial-gradient(circle at 80% 60%, rgba(140,0,255,.14), transparent 50%),
+    radial-gradient(circle at 50% 90%, rgba(0,140,255,.12), transparent 55%);
+  filter: blur(20px);
+  opacity:.9;
+
+  transform: translate3d(calc(var(--px) * 0.55), calc(var(--py) * 0.55), 0);
+  animation: mistFloat 10s ease-in-out infinite alternate;
+}
+@keyframes mistFloat{
+  0%   { transform: translate3d(calc(var(--px) * 0.55), calc(var(--py) * 0.55),0) scale(1); }
+  100% { transform: translate3d(calc(var(--px) * 0.55 + 30px), calc(var(--py) * 0.55 - 18px),0) scale(1.04); }
+}
+
+/* B4) Scanline */
+.scanline{
+  position:absolute;
+  left:-10%;
+  top:-30%;
+  width:120%;
+  height:220px;
+  background: linear-gradient(180deg, transparent, rgba(0,234,255,0.10), transparent);
+  filter: blur(1px);
+  opacity:.65;
+  animation: scanDown 5.8s linear infinite;
+}
+@keyframes scanDown{
+  0%   { transform: translateY(-40vh) skewY(-6deg); }
+  100% { transform: translateY(140vh) skewY(-6deg); }
+}
+
+/* =========================================================
+   C) CARD LOGIN (Glass)
+   - padding-top tăng để có chỗ cho nút Back
+   ========================================================= */
+.login-wrapper{
+  width: 450px;
+  max-width: 92vw;
+
+  padding: 52px 34px 34px; /* ✅ chừa chỗ cho back button */
   border-radius: 22px;
 
-  /* Mờ nhẹ + sáng hơn */
   background: rgba(25, 25, 45, 0.55);
   backdrop-filter: blur(18px);
 
-  /* Viền mỏng neon */
-  border: 1px solid rgba(0, 200, 255, 0.25);
+  border: 1px solid rgba(0,200,255,0.25);
+  box-shadow: 0 0 30px rgba(0,255,255,0.22);
 
-  /* Đổ bóng mềm */
-  box-shadow: 0px 0px 30px rgba(0, 255, 255, 0.25);
+  position:relative;
+  z-index:2;
+  transform-style: preserve-3d;
 
-  animation: fadeIn 0.6s ease-out;
+  animation: fadeIn .6s ease-out;
+}
+@keyframes fadeIn{
+  from{ opacity:0; transform: translateY(12px); }
+  to  { opacity:1; transform: translateY(0); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Viền neon xoay */
+.login-wrapper::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  border-radius: 24px;
+  background: conic-gradient(from 0deg,
+    rgba(0,234,255,0),
+    rgba(0,234,255,.65),
+    rgba(140,0,255,.35),
+    rgba(0,234,255,0)
+  );
+  filter: blur(10px);
+  opacity:.42;
+  z-index:-1;
+  animation: neonSpin 6s linear infinite;
+}
+@keyframes neonSpin{ to{ transform: rotate(360deg); } }
+
+/* =========================================================
+   C1) Error shake / Success pop
+   ========================================================= */
+@keyframes shakeX{
+  0%,100%{ transform: translateX(0); }
+  10%{ transform: translateX(-8px); }
+  20%{ transform: translateX(8px); }
+  30%{ transform: translateX(-6px); }
+  40%{ transform: translateX(6px); }
+  50%{ transform: translateX(-4px); }
+  60%{ transform: translateX(4px); }
+  70%{ transform: translateX(-2px); }
+  80%{ transform: translateX(2px); }
+}
+.login-wrapper.is-error{
+  animation: shakeX .55s ease-in-out;
+  box-shadow: 0 0 36px rgba(255,80,80,.25);
+  border-color: rgba(255,120,120,.35);
+}
+@keyframes popGlow{
+  0%{ transform: scale(.98); filter: brightness(1); }
+  65%{ transform: scale(1.02); filter: brightness(1.08); }
+  100%{ transform: scale(1); filter: brightness(1.02); }
+}
+.login-wrapper.is-success{
+  animation: popGlow .7s ease-out;
+  box-shadow: 0 0 42px rgba(0,255,180,.26), 0 0 22px rgba(0,234,255,.20);
+  border-color: rgba(0,255,180,.28);
 }
 
+/* =========================================================
+   D) Back button (đặt TRONG card, góc trên trái)
+   - dùng <a> để đúng semantics + fallback dễ
+   ========================================================= */
+.btn-back{
+  position:absolute;
+  top: 14px;
+  left: 14px;
 
-/* =============================
-   🐺 LOGO GLOW
-   ============================= */
-.logo-img {
-  width: 95px;
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+
+  z-index:3;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+
+  color: #eaf6ff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.9rem;
+
+  backdrop-filter: blur(10px);
+  transition: .2s ease;
+  text-decoration:none;
+}
+.btn-back:hover{
+  transform: translateY(-1px);
+  background: rgba(255,255,255,0.16);
+  box-shadow: 0 0 14px rgba(0,234,255,0.20);
+}
+
+/* =========================================================
+   E) LOGO shimmer
+   ========================================================= */
+.logo-wrap{
+  position: relative;
+  display: inline-block;
+  border-radius: 16px;
+  margin-bottom: 8px;
+}
+.logo-img{
+  width: 96px;
   filter: drop-shadow(0 0 18px #00eaff) brightness(1.1);
 }
+.logo-wrap::after{
+  content:"";
+  position:absolute;
+  inset:-10px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.60), transparent);
+  transform: translateX(-160%) skewX(-18deg);
+  animation: shimmerSweep 2.8s ease-in-out infinite;
+  opacity:.75;
+  filter: blur(.25px);
+  pointer-events:none;
+}
+@keyframes shimmerSweep{
+  0%   { transform: translateX(-170%) skewX(-18deg); opacity:0; }
+  20%  { opacity:.65; }
+  55%  { opacity:.4; }
+  100% { transform: translateX(170%) skewX(-18deg); opacity:0; }
+}
 
-
-/* =============================
-   ✨ INPUT NEON LÀM SÁNG
-   ============================= */
-.form-control {
+/* =========================================================
+   F) Inputs: neon + shimmer underline khi focus
+   ========================================================= */
+.input-wrap{ position: relative; }
+.form-control{
   background: rgba(255,255,255,0.15);
   border: 1px solid rgba(255,255,255,0.30);
-  border-radius: 10px;
-  color: #fff;
-  padding: 10px 14px;
-  transition: 0.25s;
+  border-radius: 12px;
+  color:#fff;
+  padding: 11px 14px;
+  transition: .25s;
 }
-
-.form-control:focus {
+.form-control:focus{
   background: rgba(255,255,255,0.20);
   border-color: #00eaff;
-  box-shadow: 0 0 14px #00eaff;
-  color: #fff;
+  box-shadow: 0 0 14px rgba(0,234,255,.9);
+  color:#fff;
+}
+.input-wrap::after{
+  content:"";
+  position:absolute;
+  left: 10px; right: 10px;
+  bottom: -6px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(0,234,255,.85), transparent);
+  transform: scaleX(0);
+  opacity: 0;
+  transition: .25s ease;
+}
+.input-wrap:focus-within::after{
+  transform: scaleX(1);
+  opacity: .95;
+  animation: inputShimmer 1.2s ease-in-out infinite;
+}
+@keyframes inputShimmer{
+  0%   { filter: blur(.2px); opacity:.7; }
+  50%  { filter: blur(0px);  opacity:1; }
+  100% { filter: blur(.2px); opacity:.7; }
 }
 
-
-/* =============================
-   👁 NÚT HIỆN MẬT KHẨU
-   ============================= */
-.toggle-password {
-  position: absolute;
+/* Toggle icon */
+.toggle-password{
+  position:absolute;
   right: 14px;
   top: 38px;
   font-size: 20px;
-  cursor: pointer;
-  color: #d0d4ff;
-  transition: 0.2s;
+  cursor:pointer;
+  color:#d0d4ff;
+  transition:.2s;
+}
+.toggle-password:hover{
+  color:#fff;
+  transform: scale(1.15);
 }
 
-.toggle-password:hover {
-  color: #ffffff;
-  transform: scale(1.18);
-}
-
-
-/* =============================
-   ➖ DIVIDER
-   ============================= */
-.divider-or {
+/* Divider */
+.divider-or{
   margin: 14px 0;
-  text-align: center;
-  font-size: 0.85rem;
-  color: #cddaff;
-  position: relative;
+  text-align:center;
+  font-size: .85rem;
+  color:#cddaff;
+  position:relative;
 }
-
 .divider-or::before,
-.divider-or::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: 38%;
-  height: 1px;
+.divider-or::after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:38%;
+  height:1px;
   background: rgba(255,255,255,0.15);
 }
+.divider-or::before{ left:0; }
+.divider-or::after{ right:0; }
 
-.divider-or::before { left: 0; }
-.divider-or::after  { right: 0; }
-
-
-/* =============================
-   🔷 BUTTON LOGIN — NEON
-   ============================= */
-#loginBtn {
+/* Login button shimmer */
+#loginBtn{
   background: linear-gradient(90deg, #00d4ff, #008cff);
-  border: none;
+  border:none;
   padding: 12px;
-  border-radius: 100px;
+  border-radius: 999px;
   font-size: 1rem;
-  color: #fff;
-  width: 100%;
-  box-shadow: 0 0 14px rgba(0,180,255,0.6);
-  transition: 0.25s;
+  color:#fff;
+  width:100%;
+  box-shadow: 0 0 14px rgba(0,180,255,0.55);
+  transition:.25s;
+  position:relative;
+  overflow:hidden;
 }
-
-#loginBtn:hover {
+#loginBtn:hover{
   transform: translateY(-2px);
-  box-shadow: 0 0 22px rgba(0,220,255,0.85);
+  box-shadow: 0 0 22px rgba(0,220,255,0.75);
+}
+#loginBtn::after{
+  content:"";
+  position:absolute;
+  top:-55%;
+  left:-60%;
+  width:60%;
+  height:220%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.75), transparent);
+  transform: rotate(18deg);
+  animation: btnShine 1.82s ease-in-out infinite;
+  opacity:.85;
+}
+@keyframes btnShine{
+  0%   { left:-80%; opacity:0; }
+  18%  { opacity:.85; }
+  55%  { opacity:.45; }
+  100% { left:140%; opacity:0; }
 }
 
-
-/* =============================
-   🔴 BUTTON GOOGLE
-   ============================= */
-.btn-google {
-  background: #ea4335;
-  color: #fff !important;
-  width: 100%;
+/* Google button */
+.btn-google{
+  background:#ea4335;
+  color:#fff !important;
+  width:100%;
   padding: 10px 14px;
   border-radius: 999px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: 0.25s;
+  font-weight:700;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 8px;
+  transition:.25s;
 }
-
-.btn-google:hover {
+.btn-google:hover{
   transform: translateY(-2px);
-  box-shadow: 0 0 14px rgba(255,80,80,0.5);
+  box-shadow: 0 0 14px rgba(255,80,80,0.45);
 }
 
+/* Mobile */
+@media (max-width: 480px){
+  .login-wrapper{ padding: 52px 22px 26px; }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+  #fx-layer::before, #fx-layer::after, .scanline, .star,
+  #loginBtn::after, .logo-wrap::after, .input-wrap:focus-within::after{
+    animation: none !important;
+  }
+}
   </style>
 </head>
 
 <body>
 
-  <div class="login-wrapper text-center">
+  <!-- FX nền -->
+  <div id="fx-layer" aria-hidden="true">
+    <div class="scanline"></div>
+    <div id="starfield"></div>
+  </div>
 
-    <!-- LOGO FOX -->
-    <img src="{{ url_for('static', path='images/fox-logo.png') }}"
-         alt="Logo"
-         class="logo-img mb-3" />
+  <!-- Card login -->
+  <div class="login-wrapper text-center" id="tiltCard">
+
+    <!-- 🔙 Nút quay lại: JS sẽ tự quyết định back hay về "/" -->
+    <a href="/" class="btn-back" id="backBtn">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+
+    <!-- Logo shimmer -->
+    <div class="logo-wrap">
+      <img src="{{ url_for('static', path='images/fox-logo.png') }}"
+           alt="Logo"
+           class="logo-img" />
+    </div>
 
     <h2 class="fw-bold mb-3" style="font-family: Orbitron;">
       <i class="bi bi-shield-lock-fill me-1"></i> Đăng nhập
     </h2>
 
-    <!-- HIỂN THỊ THÔNG BÁO -->
+    <!-- Thông báo -->
     {% if error %}
-      <div class="alert alert-danger py-2 small">
+      <div class="alert alert-danger py-2 small" id="errorBox">
         <i class="bi bi-exclamation-triangle-fill me-1"></i> {{ error }}
       </div>
     {% endif %}
     {% if success %}
-      <div class="alert alert-success py-2 small">
+      <div class="alert alert-success py-2 small" id="successBox">
         <i class="bi bi-check-circle-fill me-1"></i> {{ success }}
       </div>
     {% endif %}
 
-    <!-- FORM LOGIN -->
     <form method="post" id="loginForm">
-
-      <!-- Username / Email -->
-      <div class="mb-3 text-start">
+      <div class="mb-3 text-start input-wrap">
         <label class="form-label fw-semibold">Email hoặc Tên đăng nhập</label>
         <input name="identifier" id="identifier" class="form-control" required autofocus>
       </div>
 
-      <!-- Password -->
-      <div class="mb-3 text-start position-relative">
+      <div class="mb-3 text-start position-relative input-wrap">
         <label class="form-label fw-semibold">Mật khẩu</label>
         <input name="password" id="password" type="password" class="form-control" required>
         <i class="bi bi-eye-slash toggle-password"></i>
       </div>
 
-      <!-- Remember + Forgot -->
       <div class="d-flex justify-content-between align-items-center mb-2">
         <div class="form-check">
           <input class="form-check-input" type="checkbox" id="rememberMe" name="remember_me" value="1">
@@ -236,44 +485,132 @@ body {
         <a href="/auth/forgot-password" class="small text-decoration-none text-primary">Quên mật khẩu?</a>
       </div>
 
-      <!-- BUTTON LOGIN -->
       <button type="submit" id="loginBtn">
         <i class="bi bi-box-arrow-in-right me-1"></i> Đăng nhập
       </button>
 
-      <!-- DIVIDER -->
       <div class="divider-or">hoặc</div>
 
-      <!-- SOCIAL LOGIN -->
       <a href="/auth/google-login" class="btn-social btn-google">
         <i class="bi bi-google"></i> Đăng nhập bằng Google
       </a>
-
     </form>
   </div>
 
-  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // Toggle password
+    /* =========================================================
+       1) Toggle password
+       ========================================================= */
     const toggleBtn = document.querySelector(".toggle-password");
     const passwordInput = document.getElementById("password");
+    if (toggleBtn && passwordInput){
+      toggleBtn.addEventListener("click", () => {
+        const hidden = passwordInput.type === "password";
+        passwordInput.type = hidden ? "text" : "password";
+        toggleBtn.classList.toggle("bi-eye");
+        toggleBtn.classList.toggle("bi-eye-slash");
+      });
+    }
 
-    toggleBtn.addEventListener("click", () => {
-      const hidden = passwordInput.type === "password";
-      passwordInput.type = hidden ? "text" : "password";
-      toggleBtn.classList.toggle("bi-eye");
-      toggleBtn.classList.toggle("bi-eye-slash");
-    });
+    /* =========================================================
+       2) Nút quay lại thông minh:
+          - Nếu history có trang trước -> history.back()
+          - Nếu vào trực tiếp -> về "/"
+       ========================================================= */
+    (function smartBack(){
+      const b = document.getElementById("backBtn");
+      if(!b) return;
 
-    // Loading button
-    document.getElementById("loginForm").addEventListener("submit", () => {
-      const btn = document.getElementById("loginBtn");
-      btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Đang đăng nhập...`;
-      btn.disabled = true;
-    });
+      b.addEventListener("click", (e) => {
+        // history.length > 1 thường nghĩa là có thể back
+        if (window.history.length > 1) {
+          e.preventDefault();
+          window.history.back();
+        }
+        // else: để href="/" chạy bình thường
+      });
+    })();
+
+    /* =========================================================
+       3) Loading button khi submit
+       ========================================================= */
+    const form = document.getElementById("loginForm");
+    if (form){
+      form.addEventListener("submit", () => {
+        const btn = document.getElementById("loginBtn");
+        if(!btn) return;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>Đang đăng nhập...`;
+        btn.disabled = true;
+      });
+    }
+
+    /* =========================================================
+       4) Starfield generator + Parallax
+       ========================================================= */
+    (function makeStars(){
+      const host = document.getElementById("starfield");
+      const fx = document.getElementById("fx-layer");
+      if(!host || !fx) return;
+
+      const count = 80;
+      for(let i=0;i<count;i++){
+        const s = document.createElement("div");
+        s.className = "star";
+
+        const x = (Math.random()*100).toFixed(2) + "vw";
+        const y = (Math.random()*120 - 20).toFixed(2) + "vh";
+        const size = (Math.random()*3.6 + 1.2).toFixed(2) + "px";
+        const o = (Math.random()*0.85 + 0.25).toFixed(2);
+        const d = (Math.random()*22 + 18).toFixed(2) + "s";
+        const delay = (-Math.random()*22).toFixed(2) + "s";
+        const dx = (Math.random()*60 - 30).toFixed(0) + "px";
+
+        s.style.setProperty("--x", x);
+        s.style.setProperty("--y", y);
+        s.style.setProperty("--s", size);
+        s.style.setProperty("--o", o);
+        s.style.setProperty("--d", d);
+        s.style.setProperty("--delay", delay);
+        s.style.setProperty("--dx", dx);
+
+        host.appendChild(s);
+      }
+
+      let tx = 0, ty = 0;
+      window.addEventListener("mousemove", (e) => {
+        tx = (e.clientX / window.innerWidth  - 0.5);
+        ty = (e.clientY / window.innerHeight - 0.5);
+      }, {passive:true});
+
+      function tick(){
+        fx.style.setProperty("--px", (tx * 22).toFixed(2) + "px");
+        fx.style.setProperty("--py", (ty * 16).toFixed(2) + "px");
+        requestAnimationFrame(tick);
+      }
+      tick();
+    })();
+
+    /* =========================================================
+       5) Error shake / Success pop (auto theo Jinja)
+       ========================================================= */
+    (function statusAnimations(){
+      const card = document.getElementById("tiltCard");
+      if(!card) return;
+
+      const hasError = document.getElementById("errorBox");
+      const hasSuccess = document.getElementById("successBox");
+
+      if(hasError){
+        requestAnimationFrame(()=> card.classList.add("is-error"));
+        setTimeout(()=> card.classList.remove("is-error"), 650);
+      }
+      if(hasSuccess){
+        requestAnimationFrame(()=> card.classList.add("is-success"));
+        setTimeout(()=> card.classList.remove("is-success"), 900);
+      }
+    })();
   </script>
-
 </body>
 </html>

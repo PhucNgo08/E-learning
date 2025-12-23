@@ -2,6 +2,8 @@
 {% block title %}📘 {{ course.course_name }}{% endblock %}
 
 {% block content %}
+{% set can_learn = (enrolled or purchased or (course.final_price == 0)) %}
+
 <div class="container-fluid py-3 fade-in">
 
   <!-- Back -->
@@ -10,6 +12,14 @@
       <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách khóa học
     </a>
   </div>
+
+  {# ✅ Nếu backend redirect về ?need_buy=1 thì hiện thông báo #}
+  {% if request.query_params.get('need_buy') %}
+  <div class="alert alert-warning rounded-3 shadow-sm mb-3">
+    <i class="bi bi-lock-fill"></i>
+    Bạn cần <b>mua</b> hoặc <b>đăng ký</b> khóa học này để học nội dung.
+  </div>
+  {% endif %}
 
   <div class="row g-4">
 
@@ -66,10 +76,17 @@
                 <small class="text-muted">{{ m.description or "Không có mô tả" }}</small>
               </div>
 
-              <a href="/student/lesson/module/{{ m.id }}"
-                 class="btn btn-outline-primary btn-sm rounded-pill">
-                <i class="bi bi-play-circle"></i> Học ngay
-              </a>
+              {% if can_learn %}
+                <a href="/student/lesson/module/{{ m.id }}"
+                   class="btn btn-outline-primary btn-sm rounded-pill">
+                  <i class="bi bi-play-circle"></i> Học ngay
+                </a>
+              {% else %}
+                <a href="#"
+                   class="btn btn-outline-primary btn-sm rounded-pill js-need-buy">
+                  <i class="bi bi-lock-fill"></i> Học ngay
+                </a>
+              {% endif %}
 
             </div>
             {% endfor %}
@@ -216,6 +233,33 @@
   </div>
 </div>
 
+<!-- Toast: Need buy -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+  <div id="needBuyToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+      <strong class="me-auto">Thông báo</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Bạn cần <b>mua</b> hoặc <b>đăng ký</b> khóa học này để học nội dung.
+
+      <div class="d-flex gap-2 mt-2">
+        <a class="btn btn-sm btn-outline-primary rounded-pill"
+           href="/student/cart/add/{{ course.id }}">
+          <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+        </a>
+
+        <form method="post" action="/student/cart/buy-now/{{ course.id }}" class="m-0">
+          <button class="btn btn-sm btn-success rounded-pill" type="submit">
+            <i class="bi bi-credit-card"></i> Mua ngay
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- CSS -->
 <style>
 .fade-in { animation: fadeIn .5s ease; }
@@ -254,5 +298,34 @@
 .related-thumb { height: 150px; object-fit: cover; border-radius: 10px; }
 .related-item:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.12); }
 </style>
+
+<!-- JS -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const toastEl = document.getElementById("needBuyToast");
+
+    function showNeedBuyToast() {
+      if (!toastEl || typeof bootstrap === "undefined") {
+        alert("Bạn cần mua/đăng ký khóa học để học nội dung.");
+        return;
+      }
+      new bootstrap.Toast(toastEl, { delay: 3500 }).show();
+    }
+
+    // Click "Học ngay" khi chưa mua/ghi danh
+    document.querySelectorAll(".js-need-buy").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.preventDefault();
+        showNeedBuyToast();
+      });
+    });
+
+    // Auto show toast nếu bị redirect về ?need_buy=1
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("need_buy")) {
+      showNeedBuyToast();
+    }
+  });
+</script>
 
 {% endblock %}

@@ -1,19 +1,13 @@
 {% extends "layout_admin.html" %}
-{% block title %}📥 Import câu hỏi – PRO 2025 V8.4{% endblock %}
+{% block title %}📥 Import câu hỏi {% endblock %}
 
 {% block content %}
 
 <style>
 /* ==========================================================
-   📥 IMPORT – GLASS NEO ULTRA PRO 2025 (FINAL)
+   📥 IMPORT – GLASS NEO ULTRA PRO 2025 (FINAL + PROGRESS)
 =========================================================== */
-.import-wrapper {
-  max-width: 760px;
-  margin: auto;
-  padding-top: 40px;
-  padding-bottom: 60px;
-}
-
+.import-wrapper { max-width: 760px; margin: auto; padding-top: 40px; padding-bottom: 60px; }
 .import-card {
   padding: 2rem 2.2rem;
   background: rgba(255,255,255,0.85);
@@ -21,12 +15,9 @@
   -webkit-backdrop-filter: blur(18px);
   border-radius: 22px;
   border: 1px solid rgba(255,255,255,0.45);
-  box-shadow:
-    0 10px 32px rgba(0,0,0,0.10),
-    0 0 50px rgba(86,131,255,0.08);
+  box-shadow: 0 10px 32px rgba(0,0,0,0.10), 0 0 50px rgba(86,131,255,0.08);
   animation: fadeInUp .55s ease;
 }
-
 .title-pro {
   font-weight: 700;
   font-size: 1.7rem;
@@ -35,8 +26,7 @@
   -webkit-background-clip: text;
   color: transparent;
 }
-
-.dropzone-pro {
+.dropzone-pro{
   border: 2px dashed #6c8cff;
   padding: 45px;
   border-radius: 18px;
@@ -46,18 +36,8 @@
   cursor: pointer;
   transition: .25s ease;
 }
-
-.dropzone-pro:hover {
-  background: rgba(234,240,255,0.9);
-  transform: scale(1.02);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-}
-
-.dropzone-pro.dragover {
-  background: rgba(212,226,255,0.9);
-  border-color: #3b6bff;
-  transform: scale(1.03);
-}
+.dropzone-pro:hover { background: rgba(234,240,255,0.9); transform: scale(1.02); box-shadow: 0 6px 18px rgba(0,0,0,0.08); }
+.dropzone-pro.dragover { background: rgba(212,226,255,0.9); border-color: #3b6bff; transform: scale(1.03); }
 
 .file-name { margin-top: 10px; font-style: italic; color: #444; }
 
@@ -67,51 +47,46 @@
   border-left: 4px solid #0d6efd;
   border-radius: 14px;
   padding: 1rem;
-  max-height: none !important;
-  overflow: visible !important;
   font-size: .85rem;
   animation: fadeIn .4s ease;
 }
-
-.preview-table th,
-.preview-table td {
+.preview-table th, .preview-table td {
   padding: 6px 10px !important;
   border: 1px solid #dbe1f0 !important;
   font-size: 13px;
 }
+.preview-table { background: white; border-radius: 10px; overflow: hidden; min-width: 100%; }
 
-.preview-table {
-  background: white;
-  border-radius: 10px;
-  overflow: hidden;
-  min-width: 100%;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(26px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(26px);} to { opacity: 1; transform: translateY(0);} }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.dark-mode .preview-block {
-  background: rgba(45,55,72,.65);
-  color: #f8fafc;
-  border-color: #6cb2ff;
+#progressWrap .progress {
+  background: rgba(13,110,253,0.10);
+  border-radius: 999px;
+  overflow: hidden;
+  height: 10px;
+}
+#progressBar { transition: width .15s ease; }
+
+#errorBox{
+  display:none;
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:14px;
+  background: rgba(220,53,69,.08);
+  border: 1px solid rgba(220,53,69,.25);
+  color:#b02a37;
+  font-size:.9rem;
 }
 </style>
 
-
-
 <div class="container import-wrapper fade-in">
-
   <div class="import-card">
 
     <h3 class="text-center title-pro mb-4">
       <i class="bi bi-upload"></i> Import câu hỏi vào kỳ thi
     </h3>
 
-    <!-- FORM UPLOAD -->
     <form id="importForm"
           action="/admin/exams/{{ exam_id }}/import"
           method="post"
@@ -119,8 +94,8 @@
 
       <label class="form-label fw-semibold">📄 Chọn file Excel / CSV / TXT</label>
 
-      <!-- DROPZONE -->
-      <label class="dropzone-pro" id="dropzone">
+      <!-- ✅ FIX: chỉ dùng label-for, KHÔNG dùng dropzone.onclick -->
+      <label class="dropzone-pro" id="dropzone" for="fileInput">
         <i class="bi bi-file-earmark-arrow-up text-primary fs-1"></i>
         <p class="mt-2 mb-1">Kéo thả file vào đây hoặc click để chọn</p>
         <small class="text-muted">Hỗ trợ: .xlsx / .csv / .txt</small>
@@ -132,10 +107,28 @@
 
       <div id="fileName" class="file-name"></div>
 
-      <!-- LIVE PREVIEW -->
       <div id="previewArea" class="preview-block d-none"></div>
 
-      <!-- BUTTON -->
+      <div id="progressWrap" class="mt-3 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <small class="text-muted" id="progressLabel">Đang tải lên…</small>
+          <small class="text-muted fw-semibold" id="progressText">0%</small>
+        </div>
+
+        <div class="progress">
+          <div id="progressBar"
+               class="progress-bar progress-bar-striped progress-bar-animated"
+               role="progressbar"
+               style="width:0%"></div>
+        </div>
+
+        <div class="small text-muted mt-2 d-none" id="progressHint">
+          Upload xong sẽ chuyển sang xử lý file…
+        </div>
+      </div>
+
+      <div id="errorBox"></div>
+
       <div class="d-flex justify-content-between mt-4">
         <a href="/admin/exams/manage" class="btn btn-secondary btn-pro">
           <i class="bi bi-arrow-left"></i> Quay lại
@@ -147,33 +140,26 @@
       </div>
     </form>
 
-    <div id="loading" class="text-center loading-pro mt-3 d-none">
-      <div class="spinner-border text-primary"></div>
-      <p class="mt-2">Đang xử lý file...</p>
-    </div>
-
     <hr class="my-4">
 
     <h6 class="fw-bold">📘 Mẫu file Excel:</h6>
     <div class="pre-block mb-3">
-question_text | option_a | option_b | option_c | option_d | correct  
+question_text | option_a | option_b | option_c | option_d | correct
 Câu hỏi 1     | A1       | B1       | C1       | D1       | A
     </div>
 
     <h6 class="fw-bold">📘 Mẫu file TXT dạng block:</h6>
     <div class="pre-block">
-Câu hỏi 1  
-A. Đáp án A  
-B. Đáp án B  
-C. Đáp án C  
-D. Đáp án D  
+Câu hỏi 1
+A. Đáp án A
+B. Đáp án B
+C. Đáp án C
+D. Đáp án D
 Đáp án đúng: A
     </div>
 
   </div>
 </div>
-
-
 
 <script>
 const dropzone = document.getElementById("dropzone");
@@ -181,135 +167,103 @@ const fileInput = document.getElementById("fileInput");
 const fileName = document.getElementById("fileName");
 const previewArea = document.getElementById("previewArea");
 const submitBtn = document.getElementById("submitBtn");
-const loading = document.getElementById("loading");
 const form = document.getElementById("importForm");
 
-/* ==========================================================
-   CLICK
-=========================================================== */
-dropzone.onclick = () => fileInput.click();
+const progressWrap  = document.getElementById("progressWrap");
+const progressBar   = document.getElementById("progressBar");
+const progressText  = document.getElementById("progressText");
+const progressLabel = document.getElementById("progressLabel");
+const progressHint  = document.getElementById("progressHint");
+const errorBox      = document.getElementById("errorBox");
 
-/* ==========================================================
+/* =========================
    DRAG & DROP
-=========================================================== */
+========================= */
 dropzone.addEventListener("dragover", e => {
   e.preventDefault();
   dropzone.classList.add("dragover");
 });
-dropzone.addEventListener("dragleave", () =>
-  dropzone.classList.remove("dragover")
-);
+dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragover"));
+
 dropzone.addEventListener("drop", e => {
   e.preventDefault();
   dropzone.classList.remove("dragover");
-  handleFile(e.dataTransfer.files[0]);
+
+  const file = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files[0] : null;
+  if (!file) return;
+
+  // gán vào input để FormData(form) có file
+  try {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+  } catch (_) {}
+
+  handleFile(file);
 });
 
-/* ==========================================================
+/* =========================
    INPUT CHANGE
-=========================================================== */
+========================= */
 fileInput.addEventListener("change", e => {
-  if (e.target.files[0]) handleFile(e.target.files[0]);
+  if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
 });
 
-
-
-/* ==========================================================
-   🔥 V9.0 — AUTO ENCODING READER (NO CRASH / NO FREEZE)
-=========================================================== */
+/* =========================
+   PREVIEW
+========================= */
 function handleFile(file) {
   fileName.innerText = "📌 Đã chọn: " + file.name;
 
-  // Excel: không preview
   if (file.name.toLowerCase().endsWith(".xlsx")) {
     previewArea.classList.remove("d-none");
-    previewArea.innerHTML =
-      `<div class='text-muted'>📘 File Excel — Preview không khả dụng.</div>`;
+    previewArea.innerHTML = `<div class='text-muted'>📘 File Excel — Preview không khả dụng.</div>`;
     return;
   }
 
   const reader = new FileReader();
-
-  // Đọc bằng raw bytes
   reader.readAsArrayBuffer(file);
 
   reader.onload = e => {
     const bytes = new Uint8Array(e.target.result);
     const text = autoDecodeToUTF8(bytes);
-
     previewFile(file.name.toLowerCase(), text);
   };
 
   reader.onerror = () => {
     previewArea.classList.remove("d-none");
-    previewArea.innerHTML =
-      `<div class="text-danger">⚠ Không thể đọc file này.</div>`;
+    previewArea.innerHTML = `<div class="text-danger">⚠ Không thể đọc file này.</div>`;
   };
 }
 
-
-
-/* ==========================================================
-   🔥 AUTO-DECODE BYTE ARRAY → UTF-8 (V9.0)
-=========================================================== */
 function autoDecodeToUTF8(bytes) {
-  // UTF-8 BOM
   if (bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
     return new TextDecoder("utf-8").decode(bytes.subarray(3));
   }
-
-  // UTF-16 LE BOM
   if (bytes[0] === 0xFF && bytes[1] === 0xFE) {
     return new TextDecoder("utf-16le").decode(bytes.subarray(2));
   }
-
-  // UTF-16 BE BOM
   if (bytes[0] === 0xFE && bytes[1] === 0xFF) {
     return new TextDecoder("utf-16be").decode(bytes.subarray(2));
   }
-
-  // Thử UTF-8
-  try {
-    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-  } catch (_) {}
-
-  // Thử Windows-1258 (Tiếng Việt Windows)
-  try {
-    return new TextDecoder("windows-1258").decode(bytes);
-  } catch (_) {}
-
-  // Thử Latin-1 / ANSI
-  try {
-    return new TextDecoder("iso-8859-1").decode(bytes);
-  } catch (_) {}
-
-  // Cuối cùng – fallback thô
+  try { return new TextDecoder("utf-8", { fatal: true }).decode(bytes); } catch (_) {}
+  try { return new TextDecoder("windows-1258").decode(bytes); } catch (_) {}
+  try { return new TextDecoder("iso-8859-1").decode(bytes); } catch (_) {}
   let fallback = "";
-  for (let i = 0; i < bytes.length; i++) {
-    fallback += String.fromCharCode(bytes[i]);
-  }
+  for (let i = 0; i < bytes.length; i++) fallback += String.fromCharCode(bytes[i]);
   return fallback;
 }
 
-
-
-/* ==========================================================
-   PREVIEW V9.0 (NO CRASH)
-=========================================================== */
 function previewFile(name, text) {
   previewArea.classList.remove("d-none");
   text = (text || "").trim();
 
-  // TXT BLOCK
   if (name.endsWith(".txt") && !text.includes(",")) {
     const blocks = text.split(/\r?\n\r?\n/);
-    previewArea.innerHTML = blocks
-      .map(b => `<pre>${escapeHtml(b)}</pre>`)
-      .join("<hr>");
+    previewArea.innerHTML = blocks.map(b => `<pre>${escapeHtml(b)}</pre>`).join("<hr>");
     return;
   }
 
-  // Detect delimiter
   let delimiter = ",";
   if (text.includes(";")) delimiter = ";";
   if (text.includes("|")) delimiter = "|";
@@ -319,29 +273,6 @@ function previewFile(name, text) {
   const maxLines = 80;
   const rows = lines.slice(0, maxLines).map(l => l.split(delimiter));
 
-  // Vertical
-  if (lines.length > 0) {
-    const first = lines[0].toLowerCase();
-    if (
-      first.includes("question") ||
-      first.includes("câu hỏi") ||
-      first.startsWith("q:")
-    ) {
-      let html = "<table class='preview-table'><tbody>";
-      lines.forEach(ln => {
-        const p = ln.split(/[:\.]/);
-        if (p.length >= 2)
-          html += `<tr><th>${escapeHtml(p[0])}</th><td>${escapeHtml(
-            p.slice(1).join(":")
-          )}</td></tr>`;
-      });
-      html += "</tbody></table>";
-      previewArea.innerHTML = html;
-      return;
-    }
-  }
-
-  // CSV MODE
   let html = `<table class="preview-table"><tbody>`;
   rows.forEach(row => {
     html += "<tr>";
@@ -351,23 +282,15 @@ function previewFile(name, text) {
   html += "</tbody></table>";
 
   if (lines.length > maxLines) {
-    html += `<div class="text-muted mt-2">… và còn ${
-      lines.length - maxLines
-    } dòng nữa</div>`;
+    html += `<div class="text-muted mt-2">… và còn ${lines.length - maxLines} dòng nữa</div>`;
   }
 
   previewArea.innerHTML = html;
 }
 
-
-
-/* ==========================================================
-   ESCAPE HTML
-=========================================================== */
 function escapeHtml(text) {
   if (!text) return "";
-  return text
-    .toString()
+  return text.toString()
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
@@ -375,20 +298,117 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+/* =========================
+   XHR UPLOAD (progress)
+========================= */
+function setProgress(pct) {
+  const v = Math.max(0, Math.min(100, Math.round(pct)));
+  progressBar.style.width = v + "%";
+  progressText.innerText = v + "%";
+}
 
+function showError(msg) {
+  errorBox.style.display = "block";
+  errorBox.innerText = msg || "Có lỗi xảy ra.";
+}
 
-/* ==========================================================
-   SUBMIT (NO FREEZE)
-=========================================================== */
-form.addEventListener("submit", e => {
-  if (!fileInput.files.length) {
+function clearError() {
+  errorBox.style.display = "none";
+  errorBox.innerText = "";
+}
+
+function resetProgressUI() {
+  progressLabel.innerText = "Đang tải lên…";
+  setProgress(0);
+  progressBar.classList.remove("bg-danger", "bg-success");
+  progressHint.classList.add("d-none");
+}
+
+function setUploadingState(isUploading) {
+  if (isUploading) {
+    submitBtn.classList.add("disabled");
+    submitBtn.disabled = true;
+  } else {
+    submitBtn.classList.remove("disabled");
+    submitBtn.disabled = false;
+  }
+}
+
+form.addEventListener("submit", (e) => {
+  e.preventDefault();
+  clearError();
+
+  // chống double submit
+  if (form.dataset.uploading === "1") return;
+
+  if (!fileInput.files || !fileInput.files.length) {
     alert("Vui lòng chọn file!");
-    e.preventDefault();
     return;
   }
 
-  submitBtn.classList.add("disabled");
-  loading.classList.remove("d-none");
+  form.dataset.uploading = "1";
+  setUploadingState(true);
+
+  resetProgressUI();
+  progressWrap.classList.remove("d-none");
+  progressHint.classList.remove("d-none");
+
+  const xhr = new XMLHttpRequest();
+  const actionUrl = form.getAttribute("action");
+  const formData = new FormData(form);
+
+  xhr.open("POST", actionUrl, true);
+  xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+
+  xhr.upload.onprogress = (evt) => {
+    if (!evt.lengthComputable) return;
+    setProgress((evt.loaded / evt.total) * 100);
+  };
+
+  xhr.onload = () => {
+    setProgress(100);
+    progressLabel.innerText = "Đang xử lý file…";
+
+    const ct = (xhr.getResponseHeader("content-type") || "").toLowerCase();
+
+    if (xhr.status >= 200 && xhr.status < 400) {
+      progressBar.classList.add("bg-success");
+
+      if (ct.includes("application/json")) {
+        try {
+          const data = JSON.parse(xhr.responseText || "{}");
+          window.location.href = data.redirect || "/admin/exams/manage";
+          return;
+        } catch (_) {}
+      }
+
+      window.location.href = xhr.responseURL || "/admin/exams/manage";
+      return;
+    }
+
+    progressBar.classList.add("bg-danger");
+    setUploadingState(false);
+    form.dataset.uploading = "0";
+
+    if (ct.includes("application/json")) {
+      try {
+        const data = JSON.parse(xhr.responseText || "{}");
+        showError(data.detail || data.message || ("Upload thất bại (" + xhr.status + ")."));
+        return;
+      } catch (_) {}
+    }
+
+    showError("Upload thất bại (" + xhr.status + "). Vui lòng kiểm tra file và thử lại.");
+  };
+
+  xhr.onerror = () => {
+    progressBar.classList.add("bg-danger");
+    setUploadingState(false);
+    form.dataset.uploading = "0";
+    showError("Lỗi mạng hoặc server không phản hồi. Vui lòng thử lại.");
+  };
+
+  xhr.send(formData);
 });
 </script>
 
