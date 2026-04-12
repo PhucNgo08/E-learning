@@ -29,7 +29,7 @@
     border-radius: 0 0 10px 10px;
     box-shadow: 0 6px 15px rgba(0,0,0,0.1);
     z-index: 1000;
-    max-height: 200px;
+    max-height: 220px;
     overflow-y: auto;
     display: none;
   }
@@ -59,9 +59,11 @@
     font-size: 0.85rem;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
   }
-  .user-tag i { cursor: pointer; }
+  .user-tag i {
+    cursor: pointer;
+  }
   .broadcast-toggle {
     display: flex;
     align-items: center;
@@ -87,48 +89,77 @@
     </a>
   </div>
 
+  {% if error_message %}
+  <div class="alert alert-danger shadow-sm rounded-3">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error_message }}
+  </div>
+  {% endif %}
+
   <div class="row g-4">
-    <!-- Form -->
     <div class="col-lg-7">
       <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body">
           <form method="post" action="/admin/notification/create" id="notifyForm">
 
-            <!-- 📢 Broadcast -->
             <div class="broadcast-toggle">
-              <input type="checkbox" id="broadcastAll" name="broadcast_all" class="form-check-input">
+              <input
+                type="checkbox"
+                id="broadcastAll"
+                name="broadcast_all"
+                class="form-check-input"
+                {% if form_data.broadcast_all %}checked{% endif %}
+              >
               <label for="broadcastAll" class="form-check-label fw-semibold text-danger">
                 📢 Gửi cho tất cả người dùng
               </label>
             </div>
 
-            <!-- 👥 Người nhận -->
             <div id="recipientSection">
               <label class="form-label fw-semibold">👥 Người nhận</label>
               <div class="search-box-wrapper mb-2">
                 <i class="bi bi-search search-icon"></i>
-                <input type="text" id="userSearch" class="form-control search-box" placeholder="Nhập tên người dùng...">
+                <input
+                  type="text"
+                  id="userSearch"
+                  class="form-control search-box"
+                  placeholder="Nhập tên người dùng..."
+                  autocomplete="off"
+                >
                 <div id="suggestionBox" class="suggestion-box"></div>
               </div>
+
               <div id="selectedUsers" class="selected-users"></div>
-              <input type="hidden" name="user_ids" id="userIds">
+              <input type="hidden" name="user_ids" id="userIds" value="{{ form_data.user_ids or '' }}">
               <small class="text-muted">Gõ tên người dùng để tìm và chọn nhiều người.</small>
               <hr>
             </div>
 
-            <!-- 📌 Tiêu đề -->
             <div class="mb-3">
               <label class="form-label fw-semibold">📌 Tiêu đề</label>
-              <input type="text" name="title" id="titleInput" class="form-control" maxlength="100"
-                     placeholder="Nhập tiêu đề..." required>
+              <input
+                type="text"
+                name="title"
+                id="titleInput"
+                class="form-control"
+                maxlength="100"
+                placeholder="Nhập tiêu đề..."
+                value="{{ form_data.title or '' }}"
+                required
+              >
               <div class="text-end small text-muted"><span id="titleCount">0</span> / 100</div>
             </div>
 
-            <!-- 💬 Nội dung -->
             <div class="mb-3">
               <label class="form-label fw-semibold">💬 Nội dung</label>
-              <textarea name="message" id="messageInput" class="form-control" rows="5" maxlength="500"
-                        placeholder="Nhập nội dung..." required></textarea>
+              <textarea
+                name="message"
+                id="messageInput"
+                class="form-control"
+                rows="5"
+                maxlength="500"
+                placeholder="Nhập nội dung..."
+                required
+              >{{ form_data.message or '' }}</textarea>
               <div class="text-end small text-muted"><span id="messageCount">0</span> / 500</div>
             </div>
 
@@ -142,7 +173,6 @@
       </div>
     </div>
 
-    <!-- Preview -->
     <div class="col-lg-5">
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body">
@@ -152,7 +182,8 @@
           <p><strong>💬 Nội dung:</strong></p>
           <div id="previewMessage" class="border rounded p-2 bg-light small text-dark">—</div>
           <hr>
-          <p class="small text-muted mb-0"><i class="bi bi-info-circle"></i> 
+          <p class="small text-muted mb-0">
+            <i class="bi bi-info-circle"></i>
             Nếu bật <strong>Broadcast</strong>, thông báo sẽ gửi đến tất cả người dùng.
           </p>
         </div>
@@ -161,71 +192,118 @@
   </div>
 </div>
 
+<script id="users-data" type="application/json">
+  {{ users | tojson | safe }}
+</script>
+
+<script id="selected-users-data" type="application/json">
+  {{ selected_users | tojson | safe }}
+</script>
+
 <script>
-// ==============================
-// 👥 Lọc và gợi ý user theo tên
-// ==============================
-const allUsers = JSON.parse(`[
-  {% for user in users %}
-    {"id": "{{ user.id }}", "name": "{{ user.full_name | e }}"}{% if not loop.last %},{% endif %}
-  {% endfor %}
-]`);
+const allUsers = JSON.parse(document.getElementById('users-data').textContent);
+const initialSelectedUsers = JSON.parse(document.getElementById('selected-users-data').textContent);
 
 const userSearch = document.getElementById('userSearch');
 const suggestionBox = document.getElementById('suggestionBox');
 const selectedUsers = document.getElementById('selectedUsers');
 const userIds = document.getElementById('userIds');
+const broadcastAll = document.getElementById('broadcastAll');
+const recipientSection = document.getElementById('recipientSection');
+
 const selected = new Map();
 
-function renderSuggestions(list, keyword = '') {
-  suggestionBox.innerHTML = '';
-  if (list.length === 0) {
-    suggestionBox.style.display = 'none';
-    return;
-  }
-  list.forEach(u => {
-    const item = document.createElement('div');
-    item.className = 'suggestion-item';
-    item.innerHTML = u.name.replace(new RegExp(`(${keyword})`, 'gi'), '<span class="highlight">$1</span>');
-    item.onclick = () => selectUser(u);
-    suggestionBox.appendChild(item);
-  });
-  suggestionBox.style.display = 'block';
-}
-
-function selectUser(user) {
-  if (selected.has(user.id)) return;
-  selected.set(user.id, user.name);
-
-  const tag = document.createElement('div');
-  tag.className = 'user-tag';
-  tag.innerHTML = `${user.name} <i class="bi bi-x-circle"></i>`;
-  tag.querySelector('i').onclick = () => {
-    selected.delete(user.id);
-    tag.remove();
-    updateHiddenInput();
-  };
-  selectedUsers.appendChild(tag);
-  updateHiddenInput();
-  suggestionBox.style.display = 'none';
-  userSearch.value = '';
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function updateHiddenInput() {
   userIds.value = Array.from(selected.keys()).join(',');
 }
 
+function createTag(user) {
+  const tag = document.createElement('div');
+  tag.className = 'user-tag';
+  tag.dataset.userId = user.id;
+  tag.innerHTML = `${user.name} <i class="bi bi-x-circle"></i>`;
+
+  tag.querySelector('i').onclick = () => {
+    selected.delete(user.id);
+    tag.remove();
+    updateHiddenInput();
+  };
+
+  return tag;
+}
+
+function selectUser(user) {
+  if (selected.has(user.id)) return;
+
+  selected.set(user.id, user.name);
+  selectedUsers.appendChild(createTag(user));
+  updateHiddenInput();
+
+  suggestionBox.style.display = 'none';
+  userSearch.value = '';
+  userSearch.focus();
+}
+
+function renderSuggestions(list, keyword = '') {
+  suggestionBox.innerHTML = '';
+
+  if (!list.length) {
+    suggestionBox.style.display = 'none';
+    return;
+  }
+
+  const safeKeyword = escapeRegExp(keyword);
+
+  list.forEach(u => {
+    const item = document.createElement('div');
+    item.className = 'suggestion-item';
+
+    if (safeKeyword) {
+      item.innerHTML = u.name.replace(
+        new RegExp(`(${safeKeyword})`, 'gi'),
+        '<span class="highlight">$1</span>'
+      );
+    } else {
+      item.textContent = u.name;
+    }
+
+    item.onclick = () => selectUser(u);
+    suggestionBox.appendChild(item);
+  });
+
+  suggestionBox.style.display = 'block';
+}
+
+function initSelectedUsers() {
+  initialSelectedUsers.forEach(user => {
+    if (!selected.has(user.id)) {
+      selected.set(user.id, user.name);
+      selectedUsers.appendChild(createTag(user));
+    }
+  });
+  updateHiddenInput();
+}
+
 userSearch.addEventListener('input', () => {
   const q = userSearch.value.toLowerCase().trim();
+
   if (!q) {
     suggestionBox.style.display = 'none';
     return;
   }
-  const matches = allUsers.filter(u => u.name.toLowerCase().includes(q));
+
+  const matches = allUsers.filter(u =>
+    u.name.toLowerCase().includes(q) &&
+    !selected.has(u.id)
+  );
+
   renderSuggestions(matches, q);
 });
 
-// Enter chọn nhanh user đầu tiên
 userSearch.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
@@ -234,35 +312,35 @@ userSearch.addEventListener('keydown', e => {
   }
 });
 
-// Click ra ngoài đóng suggestion
 document.addEventListener('click', e => {
   if (!suggestionBox.contains(e.target) && e.target !== userSearch) {
     suggestionBox.style.display = 'none';
   }
 });
 
-// 📢 Broadcast toggle
-document.getElementById('broadcastAll').addEventListener('change', function() {
-  const section = document.getElementById('recipientSection');
-  section.style.display = this.checked ? 'none' : 'block';
+broadcastAll.addEventListener('change', function() {
+  recipientSection.style.display = this.checked ? 'none' : 'block';
 });
 
-// 🧠 Preview
-const title = document.getElementById('titleInput');
-const message = document.getElementById('messageInput');
+const titleInput = document.getElementById('titleInput');
+const messageInput = document.getElementById('messageInput');
 const titleCount = document.getElementById('titleCount');
 const messageCount = document.getElementById('messageCount');
 const previewTitle = document.getElementById('previewTitle');
 const previewMessage = document.getElementById('previewMessage');
 
 function updatePreview() {
-  previewTitle.textContent = title.value || '—';
-  previewMessage.textContent = message.value || '—';
-  titleCount.textContent = title.value.length;
-  messageCount.textContent = message.value.length;
+  previewTitle.textContent = titleInput.value || '—';
+  previewMessage.textContent = messageInput.value || '—';
+  titleCount.textContent = titleInput.value.length;
+  messageCount.textContent = messageInput.value.length;
 }
 
-title.addEventListener('input', updatePreview);
-message.addEventListener('input', updatePreview);
+initSelectedUsers();
+recipientSection.style.display = broadcastAll.checked ? 'none' : 'block';
+updatePreview();
+
+titleInput.addEventListener('input', updatePreview);
+messageInput.addEventListener('input', updatePreview);
 </script>
 {% endblock %}

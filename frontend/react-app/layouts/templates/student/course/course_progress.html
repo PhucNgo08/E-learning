@@ -4,14 +4,12 @@
 {% block content %}
 <div class="container py-3">
 
-  <!-- 🔙 Nút quay lại -->
   <div class="mb-3">
     <a href="/student/course/detail/{{ course.id }}" class="btn btn-outline-secondary btn-sm rounded-pill">
       <i class="bi bi-arrow-left-circle"></i> Quay lại khóa học
     </a>
   </div>
 
-  <!-- 📊 Tiến độ tổng quan -->
   <div class="card mb-4 shadow-sm border-0 progress-card">
     <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
       <div class="mb-2">
@@ -25,12 +23,13 @@
         <div class="progress">
           <div class="progress-bar" data-width="{{ progress.percent or 0 }}"></div>
         </div>
-        <div class="small text-muted mt-1 text-end fw-semibold">{{ progress.percent or 0 }}%</div>
+        <div class="small text-muted mt-1 text-end fw-semibold">
+          {{ progress.percent or 0 }}%
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 📚 Module + Lesson -->
   <div class="card shadow-sm border-0 module-card">
     <div class="card-header bg-light fw-semibold">
       <i class="bi bi-journal-bookmark"></i> Nội dung khóa học
@@ -38,37 +37,34 @@
 
     <div class="list-group list-group-flush">
       {% if modules %}
-      {% for m in modules %}
-      <div class="list-group-item module-item">
+        {% for m in modules %}
+        <div class="list-group-item module-item">
 
-        <!-- Module Header -->
-        <div class="fw-semibold mb-2 text-dark fs-6">
-          <i class="bi bi-folder2-open text-warning"></i>
-          Module {{ m.module_number }}: {{ m.title }}
+          <div class="fw-semibold mb-2 text-dark fs-6">
+            <i class="bi bi-folder2-open text-warning"></i>
+            Module {{ m.module_number }}: {{ m.title }}
+          </div>
+
+          <div class="mt-2">
+            {% if m.lessons %}
+              {% for l in m.lessons %}
+              <a class="lesson-btn btn btn-sm {% if l.completed %}lesson-done{% else %}lesson-pending{% endif %} me-1 mb-2"
+                 href="/student/lesson/view/{{ l.id }}">
+                {% if l.completed %}
+                  <i class="bi bi-check-circle-fill me-1"></i>
+                {% else %}
+                  <i class="bi bi-circle me-1"></i>
+                {% endif %}
+                {{ l.lesson_number }}. {{ l.title }}
+              </a>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small">⛔ Chưa có bài học nào.</span>
+            {% endif %}
+          </div>
+
         </div>
-
-        <!-- Lesson List -->
-        <div class="mt-2">
-          {% if m.lessons %}
-            {% for l in m.lessons %}
-            <a class="lesson-btn btn btn-sm 
-                      {% if l.completed %}lesson-done{% else %}lesson-pending{% endif %} me-1 mb-2"
-               href="/student/lesson/view/{{ l.id }}">
-              {% if l.completed %}
-                <i class="bi bi-check-circle-fill me-1"></i>
-              {% else %}
-                <i class="bi bi-circle me-1"></i>
-              {% endif %}
-              {{ l.lesson_number }}. {{ l.title }}
-            </a>
-            {% endfor %}
-          {% else %}
-            <span class="text-muted small">⛔ Chưa có bài học nào.</span>
-          {% endif %}
-        </div>
-
-      </div>
-      {% endfor %}
+        {% endfor %}
       {% else %}
       <div class="list-group-item text-center text-muted py-3">
         <i class="bi bi-info-circle"></i> Chưa có module nào được thêm.
@@ -77,7 +73,6 @@
     </div>
   </div>
 
-  <!-- Học tiếp nút -->
   {% if next_lesson_id %}
   <div class="text-end mt-3">
     <a href="/student/lesson/view/{{ next_lesson_id }}" class="btn btn-primary btn-sm rounded-pill">
@@ -88,7 +83,6 @@
 
 </div>
 
-<!-- Progress bar animation -->
 <script>
   document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
     const w = el.dataset.width || 0;

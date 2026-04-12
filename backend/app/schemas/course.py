@@ -1,5 +1,3 @@
-# app/schemas/course.py
-
 from pydantic import BaseModel
 from typing import Optional
 from datetime import date, datetime
@@ -21,7 +19,6 @@ class CourseBase(BaseModel):
     enrollment_mode: Optional[str] = "auto"
 
     max_students: Optional[int] = 100
-    current_students: Optional[int] = 0
     is_public: Optional[bool] = False
 
     price: Optional[float] = 0
@@ -35,7 +32,6 @@ class CourseBase(BaseModel):
 
     allow_assignments: Optional[bool] = True
     default_submission_type: Optional[str] = "individual"
-    assignment_count: Optional[int] = 0
 
 
 class CourseCreate(CourseBase):
@@ -44,20 +40,81 @@ class CourseCreate(CourseBase):
     major_id: Optional[str] = None
 
 
-class CourseUpdate(CourseBase):
+class CourseUpdate(BaseModel):
+    course_code: Optional[str] = None
+    course_name: Optional[str] = None
+    description: Optional[str] = None
+    credit_hours: Optional[int] = None
+
+    course_type: Optional[str] = None
+    subject: Optional[str] = None
+    grade_level: Optional[int] = None
+    difficulty_level: Optional[str] = None
+
     teacher_id: Optional[str] = None
     academic_year_id: Optional[str] = None
     major_id: Optional[str] = None
 
+    semester: Optional[int] = None
+    status: Optional[str] = None
+    enrollment_mode: Optional[str] = None
 
-class CourseResponse(CourseBase):
+    max_students: Optional[int] = None
+    is_public: Optional[bool] = None
+
+    price: Optional[float] = None
+    discount_percent: Optional[int] = None
+
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+    thumbnail_url: Optional[str] = None
+    prerequisites: Optional[str] = None
+
+    allow_assignments: Optional[bool] = None
+    default_submission_type: Optional[str] = None
+
+
+class CourseResponse(BaseModel):
     id: str
-    teacher_id: Optional[str]
-    academic_year_id: Optional[str]
-    major_id: Optional[str]
+    course_code: str
+    course_name: str
+    description: Optional[str] = None
+    credit_hours: Optional[int] = None
+
+    course_type: Optional[str] = None
+    subject: Optional[str] = None
+    grade_level: Optional[int] = None
+    difficulty_level: Optional[str] = None
+
+    teacher_id: Optional[str] = None
+    academic_year_id: Optional[str] = None
+    major_id: Optional[str] = None
+
+    semester: Optional[int] = None
+    status: Optional[str] = None
+    enrollment_mode: Optional[str] = None
+
+    max_students: Optional[int] = None
+    current_students: Optional[int] = None
+    is_public: Optional[bool] = None
+
+    price: Optional[float] = None
+    discount_percent: Optional[int] = None
+
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+
+    thumbnail_url: Optional[str] = None
+    prerequisites: Optional[str] = None
+
+    allow_assignments: Optional[bool] = None
+    default_submission_type: Optional[str] = None
+    assignment_count: Optional[int] = None
+
     created_at: datetime
-    updated_at: Optional[datetime]
-    deleted_at: Optional[datetime]
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -4,98 +4,43 @@
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <!-- Quay lại -->
   <a href="/student/lesson/notes/{{ lesson.id }}" class="btn btn-outline-secondary mb-3">
     <i class="bi bi-arrow-left"></i> Quay lại danh sách ghi chú
   </a>
 
   <div class="card border-0 p-4 note-card shadow-sm">
-
     <h4 class="fw-bold text-primary mb-3">
-      <i class="bi bi-pencil me-2"></i> Ghi chú (Notion Style)
+      <i class="bi bi-pencil me-2"></i> Ghi chú bài học
     </h4>
 
     <form id="noteForm">
-
       <div class="notion-wrapper">
-        
-        <textarea 
+        <textarea
           id="noteContent"
           name="content"
           required
           class="notion-textarea"
           placeholder="✏️ Ghi lại điều bạn muốn nhớ..."
-        >{{ note.content if note else "" }}</textarea>
+        >{{ note.content if note is defined and note else "" }}</textarea>
 
         <div class="char-counter">
           <small id="charCount">0 ký tự</small>
         </div>
-
       </div>
 
-      <!-- Save status -->
       <div id="saveStatus" class="autosave-status text-end mt-1"></div>
 
       <div class="text-end mt-3">
-        <button id="manualSaveBtn" class="btn btn-success px-4">
+        <button id="manualSaveBtn" type="button" class="btn btn-success px-4">
           <i class="bi bi-save"></i> Lưu ghi chú
         </button>
       </div>
-
     </form>
-
   </div>
 
 </div>
 
-<!-- 🌈 CSS -->
 <style>
-
-.note-card {
-  background: #fff !important;
-  border-radius: 12px;
-  overflow: visible !important;
-}
-
-/* 120 ký tự ngang */
-.notion-wrapper {
-  width: 120ch !important;
-  max-width: 120ch !important;
-  margin: 0 auto;
-}
-
-.notion-textarea {
-  width: 100%;
-  border: 1px solid #d0d7de;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.95rem;
-  line-height: 1.4;
-  min-height: 60px;
-  resize: none;
-  overflow: hidden;
-  outline: none;
-  transition: 0.18s ease;
-}
-
-.notion-textarea:focus {
-  border-color: #4c8bfd;
-  box-shadow: 0 0 0 2px rgba(76, 139, 253, 0.25);
-}
-
-.char-counter {
-  display: flex;
-  justify-content: flex-end;
-  padding-right: 4px;
-  margin-top: 6px;
-}
-
-.autosave-status {
-  font-size: 13px;
-  color: #198754;
-  min-height: 18px;
-}
-
 .fade-in {
   animation: fadeIn .4s ease;
 }
@@ -103,55 +48,74 @@
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-
+.note-card {
+  background: #fff !important;
+  border-radius: 12px;
+  overflow: visible !important;
+}
+.notion-wrapper {
+  width: 120ch !important;
+  max-width: 100% !important;
+  margin: 0 auto;
+}
+.notion-textarea {
+  width: 100%;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: .95rem;
+  line-height: 1.4;
+  min-height: 60px;
+  resize: none;
+  overflow: hidden;
+  outline: none;
+  transition: .18s ease;
+}
+.notion-textarea:focus {
+  border-color: #4c8bfd;
+  box-shadow: 0 0 0 2px rgba(76, 139, 253, .25);
+}
+.char-counter {
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 4px;
+  margin-top: 6px;
+}
+.autosave-status {
+  font-size: 13px;
+  color: #198754;
+  min-height: 18px;
+}
 </style>
 
-<!-- JS Auto-expand + Save thủ công + Ctrl+S -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-
   const textarea = document.getElementById("noteContent");
   const counter = document.getElementById("charCount");
   const saveStatus = document.getElementById("saveStatus");
   const manualSaveBtn = document.getElementById("manualSaveBtn");
 
-  // Auto-expand
+  if (!textarea || !counter || !saveStatus || !manualSaveBtn) return;
+
+  let isSaving = false;
+
   function autoExpand() {
     textarea.style.height = "60px";
     textarea.style.height = textarea.scrollHeight + "px";
   }
-  autoExpand();
 
-  // Counter
-  textarea.addEventListener("input", () => {
+  function updateCounter() {
     counter.textContent = `${textarea.value.length} ký tự`;
-    autoExpand();
-  });
-
-  // Manual Save Button
-  manualSaveBtn.addEventListener("click", function (e) {
-    e.preventDefault();
-    saveNote();
-  });
-
-  // Ctrl + S save
-  document.addEventListener("keydown", function (e) {
-    if (e.ctrlKey && e.key === "s") {
-      e.preventDefault();
-      saveNote();
-    }
-  });
-
-  function saveNote() {
-    fetch(`/student/lesson/notes/{{ lesson.id }}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `content=${encodeURIComponent(textarea.value)}`
-    })
-    .then(res => res.ok ? showSaved() : showError());
   }
 
-  // ⭐⭐ LƯU XONG → QUAY LẠI
+  function setSavingState(saving) {
+    isSaving = saving;
+    manualSaveBtn.disabled = saving;
+    manualSaveBtn.innerHTML = saving
+      ? '<i class="bi bi-hourglass-split"></i> Đang lưu...'
+      : '<i class="bi bi-save"></i> Lưu ghi chú';
+  }
+
   function showSaved() {
     const time = new Date().toLocaleTimeString();
     saveStatus.innerHTML = `💾 Đã lưu lúc <b>${time}</b> — đang quay lại...`;
@@ -161,12 +125,60 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 800);
   }
 
-  function showError() {
-    saveStatus.innerHTML = `<span class="text-danger">❌ Lỗi khi lưu!</span>`;
+  function showError(message = "❌ Lỗi khi lưu!") {
+    saveStatus.innerHTML = `<span class="text-danger">${message}</span>`;
   }
 
+  async function saveNote() {
+    if (isSaving) return;
+
+    const content = textarea.value.trim();
+    if (!content) {
+      showError("❌ Nội dung ghi chú không được để trống.");
+      textarea.focus();
+      return;
+    }
+
+    try {
+      setSavingState(true);
+      saveStatus.innerHTML = "💾 Đang lưu...";
+
+      const res = await fetch("/student/lesson/notes/{{ lesson.id }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `content=${encodeURIComponent(content)}`
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.status !== "ok") {
+        throw new Error(data.message || "Không thể lưu ghi chú.");
+      }
+
+      showSaved();
+    } catch (err) {
+      showError(err.message || "❌ Lỗi khi lưu!");
+    } finally {
+      setSavingState(false);
+    }
+  }
+
+  autoExpand();
+  updateCounter();
+
+  textarea.addEventListener("input", () => {
+    updateCounter();
+    autoExpand();
+  });
+
+  manualSaveBtn.addEventListener("click", saveNote);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.key.toLowerCase() === "s") {
+      e.preventDefault();
+      saveNote();
+    }
+  });
 });
 </script>
-
-
 {% endblock %}

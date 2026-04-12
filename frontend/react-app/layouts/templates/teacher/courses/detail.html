@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📘 Chi tiết khóa học - {{ course.course_name }}</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
@@ -14,18 +13,15 @@
       background: linear-gradient(135deg, #dbe8ff, #f6faff);
       font-family: "Inter", sans-serif;
     }
-
     .navbar-glass {
       backdrop-filter: blur(16px);
       background: rgba(255, 255, 255, 0.22);
       border-bottom: 1px solid rgba(255, 255, 255, 0.35);
     }
-
     .navbar-brand {
       font-weight: 700;
       color: #003087 !important;
     }
-
     .course-card {
       backdrop-filter: blur(20px);
       background: rgba(255, 255, 255, 0.28);
@@ -34,20 +30,17 @@
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
       overflow: hidden;
     }
-
     .course-thumb {
       width: 100%;
       height: 260px;
       object-fit: cover;
       border-radius: 24px 24px 0 0;
     }
-
     .course-title {
       font-size: 1.8rem;
       font-weight: 700;
       color: #003087;
     }
-
     .accordion-item {
       border-radius: 16px !important;
       overflow: hidden;
@@ -57,13 +50,11 @@
       backdrop-filter: blur(18px);
       box-shadow: 0 4px 16px rgba(0,0,0,0.08);
     }
-
     .accordion-button:not(.collapsed) {
       background: rgba(0, 53, 128, 0.08);
       color: #003087;
       font-weight: 600;
     }
-
     .lesson-item {
       border: none;
       border-bottom: 1px solid rgba(255, 255, 255, 0.4);
@@ -72,7 +63,6 @@
     .lesson-item:hover {
       background: rgba(0, 0, 0, 0.03);
     }
-
     footer {
       background: rgba(255, 255, 255, 0.3);
       backdrop-filter: blur(12px);
@@ -83,30 +73,10 @@
       color: #003087;
       font-weight: 500;
     }
-
-    @media (max-width: 768px) {
-      .course-thumb { height: 180px; }
-      .course-title { font-size: 1.4rem; }
-      .navbar-brand { font-size: 1rem; }
-      .accordion-button { font-size: 0.95rem; padding: 10px 14px; }
-      li.lesson-item span { font-size: 0.9rem; }
-      .btn-sm { padding: 4px 8px; font-size: 0.78rem; }
-    }
-
-    @media (max-width: 576px) {
-      .course-title { font-size: 1.25rem; }
-      .course-card { border-radius: 16px; }
-      .course-thumb { border-radius: 16px 16px 0 0; }
-      .badge { font-size: 0.7rem; padding: 6px 8px; }
-      .accordion-button { font-size: 0.9rem; }
-      footer { font-size: 0.75rem; }
-      .btn-outline-dark { width: 100%; }
-    }
   </style>
 </head>
 
 <body>
-
 <nav class="navbar navbar-expand-lg navbar-glass py-3 shadow-sm">
   <div class="container">
     <a class="navbar-brand" href="/teacher/dashboard">
@@ -120,7 +90,6 @@
 </nav>
 
 <div class="container py-5">
-
   <div class="course-card mb-5">
     <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
          onerror="this.src='/uploads/course_thumbnails/default-course.png'"
@@ -133,10 +102,9 @@
       <p class="text-muted">{{ course.description or "Chưa có mô tả chi tiết." }}</p>
 
       <div class="mt-3 d-flex flex-wrap gap-2">
-        <span class="badge bg-primary">{{ course.subject or "Không rõ" }}</span>
+        <span class="badge bg-primary">{{ course.subject_name or "Không rõ" }}</span>
         <span class="badge bg-info text-dark">Tín chỉ: {{ course.credit_hours }}</span>
         <span class="badge bg-warning text-dark">Mức độ: {{ course.difficulty_level }}</span>
-
         <span class="badge bg-success">
           Giá: {{ "{:,.0f}".format(course.price or 0) }}₫
         </span>
@@ -153,7 +121,6 @@
       <p><strong>Yêu cầu đầu vào:</strong> {{ course.prerequisites or "Không có" }}</p>
       <p><strong>Hình thức đăng ký:</strong> {{ course.enrollment_mode }}</p>
       <p><strong>Học kỳ:</strong> {{ course.semester or "Không rõ" }}</p>
-
     </div>
   </div>
 
@@ -163,7 +130,6 @@
 
   {% if modules %}
   <div class="accordion" id="modulesList">
-
     {% for m in modules %}
     <div class="accordion-item">
       <h2 class="accordion-header" id="m{{ m.id }}">
@@ -175,7 +141,6 @@
 
       <div id="collapse{{ m.id }}" class="accordion-collapse collapse">
         <div class="accordion-body">
-
           {% if m.lessons %}
           <ul class="list-group list-group-flush">
             {% for l in m.lessons %}
@@ -200,7 +165,6 @@
             </li>
             {% endfor %}
           </ul>
-
           {% else %}
           <p class="text-muted fst-italic">Chưa có bài học.</p>
           {% endif %}
@@ -209,19 +173,16 @@
              class="btn btn-outline-primary btn-sm mt-3">
             <i class="bi bi-plus-circle"></i> Thêm bài học mới
           </a>
-
         </div>
       </div>
     </div>
     {% endfor %}
-
   </div>
   {% else %}
   <div class="alert alert-info mt-3 shadow-sm">
     <i class="bi bi-info-circle"></i> Chưa có chương nào trong khóa học này.
   </div>
   {% endif %}
-
 </div>
 
 <footer>

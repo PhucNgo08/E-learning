@@ -7,7 +7,6 @@
 
     <div class="glass-card shadow-lg p-4" style="border-radius: 22px;">
 
-        <!-- HEADER -->
         <div class="text-center mb-4">
             <div class="mx-auto mb-3"
                 style="width: 85px; height: 85px; border-radius: 50%;
@@ -21,7 +20,6 @@
             <p class="text-muted mb-0">Nhập số tiền cần rút và ghi chú nếu cần.</p>
         </div>
 
-        <!-- ERROR -->
         {% if error %}
         <div class="alert alert-danger d-flex align-items-center mb-3">
             <i class="bi bi-x-circle-fill me-2"></i>
@@ -29,17 +27,14 @@
         </div>
         {% endif %}
 
-        <!-- CURRENT BALANCE -->
         <div class="alert alert-info d-flex justify-content-between align-items-center mb-4"
              style="border-radius: 12px;">
             <span class="fw-semibold">💰 Số dư hiện tại:</span>
             <span class="fw-bold text-primary">{{ "{:,.0f}".format(balance) }} đ</span>
         </div>
 
-        <!-- FORM -->
         <form action="/student/wallet/withdraw" method="post" id="withdrawForm">
 
-            <!-- Amount -->
             <label class="form-label fw-semibold">Số tiền cần rút</label>
             <div class="input-group mb-2">
                 <span class="input-group-text fw-bold text-danger"
@@ -54,9 +49,8 @@
                     required>
             </div>
 
-            <!-- QUICK BUTTONS -->
             <div class="d-flex flex-wrap gap-2 mb-3">
-                {% set values = [50000,100000,200000,500000] %}
+                {% set values = [50000, 100000, 200000, 500000] %}
                 {% for v in values %}
                 <button type="button"
                     class="btn btn-outline-danger fw-semibold quick-btn"
@@ -66,7 +60,6 @@
                 {% endfor %}
             </div>
 
-            <!-- NOTE -->
             <label class="form-label fw-semibold">Ghi chú (không bắt buộc)</label>
             <div class="input-group mb-3">
                 <span class="input-group-text text-muted"
@@ -79,7 +72,6 @@
                        placeholder="Ví dụ: Rút về ngân hàng">
             </div>
 
-            <!-- BUTTON -->
             <button id="submitBtn"
                     class="btn btn-danger w-100 fw-semibold py-3 mt-2"
                     style="border-radius: 12px;
@@ -92,7 +84,6 @@
 
         </form>
 
-        <!-- BACK -->
         <div class="text-center mt-4">
             <a href="/student/wallet/page" class="fw-semibold"
                style="text-decoration:none; color:#2563eb;">
@@ -104,28 +95,29 @@
 
 </div>
 
+{% endblock %}
 
-<!-- ================================
-     JAVASCRIPT — PRO MAX v9
-================================ -->
+{% block scripts %}
 <script>
+(() => {
     const input = document.getElementById("withdrawAmount");
     const submitBtn = document.getElementById("submitBtn");
-    const BALANCE = parseInt("{{ balance|int }}");
-
+    const form = document.getElementById("withdrawForm");
+    const BALANCE = parseInt("{{ balance|int }}", 10) || 0;
 
     function formatCurrency(num) {
         return num.toLocaleString("vi-VN");
     }
 
     function extractNumber(str) {
-        return parseInt(str.replace(/\D/g, "")) || 0;
+        return parseInt(String(str).replace(/\D/g, "")) || 0;
     }
 
-    // Format realtime & validate
+    submitBtn.disabled = true;
+
     input.addEventListener("input", () => {
-        let v = extractNumber(input.value);
-        input.value = formatCurrency(v);
+        const v = extractNumber(input.value);
+        input.value = v ? formatCurrency(v) : "";
 
         if (v > BALANCE) {
             input.style.border = "2px solid #dc2626";
@@ -136,22 +128,20 @@
         }
     });
 
-    // Quick buttons
     document.querySelectorAll(".quick-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            let v = parseInt(btn.dataset.amount);
+            let v = parseInt(btn.dataset.amount || "0", 10);
             if (v > BALANCE) v = BALANCE;
 
-            input.value = formatCurrency(v);
-            submitBtn.disabled = false;
+            input.value = v ? formatCurrency(v) : "";
             input.style.border = "";
+            submitBtn.disabled = (v < 1000);
         });
     });
 
-    // Before submit — convert "100.000" -> 100000
-    document.getElementById("withdrawForm").addEventListener("submit", () => {
+    form.addEventListener("submit", () => {
         input.value = extractNumber(input.value);
     });
+})();
 </script>
-
 {% endblock %}

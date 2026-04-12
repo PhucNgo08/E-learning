@@ -7,7 +7,6 @@
 
     <div class="glass-card shadow-lg p-4" style="border-radius: 22px;">
 
-        <!-- HEADER -->
         <div class="text-center mb-4">
             <div class="mx-auto mb-3"
                 style="width: 85px; height: 85px; border-radius: 50%;
@@ -21,7 +20,6 @@
             <p class="text-muted mb-0">Vui lòng nhập số tiền muốn nạp vào ví E-Learning.</p>
         </div>
 
-        <!-- ERROR -->
         {% if error %}
         <div class="alert alert-danger d-flex align-items-center mb-3">
             <i class="bi bi-x-circle-fill me-2"></i>
@@ -29,7 +27,6 @@
         </div>
         {% endif %}
 
-        <!-- FORM -->
         <form action="/student/wallet/deposit/qr" method="get" id="depositForm">
 
             <label class="form-label fw-semibold">Số tiền cần nạp</label>
@@ -47,11 +44,8 @@
                     required>
             </div>
 
-            <!-- QUICK SELECT BUTTONS -->
             <div class="d-flex flex-wrap gap-2 mb-3">
-
                 {% set quick_values = [20000, 50000, 100000, 200000, 500000] %}
-
                 {% for v in quick_values %}
                 <button type="button"
                     class="btn btn-outline-primary quick-btn fw-semibold"
@@ -59,7 +53,6 @@
                     {{ "{:,.0f}".format(v) }} đ
                 </button>
                 {% endfor %}
-
             </div>
 
             <button id="submitBtn" class="btn btn-primary w-100 fw-semibold py-3 mt-2"
@@ -71,7 +64,6 @@
 
         </form>
 
-        <!-- BACK -->
         <div class="text-center mt-4">
             <a href="/student/wallet/page"
                 class="fw-semibold"
@@ -84,43 +76,42 @@
 
 </div>
 
+{% endblock %}
 
-<!-- ================================
-     JAVASCRIPT — PRO MAX v9
-================================ -->
+{% block scripts %}
 <script>
+(() => {
     const input = document.getElementById("amountInput");
     const submitBtn = document.getElementById("submitBtn");
+    const form = document.getElementById("depositForm");
 
     function formatCurrency(num) {
         return num.toLocaleString("vi-VN");
     }
 
     function extractNumber(str) {
-        return parseInt(str.replace(/\D/g, "")) || 0;
+        return parseInt(String(str).replace(/\D/g, "")) || 0;
     }
 
-    // Khi gõ vào input → tự format tiền
-    input.addEventListener("input", () => {
-        let num = extractNumber(input.value);
-        input.value = formatCurrency(num);
+    submitBtn.disabled = true;
 
+    input.addEventListener("input", () => {
+        const num = extractNumber(input.value);
+        input.value = num ? formatCurrency(num) : "";
         submitBtn.disabled = (num < 1000);
     });
 
-    // Nút chọn nhanh
     document.querySelectorAll(".quick-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            let v = parseInt(btn.dataset.amount);
+            const v = parseInt(btn.dataset.amount || "0", 10);
             input.value = formatCurrency(v);
-            submitBtn.disabled = false;
+            submitBtn.disabled = (v < 1000);
         });
     });
 
-    // Trước khi submit form → convert "50.000" → 50000
-    document.getElementById("depositForm").addEventListener("submit", () => {
+    form.addEventListener("submit", () => {
         input.value = extractNumber(input.value);
     });
+})();
 </script>
-
 {% endblock %}

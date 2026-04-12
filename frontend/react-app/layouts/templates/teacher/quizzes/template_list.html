@@ -1,0 +1,56 @@
+{% extends "layout_teacher.html" %}
+{% block title %}🧩 Danh sách mẫu Quiz{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">🧩 Danh sách mẫu Quiz</h3>
+      <p class="text-muted mb-0">Quản lý và tái sử dụng các mẫu quiz đã tạo.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">← Danh sách Quiz</a>
+      <a href="/teacher/quizzes/create" class="btn btn-primary">+ Tạo Quiz mới</a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body">
+      {% if templates %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-primary text-center">
+            <tr>
+              <th>#</th>
+              <th class="text-start">Tên mẫu</th>
+              <th>Mô tả</th>
+              <th>Ngày tạo</th>
+              <th>Công khai</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in templates %}
+            <tr class="text-center">
+              <td>{{ loop.index }}</td>
+              <td class="text-start fw-semibold">{{ item.name }}</td>
+              <td>{{ item.description or "—" }}</td>
+              <td>{{ item.created_at.strftime('%d/%m/%Y') if item.created_at else "—" }}</td>
+              <td>
+                {% if item.is_public %}
+                  <span class="badge bg-success">Công khai</span>
+                {% else %}
+                  <span class="badge bg-secondary">Riêng tư</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info mb-0">Chưa có mẫu quiz nào.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

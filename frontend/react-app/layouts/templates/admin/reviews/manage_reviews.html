@@ -1,72 +1,51 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>📝 Quản lý Đánh giá Khóa học</title>
+{% extends "layout_admin.html" %}
+{% block title %}📝 Quản lý Đánh giá Khóa học{% endblock %}
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block head_extra %}
+<style>
+  body {
+    background-color: #f7f9fc;
+    font-family: "Segoe UI", "Inter", sans-serif;
+  }
 
-  <style>
-    body {
-      background-color: #f7f9fc;
-      font-family: "Segoe UI", "Inter", sans-serif;
-    }
+  .summary-card {
+    background: #f8faff;
+    border: 1px solid #e3e8ef;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    height: 100%;
+  }
 
-    .container {
-      margin-top: 40px;
-      background-color: white;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    }
+  .summary-card h4 {
+    color: #0d6efd;
+    font-weight: 600;
+  }
 
-    h3 {
-      font-weight: 700;
-      color: #0d6efd;
-    }
+  .table thead th {
+    background: linear-gradient(90deg, #007bff, #003087);
+    color: white;
+    vertical-align: middle;
+    text-align: center;
+  }
 
-    .table thead {
-      background: linear-gradient(90deg, #007bff, #003087);
-      color: white;
-    }
+  .comment-cell {
+    max-width: 320px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>
+{% endblock %}
 
-    .badge {
-      font-size: 0.9rem;
-      border-radius: 8px;
-    }
-
-    .summary-card {
-      background: #f8faff;
-      border: 1px solid #e3e8ef;
-      border-radius: 12px;
-      padding: 16px;
-      text-align: center;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-    }
-
-    .summary-card h4 {
-      color: #0d6efd;
-      font-weight: 600;
-    }
-
-    footer {
-      text-align: center;
-      margin-top: 25px;
-      color: #6b7280;
-      font-size: 0.9rem;
-    }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <!-- Tiêu đề -->
+{% block content %}
+<div class="container py-4">
   <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
     <div>
-      <h3 class="fw-bold"><i class="bi bi-chat-square-text"></i> Quản lý Đánh giá Khóa học</h3>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-chat-square-text"></i> Quản lý Đánh giá Khóa học
+      </h3>
       <p class="text-muted mb-0">Theo dõi phản hồi và mức độ hài lòng của học viên.</p>
     </div>
     <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm">
@@ -74,7 +53,17 @@
     </a>
   </div>
 
-  <!-- Thống kê tổng quan -->
+  {% if success %}
+    <div class="alert alert-success">
+      <i class="bi bi-check-circle"></i> {{ success }}
+    </div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">
+      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    </div>
+  {% endif %}
+
   <div class="row g-3 mb-4 text-center">
     <div class="col-md-4">
       <div class="summary-card">
@@ -96,46 +85,68 @@
     </div>
   </div>
 
-  <!-- Bảng danh sách đánh giá -->
-  <div class="table-responsive">
-    <table class="table table-hover align-middle text-center">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Khóa học</th>
-          <th>Người đánh giá</th>
-          <th>Điểm</th>
-          <th>Nhận xét</th>
-          <th>Ngày tạo</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for review in reviews %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>{{ review.course.title if review.course else "—" }}</td>
-          <td>{{ review.user.username if review.user else "—" }}</td>
-          <td>
-            <span class="badge bg-warning text-dark">⭐ {{ review.rating }}</span>
-          </td>
-          <td class="text-start">{{ review.comment or "—" }}</td>
-          <td>{{ review.created_at.strftime("%d/%m/%Y %H:%M") if review.created_at else "—" }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="text-muted py-3">
-            <i class="bi bi-info-circle"></i> Chưa có đánh giá nào trong hệ thống.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle text-center">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Khóa học</th>
+              <th>Người đánh giá</th>
+              <th>Điểm</th>
+              <th>Nhận xét</th>
+              <th>Ngày tạo</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for review in reviews %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ get_course_display_name(review) }}</td>
+              <td>{{ get_reviewer_display_name(review) }}</td>
+              <td>
+                <span class="badge bg-warning text-dark">⭐ {{ get_rating_value(review) }}</span>
+              </td>
+              <td class="text-start comment-cell" title="{{ review.comment or '—' }}">
+                {{ review.comment or "—" }}
+              </td>
+              <td>{{ review.created_at.strftime("%d/%m/%Y %H:%M") if review.created_at else "—" }}</td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a href="/admin/reviews/view/{{ review.id }}" class="btn btn-outline-info" title="Xem chi tiết">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="/admin/reviews/edit/{{ review.id }}" class="btn btn-outline-primary" title="Chỉnh sửa">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                  <a href="/admin/reviews/delete/{{ review.id }}" class="btn btn-outline-danger" title="Xóa">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                  {% if review.course_id %}
+                  <a href="/admin/reviews/statistics/{{ review.course_id }}" class="btn btn-outline-warning" title="Thống kê khóa học">
+                    <i class="bi bi-bar-chart"></i>
+                  </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-muted py-3">
+                <i class="bi bi-info-circle"></i> Chưa có đánh giá nào trong hệ thống.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
-  <footer>© {{ current_year }} Hệ thống E-Learning — Quản lý đánh giá</footer>
+  <div class="text-center mt-4 text-muted small">
+    © {{ current_year }} Hệ thống E-Learning — Quản lý đánh giá
+  </div>
 </div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% endblock %}

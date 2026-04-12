@@ -1,136 +1,386 @@
 {% extends "layout_teacher.html" %}
-{% block title %}📊 Thống kê giảng dạy{% endblock %}
+{% block title %}📊 Thống kê tổng quan{% endblock %}
 
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
 <style>
-  body {
-    background: linear-gradient(180deg, #f5f8ff, #e9efff);
-    font-family: "Inter", "Segoe UI", sans-serif;
+  .stats-page {
+    padding: 1.25rem 0 2rem;
   }
-  .stats-card {
-    border: none;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-    transition: all 0.2s ease;
+
+  .stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
   }
-  .stats-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  }
-  .stats-icon {
-    font-size: 2rem;
-    color: #0056d2;
-  }
-  .stats-value {
-    font-size: 2rem;
+
+  .stats-title {
+    margin: 0;
     font-weight: 700;
-    color: #003087;
+    color: #0d6efd;
+  }
+
+  .stats-subtitle {
+    color: #6c757d;
+    margin: 0.2rem 0 0;
+  }
+
+  .stat-card {
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+    height: 100%;
+  }
+
+  .stat-card .card-body {
+    padding: 1rem 1.1rem;
+  }
+
+  .stat-label {
+    color: #6c757d;
+    font-size: 0.92rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+  }
+
+  .stat-meta {
+    color: #6c757d;
+    font-size: 0.85rem;
+  }
+
+  .section-card {
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+    margin-top: 1rem;
+  }
+
+  .section-card .card-header {
+    background: transparent;
+    border-bottom: 1px solid #eef2f7;
+    padding: 1rem 1.1rem 0.9rem;
+    font-weight: 700;
+  }
+
+  .section-card .card-body {
+    padding: 1rem 1.1rem 1.1rem;
+  }
+
+  .rating-row {
+    display: grid;
+    grid-template-columns: 64px 1fr 48px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .rating-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .progress {
+    height: 10px;
+    border-radius: 999px;
+    background: #eef2f7;
+  }
+
+  .progress-bar {
+    border-radius: 999px;
+    width: 0;
+    transition: width 0.35s ease;
+  }
+
+  .mini-badge {
+    display: inline-block;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .badge-published {
+    background: rgba(25, 135, 84, 0.12);
+    color: #198754;
+  }
+
+  .badge-draft {
+    background: rgba(108, 117, 125, 0.12);
+    color: #6c757d;
+  }
+
+  .badge-archived {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+  }
+
+  .empty-box {
+    padding: 1rem;
+    border-radius: 14px;
+    background: #f8f9fb;
+    color: #6c757d;
+    text-align: center;
   }
 </style>
 
-<div class="container py-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary fw-bold">
-      <i class="bi bi-bar-chart-line"></i> Bảng thống kê giảng dạy
-    </h3>
-    <a href="/teacher/dashboard" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Quay lại
-    </a>
-  </div>
+<div class="container-fluid stats-page">
 
-  <!-- Cards tổng quan -->
-  <div class="row g-4">
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-journal-bookmark"></i></div>
-        <h6 class="text-muted">Khóa học</h6>
-        <div class="stats-value">{{ data.total_courses }}</div>
-      </div>
+  <div class="stats-header">
+    <div>
+      <h3 class="stats-title">📊 Thống kê tổng quan</h3>
+      <p class="stats-subtitle">
+        {% if teacher %}
+          Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+        {% endif %}
+      </p>
     </div>
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-diagram-3"></i></div>
-        <h6 class="text-muted">Module</h6>
-        <div class="stats-value">{{ data.total_modules }}</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-collection-play"></i></div>
-        <h6 class="text-muted">Bài học</h6>
-        <div class="stats-value">{{ data.total_lessons }}</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-clipboard-check"></i></div>
-        <h6 class="text-muted">Bài tập</h6>
-        <div class="stats-value">{{ data.total_assignments }}</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-people"></i></div>
-        <h6 class="text-muted">Học viên</h6>
-        <div class="stats-value">{{ data.total_students }}</div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-chat-left-heart"></i></div>
-        <h6 class="text-muted">Tổng đánh giá</h6>
-        <div class="stats-value">{{ data.total_reviews }}</div>
-      </div>
-    </div>
-    <div class="col-12 col-md-6">
-      <div class="stats-card p-4 text-center">
-        <div class="stats-icon mb-2"><i class="bi bi-star-half"></i></div>
-        <h6 class="text-muted">Điểm trung bình đánh giá</h6>
-        <div class="stats-value">{{ '%.2f'|format(data.average_rating) }}</div>
-      </div>
+
+    <div class="d-flex gap-2">
+      <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
     </div>
   </div>
 
-  <!-- Biểu đồ & Top khóa học -->
-  <div class="row g-4 mt-1">
-    <!-- Biểu đồ -->
-    <div class="col-lg-6">
-      <div class="card stats-card p-4 h-100">
-        <h6 class="fw-semibold mb-3">⭐ Phân bố điểm đánh giá (1–5)</h6>
-        <canvas id="ratingChart"></canvas>
+  <div class="row g-3">
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="stat-card">
+        <div class="card-body">
+          <div class="stat-label">Khóa học</div>
+          <div class="stat-value text-primary">{{ data.total_courses or 0 }}</div>
+          <div class="stat-meta">
+            Published: {{ data.published_courses or 0 }} ·
+            Draft: {{ data.draft_courses or 0 }} ·
+            Archived: {{ data.archived_courses or 0 }}
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Top khóa học -->
-    <div class="col-lg-6">
-      <div class="card stats-card p-4 h-100">
-        <h6 class="fw-semibold mb-3"><i class="bi bi-trophy"></i> Top 3 khóa học được đánh giá cao</h6>
-        <div class="table-responsive">
-          <table class="table table-sm align-middle">
-            <thead>
-              <tr>
-                <th>Khóa học</th>
-                <th class="text-center">ĐTB</th>
-                <th class="text-end">Số đánh giá</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for c in data.top_courses %}
-              <tr>
-                <td>{{ c.name }}</td>
-                <td class="text-center">{{ '%.2f'|format(c.avg_rating) }}</td>
-                <td class="text-end">{{ c.total_reviews }}</td>
-              </tr>
-              {% else %}
-              <tr><td colspan="3" class="text-center text-muted">Chưa có dữ liệu</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="stat-card">
+        <div class="card-body">
+          <div class="stat-label">Module / Bài học</div>
+          <div class="stat-value text-success">{{ data.total_modules or 0 }} / {{ data.total_lessons or 0 }}</div>
+          <div class="stat-meta">
+            Module đã đăng: {{ data.published_modules or 0 }} ·
+            Bài học đã đăng: {{ data.published_lessons or 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="stat-card">
+        <div class="card-body">
+          <div class="stat-label">Quiz / Assignment</div>
+          <div class="stat-value text-warning">{{ data.total_quizzes or 0 }} / {{ data.total_assignments or 0 }}</div>
+          <div class="stat-meta">
+            Graded: {{ data.graded_quizzes or 0 }} ·
+            Practice: {{ data.practice_quizzes or 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="stat-card">
+        <div class="card-body">
+          <div class="stat-label">Lớp / Học viên</div>
+          <div class="stat-value text-info">{{ data.total_classes or 0 }} / {{ data.total_students or 0 }}</div>
+          <div class="stat-meta">
+            Hôm nay: {{ data.today_lessons or 0 }} buổi ·
+            Sắp tới: {{ data.upcoming_lessons or 0 }} buổi
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mt-1">
+    <div class="col-12 col-xl-7">
+      <div class="section-card card h-100">
+        <div class="card-header">
+          <i class="bi bi-star-fill text-warning me-2"></i>Đánh giá khóa học
+        </div>
+        <div class="card-body">
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Điểm trung bình</div>
+                  <div class="stat-value text-warning">{{ data.avg_rating or 0 }}</div>
+                  <div class="stat-meta">Trên thang 5.0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Tổng lượt đánh giá</div>
+                  <div class="stat-value text-primary">{{ data.total_reviews or 0 }}</div>
+                  <div class="stat-meta">Tất cả khóa học của bạn</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Tài liệu khóa học</div>
+                  <div class="stat-value text-success">{{ data.total_materials or 0 }}</div>
+                  <div class="stat-meta">Tổng file đã tải lên</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {% set total_ratings = (data.rating_distribution[0] + data.rating_distribution[1] + data.rating_distribution[2] + data.rating_distribution[3] + data.rating_distribution[4]) if data.rating_distribution else 0 %}
+
+          <div>
+            <div class="rating-row">
+              <div>⭐ 1 sao</div>
+              <div class="progress">
+                <div class="progress-bar bg-danger js-progress"
+                     data-width="{{ ((data.rating_distribution[0] / total_ratings) * 100) if total_ratings else 0 }}"></div>
+              </div>
+              <div class="text-end">{{ data.rating_distribution[0] if data.rating_distribution else 0 }}</div>
+            </div>
+
+            <div class="rating-row">
+              <div>⭐ 2 sao</div>
+              <div class="progress">
+                <div class="progress-bar bg-warning js-progress"
+                     data-width="{{ ((data.rating_distribution[1] / total_ratings) * 100) if total_ratings else 0 }}"></div>
+              </div>
+              <div class="text-end">{{ data.rating_distribution[1] if data.rating_distribution else 0 }}</div>
+            </div>
+
+            <div class="rating-row">
+              <div>⭐ 3 sao</div>
+              <div class="progress">
+                <div class="progress-bar bg-info js-progress"
+                     data-width="{{ ((data.rating_distribution[2] / total_ratings) * 100) if total_ratings else 0 }}"></div>
+              </div>
+              <div class="text-end">{{ data.rating_distribution[2] if data.rating_distribution else 0 }}</div>
+            </div>
+
+            <div class="rating-row">
+              <div>⭐ 4 sao</div>
+              <div class="progress">
+                <div class="progress-bar bg-primary js-progress"
+                     data-width="{{ ((data.rating_distribution[3] / total_ratings) * 100) if total_ratings else 0 }}"></div>
+              </div>
+              <div class="text-end">{{ data.rating_distribution[3] if data.rating_distribution else 0 }}</div>
+            </div>
+
+            <div class="rating-row">
+              <div>⭐ 5 sao</div>
+              <div class="progress">
+                <div class="progress-bar bg-success js-progress"
+                     data-width="{{ ((data.rating_distribution[4] / total_ratings) * 100) if total_ratings else 0 }}"></div>
+              </div>
+              <div class="text-end">{{ data.rating_distribution[4] if data.rating_distribution else 0 }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-5">
+      <div class="section-card card h-100">
+        <div class="card-header">
+          <i class="bi bi-lightning-charge-fill text-primary me-2"></i>Tổng quan nhanh
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-6">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Quiz Graded</div>
+                  <div class="stat-value text-danger">{{ data.graded_quizzes or 0 }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Quiz Practice</div>
+                  <div class="stat-value text-info">{{ data.practice_quizzes or 0 }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Buổi dạy hôm nay</div>
+                  <div class="stat-value text-primary">{{ data.today_lessons or 0 }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-6">
+              <div class="stat-card">
+                <div class="card-body">
+                  <div class="stat-label">Buổi sắp tới</div>
+                  <div class="stat-value text-success">{{ data.upcoming_lessons or 0 }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div>
+            <div class="fw-semibold mb-2">Khóa học gần đây</div>
+
+            {% if data.latest_courses %}
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>Tên khóa học</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày tạo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for c in data.latest_courses %}
+                    <tr>
+                      <td>{{ c.course_name }}</td>
+                      <td>
+                        {% if c.status == "published" %}
+                          <span class="mini-badge badge-published">Published</span>
+                        {% elif c.status == "draft" %}
+                          <span class="mini-badge badge-draft">Draft</span>
+                        {% elif c.status == "archived" %}
+                          <span class="mini-badge badge-archived">Archived</span>
+                        {% else %}
+                          <span class="mini-badge badge-draft">{{ c.status or "—" }}</span>
+                        {% endif %}
+                      </td>
+                      <td>{{ c.created_at.strftime('%d/%m/%Y') if c.created_at else '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="empty-box">Chưa có khóa học nào.</div>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
@@ -138,30 +388,10 @@
 
 </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // ✅ Dùng JSON.parse để tránh lỗi VS Code và vẫn render đúng
-  const ratingData = JSON.parse('{{ data.rating_distribution | tojson | safe }}');
-
-  const ctx = document.getElementById('ratingChart');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['1⭐','2⭐','3⭐','4⭐','5⭐'],
-      datasets: [{
-        label: 'Số lượng đánh giá',
-        data: ratingData,
-        backgroundColor: ['#dc3545','#fd7e14','#ffc107','#0d6efd','#198754'],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      }
-    }
+  document.querySelectorAll('.js-progress').forEach(function (el) {
+    const width = parseFloat(el.dataset.width || '0');
+    el.style.width = Math.max(0, Math.min(100, width)) + '%';
   });
 </script>
 {% endblock %}

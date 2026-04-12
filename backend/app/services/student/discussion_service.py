@@ -12,7 +12,8 @@ import uuid
 
 from app.models.discussion import Discussion
 from app.models.user import User
-
+from app.models.user_profile import UserProfile
+from backend.app import db
 
 # ==========================================================
 # 🧩 Helper: Load dữ liệu JOIN sẵn user, course
@@ -217,7 +218,6 @@ def toggle_like(db: Session, discussion_id: str, user_id: str):
         return {"unliked": True}
 
     like = DiscussionLike(
-        id=str(uuid.uuid4()),
         discussion_id=discussion_id,
         user_id=user_id,
         created_at=datetime.utcnow(),
@@ -240,18 +240,19 @@ def search_discussions(db: Session, keyword: str):
 
     discussions = (
         db.query(Discussion)
-        .options(
+            .options(
             joinedload(Discussion.user),
             joinedload(Discussion.course),
         )
         .join(User, User.id == Discussion.user_id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
         .filter(
-            Discussion.parent_id == None,
+            Discussion.parent_id.is_(None),
             or_(
                 Discussion.content.like(keyword),
-                User.full_name.like(keyword),
+                UserProfile.full_name.like(keyword),
             ),
-        )
+     )
         .order_by(Discussion.created_at.desc())
         .all()
     )

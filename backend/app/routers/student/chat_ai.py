@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import google.generativeai as genai
+from starlette.concurrency import run_in_threadpool
 
 # 🧩 Import hệ thống
 from app.database.connection import get_db
@@ -28,6 +29,65 @@ else:
 
 
 # =====================================================
+# ✅ HÀM LẤY TEXT AN TOÀN TỪ GEMINI RESPONSE
+# =====================================================
+def extract_gemini_text(resp) -> str:
+    """
+    Gemini đôi khi không trả resp.text mà nằm trong candidates/content/parts.
+    Hàm này đảm bảo lấy được text nếu có.
+    """
+    # 1) cách phổ biến
+    t = getattr(resp, "text", None)
+    if t and str(t).strip():
+        return str(t).strip()
+
+    # 2) fallback: candidates -> content -> parts
+    try:
+        candidates = getattr(resp, "candidates", None) or []
+        for c in candidates:
+            content = getattr(c, "content", None)
+            if not content:
+                continue
+            parts = getattr(content, "parts", None) or []
+            for p in parts:
+                pt = getattr(p, "text", None)
+                if pt and str(pt).strip():
+                    return str(pt).strip()
+    except Exception:
+        pass
+
+    # 3) fallback: nếu bị block
+    try:
+        pf = getattr(resp, "prompt_feedback", None)
+        block_reason = getattr(pf, "block_reason", None) if pf else None
+        if block_reason:
+            return f"⚠️ Câu hỏi có thể bị chặn bởi chính sách an toàn ({block_reason}). Bạn thử diễn đạt lại rõ hơn nhé."
+    except Exception:
+        pass
+
+    return ""
+
+
+async def call_gemini(prompt: str) -> str:
+    """Gọi Gemini không block FastAPI."""
+    if not GOOGLE_API_KEY:
+        return "⚠️ Hệ thống chưa cấu hình GOOGLE_API_KEY. Vui lòng báo admin."
+
+    model_name = "models/gemini-2.5-flash"  # nếu lỗi model, đổi sang "models/gemini-1.5-flash"
+
+    def _call():
+        model = genai.GenerativeModel(model_name)
+        return model.generate_content(prompt)
+
+    try:
+        resp = await run_in_threadpool(_call)
+        text = extract_gemini_text(resp)
+        return text
+    except Exception as e:
+        return f"⚠️ Lỗi khi gọi Gemini API: {e}"
+
+
+# =====================================================
 # 🌐 TRANG GIAO DIỆN - Gợi ý câu hỏi theo ngành
 # =====================================================
 @router.get("/")
@@ -36,14 +96,11 @@ async def chat_ai_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_student)
 ):
-    """Hiển thị giao diện chat AI + lịch sử trò chuyện + gợi ý theo ngành."""
     history = ai_chat_service.get_chat_history(db, current_user.id)
 
-    # 🧩 Lấy thông tin ngành học
     major = db.query(Major).filter(Major.id == current_user.major_id).first()
     major_name = major.major_name if major else "Chưa xác định"
 
-    # 🎓 Gợi ý câu hỏi theo ngành học
     major_suggestions = {
         "công nghệ thông tin": {
             "icon": "💻",
@@ -96,12 +153,10 @@ async def chat_ai_page(
     }
 
     selected_major = next(
-        (k for k in major_suggestions if k in major_name.lower()), "chưa xác định"
+        (k for k in major_suggestions if k in (major_name or "").lower()), "chưa xác định"
     )
     icon = major_suggestions[selected_major]["icon"]
     suggestions = major_suggestions[selected_major]["suggestions"]
-
-    print(f"🎓 [ChatAI] Ngành: {major_name} → {len(suggestions)} gợi ý")
 
     return request.app.templates.TemplateResponse(
         "student/chat_ai/chat_ai.html",
@@ -125,23 +180,25 @@ async def ask_ai(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_student)
 ):
-    """Xử lý câu hỏi từ học viên (từ DB hoặc Gemini)."""
     try:
-        print(f"🧠 [ChatAI] Tin nhắn nhận được: {message}")
-        msg_lower = message.lower()
+        msg = (message or "").strip()
+        if len(msg) < 2:
+            return JSONResponse({"reply": "Bạn nhập rõ hơn giúp mình nhé 🙂"})
+
+        msg_lower = msg.lower()
 
         course_keywords = ["khóa học", "course", "môn học", "lớp học", "học phần"]
         category_keywords = ["danh mục", "chuyên mục", "category", "lĩnh vực học"]
 
-        # ✅ Lưu tin nhắn của học viên
+        # ✅ lưu message user
         ai_chat_service.save_chat_history(
-            db, current_user.id, message, None, role="user", source="user_input"
+            db, current_user.id, msg, None, role="user", source="user_input"
         )
 
-        # 🧩 1️⃣ Câu hỏi về khóa học
+        # ✅ hỏi về khóa học -> query DB
         if any(kw in msg_lower for kw in course_keywords):
-            print("✅ [ChatAI] Truy vấn khóa học từ DB...")
             courses = db.query(Course).filter(Course.status == "published").limit(10).all()
+
             if not courses:
                 reply = "📚 Hiện chưa có khóa học nào được xuất bản."
             else:
@@ -149,16 +206,15 @@ async def ask_ai(
                 for c in courses:
                     reply += f"• {c.course_name} ({c.course_code}) — {c.description or 'Không có mô tả.'}\n"
 
-            # ✅ Lưu phản hồi từ hệ thống (assistant)
             ai_chat_service.save_chat_history(
-                db, current_user.id, message, reply, role="assistant", source="database"
+                db, current_user.id, msg, reply, role="assistant", source="database"
             )
             return JSONResponse({"reply": reply})
 
-        # 🧩 2️⃣ Câu hỏi về danh mục khóa học
+        # ✅ hỏi về danh mục -> query DB
         if any(kw in msg_lower for kw in category_keywords):
-            print("✅ [ChatAI] Truy vấn danh mục khóa học từ DB...")
             categories = db.query(CourseCategory).order_by(CourseCategory.category_name).all()
+
             if not categories:
                 reply = "📂 Hiện chưa có danh mục khóa học nào trong hệ thống."
             else:
@@ -167,34 +223,30 @@ async def ask_ai(
                     reply += f"- {cat.category_name}: {cat.description or ''}\n"
 
             ai_chat_service.save_chat_history(
-                db, current_user.id, message, reply, role="assistant", source="database"
+                db, current_user.id, msg, reply, role="assistant", source="database"
             )
             return JSONResponse({"reply": reply})
 
-        # 🤖 3️⃣ Nếu không phải câu hỏi về DB → gọi Gemini AI
-        print("🤖 [ChatAI] Không phát hiện từ khóa DB → gọi Gemini API...")
-        if not GOOGLE_API_KEY:
-            raise ValueError("❌ GOOGLE_API_KEY chưa được cấu hình trong .env")
+        # ✅ không match DB -> gọi Gemini
+        reply_text = await call_gemini(msg)
 
-        model = genai.GenerativeModel("models/gemini-2.5-flash")
+        # ✅ nếu Gemini trả rỗng -> trả lời hướng dẫn rõ ràng
+        if not reply_text.strip():
+            reply_text = (
+                "🤔 Mình chưa hiểu ý bạn.\n\n"
+                "Bạn thử hỏi theo mẫu này nhé:\n"
+                "• Bạn muốn tìm khóa học gì?\n"
+                "• Bạn đang gặp vấn đề gì trong bài?\n"
+                "• Bạn cần mình giải thích phần nào?"
+            )
 
-        try:
-            response = model.generate_content(message)
-            reply_text = getattr(response, "text", None)
-            if not reply_text:
-                reply_text = "⚠️ Gemini không trả lời, vui lòng thử lại."
-        except Exception as gemini_err:
-            reply_text = f"⚠️ Lỗi khi gọi Gemini API: {gemini_err}"
-
-        print(f"🤖 [Gemini] → {reply_text[:100]}...")
         ai_chat_service.save_chat_history(
-            db, current_user.id, message, reply_text, role="assistant", source="gemini"
+            db, current_user.id, msg, reply_text, role="assistant", source="gemini"
         )
 
         return JSONResponse({"reply": reply_text})
 
     except Exception as e:
-        print("💥 [ChatAI ERROR] Lỗi xử lý yêu cầu Chat AI:")
         traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
 
@@ -207,12 +259,9 @@ async def clear_history(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_student)
 ):
-    """Xóa toàn bộ lịch sử chat của học viên."""
     try:
         deleted = ai_chat_service.clear_chat_history(db, current_user.id)
-        msg = f"🗑️ Đã xóa {deleted} tin nhắn khỏi lịch sử trò chuyện."
-        return JSONResponse({"success": True, "message": msg})
+        return JSONResponse({"success": True, "message": f"🗑️ Đã xóa {deleted} tin nhắn."})
     except Exception as e:
-        print("💥 [ChatAI ERROR] Lỗi khi xóa lịch sử:")
         traceback.print_exc()
         return JSONResponse({"success": False, "error": str(e)}, status_code=500)

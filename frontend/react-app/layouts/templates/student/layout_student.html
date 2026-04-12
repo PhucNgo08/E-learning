@@ -3,15 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0a0a0a">
+  <meta name="theme-color" content="#0a0a0a" />
 
   <title>{% block title %}🎓 Student Panel – E-Learning{% endblock %}</title>
 
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- Custom CSS -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student.css" />
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/wallet_system.css" />
 
@@ -19,220 +17,234 @@
 </head>
 
 <body>
+{% set sg = student_globals(request) %}
 
-<div class="student-wrapper d-flex">
+<div class="student-wrapper">
 
-  <!-- ======================================================
-       SIDEBAR
-  ====================================================== -->
-  <nav id="sidebar" class="student-sidebar shadow-lg">
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="student-sidebar">
+
+    <div class="sidebar-glow sidebar-glow-1"></div>
+    <div class="sidebar-glow sidebar-glow-2"></div>
 
     <div class="sidebar-header text-center">
-
-   <img
-    src="{{ student_globals(request).avatar_url }}"
-    onerror="this.src='/uploads/avatars/default-avatar.png'"
-  >
-
-
-      <span class="fw-semibold d-block mt-3 fs-5 text-white">
-        {{ request.session.get('user_fullname') or 'Học viên E-Learning' }}
-      </span>
-      <small class="text-white-50">Học viên</small>
-
-    </div>
-
-    <div class="sidebar-inner">
-
-      {% for item in [
-        ('dashboard','speedometer2','Bảng điều khiển','/student/dashboard'),
-        ('course','journal-bookmark','Khóa học của tôi','/student/course'),
-        ('lesson','easel','Bài học','/student/lesson'),
-        ('assignment','journal-check','Bài tập','/student/assignment'),
-        ('quiz','question-circle','Trắc nghiệm','/student/quiz'),
-        ('material','folder2-open','Tài liệu','/student/material'),
-        ('discussion','chat-dots','Thảo luận','/student/discussion'),
-        ('schedule','calendar3','Lịch học','/student/schedule'),
-        ('profile','person-circle','Hồ sơ cá nhân','/student/profile')
-      ] %}
-
-        <a 
-          href="{{ item[3] }}"
-          class="{% if active_page==item[0] %}active{% endif %}"
-          data-tooltip="{{ item[2] }}"
-        >
-          <i class="bi bi-{{ item[1] }}"></i>
-          <span>{{ item[2] }}</span>
-        </a>
-
-      {% endfor %}
-
-      <a href="/auth/logout" data-tooltip="Đăng xuất">
-        <i class="bi bi-box-arrow-right"></i>
-        <span>Đăng xuất</span>
-      </a>
-
-    </div>
-
-    <div class="sidebar-footer small text-center text-white-50">
-      © {{ now.year }} E-Learning
-    </div>
-
-  </nav>
-
-  <!-- ======================================================
-       CONTENT AREA
-  ====================================================== -->
-  <div class="content-wrapper d-flex flex-column">
-
-    <!-- HEADER -->
-    <header class="student-header shadow-sm">
-
-      <div class="nav-icons">
-
-        <a href="/student/notifications" class="nav-icon">
-          <i class="bi bi-bell"></i>
-        </a>
-
-        <a href="/student/message" class="nav-icon">
-          <i class="bi bi-envelope"></i>
-        </a>
-
-        <!-- Cart -->
-        <a href="/student/cart" class="nav-icon position-relative">
-          <i class="bi bi-cart3"></i>
-          {% if request.session.get('cart_count', 0) > 0 %}
-          <span class="cart-badge">{{ request.session.get('cart_count') }}</span>
-          {% endif %}
-        </a>
-
-        <!-- Wallet mini -->
-        <a href="/student/wallet/page" class="wallet-header-btn">
-          <div class="wallet-icon-box">
-            <i class="bi bi-wallet2"></i>
-          </div>
-          <span class="wallet-balance-mini">
-            {{ "{:,.0f}".format(student_globals(request).wallet_balance) }}đ
-          </span>
-        </a>
-
-        <!-- Dark mode -->
-        <button id="toggleModeBtn" class="nav-icon">
-          <i class="bi bi-moon-fill"></i>
-        </button>
-
+      <div class="sidebar-avatar-wrap">
+        <img
+          class="sidebar-avatar"
+          src="{{ sg.avatar_url }}"
+          alt="Avatar học viên"
+          onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png'"
+        />
+        <span class="sidebar-avatar-ring"></span>
       </div>
 
+      <span class="fw-semibold d-block mt-3 fs-5 text-white sidebar-name">
+        {{ request.session.get('user_fullname') or 'Học viên E-Learning' }}
+      </span>
+      <small class="text-white-50 sidebar-role">Học viên</small>
+    </div>
+
+    <nav class="sidebar-inner">
+      {% for item in [
+        ('dashboard', 'speedometer2', 'Bảng điều khiển', '/student/dashboard'),
+        ('course', 'journal-bookmark', 'Khóa học của tôi', '/student/course'),
+        ('lesson', 'easel', 'Bài học', '/student/lesson'),
+        ('assignment', 'journal-check', 'Bài tập', '/student/assignment'),
+        ('quiz', 'question-circle', 'Trắc nghiệm', '/student/quiz'),
+        ('material', 'folder2-open', 'Tài liệu', '/student/material'),
+        ('discussion', 'chat-dots', 'Thảo luận', '/student/discussion'),
+        ('schedule', 'calendar3', 'Lịch học', '/student/schedule'),
+        ('profile', 'person-circle', 'Hồ sơ cá nhân', '/student/profile')
+      ] %}
+        <a
+          href="{{ item[3] }}"
+          class="sidebar-link {% if active_page == item[0] %}active{% endif %}"
+          data-tooltip="{{ item[2] }}"
+        >
+          <span class="sidebar-link-icon">
+            <i class="bi bi-{{ item[1] }}"></i>
+          </span>
+          <span class="sidebar-link-text">{{ item[2] }}</span>
+        </a>
+      {% endfor %}
+
+      <a href="/auth/logout" class="sidebar-link sidebar-link-logout" data-tooltip="Đăng xuất">
+        <span class="sidebar-link-icon">
+          <i class="bi bi-box-arrow-right"></i>
+        </span>
+        <span class="sidebar-link-text">Đăng xuất</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-chip">
+        © {{ year }} E-Learning
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content-wrapper">
+
+    <header class="student-header">
+      <div class="header-left">
+        <div class="header-title-wrap">
+          <span class="header-title">Khu vực học viên</span>
+          <small class="header-subtitle">Học tập thông minh, theo dõi tiến độ dễ dàng</small>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="nav-icons">
+
+          <a href="/student/notifications" class="nav-icon" aria-label="Thông báo">
+            <i class="bi bi-bell"></i>
+          </a>
+
+          <a href="/student/message" class="nav-icon" aria-label="Tin nhắn">
+            <i class="bi bi-envelope"></i>
+          </a>
+
+          <a href="/student/cart" class="nav-icon position-relative" aria-label="Giỏ hàng">
+            <i class="bi bi-cart3"></i>
+            {% if request.session.get('cart_count', 0) > 0 %}
+            <span class="cart-badge">{{ request.session.get('cart_count') }}</span>
+            {% endif %}
+          </a>
+
+          <a href="/student/wallet/page" class="wallet-header-btn" aria-label="Ví của tôi">
+            <div class="wallet-icon-box">
+              <i class="bi bi-wallet2"></i>
+            </div>
+            <div class="wallet-meta">
+              <small>Số dư ví</small>
+              <span class="wallet-balance-mini">{{ "{:,.0f}".format(sg.wallet_balance) }}đ</span>
+            </div>
+          </a>
+
+          <button id="toggleModeBtn" class="nav-icon mode-toggle-btn" type="button" aria-label="Chuyển chế độ sáng tối">
+            <i class="bi bi-moon-fill"></i>
+          </button>
+
+        </div>
+      </div>
     </header>
 
-    <!-- MAIN CONTENT -->
-    <main id="content" class="fade flex-grow-1">
+    <main id="content" class="page-content fade-page">
       {% block content %}{% endblock %}
     </main>
 
-    <!-- FOOTER -->
-    <footer class="text-center py-3 small text-muted border-top">
-      © {{ now.year }} E-Learning – Student Panel
+    <footer class="student-footer">
+      <span>© {{ year }} E-Learning – Student Panel</span>
     </footer>
 
   </div>
-
 </div>
 
-<!-- Floating Buttons -->
-<button id="toggleSidebarBtn" class="btn-floating sidebar-btn">
+<button id="toggleSidebarBtn" class="btn-floating sidebar-btn" type="button" aria-label="Mở menu">
   <i class="bi bi-list"></i>
 </button>
 
-<button id="chatBotToggle" class="btn-floating chat-btn">
+<button id="chatBotToggle" class="btn-floating chat-btn" type="button" aria-label="Mở trợ lý AI">
   <i class="bi bi-robot"></i>
 </button>
 
-<!-- Overlay -->
 <div id="sidebar-overlay"></div>
 
-
-<!-- ======================================================
-     CHATBOT POPUP
-====================================================== -->
+<!-- CHATBOT -->
 <div id="chatBotWindow">
-
   <div id="chatBotHeader">
-    <span><i class="bi bi-stars me-1"></i> Trợ lý học tập AI</span>
-    <i class="bi bi-x-lg" id="closeChatBot"></i>
+    <div class="chatbot-title-wrap">
+      <span class="chatbot-title-icon"><i class="bi bi-stars"></i></span>
+      <div class="chatbot-title-text">
+        <strong>Trợ lý học tập AI</strong>
+        <small>Hỗ trợ nhanh mọi lúc</small>
+      </div>
+    </div>
+
+    <button id="closeChatBot" type="button" aria-label="Đóng chatbot">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 
   <div id="chatBotMessages"></div>
 
   <form id="chatBotForm">
     <input id="chatInput" type="text" placeholder="Nhập câu hỏi..." required />
-    <button id="sendBtn"><i class="bi bi-send"></i></button>
+    <button id="sendBtn" type="submit">
+      <i class="bi bi-send"></i>
+    </button>
   </form>
-
 </div>
 
-<!-- BOOTSTRAP -->
+<div id="chatbotCfg"
+     data-user-avatar="{{ sg.avatar_url|e }}"
+     data-ai-avatar="{{ request.url_for('static', path='assets/ai_avatar.png')|e }}"
+     style="display:none;"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- DARK MODE ENGINE -->
 <script>
 (() => {
   const body = document.body;
   const btn = document.getElementById("toggleModeBtn");
-  const icon = btn.querySelector("i");
+  const icon = btn ? btn.querySelector("i") : null;
+
+  if (!btn || !icon) return;
 
   if (localStorage.student_dark_mode === "1") {
     body.classList.add("dark-mode");
-    icon.classList.replace("bi-moon-fill","bi-brightness-low-fill");
+    icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
   }
 
-  btn.onclick = () => {
+  btn.addEventListener("click", () => {
     body.classList.toggle("dark-mode");
 
     if (body.classList.contains("dark-mode")) {
-      icon.classList.replace("bi-moon-fill","bi-brightness-low-fill");
+      icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
       localStorage.student_dark_mode = "1";
     } else {
-      icon.classList.replace("bi-brightness-low-fill","bi-moon-fill");
+      icon.classList.replace("bi-brightness-low-fill", "bi-moon-fill");
       localStorage.student_dark_mode = "0";
     }
-  };
+  });
 })();
 </script>
 
-<!-- SIDEBAR ENGINE v12 -->
 <script>
 (() => {
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
   const btn = document.getElementById("toggleSidebarBtn");
 
+  if (!sidebar || !overlay || !btn) return;
+
   const isMobile = () => window.innerWidth < 992;
 
-  btn.onclick = () => {
+  btn.addEventListener("click", () => {
     if (isMobile()) {
       sidebar.classList.toggle("mobile-show");
       overlay.classList.toggle("show");
     } else {
       sidebar.classList.toggle("collapsed");
     }
-  };
+  });
 
-  overlay.onclick = () => {
+  overlay.addEventListener("click", () => {
     sidebar.classList.remove("mobile-show");
     overlay.classList.remove("show");
-  };
+  });
 
-  window.onresize = () => {
+  window.addEventListener("resize", () => {
     if (!isMobile()) {
       sidebar.classList.remove("mobile-show");
       overlay.classList.remove("show");
     }
-  };
+  });
 })();
 </script>
 
-<!-- CHATBOT ENGINE v12 -->
 <script>
 (() => {
   const toggle = document.getElementById("chatBotToggle");
@@ -242,75 +254,107 @@
   const form = document.getElementById("chatBotForm");
   const box = document.getElementById("chatBotMessages");
   const input = document.getElementById("chatInput");
+  const cfg = document.getElementById("chatbotCfg");
 
-  const USER_AVATAR = "{{ request.session.get('user_avatar') or '/uploads/avatars/default-avatar.png' }}";
-  const AI_AVATAR = "/frontend/react-app/assets/ai_avatar.png";
+  if (!toggle || !win || !close || !form || !box || !input || !cfg) return;
 
-  if (localStorage.student_chat_history) {
-    box.innerHTML = localStorage.student_chat_history;
+  const FALLBACK_AVATAR = "/uploads/avatars/default-avatar.png";
+  const USER_AVATAR = cfg.dataset.userAvatar || FALLBACK_AVATAR;
+  const AI_AVATAR = cfg.dataset.aiAvatar || "/static/assets/ai_avatar.png";
+
+  const old = localStorage.getItem("student_chat_history");
+  if (old) {
+    const migrated = old
+      .split("/frontend/react-app/assets/ai_avatar.png").join(AI_AVATAR)
+      .split("/frontend/react-app/admin/assets/ai_avatar.png").join(AI_AVATAR)
+      .split("/static/admin/assets/ai_avatar.png").join(AI_AVATAR);
+
+    if (migrated !== old) {
+      localStorage.setItem("student_chat_history", migrated);
+    }
+    box.innerHTML = migrated;
   }
-  const saveHistory = () => localStorage.student_chat_history = box.innerHTML;
 
-  toggle.onclick = () => win.classList.toggle("show");
-  close.onclick = () => win.classList.remove("show");
+  const saveHistory = () => {
+    localStorage.setItem("student_chat_history", box.innerHTML);
+  };
 
-  const scrollBottom = () => (box.scrollTop = box.scrollHeight);
+  const scrollBottom = () => {
+    box.scrollTop = box.scrollHeight;
+  };
 
-  form.onsubmit = async (e) => {
+  const imgTag = (src) =>
+    `<img src="${src}" class="chat-avatar" onerror="this.onerror=null;this.src='${FALLBACK_AVATAR}'">`;
+
+  toggle.addEventListener("click", () => win.classList.toggle("show"));
+  close.addEventListener("click", () => win.classList.remove("show"));
+
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const msg = input.value.trim();
+
+    const msg = (input.value || "").trim();
     if (!msg) return;
 
     box.innerHTML += `
-    <div class="msg-wrap user">
-      <span class="msg-bubble msg-user">${msg}</span>
-      <img src="${USER_AVATAR}" class="chat-avatar">
-    </div>`;
-    saveHistory(); scrollBottom();
+      <div class="msg-wrap user">
+        <span class="msg-bubble msg-user">${msg}</span>
+        ${imgTag(USER_AVATAR)}
+      </div>
+    `;
+    saveHistory();
+    scrollBottom();
     input.value = "";
 
     const typingId = "typing-" + Date.now();
     box.innerHTML += `
-    <div class="msg-wrap ai" id="${typingId}">
-      <img src="${AI_AVATAR}" class="chat-avatar">
-      <div class="typing"><div></div><div></div><div></div></div>
-    </div>`;
+      <div class="msg-wrap ai" id="${typingId}">
+        ${imgTag(AI_AVATAR)}
+        <div class="typing"><div></div><div></div><div></div></div>
+      </div>
+    `;
     scrollBottom();
 
     try {
       const res = await fetch("/student/chat-ai/ask", {
         method: "POST",
-        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `message=${encodeURIComponent(msg)}`
       });
+
       const data = await res.json();
-
-      document.getElementById(typingId).remove();
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
 
       box.innerHTML += `
-      <div class="msg-wrap ai">
-        <img src="${AI_AVATAR}" class="chat-avatar">
-        <span class="msg-bubble msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</span>
-      </div>`;
-      saveHistory(); scrollBottom();
+        <div class="msg-wrap ai">
+          ${imgTag(AI_AVATAR)}
+          <span class="msg-bubble msg-ai">${data.reply || "⚠️ Không có phản hồi từ AI."}</span>
+        </div>
+      `;
+      saveHistory();
+      scrollBottom();
+    } catch (err) {
+      const typingEl = document.getElementById(typingId);
+      if (typingEl) typingEl.remove();
 
-    } catch {
-      document.getElementById(typingId).remove();
       box.innerHTML += `
-      <div class="msg-wrap ai">
-        <img src="${AI_AVATAR}" class="chat-avatar">
-        <span class="msg-bubble msg-ai text-danger">⚠️ Lỗi kết nối AI.</span>
-      </div>`;
-      saveHistory(); scrollBottom();
+        <div class="msg-wrap ai">
+          ${imgTag(AI_AVATAR)}
+          <span class="msg-bubble msg-ai text-danger">⚠️ Lỗi kết nối AI.</span>
+        </div>
+      `;
+      saveHistory();
+      scrollBottom();
     }
-  };
+  });
 })();
 </script>
 
-<!-- PAGE FADE -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".fade").forEach(e => e.classList.add("show"));
+  document.querySelectorAll(".fade-page").forEach((el) => {
+    el.classList.add("show");
+  });
 });
 </script>
 

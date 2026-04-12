@@ -1,28 +1,48 @@
 # =============================================
-# 📦 app/models/__init__.py
+# app/models/__init__.py
 # Tập hợp tất cả model để SQLAlchemy load đúng thứ tự
 # =============================================
 
-# === Core & Academic (Nền tảng) ===
+# === Misc / Existing ===
+from .question_bank_option import QuestionBankOption
+from .course_material_version import CourseMaterialVersion
+
+
+from .wallet_accounts import WalletAccount
+from .wallet_transactions import WalletTransaction
+
+# === Core & Academic ===
 from .academic_year import AcademicYear
 from .major import Major
 from .classes import Class
-from .enrollment import Enrollment
+from .class_enrollment import ClassEnrollment
+from .course_enrollment import CourseEnrollment
 from .user import User
-from .system_settings import SystemSetting        # ⭐ THÊM
+from .user_profile import UserProfile
+from .student_profile import StudentProfile
+from .teacher_profiles import TeacherProfile
+from .system_settings import SystemSetting
+from .security_setting import SecuritySettings
+from .class_schedule import ClassSchedule
 
-# === Course System (Khóa học) ===
+# === RBAC / Security Extension ===
+from .rbac import Role, Permission, user_roles, role_permissions
+
+# === Course System ===
 from .course_category import CourseCategory
 from .course import Course
-from .course_section import CourseSection        # ⭐ THÊM CHUẨN
+from .course_section import CourseSection
 from .module import Module
 from .lesson import Lesson
 from .lesson_progress import LessonProgress
-from .lesson_note import LessonNote              # ⭐ THÊM
+from .lesson_note import LessonNote
+from .course_progress import CourseProgress
+from .learning_activity_log import LearningActivityLog
 from .course_material import CourseMaterial
 from .course_review import CourseReview
+from .certificate import Certificate
 
-# === Quiz & Question System (Trắc nghiệm) ===
+# === Quiz & Question System ===
 from .quiz import Quiz
 from .quiz_attempt import QuizAttempt
 from .question import Question
@@ -31,27 +51,26 @@ from .question_bank import QuestionBank
 from .quiz_template import QuizTemplate
 from .attempt_answer import AttemptAnswer
 
-# === Assignment System (Bài tập) ===
+# === Assignment System ===
 from .assignment import Assignment
 from .assignment_submission import AssignmentSubmission
 from .assignment_group import AssignmentGroup
 from .assignment_file import AssignmentFile
 
-# === E-Commerce System (Thanh toán / giỏ hàng / khóa học mua) ===
+# === E-Commerce System ===
 from .cart_item import CartItem
 from .order import Order
 from .order_item import OrderItem
 from .user_course import UserCourse
 
-# === Messaging & Notification (Tin nhắn & thông báo) ===
-from .message import Message                     # ⭐ THÊM
+# === Messaging & Notification ===
+from .message import Message
 from .notification import Notification
 from .discussion import Discussion
-   # ⭐ THÊM
 from .discussion_like import DiscussionLike
 
-# === AI System (Chat AI) ===
-from .ai_chat_history import AIChatHistory       # ⭐ THÊM
+# === AI System ===
+from .ai_chat_history import AIChatHistory
 
 # === File storage & CDN ===
 from .file_storage import FileStorage
@@ -67,7 +86,3 @@ from .api_rate_limit import ApiRateLimit
 from .backup_history import BackupHistory
 from .backup_schedule import BackupSchedule
 from .database_health_log import DatabaseHealthLog
-
-# === Security ===
-from .security_setting import SecuritySettings
-from .class_schedule import ClassSchedule

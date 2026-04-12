@@ -1,52 +1,83 @@
-from fastapi import APIRouter, Request, Form, Depends, HTTPException
+from typing import Optional
+from datetime import datetime
+import logging
+from urllib.parse import quote
+
+from fastapi import APIRouter, Request, Form, Depends, HTTPException, status, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from datetime import datetime
-import traceback
 
-# 🔹 Import DB & Service
 from app.database.connection import get_db
 from app.services.admin import academic_year_service
-from app.models.user import User
 from app.models.academic_year import AcademicYear
-
-# 🔹 Import cấu hình template chung
 from app.config.template_config import get_template_by_path
 
-# =========================================================
-# 🚀 Router
-# =========================================================
+logger = logging.getLogger(__name__)
+
 router = APIRouter(
     prefix="/admin/academic_years",
     tags=["Admin - Academic Years Management"]
 )
 
+
+def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
+    tpl = get_template_by_path(request.url.path)
+    base_context = {
+        "request": request,
+        "current_year": datetime.now().year,
+    }
+    base_context.update(context)
+    return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
+
+
 # =========================================================
-# 📋 1️⃣ Danh sách năm học
+# 1) Danh sách năm học
 # =========================================================
 @router.get("/list", response_class=HTMLResponse)
-def list_academic_years(request: Request, db: Session = Depends(get_db)):
+def list_academic_years(
+    request: Request,
+    success: Optional[str] = Query(None),
+    error: Optional[str] = Query(None),
+    db: Session = Depends(get_db),
+):
     try:
-        tpl = get_template_by_path(request.url.path)
         years = academic_year_service.get_all_academic_years(db)
-        return tpl.TemplateResponse(
+        return render_template(
+            request,
             "academic_years/list.html",
-            {"request": request, "years": years, "current_year": datetime.now().year}
+            {
+                "years": years,
+                "success": success,
+                "error": error,
+            }
         )
+    except HTTPException:
+        raise
     except Exception:
-        print("\n❌ LỖI DANH SÁCH NĂM HỌC:\n", traceback.format_exc())
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+        logger.exception("Lỗi khi tải danh sách năm học")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Không thể tải danh sách năm học."
+        )
 
 
 # =========================================================
-# ➕ 2️⃣ Tạo năm học mới
+# 2) Tạo năm học mới
 # =========================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_form(request: Request):
-    tpl = get_template_by_path(request.url.path)
-    return tpl.TemplateResponse(
+    return render_template(
+        request,
         "academic_years/create.html",
-        {"request": request, "current_year": datetime.now().year}
+        {
+            "form_data": {
+                "year_code": "",
+                "year_name": "",
+                "start_year": "",
+                "end_year": "",
+                "is_active": True,
+            }
+        }
     )
 
 
@@ -57,39 +88,79 @@ def create_academic_year(
     year_name: str = Form(...),
     start_year: int = Form(...),
     end_year: int = Form(...),
-    is_active: bool = Form(False),
-    db: Session = Depends(get_db)
+    is_active: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
 ):
+    form_data = {
+        "year_code": year_code.strip(),
+        "year_name": year_name.strip(),
+        "start_year": start_year,
+        "end_year": end_year,
+        "is_active": is_active is not None,
+    }
+
     try:
         academic_year_service.create_academic_year(
-            db, year_code, year_name, start_year, end_year, is_active
+            db=db,
+            year_code=form_data["year_code"],
+            year_name=form_data["year_name"],
+            start_year=form_data["start_year"],
+            end_year=form_data["end_year"],
+            is_active=form_data["is_active"],
         )
-        return RedirectResponse(url="/admin/academic_years/list", status_code=303)
+        message = quote("Tạo năm học thành công.")
+        return RedirectResponse(
+            url=f"/admin/academic_years/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
     except ValueError as e:
-        tpl = get_template_by_path(request.url.path)
-        return tpl.TemplateResponse(
+        return render_template(
+            request,
             "academic_years/create.html",
-            {"request": request, "error": str(e), "current_year": datetime.now().year},
-            status_code=400
+            {
+                "error": str(e),
+                "form_data": form_data,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST
         )
+    except HTTPException:
+        raise
     except Exception:
-        print("\n❌ LỖI TẠO NĂM HỌC:\n", traceback.format_exc())
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+        logger.exception("Lỗi khi tạo năm học")
+        return render_template(
+            request,
+            "academic_years/create.html",
+            {
+                "error": "Đã xảy ra lỗi hệ thống khi tạo năm học.",
+                "form_data": form_data,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # =========================================================
-# ✏️ 3️⃣ Chỉnh sửa năm học
+# 3) Chỉnh sửa năm học
 # =========================================================
 @router.get("/edit/{year_id}", response_class=HTMLResponse)
 def edit_form(request: Request, year_id: str, db: Session = Depends(get_db)):
-    tpl = get_template_by_path(request.url.path)
-    year = academic_year_service.get_academic_year_by_id(db, year_id)
-    if not year:
-        raise HTTPException(status_code=404, detail="Không tìm thấy năm học.")
-    return tpl.TemplateResponse(
-        "academic_years/edit.html",
-        {"request": request, "year": year, "current_year": datetime.now().year}
-    )
+    try:
+        year = academic_year_service.get_academic_year_by_id(db, year_id)
+        if not year:
+            raise HTTPException(status_code=404, detail="Không tìm thấy năm học.")
+
+        return render_template(
+            request,
+            "academic_years/edit.html",
+            {"year": year}
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Lỗi khi tải form sửa năm học")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Không thể tải thông tin năm học."
+        )
 
 
 @router.post("/edit/{year_id}", response_class=HTMLResponse)
@@ -100,73 +171,120 @@ def update_academic_year(
     year_name: str = Form(...),
     start_year: int = Form(...),
     end_year: int = Form(...),
-    is_active: bool = Form(False),
-    db: Session = Depends(get_db)
+    is_active: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
 ):
+    form_data = {
+        "id": year_id,
+        "year_code": year_code.strip(),
+        "year_name": year_name.strip(),
+        "start_year": start_year,
+        "end_year": end_year,
+        "is_active": is_active is not None,
+    }
+
     try:
-        academic_year_service.update_academic_year(
-            db,
-            year_id,
-            {
-                "year_code": year_code,
-                "year_name": year_name,
-                "start_year": start_year,
-                "end_year": end_year,
-                "is_active": 1 if is_active else 0,
-            },
-        )
-        return RedirectResponse(url="/admin/academic_years/list", status_code=303)
-    except ValueError as e:
-        tpl = get_template_by_path(request.url.path)
         year = academic_year_service.get_academic_year_by_id(db, year_id)
-        return tpl.TemplateResponse(
+        if not year:
+            raise HTTPException(status_code=404, detail="Không tìm thấy năm học.")
+
+        academic_year_service.update_academic_year(
+            db=db,
+            year_id=year_id,
+            year_code=form_data["year_code"],
+            year_name=form_data["year_name"],
+            start_year=form_data["start_year"],
+            end_year=form_data["end_year"],
+            is_active=form_data["is_active"],
+        )
+
+        message = quote("Cập nhật năm học thành công.")
+        return RedirectResponse(
+            url=f"/admin/academic_years/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except ValueError as e:
+        return render_template(
+            request,
             "academic_years/edit.html",
             {
-                "request": request,
-                "year": year,
+                "year": form_data,
                 "error": str(e),
-                "current_year": datetime.now().year,
             },
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST
         )
+    except HTTPException:
+        raise
     except Exception:
-        print("\n❌ LỖI CẬP NHẬT NĂM HỌC:\n", traceback.format_exc())
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+        logger.exception("Lỗi khi cập nhật năm học")
+        return render_template(
+            request,
+            "academic_years/edit.html",
+            {
+                "year": form_data,
+                "error": "Đã xảy ra lỗi hệ thống khi cập nhật năm học.",
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 
 # =========================================================
-# 🗑️ 4️⃣ Xóa năm học
+# 4) Xóa năm học
 # =========================================================
-@router.get("/delete/{year_id}")
+@router.post("/delete/{year_id}")
 def delete_academic_year(year_id: str, db: Session = Depends(get_db)):
     try:
         result = academic_year_service.delete_academic_year(db, year_id)
         if not result:
             raise HTTPException(status_code=404, detail="Không tìm thấy năm học cần xóa.")
-        return RedirectResponse(url="/admin/academic_years/list", status_code=303)
+
+        message = quote("Xóa năm học thành công.")
+        return RedirectResponse(
+            url=f"/admin/academic_years/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except ValueError as e:
+        message = quote(str(e))
+        return RedirectResponse(
+            url=f"/admin/academic_years/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except HTTPException:
+        raise
     except Exception:
-        print("\n❌ LỖI XÓA NĂM HỌC:\n", traceback.format_exc())
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+        logger.exception("Lỗi khi xóa năm học")
+        message = quote("Không thể xóa năm học.")
+        return RedirectResponse(
+            url=f"/admin/academic_years/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
 
 # =========================================================
-# 👥 5️⃣ Xem danh sách sinh viên theo năm học
+# 5) Xem danh sách sinh viên theo năm học
 # =========================================================
 @router.get("/{year_id}/students", response_class=HTMLResponse)
 def students_by_year(request: Request, year_id: str, db: Session = Depends(get_db)):
     try:
-        tpl = get_template_by_path(request.url.path)
         year = db.query(AcademicYear).filter(AcademicYear.id == year_id).first()
         if not year:
             raise HTTPException(status_code=404, detail="Không tìm thấy năm học.")
-        students = db.query(User).filter(
-            User.academic_year_id == year_id,
-            User.role == "student"
-        ).all()
-        return tpl.TemplateResponse(
+
+        students = academic_year_service.get_students_by_academic_year(db, year_id)
+
+        return render_template(
+            request,
             "academic_years/students_by_year.html",
-            {"request": request, "year": year, "students": students, "current_year": datetime.now().year},
+            {
+                "year": year,
+                "students": students,
+            }
         )
+    except HTTPException:
+        raise
     except Exception:
-        print("\n❌ LỖI HIỂN THỊ SINH VIÊN THEO NĂM HỌC:\n", traceback.format_exc())
-        return HTMLResponse(f"<pre>{traceback.format_exc()}</pre>", status_code=500)
+        logger.exception("Lỗi khi hiển thị sinh viên theo năm học")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Không thể tải danh sách sinh viên."
+        )

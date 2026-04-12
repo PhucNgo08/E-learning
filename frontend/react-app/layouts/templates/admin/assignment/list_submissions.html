@@ -3,69 +3,72 @@
 
 {% block content %}
 <div class="container py-4">
-
-    <h2 class="mb-4">📄 Danh sách bài nộp — {{ assignment.title }}</h2>
-
-    <a href="/admin/assignment/list" class="btn btn-secondary mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="mb-0">📄 Danh sách bài nộp — {{ assignment.title }}</h2>
+    <div class="d-flex gap-2">
+      <a href="/admin/assignment/export_excel/{{ assignment.id }}" class="btn btn-success">
+        📤 Xuất Excel
+      </a>
+      <a href="/admin/assignment/list" class="btn btn-secondary">
         ⬅ Quay lại danh sách bài tập
-    </a>
+      </a>
+    </div>
+  </div>
 
-    <table class="table table-bordered table-striped align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Học sinh</th>
-                <th>Thời gian nộp</th>
-                <th>Trạng thái</th>
-                <th>Điểm</th>
-                <th style="width: 150px;">Hành động</th>
-            </tr>
-        </thead>
+  <table class="table table-bordered table-striped align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>Học sinh</th>
+        <th>Thời gian nộp</th>
+        <th>Trạng thái</th>
+        <th>Điểm</th>
+        <th style="width: 160px;">Hành động</th>
+      </tr>
+    </thead>
 
-        <tbody>
-        {% for sub in submissions %}
-            <tr>
-                <td>{{ sub.student.full_name }}</td>
+    <tbody>
+      {% for sub in submissions %}
+      <tr>
+        <td>
+          {{ sub.student.full_name if sub.student and sub.student.full_name
+             else (sub.student.user_profile.full_name if sub.student and sub.student.user_profile
+             else (sub.student.username if sub.student else "Không rõ")) }}
+        </td>
 
-                <td>{{ sub.submission_time.strftime("%d/%m/%Y %H:%M") }}</td>
+        <td>{{ sub.submission_time.strftime("%d/%m/%Y %H:%M") if sub.submission_time else "—" }}</td>
 
-                <td>
-                    {% if sub.status == "submitted" %}
-                        <span class="badge bg-primary">Đã nộp</span>
-                    {% elif sub.status == "graded" %}
-                        <span class="badge bg-success">Đã chấm</span>
-                    {% elif sub.status == "late" %}
-                        <span class="badge bg-warning text-dark">Nộp trễ</span>
-                    {% else %}
-                        <span class="badge bg-secondary">{{ sub.status }}</span>
-                    {% endif %}
-                </td>
+        <td>
+          {% if sub.status == "submitted" %}
+            <span class="badge bg-primary">Đã nộp</span>
+          {% elif sub.status == "graded" %}
+            <span class="badge bg-success">Đã chấm</span>
+          {% elif sub.status == "late" %}
+            <span class="badge bg-warning text-dark">Nộp trễ</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ sub.status or "Không rõ" }}</span>
+          {% endif %}
+        </td>
 
-                <td>
-                    {% if sub.grade %}
-                        <b>{{ sub.grade }}</b>
-                    {% else %}
-                        —
-                    {% endif %}
-                </td>
+        <td>
+          {% if sub.grade is not none %}
+            <b>{{ sub.grade }}</b>
+          {% else %}
+            —
+          {% endif %}
+        </td>
 
-                <td>
-                    {% if sub.status != "graded" %}
-                    <a href="/admin/assignment/grade/{{ sub.id }}" class="btn btn-primary btn-sm">
-                        ✏ Chấm bài
-                    </a>
-                    {% else %}
-                    <span class="badge bg-success">✔ Đã chấm</span>
-                    {% endif %}
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="5" class="text-center text-muted">
-                    Chưa có bài nộp nào.
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+        <td>
+          <a href="/admin/assignment/grade/{{ sub.id }}" class="btn btn-primary btn-sm">
+            {% if sub.status == "graded" %}✏ Sửa điểm{% else %}✏ Chấm bài{% endif %}
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="text-center text-muted">Chưa có bài nộp nào.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% endblock %}

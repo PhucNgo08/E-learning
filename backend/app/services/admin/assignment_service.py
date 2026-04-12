@@ -1,110 +1,97 @@
 """
 📘 Assignment Service (Admin)
 CRUD + Thống kê + Xuất Excel cho bài tập.
-✓ Hỗ trợ validate course_id, module_id, teacher_id
-✓ Không còn lỗi MySQL FOREIGN KEY (1452)
-✓ Tối ưu truy vấn và logic đúng chuẩn database mới
 """
 
-from sqlalchemy import case
-from sqlalchemy.orm import Session
-from sqlalchemy import func
-from fastapi import HTTPException
 from datetime import datetime
-import pandas as pd
 import uuid
 
-# Models
+import pandas as pd
+from fastapi import HTTPException
+from sqlalchemy import case, func
+from sqlalchemy.orm import Session
+
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
-from app.models.user import User
 from app.models.course import Course
 from app.models.module import Module
+from app.models.rbac import Role
+from app.models.user import User
+from app.models.user_profile import UserProfile
+
+
+def _validate_assignment_payload(
+    db: Session,
+    title: str,
+    course_id: str,
+    module_id: str | None = None,
+    teacher_id: str | None = None,
+):
+    title = (title or "").strip()
+    if not title:
+        raise HTTPException(status_code=400, detail="Tiêu đề bài tập không được để trống.")
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise HTTPException(status_code=400, detail="Khóa học không tồn tại.")
+
+    if module_id:
+        module = db.query(Module).filter(Module.id == module_id).first()
+        if not module:
+            raise HTTPException(status_code=400, detail="Module không tồn tại.")
+        if module.course_id != course_id:
+            raise HTTPException(status_code=400, detail="Module không thuộc khóa học đã chọn.")
+
+    if teacher_id:
+        teacher = (
+            db.query(User)
+            .join(User.roles)
+            .filter(
+                User.id == teacher_id,
+                Role.role_code.in_(["teacher", "admin"]),
+            )
+            .first()
+        )
+        if not teacher:
+            raise HTTPException(status_code=400, detail="Giảng viên phụ trách không hợp lệ.")
+
+    return title, course
 
 
 # =====================================================
-# 🧩 1️⃣ Lấy danh sách & chi tiết
+# 1) Danh sách & chi tiết
 # =====================================================
 def get_all(db: Session):
-    """Admin xem toàn bộ bài tập"""
-    return (
-        db.query(Assignment)
-        .order_by(Assignment.created_at.desc())
-        .all()
-    )
+    return db.query(Assignment).order_by(Assignment.created_at.desc()).all()
 
 
 def get_by_id(db: Session, assignment_id: str):
-    """Lấy thông tin chi tiết 1 bài tập"""
     return db.query(Assignment).filter(Assignment.id == assignment_id).first()
 
 
 # =====================================================
-# ➕ 2️⃣ Tạo bài tập mới
+# 2) Tạo bài tập
 # =====================================================
 def create_assignment(
     db: Session,
     title: str,
-    description: str,
+    description: str | None,
     course_id: str,
-    due_date: datetime = None,
-    teacher_id: str = None,
-    module_id: str = None
+    due_date: datetime | None = None,
+    teacher_id: str | None = None,
+    module_id: str | None = None,
 ):
-    """
-    Admin tạo bài tập mới.
-    Validate đầy đủ:
-      - course_id phải tồn tại
-      - module_id phải thuộc đúng course_id (nếu có)
-      - teacher_id phải tồn tại (nếu có)
-    """
+    title, _course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
 
-    # -------------------------------
-    # 1️⃣ Validate course_id
-    # -------------------------------
-    course = db.query(Course).filter(Course.id == course_id).first()
-    if not course:
-        raise HTTPException(status_code=400, detail="❌ Course ID không tồn tại!")
-
-    # -------------------------------
-    # 2️⃣ Validate module_id (optional)
-    # -------------------------------
-    if module_id:
-        module = db.query(Module).filter(Module.id == module_id).first()
-        if not module:
-            raise HTTPException(status_code=400, detail="❌ Module ID không tồn tại!")
-        if module.course_id != course_id:
-            raise HTTPException(
-                status_code=400,
-                detail="❌ Module không thuộc khóa học bạn đã chọn!"
-            )
-
-    # -------------------------------
-    # 3️⃣ Validate teacher_id (optional)
-    # -------------------------------
-    if teacher_id:
-        teacher = db.query(User).filter(
-            User.id == teacher_id,
-            User.role.in_(["teacher", "admin"])
-        ).first()
-
-        if not teacher:
-            raise HTTPException(status_code=400, detail="❌ Teacher ID không hợp lệ!")
-
-    # -------------------------------
-    # 4️⃣ Tạo Assignment
-    # -------------------------------
     new_assignment = Assignment(
         id=str(uuid.uuid4()),
-        title=title.strip(),
-        description=description.strip() if description else None,
+        title=title,
+        description=(description or "").strip() or None,
         course_id=course_id,
-        module_id=module_id,
-        teacher_id=teacher_id,
+        module_id=module_id or None,
+        teacher_id=teacher_id or None,
         start_date=datetime.utcnow(),
         due_date=due_date,
-
-        # DB defaults
         submission_type="individual",
         allowed_file_types="pdf,docx,zip",
         max_files=5,
@@ -112,7 +99,6 @@ def create_assignment(
         total_points=10,
         allow_late_submission=0,
         late_penalty_percent=0,
-
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
     )
@@ -121,101 +107,94 @@ def create_assignment(
         db.add(new_assignment)
         db.commit()
         db.refresh(new_assignment)
-        print(f"✅ [Admin] Đã tạo bài tập: {title}")
         return new_assignment
-
-    except Exception as e:
+    except Exception:
         db.rollback()
-        print(f"❌ [Admin] Lỗi khi tạo bài tập: {e}")
-        raise HTTPException(status_code=500, detail="Lỗi khi tạo bài tập!")
+        raise HTTPException(status_code=500, detail="Lỗi khi tạo bài tập.")
 
 
 # =====================================================
-# ✏️ 3️⃣ Cập nhật bài tập
+# 3) Cập nhật bài tập
 # =====================================================
-def update_assignment(db: Session, assignment_id: str, title: str, description: str):
-    """Cập nhật thông tin bài tập"""
+def update_assignment(
+    db: Session,
+    assignment_id: str,
+    title: str,
+    description: str | None,
+    course_id: str,
+    due_date: datetime | None = None,
+    teacher_id: str | None = None,
+    module_id: str | None = None,
+):
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
     if not assignment:
-        raise HTTPException(status_code=404, detail="Bài tập không tồn tại!")
+        raise HTTPException(status_code=404, detail="Bài tập không tồn tại.")
 
-    assignment.title = title.strip()
-    assignment.description = description.strip() if description else None
+    title, _course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
+
+    assignment.title = title
+    assignment.description = (description or "").strip() or None
+    assignment.course_id = course_id
+    assignment.module_id = module_id or None
+    assignment.teacher_id = teacher_id or None
+    assignment.due_date = due_date
     assignment.updated_at = datetime.utcnow()
 
-    db.commit()
-    db.refresh(assignment)
-    print(f"✏️ [Admin] Đã cập nhật bài tập: {assignment.title}")
-    return assignment
+    try:
+        db.commit()
+        db.refresh(assignment)
+        return assignment
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Lỗi khi cập nhật bài tập.")
 
 
 # =====================================================
-# 🗑️ 4️⃣ Xóa bài tập
+# 4) Xóa bài tập
 # =====================================================
 def delete_assignment(db: Session, assignment_id: str):
-    """Admin xóa bài tập bất kỳ"""
     assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
     if not assignment:
         return False
 
-    db.delete(assignment)
-    db.commit()
-
-    print(f"🗑️ [Admin] Đã xóa bài tập: {assignment.title}")
-    return True
-
-
-# =====================================================
-# 📊 5️⃣ Thống kê tổng quan
-# =====================================================
-def get_statistics(db: Session):
-    """Thống kê tổng quan bài tập"""
-    total_assignments = db.query(Assignment).count()
-    total_submissions = db.query(AssignmentSubmission).count()
-    graded = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.status == "graded"
-    ).count()
-
-    return {
-        "total_assignments": total_assignments,
-        "total_submissions": total_submissions,
-        "graded": graded
-    }
+    try:
+        db.delete(assignment)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Lỗi khi xóa bài tập.")
 
 
 # =====================================================
-# 📈 6️⃣ Thống kê theo khóa học
+# 5) Thống kê theo khóa học
 # =====================================================
 def get_assignment_analytics(db: Session, course_id: str):
-    """Thống kê bài tập theo khóa học"""
-
-    total_assignments = db.query(Assignment).filter(
-        Assignment.course_id == course_id
-    ).count()
+    total_assignments = db.query(Assignment).filter(Assignment.course_id == course_id).count()
 
     total_submitted = (
         db.query(AssignmentSubmission)
-        .join(Assignment)
+        .join(Assignment, AssignmentSubmission.assignment_id == Assignment.id)
         .filter(Assignment.course_id == course_id)
         .count()
     )
 
     graded = (
         db.query(AssignmentSubmission)
-        .join(Assignment)
+        .join(Assignment, AssignmentSubmission.assignment_id == Assignment.id)
         .filter(
             Assignment.course_id == course_id,
-            AssignmentSubmission.status == "graded"
+            AssignmentSubmission.status == "graded",
         )
         .count()
     )
 
     late = (
         db.query(AssignmentSubmission)
-        .join(Assignment)
+        .join(Assignment, AssignmentSubmission.assignment_id == Assignment.id)
         .filter(
             Assignment.course_id == course_id,
-            AssignmentSubmission.status == "late"
+            AssignmentSubmission.status == "late",
         )
         .count()
     )
@@ -229,85 +208,23 @@ def get_assignment_analytics(db: Session, course_id: str):
 
 
 # =====================================================
-# 📤 7️⃣ Xuất điểm ra Excel
-# =====================================================
-def export_assignment_scores_to_excel(db: Session, assignment_id: str, file_path: str):
-    """Xuất danh sách điểm bài tập ra Excel (.xlsx)"""
-
-    results = (
-        db.query(
-            User.full_name.label("Họ và tên"),
-            AssignmentSubmission.status.label("Trạng thái"),
-            AssignmentSubmission.grade.label("Điểm"),
-            AssignmentSubmission.submission_time.label("Thời gian nộp")
-        )
-        .join(AssignmentSubmission, AssignmentSubmission.student_id == User.id)
-        .filter(AssignmentSubmission.assignment_id == assignment_id)
-        .all()
-    )
-
-    df = pd.DataFrame(results) if results else pd.DataFrame(
-        columns=["Họ và tên", "Trạng thái", "Điểm", "Thời gian nộp"]
-    )
-
-    df.to_excel(file_path, index=False, sheet_name="Assignment Scores")
-    print(f"📤 Excel exported: {file_path}")
-    return file_path
-
-
-# =====================================================
-# 🧮 8️⃣ Thống kê chi tiết từng bài tập
-# =====================================================
-def get_detailed_analytics(db: Session, assignment_id: str):
-    """Thống kê chi tiết bài tập"""
-
-    total_submissions = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == assignment_id
-    ).count()
-
-    graded = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == assignment_id,
-        AssignmentSubmission.status == "graded"
-    ).count()
-
-    avg_grade = (
-        db.query(func.avg(AssignmentSubmission.grade))
-        .filter(
-            AssignmentSubmission.assignment_id == assignment_id,
-            AssignmentSubmission.grade.isnot(None)
-        )
-        .scalar()
-    )
-
-    late = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.assignment_id == assignment_id,
-        AssignmentSubmission.status == "late"
-    ).count()
-
-    return {
-        "total_submissions": total_submissions,
-        "graded": graded,
-        "avg_grade": round(avg_grade or 0, 2),
-        "late": late
-    }
-
-
-# =====================================================
-# 📊 9️⃣ Thống kê tổng hợp toàn hệ thống
+# 6) Dashboard thống kê tổng hợp
 # =====================================================
 def get_global_assignment_report(db: Session):
-    """Thống kê toàn hệ thống"""
-
     total_assignments = db.query(Assignment).count()
     total_submissions = db.query(AssignmentSubmission).count()
 
-    graded_submissions = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.status == "graded"
-    ).count()
+    graded_submissions = (
+        db.query(AssignmentSubmission)
+        .filter(AssignmentSubmission.status == "graded")
+        .count()
+    )
 
-    late_submissions = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.status == "late"
-    ).count()
+    late_submissions = (
+        db.query(AssignmentSubmission)
+        .filter(AssignmentSubmission.status == "late")
+        .count()
+    )
 
     avg_grade = (
         db.query(func.avg(AssignmentSubmission.grade))
@@ -320,36 +237,31 @@ def get_global_assignment_report(db: Session):
         "total_submissions": total_submissions,
         "graded_submissions": graded_submissions,
         "late_submissions": late_submissions,
-        "average_grade": round(avg_grade or 0, 2)
+        "average_grade": round(avg_grade or 0, 2),
     }
 
 
 # =====================================================
-# 🧑‍🏫 🔟 Thống kê theo giảng viên
+# 7) Thống kê theo giảng viên
 # =====================================================
 def get_teacher_assignment_stats(db: Session, teacher_id: str):
-    """Thống kê bài tập theo từng khóa học mà giảng viên phụ trách."""
-
     results = (
         db.query(
             Course.course_name.label("course_name"),
-            func.count(Assignment.id).label("total_assignments"),
-            func.count(AssignmentSubmission.id).label("total_submissions"),
+            func.count(func.distinct(Assignment.id)).label("total_assignments"),
+            func.count(func.distinct(AssignmentSubmission.id)).label("total_submissions"),
             func.avg(AssignmentSubmission.grade).label("average_grade"),
             func.sum(
-                case(
-                    (AssignmentSubmission.status == "late", 1),
-                    else_=0
-                )
+                case((AssignmentSubmission.status == "late", 1), else_=0)
             ).label("late_submissions"),
         )
         .join(Assignment, Assignment.course_id == Course.id)
         .outerjoin(
             AssignmentSubmission,
-            AssignmentSubmission.assignment_id == Assignment.id
+            AssignmentSubmission.assignment_id == Assignment.id,
         )
         .filter(Assignment.teacher_id == teacher_id)
-        .group_by(Course.id)
+        .group_by(Course.id, Course.course_name)
         .all()
     )
 
@@ -366,16 +278,13 @@ def get_teacher_assignment_stats(db: Session, teacher_id: str):
 
 
 # =====================================================
-# 🎓 1️⃣1️⃣ Thống kê cá nhân sinh viên
+# 8) Thống kê cá nhân sinh viên
 # =====================================================
 def get_student_assignment_summary(db: Session, student_id: str):
-    """Thống kê bài tập cá nhân cho sinh viên."""
-
     total_assigned = (
-        db.query(Assignment)
-        .join(AssignmentSubmission, AssignmentSubmission.assignment_id == Assignment.id)
+        db.query(func.count(func.distinct(AssignmentSubmission.assignment_id)))
         .filter(AssignmentSubmission.student_id == student_id)
-        .count()
+        .scalar()
     )
 
     total_submitted = (
@@ -388,7 +297,7 @@ def get_student_assignment_summary(db: Session, student_id: str):
         db.query(AssignmentSubmission)
         .filter(
             AssignmentSubmission.student_id == student_id,
-            AssignmentSubmission.status == "graded"
+            AssignmentSubmission.status == "graded",
         )
         .count()
     )
@@ -397,7 +306,7 @@ def get_student_assignment_summary(db: Session, student_id: str):
         db.query(AssignmentSubmission)
         .filter(
             AssignmentSubmission.student_id == student_id,
-            AssignmentSubmission.status == "late"
+            AssignmentSubmission.status == "late",
         )
         .count()
     )
@@ -406,7 +315,7 @@ def get_student_assignment_summary(db: Session, student_id: str):
         db.query(func.avg(AssignmentSubmission.grade))
         .filter(
             AssignmentSubmission.student_id == student_id,
-            AssignmentSubmission.grade.isnot(None)
+            AssignmentSubmission.grade.isnot(None),
         )
         .scalar()
     )
@@ -416,42 +325,74 @@ def get_student_assignment_summary(db: Session, student_id: str):
         "total_submitted": total_submitted or 0,
         "graded": graded or 0,
         "late": late or 0,
-        "avg_grade": round(avg_grade or 0, 2)
+        "avg_grade": round(avg_grade or 0, 2),
     }
+
+
 # =====================================================
-# 📝 1️⃣2️⃣ Chấm bài (Grade Submission)
+# 9) Xuất Excel
+# =====================================================
+def export_assignment_scores_to_excel(db: Session, assignment_id: str, file_path: str):
+    results = (
+        db.query(
+            func.coalesce(UserProfile.full_name, User.username).label("Họ và tên"),
+            AssignmentSubmission.status.label("Trạng thái"),
+            AssignmentSubmission.grade.label("Điểm"),
+            AssignmentSubmission.submission_time.label("Thời gian nộp"),
+        )
+        .select_from(AssignmentSubmission)
+        .join(User, AssignmentSubmission.student_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .filter(AssignmentSubmission.assignment_id == assignment_id)
+        .order_by(AssignmentSubmission.submission_time.asc())
+        .all()
+    )
+
+    df = pd.DataFrame(results) if results else pd.DataFrame(
+        columns=["Họ và tên", "Trạng thái", "Điểm", "Thời gian nộp"]
+    )
+
+    df.to_excel(file_path, index=False, sheet_name="Assignment Scores")
+    return file_path
+
+
+# =====================================================
+# 10) Chấm bài
 # =====================================================
 def grade_submission(
     db: Session,
     submission_id: str,
     grade: float,
     feedback: str,
-    teacher_id: str
+    teacher_id: str | None = None,
 ):
-    """Giảng viên/Admin chấm điểm bài nộp"""
-
-    submission = db.query(AssignmentSubmission).filter(
-        AssignmentSubmission.id == submission_id
-    ).first()
+    submission = (
+        db.query(AssignmentSubmission)
+        .filter(AssignmentSubmission.id == submission_id)
+        .first()
+    )
 
     if not submission:
-        raise HTTPException(status_code=404, detail="Submission không tồn tại!")
+        raise HTTPException(status_code=404, detail="Không tìm thấy bài nộp.")
 
-    # Cập nhật thông tin chấm điểm
+    if grade < 0:
+        raise HTTPException(status_code=400, detail="Điểm không được âm.")
+
     submission.grade = grade
-    submission.feedback = feedback
+    submission.feedback = (feedback or "").strip() or None
     submission.status = "graded"
-    submission.graded_by = teacher_id
     submission.graded_at = datetime.utcnow()
 
-    # Cập nhật thống kê cho giáo viên
-    teacher = db.query(User).filter(User.id == teacher_id).first()
-    if teacher:
-        teacher.total_assignments_graded += 1
+    if teacher_id:
+        teacher = db.query(User).filter(User.id == teacher_id).first()
+        submission.graded_by = teacher.id if teacher else None
+    else:
+        submission.graded_by = None
 
-    db.commit()
-    db.refresh(submission)
-
-    print(f"✔️ [GRADE] Teacher {teacher_id} graded submission {submission_id}")
-
-    return submission
+    try:
+        db.commit()
+        db.refresh(submission)
+        return submission
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Lỗi khi chấm bài.")

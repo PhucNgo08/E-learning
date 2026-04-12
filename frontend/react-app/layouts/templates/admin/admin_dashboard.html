@@ -3,29 +3,27 @@
 {% block title %}📊 Bảng điều khiển quản trị{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin_dashboard.css">
 
-  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin_dashboard.css">
+<style>
+  .fade-in-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.7s ease forwards;
+  }
 
-  <style>
-    /* Hiệu ứng fade-in nâng cấp */
-    .fade-in-up {
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.7s ease forwards;
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-  </style>
+  }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
 
-  <!-- ====================== HEADER ====================== -->
   <div class="dashboard-header text-center fade-in-up">
     <h2>👋 Xin chào, <span class="text-primary">{{ username or "Quản trị viên" }}</span>!</h2>
     <p class="text-muted">
@@ -34,10 +32,9 @@
     </p>
   </div>
 
-  <!-- ====================== QUICK BUTTONS ====================== -->
-  <div class="d-flex justify-content-center gap-3 flex-wrap mb-5 fade-in-up" style="animation-delay:0.15s">
+  <div class="d-flex justify-content-center gap-3 flex-wrap mb-5 fade-in-up" style="animation-delay: 0.15s;">
     <a href="/admin/file-storage/list" class="btn btn-outline-primary quick-btn px-4 py-2">
-      <i class="fa-solid fa-folder-open me-2"></i> Quản lý File
+      <i class="fa-solid fa-folder-open me-2"></i> Quản lý tệp
     </a>
     <a href="/admin/discussion/list" class="btn btn-outline-success quick-btn px-4 py-2">
       <i class="fa-solid fa-comments me-2"></i> Thảo luận
@@ -47,37 +44,30 @@
     </a>
   </div>
 
-  <!-- ====================== ITEMS ====================== -->
   <div class="row g-4">
 
     {% set items = [
-      {"icon": "fa-user-shield", "color": "success", "bg": "bg-light-success", "title": "Tài khoản", "desc": "Quản lý người dùng & phân quyền.", "link": "/admin/Account/manage-users"},
-      {"icon": "fa-layer-group", "color": "info", "bg": "bg-light-info", "title": "Khoa / Viện", "desc": "Quản lý danh sách khoa.", "link": "/admin/CourseCategory/manage"},
-      {"icon": "fa-book-open", "color": "primary", "bg": "bg-light-primary", "title": "Khóa học", "desc": "Tổ chức nội dung giảng dạy.", "link": "/admin/Course/manage"},
-      {"icon": "fa-graduation-cap", "color": "danger", "bg": "bg-light-danger", "title": "Ngành học", "desc": "Quản lý các chuyên ngành.", "link": "/admin/majors/list"},
-      {"icon": "fa-chalkboard-user", "color": "info", "bg": "bg-light-info", "title": "Giảng viên", "desc": "Hồ sơ và phân công giảng viên.", "link": "/admin/teachers/list"},
+      {"icon": "fa-user-shield", "color": "success", "bg": "bg-light-success", "title": "Tài khoản", "desc": "Quản lý người dùng và phân quyền.", "link": "/admin/Account/manage-users"},
+      {"icon": "fa-layer-group", "color": "info", "bg": "bg-light-info", "title": "Khoa / Viện", "desc": "Quản lý danh sách khoa, viện.", "link": "/admin/CourseCategory/manage"},
+      {"icon": "fa-book-open", "color": "primary", "bg": "bg-light-primary", "title": "Khóa học", "desc": "Tổ chức và quản lý nội dung giảng dạy.", "link": "/admin/Course/manage"},
+      {"icon": "fa-graduation-cap", "color": "danger", "bg": "bg-light-danger", "title": "Ngành học", "desc": "Quản lý các chuyên ngành đào tạo.", "link": "/admin/majors/list"},
+      {"icon": "fa-chalkboard-user", "color": "info", "bg": "bg-light-info", "title": "Giảng viên", "desc": "Quản lý hồ sơ và phân công giảng viên.", "link": "/admin/teachers/list"},
       {"icon": "fa-calendar-days", "color": "secondary", "bg": "bg-light-secondary", "title": "Năm học", "desc": "Thiết lập niên khóa đào tạo.", "link": "/admin/academic_years/list"},
       {"icon": "fa-school", "color": "warning", "bg": "bg-light-warning", "title": "Lớp học", "desc": "Quản lý lớp hành chính.", "link": "/admin/Class/manage"},
       {"icon": "fa-clipboard-check", "color": "info", "bg": "bg-light-info", "title": "Ghi danh", "desc": "Duyệt đơn đăng ký học.", "link": "/admin/enrollments/manage"},
-      {"icon": "fa-file-pen", "color": "primary", "bg": "bg-light-primary", "title": "Kỳ thi", "desc": "Tổ chức thi & kiểm tra.", "link": "/admin/exams/manage"},
+      {"icon": "fa-file-pen", "color": "primary", "bg": "bg-light-primary", "title": "Kỳ thi", "desc": "Tổ chức thi và kiểm tra.", "link": "/admin/exams/manage"},
       {"icon": "fa-chart-pie", "color": "secondary", "bg": "bg-light-secondary", "title": "Báo cáo", "desc": "Thống kê dữ liệu hệ thống.", "link": "/admin/reports/manage"},
-      {"icon": "fa-list-check", "color": "primary", "bg": "bg-light-primary", "title": "Bài tập", "desc": "Quản lý bài tập & chấm điểm.", "link": "/admin/assignment/list"},
-      {"icon": "fa-cloud-arrow-up", "color": "success", "bg": "bg-light-success", "title": "Tài liệu", "desc": "Kho tài liệu học tập chung.", "link": "/admin/course-material/list"},
-      {"icon": "fa-brain", "color": "warning", "bg": "bg-light-warning", "title": "Mẫu Quiz", "desc": "Ngân hàng câu hỏi trắc nghiệm.", "link": "/admin/quiz-template/list"},
+      {"icon": "fa-list-check", "color": "primary", "bg": "bg-light-primary", "title": "Bài tập", "desc": "Quản lý bài tập và chấm điểm.", "link": "/admin/assignment/list"},
+      {"icon": "fa-cloud-arrow-up", "color": "success", "bg": "bg-light-success", "title": "Tài liệu", "desc": "Kho tài liệu học tập dùng chung.", "link": "/admin/course-material/list"},
+      {"icon": "fa-brain", "color": "warning", "bg": "bg-light-warning", "title": "Mẫu quiz", "desc": "Ngân hàng câu hỏi trắc nghiệm.", "link": "/admin/quiz-template/list"},
       {"icon": "fa-star", "color": "warning", "bg": "bg-light-warning", "title": "Đánh giá", "desc": "Phản hồi từ học viên.", "link": "/admin/reviews/manage"},
-      
-      {"icon": "fa-database", "color": "dark", "bg": "bg-light-dark", "title": "Sao lưu", "desc": "Backup dữ liệu an toàn.", "link": "/admin/backups/manage"},
-     
+      {"icon": "fa-database", "color": "dark", "bg": "bg-light-dark", "title": "Sao lưu", "desc": "Sao lưu dữ liệu an toàn.", "link": "/admin/backups/manage"}
     ] %}
 
     {% for item in items %}
-      <div class="col-md-4 col-sm-6 col-12 fade-in-upstyle="animation-delay: {{ (loop.index * 0.05) ~ 's' }}"
->
-
+      <div class="col-md-4 col-sm-6 col-12 fade-in-up" data-delay="{{ (loop.index * 0.05) ~ 's' }}">
         <div class="card h-100" data-tilt data-tilt-max="8" data-tilt-speed="450">
-
           <div class="card-body text-center">
-
             <div class="icon-box {{ item.bg }}">
               <i class="fa-solid {{ item.icon }}"></i>
             </div>
@@ -88,19 +78,20 @@
             <a href="{{ item.link }}" class="btn btn-sm btn-outline-{{ item.color }} w-100">
               Truy cập <i class="fa-solid fa-arrow-right ms-1"></i>
             </a>
-
           </div>
-
         </div>
-
       </div>
     {% endfor %}
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
-<!-- Thư viện Parallax Tilt (siêu nhẹ) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.7.2/vanilla-tilt.min.js"></script>
+
+<script>
+  document.querySelectorAll(".fade-in-up[data-delay]").forEach(function (el) {
+    el.style.animationDelay = el.dataset.delay;
+  });
+</script>
 {% endblock %}

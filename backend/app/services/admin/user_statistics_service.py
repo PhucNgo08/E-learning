@@ -6,7 +6,8 @@ Thống kê người dùng theo vai trò, trạng thái, và lần đăng nhập
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from app.models.user import User
-
+from app.models.user_profile import UserProfile
+from app.models.rbac import Role
 
 def get_user_statistics(db: Session):
     """Thống kê số lượng người dùng theo role, trạng thái và lần đăng nhập gần nhất."""
@@ -22,8 +23,9 @@ def get_user_statistics(db: Session):
     # =====================================================
     try:
         roles = (
-            db.query(User.role, func.count(User.id))
-            .group_by(User.role)
+            db.query(Role.role_code, func.count(User.id))
+            .join(User.roles)
+            .group_by(Role.role_code)
             .all()
         )
         stats["by_role"] = {r or "Không xác định": c for r, c in roles}
@@ -50,7 +52,8 @@ def get_user_statistics(db: Session):
     # =====================================================
     try:
         recent = (
-            db.query(User.full_name, User.last_login)
+            db.query(UserProfile.full_name, User.last_login)
+            .outerjoin(UserProfile, UserProfile.user_id == User.id)
             .filter(User.last_login.isnot(None))
             .order_by(User.last_login.desc())
             .limit(5)

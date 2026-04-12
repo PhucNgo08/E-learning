@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📚 Danh sách tất cả bài học</title>
 
-  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
 
@@ -46,10 +45,6 @@
     }
     .btn {
       border-radius: 8px;
-      transition: all 0.2s;
-    }
-    .btn:hover {
-      transform: translateY(-2px);
     }
     .stat-card {
       border-radius: 10px;
@@ -58,32 +53,22 @@
       padding: 20px;
       text-align: center;
     }
-    .stat-card h5 {
-      color: #666;
-      font-size: 15px;
-    }
-    .stat-card h3 {
-      font-weight: bold;
-      margin: 0;
-    }
   </style>
 </head>
 
 <body>
-  <!-- Navbar -->
   <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
     <div class="container-fluid">
       <a class="navbar-brand" href="/teacher/dashboard">
         <i class="bi bi-mortarboard"></i> Cổng Giáo viên
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto mb-2 mb-lg-0">
           <li class="nav-item"><a class="nav-link" href="/teacher/dashboard">🏠 Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link active" href="/teacher/lessons/list_all">📚 Bài học</a></li>
+          <li class="nav-item"><a class="nav-link active" href="/teacher/lessons/list-all">📚 Bài học</a></li>
           <li class="nav-item"><a class="nav-link" href="/teacher/courses/list">📘 Khóa học</a></li>
         </ul>
         <ul class="navbar-nav">
@@ -93,7 +78,6 @@
     </div>
   </nav>
 
-  <!-- Nội dung chính -->
   <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
       <div>
@@ -108,7 +92,6 @@
     </div>
 
     {% if lessons %}
-    <!-- Thống kê -->
     <div class="row mb-4">
       <div class="col-md-4">
         <div class="stat-card">
@@ -134,7 +117,6 @@
       </div>
     </div>
 
-    <!-- Bảng dữ liệu -->
     <div class="table-responsive shadow-sm rounded bg-white">
       <table class="table table-hover align-middle mb-0">
         <thead class="bg-light">
@@ -154,13 +136,17 @@
           <tr>
             <td>{{ loop.index }}</td>
             <td>{{ l.title or "(Không tiêu đề)" }}</td>
-            <td>{{ l.module.module_name if l.module else "—" }}</td>
+            <td>{{ l.module.title if l.module else "—" }}</td>
             <td>{{ l.module.course.course_name if l.module and l.module.course else "—" }}</td>
             <td>
               {% if l.content_type == 'video' %}
                 🎬 Video
               {% elif l.content_type == 'document' %}
                 📄 Tài liệu
+              {% elif l.content_type == 'quiz' %}
+                ❓ Quiz
+              {% elif l.content_type == 'mixed' %}
+                🧩 Hỗn hợp
               {% else %}
                 🧩 Khác
               {% endif %}
@@ -202,7 +188,6 @@
     <p>© 2025 E-Learning System | Trang quản lý bài học giáo viên</p>
   </footer>
 
-  <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

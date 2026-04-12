@@ -4,7 +4,6 @@
 {% block content %}
 <div class="container-fluid py-3">
 
-  <!-- 🌟 Header -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
     <div>
       <h3 class="fw-bold text-primary mb-0">
@@ -18,7 +17,6 @@
     </a>
   </div>
 
-  <!-- 📋 Table -->
   <div class="table-responsive shadow-sm rounded-4 overflow-hidden">
     <table class="table table-hover align-middle bg-white mb-0">
 
@@ -33,11 +31,11 @@
 
       <tbody>
         {% for item in courses %}
-        {% set level = item.course.difficulty_level|lower %}
+        {% set level = (item.course.difficulty_level or "beginner")|lower %}
+        {% set p = item.progress_percent or 0 %}
 
         <tr class="course-row">
 
-          <!-- 🎓 Tên khóa học -->
           <td data-label="Khóa học">
             <div class="fw-semibold course-title text-truncate" title="{{ item.course.course_name }}">
               <a href="/student/course/detail/{{ item.course.id }}" class="text-primary text-decoration-none">
@@ -46,11 +44,10 @@
               </a>
             </div>
 
-            <!-- Level badge -->
             <span class="badge 
-              {% if level == 'beginner' %} bg-success
-              {% elif level == 'intermediate' %} bg-warning text-dark
-              {% else %} bg-danger
+              {% if level == 'beginner' %}bg-success
+              {% elif level == 'intermediate' %}bg-warning text-dark
+              {% else %}bg-danger
               {% endif %} small mt-1">
               {{ item.course.difficulty_level | capitalize }}
             </span>
@@ -60,15 +57,12 @@
             </div>
           </td>
 
-          <!-- 👨‍🏫 Giảng viên -->
           <td data-label="Giảng viên">
             <i class="bi bi-person-badge"></i>
             {{ item.course.teacher.full_name if item.course.teacher else "—" }}
           </td>
 
-          <!-- 📈 Tiến độ -->
           <td data-label="Tiến độ" style="min-width:160px;">
-            {% set p = item.progress_percent or 0 %}
             <div class="progress progress-custom">
               <div class="progress-bar" data-width="{{ p }}"></div>
             </div>
@@ -78,9 +72,8 @@
             </div>
           </td>
 
-          <!-- ▶️ Hành động -->
           <td class="text-end" data-label="Hành động">
-            {% if item.progress_percent < 100 %}
+            {% if p < 100 %}
               <a class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
                  href="/student/course/progress/{{ item.course.id }}">
                 <i class="bi bi-play-circle"></i> Học tiếp
@@ -104,7 +97,6 @@
   </div>
 </div>
 
-<!-- 🎬 Progress animation -->
 <script>
   document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
     const percent = el.dataset.width || 0;
@@ -112,7 +104,6 @@
   });
 </script>
 
-<!-- 🎨 CSS -->
 <style>
   .course-row { transition: background 0.25s, transform 0.2s; }
   .course-row:hover { background: rgba(13,110,253,0.05); }
@@ -122,9 +113,26 @@
 
   @media (max-width: 768px) {
     .table thead { display: none; }
-    .table tbody tr { display: block; margin-bottom: 1rem; border-radius: 14px; background: #fff; padding: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .table tbody td { display: flex; justify-content: space-between; border: none !important; padding: 6px 0; }
-    .table tbody td::before { content: attr(data-label); font-weight: 600; color: #6c757d; }
+    .table tbody tr {
+      display: block;
+      margin-bottom: 1rem;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .table tbody td {
+      display: flex;
+      justify-content: space-between;
+      border: none !important;
+      padding: 6px 0;
+    }
+    .table tbody td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: #6c757d;
+      margin-right: 12px;
+    }
   }
 </style>
 {% endblock %}

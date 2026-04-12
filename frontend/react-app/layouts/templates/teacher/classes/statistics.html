@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>📊 Thống kê điểm lớp {{ class_info.class_name }}</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body {
       background: linear-gradient(180deg, #eef3ff, #f9fbff);
@@ -24,6 +21,8 @@
       padding: 1rem 1.5rem;
       border-radius: 12px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+      gap: 12px;
+      flex-wrap: wrap;
     }
     .page-header h3 {
       color: #003087;
@@ -49,16 +48,18 @@
 </head>
 <body class="p-4">
   <div class="container">
-
-    <!-- 🔹 Header -->
     <div class="page-header">
-      <h3><i class="bi bi-bar-chart-line"></i> Thống kê điểm lớp {{ class_info.class_name }}</h3>
+      <div>
+        <h3><i class="bi bi-bar-chart-line"></i> Thống kê điểm lớp {{ class_info.class_name }}</h3>
+        {% if teacher_name %}
+        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+        {% endif %}
+      </div>
       <a href="/teacher/classes/list" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
       </a>
     </div>
 
-    <!-- 🔹 Bảng thống kê -->
     <div class="card p-3">
       <div class="table-responsive">
         <table class="table table-striped align-middle text-center mb-0">
@@ -66,6 +67,7 @@
             <tr>
               <th>#</th>
               <th>Họ và tên</th>
+              <th>MSSV</th>
               <th>Quiz TB</th>
               <th>Assignment TB</th>
               <th>Điểm tổng hợp</th>
@@ -75,14 +77,15 @@
             {% for row in stats %}
             <tr>
               <td>{{ loop.index }}</td>
-              <td class="text-start">{{ row.student.full_name }}</td>
+              <td class="text-start">{{ row.full_name }}</td>
+              <td>{{ row.mssv or '-' }}</td>
               <td>{{ row.quiz_avg }}</td>
               <td>{{ row.assignment_avg }}</td>
               <td><strong>{{ row.total_score }}</strong></td>
             </tr>
             {% else %}
             <tr>
-              <td colspan="5" class="text-center text-muted py-4">
+              <td colspan="6" class="text-center text-muted py-4">
                 <i class="bi bi-emoji-frown"></i> Chưa có dữ liệu điểm cho lớp này.
               </td>
             </tr>
@@ -92,29 +95,29 @@
       </div>
     </div>
 
-    <!-- 🔹 Biểu đồ tổng hợp -->
     <div id="chartContainer">
       <canvas id="scoreChart" height="110"></canvas>
     </div>
-
   </div>
 
-  <!-- ✅ Script (không còn cảnh báo VSCode) -->
-  <script type="application/javascript">
-    // @ts-nocheck
-    const jsonString = `{{ {
-      "labels": stats | map(attribute='student.full_name') | list,
-      "quiz": stats | map(attribute='quiz_avg') | list,
-      "assign": stats | map(attribute='assignment_avg') | list,
-      "total": stats | map(attribute='total_score') | list
-    } | tojson | safe }}`;
+  <script id="chart-labels" type="application/json">
+    {{ chart_labels | tojson | safe }}
+  </script>
+  <script id="chart-quiz" type="application/json">
+    {{ chart_quiz | tojson | safe }}
+  </script>
+  <script id="chart-assign" type="application/json">
+    {{ chart_assign | tojson | safe }}
+  </script>
+  <script id="chart-total" type="application/json">
+    {{ chart_total | tojson | safe }}
+  </script>
 
-    const dataJson = JSON.parse(jsonString);
-
-    const labels = dataJson.labels;
-    const quizData = dataJson.quiz;
-    const assignData = dataJson.assign;
-    const totalData = dataJson.total;
+  <script>
+    const labels = JSON.parse(document.getElementById("chart-labels").textContent);
+    const quizData = JSON.parse(document.getElementById("chart-quiz").textContent);
+    const assignData = JSON.parse(document.getElementById("chart-assign").textContent);
+    const totalData = JSON.parse(document.getElementById("chart-total").textContent);
 
     new Chart(document.getElementById('scoreChart'), {
       type: 'bar',
@@ -147,6 +150,5 @@
       }
     });
   </script>
-
 </body>
 </html>

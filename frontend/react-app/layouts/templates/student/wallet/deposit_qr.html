@@ -13,18 +13,15 @@
             Chọn phương thức và quét mã để nạp tiền.
         </p>
 
-        <!-- TAB BUTTONS -->
         <div class="d-flex justify-content-center mb-4">
-            <button class="btn btn-primary me-2" id="bankTabBtn">🏦 Ngân hàng (VietQR)</button>
-            <button class="btn btn-outline-primary" id="momoTabBtn">💗 Ví MoMo</button>
+            <button type="button" class="btn btn-primary me-2" id="bankTabBtn">🏦 Ngân hàng (VietQR)</button>
+            <button type="button" class="btn btn-outline-primary" id="momoTabBtn">💗 Ví MoMo</button>
         </div>
 
-
-        <!-- BANK QR -->
         <div id="bank-section" class="tab-section">
 
             <div class="text-center mb-3">
-                <img src="{{ url_for('static', path='QR/bank-sacombank.png') }}"
+                <img src="{{ request.url_for('static', path='QR/bank-sacombank.png') }}"
                      alt="Sacombank QR"
                      class="shadow rounded"
                      style="max-width: 280px;">
@@ -52,13 +49,10 @@
 
         </div>
 
-
-
-        <!-- MOMO QR -->
         <div id="momo-section" class="tab-section" style="display:none;">
 
             <div class="text-center mb-3">
-                <img src="{{ url_for('static', path='QR/ma-qr.jpg') }}"
+                <img src="{{ request.url_for('static', path='QR/ma-qr.jpg') }}"
                      alt="MoMo QR"
                      class="shadow rounded"
                      style="max-width: 260px;">
@@ -86,7 +80,6 @@
 
         </div>
 
-        <!-- BACK -->
         <a href="/student/wallet/page" class="btn btn-outline-secondary w-100 py-2 fw-semibold mt-4">
             ← Quay về ví
         </a>
@@ -95,16 +88,17 @@
 
 </div>
 
+{% endblock %}
 
-<!-- TAB SWITCH JS -->
+{% block scripts %}
 <script>
+(() => {
     const bankBtn = document.getElementById("bankTabBtn");
     const momoBtn = document.getElementById("momoTabBtn");
-
     const bankSection = document.getElementById("bank-section");
     const momoSection = document.getElementById("momo-section");
 
-    bankBtn.onclick = () => {
+    bankBtn.addEventListener("click", () => {
         bankSection.style.display = "block";
         momoSection.style.display = "none";
 
@@ -112,9 +106,9 @@
         bankBtn.classList.remove("btn-outline-primary");
         momoBtn.classList.add("btn-outline-primary");
         momoBtn.classList.remove("btn-primary");
-    };
+    });
 
-    momoBtn.onclick = () => {
+    momoBtn.addEventListener("click", () => {
         bankSection.style.display = "none";
         momoSection.style.display = "block";
 
@@ -122,7 +116,7 @@
         momoBtn.classList.remove("btn-outline-primary");
         bankBtn.classList.add("btn-outline-primary");
         bankBtn.classList.remove("btn-primary");
-    };
+    });
+})();
 </script>
-
 {% endblock %}

@@ -10,87 +10,78 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from starlette import status
 
-# ✅ Import cấu hình & service
 from app.database.connection import get_db
 from app.config.template_config import get_template_by_path
 from app.dependencies.auth import get_current_teacher
 from app.services.teacher import message_service
 from app.models.user import User
 
-
-# ======================================================
-# 🚀 Cấu hình Router
-# ======================================================
 router = APIRouter(
     prefix="/teacher/message",
     tags=["Teacher - Message"]
 )
 
 
-# ======================================================
-# 🧭 0️⃣ Redirect gốc → /inbox
-# ======================================================
+def render_template(
+    request: Request,
+    template_name: str,
+    context: dict,
+    status_code: int = 200,
+):
+    templates = get_template_by_path(str(request.url.path))
+    base_context = {
+        "request": request,
+        "active_page": "message",
+    }
+    base_context.update(context)
+    return templates.TemplateResponse(template_name, base_context, status_code=status_code)
+
+
 @router.get("/", include_in_schema=False)
 def redirect_root():
-    """Chuyển hướng /teacher/message → /teacher/message/inbox"""
     return RedirectResponse("/teacher/message/inbox", status_code=303)
 
 
-# ======================================================
-# 📥 1️⃣ Hộp thư đến (Inbox)
-# ======================================================
 @router.get("/inbox", response_class=HTMLResponse)
 async def inbox(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị hộp thư đến của giáo viên"""
     teacher = current_teacher
     messages = message_service.get_inbox_messages(db, teacher.id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "message/inbox.html",
         {
-            "request": request,
             "teacher": teacher,
             "messages": messages,
-            "page_title": "📥 Hộp thư đến (Giáo viên)",
-            "active_page": "message",
+            "page_title": "📥 Hộp thư đến",
         },
     )
 
 
-# ======================================================
-# 📤 2️⃣ Hộp thư đã gửi (Sent)
-# ======================================================
 @router.get("/sent", response_class=HTMLResponse)
 async def sent_messages(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị hộp thư đã gửi"""
     teacher = current_teacher
     messages = message_service.get_sent_messages(db, teacher.id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "message/sent.html",
         {
-            "request": request,
             "teacher": teacher,
             "messages": messages,
-            "page_title": "📤 Tin nhắn đã gửi (Giáo viên)",
-            "active_page": "message",
+            "page_title": "📤 Thư đã gửi",
         },
     )
 
 
-# ======================================================
-# 📨 3️⃣ Xem chi tiết tin nhắn
-# ======================================================
 @router.get("/view/{message_id}", response_class=HTMLResponse)
 async def view_message(
     request: Request,
@@ -98,53 +89,41 @@ async def view_message(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Xem nội dung chi tiết tin nhắn"""
     teacher = current_teacher
-    message = message_service.get_message_detail(db, message_id)
+    message = message_service.get_message_detail_for_user(db, message_id, teacher.id)
 
     if not message:
         raise HTTPException(status_code=404, detail="Không tìm thấy tin nhắn.")
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "message/view_message.html",
         {
-            "request": request,
             "teacher": teacher,
             "message": message,
-            "page_title": "📨 Xem tin nhắn (Giáo viên)",
-            "active_page": "message",
+            "page_title": "📨 Chi tiết tin nhắn",
         },
     )
 
 
-# ======================================================
-# ✉️ 4️⃣ Soạn tin nhắn mới
-# ======================================================
 @router.get("/compose", response_class=HTMLResponse)
 async def compose_page(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Trang soạn tin nhắn mới"""
     teacher = current_teacher
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "message/compose_message.html",
         {
-            "request": request,
             "teacher": teacher,
             "page_title": "✉️ Soạn tin nhắn mới",
-            "active_page": "message",
         },
     )
 
 
-# ======================================================
-# 🚀 5️⃣ Gửi tin nhắn (POST) — hỗ trợ file đính kèm
-# ======================================================
 @router.post("/compose")
 async def send_message(
     request: Request,
@@ -154,7 +133,6 @@ async def send_message(
     content: str = Form(...),
     attachment: UploadFile | None = File(None),
 ):
-    """Gửi tin nhắn nội bộ (có thể đính kèm file)"""
     sender = current_teacher
 
     receiver = (
@@ -165,15 +143,19 @@ async def send_message(
     if not receiver:
         raise HTTPException(status_code=400, detail="Không tìm thấy người nhận trong hệ thống.")
 
-    message_service.send_message(
-        db,
+    result = message_service.send_message(
+        db=db,
         sender_id=sender.id,
         receiver_id=receiver.id,
         content=content,
         attachment=attachment,
     )
 
-    print(f"✅ [Teacher Message] {sender.id} ➜ {receiver.id} ({receiver.email})")
+    if not result or "error" in result:
+        raise HTTPException(
+            status_code=400,
+            detail=result["error"] if result and "error" in result else "Không thể gửi tin nhắn."
+        )
 
     return RedirectResponse(
         url="/teacher/message/sent",

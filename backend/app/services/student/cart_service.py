@@ -1,83 +1,97 @@
-"""
-=====================================================
-🛒 Service: Shopping Cart for Students (PREMIUM FIX 2025)
-- Ví điện tử tích hợp
-- Checkout an toàn với Decimal
-- Không dùng attribute final_price runtime (FIXED)
-=====================================================
-"""
+from __future__ import annotations
 
 import uuid
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
-from sqlalchemy.orm import Session
+
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.cart_item import CartItem
 from app.models.course import Course
-from app.models.user_course import UserCourse
-from app.models.enrollment import Enrollment
+from app.models.course_enrollment import CourseEnrollment
 from app.models.order import Order
 from app.models.order_item import OrderItem
+from app.services.common.course_access_service import has_course_access
+from app.services.wallet_service import get_balance, student_pay
 
-# Ví điện tử
-from app.services.wallet_service import (
-    get_balance,
-    student_pay
-)
+TWOPLACES = Decimal("0.01")
+SUPPORTED_PAYMENT_METHODS = {"wallet", "vnpay", "card"}
+COUPON_MAPPING = {
+    "GIAM50": Decimal("0.50"),
+    "GIAM20": Decimal("0.20"),
+    "GIAM10": Decimal("0.10"),
+}
+PAYMENT_LABELS = {
+    "wallet": "Ví nội bộ",
+    "vnpay": "VNPay",
+    "card": "Thẻ quốc tế",
+}
+ACTIVE_ENROLLMENT_STATUSES = {"approved", "active", "completed"}
+BLOCK_CART_ENROLLMENT_STATUSES = {"approved", "active", "applied", "completed"}
 
-# =====================================================
-# Helper Decimal
-# =====================================================
+
 def D(value) -> Decimal:
     if value is None:
-        return Decimal("0")
+        return Decimal("0.00")
     if isinstance(value, Decimal):
-        return value
-    return Decimal(str(value))
+        return value.quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
 
 
-# =====================================================
-# 0) Giá sau giảm giá (%)
-# =====================================================
+def as_vnd_number(value) -> float:
+    return float(D(value))
+
+
 def get_final_price(course: Course) -> Decimal:
-    price = D(course.price or 0)
-    discount = D(course.discount_percent or 0)
+    price = D(getattr(course, "price", 0) or 0)
+    discount = D(getattr(course, "discount_percent", 0) or 0)
 
     if discount > 0:
-        final_price = price * (Decimal("100") - discount) / Decimal("100")
-    else:
-        final_price = price
+        price = price * (Decimal("100") - discount) / Decimal("100")
 
-    return final_price.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return price.quantize(TWOPLACES, rounding=ROUND_HALF_UP)
 
 
-# =====================================================
-# 1) Kiểm tra user đã mua khóa học
-# =====================================================
+def get_payment_label(method: str) -> str:
+    return PAYMENT_LABELS.get((method or "").strip().lower(), "Thanh toán")
+
+
 def is_purchased(db: Session, user_id: str, course_id: str) -> bool:
-    return db.query(UserCourse).filter(
-        UserCourse.user_id == user_id,
-        UserCourse.course_id == course_id
-    ).first() is not None
+    """
+    Giữ nguyên tên hàm để tránh vỡ import cũ.
+    Ý nghĩa mới: user đã có quyền học khóa hay chưa.
+    """
+    return has_course_access(db, user_id, course_id)
 
 
-# =====================================================
-# 2) Lấy giỏ hàng
-# =====================================================
+def _get_existing_enrollment(db: Session, user_id: str, course_id: str):
+    return (
+        db.query(CourseEnrollment)
+        .filter(
+            CourseEnrollment.user_id == user_id,
+            CourseEnrollment.course_id == course_id,
+        )
+        .first()
+    )
+
+
 def get_cart(db: Session, user_id: str):
     items = (
         db.query(CartItem)
-        .join(Course, CartItem.course_id == Course.id)
+        .options(joinedload(CartItem.course))
         .filter(CartItem.user_id == user_id)
+        .order_by(CartItem.added_at.desc())
         .all()
     )
 
-    # Gắn final_price runtime để hiển thị UI
+    clean_items = []
     for item in items:
-        if item.course:
-            item.course.final_price = get_final_price(item.course)
+        if not item.course:
+            continue
+        item.course.final_price = get_final_price(item.course)
+        clean_items.append(item)
 
-    return items
+    return clean_items
 
 
 def get_cart_count(db: Session, user_id: str) -> int:
@@ -87,89 +101,104 @@ def get_cart_count(db: Session, user_id: str) -> int:
 def get_cart_total(db: Session, user_id: str) -> Decimal:
     items = get_cart(db, user_id)
     if not items:
-        return Decimal("0")
-    return sum((get_final_price(item.course) for item in items), Decimal("0"))
-
-
-# =====================================================
-# 3) Coupon
-# =====================================================
-def apply_coupon(total: Decimal, coupon_code: str) -> Decimal:
-    if not coupon_code:
-        return total
-
-    mapping = {
-        "GIAM50": Decimal("0.5"),
-        "GIAM20": Decimal("0.2"),
-        "GIAM10": Decimal("0.1"),
-    }
-
-    rate = mapping.get(coupon_code.upper().strip())
-    if not rate:
-        return total
-
-    discounted = total * (Decimal("1") - rate)
-    return discounted.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-
-# =====================================================
-# 4) Payment fee
-# =====================================================
-def get_payment_fee(amount: Decimal, method: str) -> Decimal:
-    if method == "vnpay":
-        return (amount * Decimal("0.02")).quantize(Decimal("0.01"))
-    if method == "card":
-        return (amount * Decimal("0.03")).quantize(Decimal("0.01"))
-    return Decimal("0")
-
-
-# =====================================================
-# 5) Add to cart
-# =====================================================
-def add_to_cart(db: Session, user_id: str, course_id: str):
-
-    if is_purchased(db, user_id, course_id):
-        return None
-
-    # Đã ghi danh → không thêm giỏ
-    enrolled = db.query(Enrollment).filter(
-        Enrollment.user_id == user_id,
-        Enrollment.course_id == course_id,
-        Enrollment.enrollment_status.in_(["approved", "active", "applied"]),
-    ).first()
-
-    if enrolled:
-        return None
-
-    exists = db.query(CartItem).filter(
-        CartItem.user_id == user_id,
-        CartItem.course_id == course_id
-    ).first()
-
-    if exists:
-        return exists
-
-    item = CartItem(
-        id=str(uuid.uuid4()),
-        user_id=user_id,
-        course_id=course_id
+        return Decimal("0.00")
+    return sum((D(item.course.final_price) for item in items), Decimal("0.00")).quantize(
+        TWOPLACES, rounding=ROUND_HALF_UP
     )
 
+
+def apply_coupon(total: Decimal, coupon_code: str | None):
+    total = D(total)
+    code = (coupon_code or "").strip().upper()
+    if not code:
+        return total, None, Decimal("0.00")
+
+    rate = COUPON_MAPPING.get(code)
+    if rate is None:
+        return total, None, Decimal("0.00")
+
+    discounted = (total * (Decimal("1") - rate)).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+    discount_amount = (total - discounted).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+    return discounted, code, discount_amount
+
+
+def get_payment_fee(amount: Decimal, method: str) -> Decimal:
+    amount = D(amount)
+    method = (method or "wallet").strip().lower()
+
+    if method == "vnpay":
+        return (amount * Decimal("0.02")).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+    if method == "card":
+        return (amount * Decimal("0.03")).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+    return Decimal("0.00")
+
+
+def build_checkout_summary(
+    db: Session,
+    user_id: str,
+    coupon_code: str | None = None,
+    payment_method: str = "wallet",
+):
+    payment_method = (payment_method or "wallet").strip().lower()
+    if payment_method not in SUPPORTED_PAYMENT_METHODS:
+        payment_method = "wallet"
+
+    items = get_cart(db, user_id)
+    subtotal = sum((D(item.course.final_price) for item in items), Decimal("0.00")).quantize(
+        TWOPLACES, rounding=ROUND_HALF_UP
+    )
+    discounted, valid_coupon, discount_amount = apply_coupon(subtotal, coupon_code)
+    fee = get_payment_fee(discounted, payment_method)
+    total_paid = (discounted + fee).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+
+    return {
+        "items": items,
+        "subtotal": subtotal,
+        "discounted": discounted,
+        "discount_amount": discount_amount,
+        "fee": fee,
+        "total_paid": total_paid,
+        "coupon_code": valid_coupon or (coupon_code or "").strip().upper() or "",
+        "valid_coupon": valid_coupon,
+        "payment_method": payment_method,
+        "payment_label": get_payment_label(payment_method),
+        "wallet_balance": D(get_balance(db, user_id)),
+    }
+
+
+def add_to_cart(db: Session, user_id: str, course_id: str):
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        return {"status": "error", "message": "Không tìm thấy khóa học."}
+
+    if has_course_access(db, user_id, course_id):
+        return {"status": "exists", "message": "Bạn đã sở hữu hoặc đã được ghi danh khóa học này."}
+
+    enrolled = _get_existing_enrollment(db, user_id, course_id)
+    if enrolled and enrolled.enrollment_status in BLOCK_CART_ENROLLMENT_STATUSES:
+        return {"status": "exists", "message": "Khóa học đã có trong danh sách học của bạn."}
+
+    exists = (
+        db.query(CartItem)
+        .filter(CartItem.user_id == user_id, CartItem.course_id == course_id)
+        .first()
+    )
+    if exists:
+        return {"status": "exists", "message": "Khóa học đã có trong giỏ hàng.", "item": exists}
+
+    item = CartItem(id=str(uuid.uuid4()), user_id=user_id, course_id=course_id)
     db.add(item)
     db.commit()
     db.refresh(item)
-    return item
+    return {"status": "success", "message": "Đã thêm vào giỏ hàng.", "item": item}
 
 
-# =====================================================
-# 6) Remove one item
-# =====================================================
 def remove_from_cart(db: Session, user_id: str, item_id: str) -> bool:
-    cart = db.query(CartItem).filter(
-        CartItem.id == item_id,
-        CartItem.user_id == user_id
-    ).first()
-
+    cart = (
+        db.query(CartItem)
+        .filter(CartItem.id == item_id, CartItem.user_id == user_id)
+        .first()
+    )
     if not cart:
         return False
 
@@ -178,116 +207,234 @@ def remove_from_cart(db: Session, user_id: str, item_id: str) -> bool:
     return True
 
 
-# =====================================================
-# 7) CHECKOUT (Wallet-integrated, Decimal-safe)
-# =====================================================
-def checkout(db: Session, user_id: str, coupon_code=None, payment_method="wallet"):
-
-    cart_items = get_cart(db, user_id)
-    if not cart_items:
-        return {"status": "empty", "message": "Giỏ hàng trống."}
-
-    # 1. Tính tiền
-    subtotal = get_cart_total(db, user_id)
-    discounted = apply_coupon(subtotal, coupon_code)
-    fee = get_payment_fee(discounted, payment_method)
-    total_paid = discounted + fee
-
-    # 2. Kiểm tra số dư ví
-    balance = D(get_balance(db, user_id))
-
-    if balance < total_paid:
-        raise Exception("❌ Số dư ví không đủ! Vui lòng nạp thêm tiền.")
-
-    # 3. Trừ tiền ví
-    student_pay(
-        db=db,
-        user_id=user_id,
-        amount=float(total_paid),
-        description=f"Thanh toán khóa học: {', '.join(i.course.course_name for i in cart_items)}"
-    )
-
-    # 4. Tạo Order
-    transaction_id = str(uuid.uuid4())
-
-    order = Order(
-        id=str(uuid.uuid4()),
-        user_id=user_id,
-        total_amount=total_paid,
-        status="paid",
-        payment_method=payment_method,
-        paid_at=datetime.utcnow(),
-    )
-    db.add(order)
-    db.flush()
-
-    purchased_list = []
-
-    # 5. Tạo OrderItem + Enrollment + Purchased
-    for item in cart_items:
-        course = item.course
-        cid = item.course_id
-
-        final_price = get_final_price(course)
-
-        db.add(OrderItem(
-            id=str(uuid.uuid4()),
-            order_id=order.id,
-            course_id=cid,
-            price=final_price,
-        ))
-
-        # Enrollment
-        enrolled = db.query(Enrollment).filter(
-            Enrollment.user_id == user_id,
-            Enrollment.course_id == cid
-        ).first()
-
-        if not enrolled:
-            db.add(Enrollment(
-                id=str(uuid.uuid4()),
-                user_id=user_id,
-                course_id=cid,
-                enrollment_status="approved",
-                applied_at=datetime.utcnow(),
-            ))
-
-        # Purchased
-        purchased = db.query(UserCourse).filter(
-            UserCourse.user_id == user_id,
-            UserCourse.course_id == cid
-        ).first()
-
-        if not purchased:
-            db.add(UserCourse(
-                id=str(uuid.uuid4()),
-                user_id=user_id,
-                course_id=cid,
-                purchased_at=datetime.utcnow(),
-            ))
-
-        purchased_list.append(course.course_name)
-
-        db.delete(item)
-
-    db.commit()
-
-    return {
-        "status": "success",
-        "transaction_id": transaction_id,
-        "order_id": order.id,
-        "subtotal": float(subtotal),
-        "discounted": float(discounted),
-        "fee": float(fee),
-        "total_paid": float(total_paid),
-        "purchased_courses": purchased_list,
-        "payment_method": payment_method,
-    }
-
-
-# =====================================================
-# 8) Clear cart
-# =====================================================
 def clear_cart(db: Session, user_id: str):
     db.query(CartItem).filter(CartItem.user_id == user_id).delete()
     db.commit()
+
+
+def _prepare_enrollment_data(course: Course, now: datetime):
+    enrollment_mode = (getattr(course, "enrollment_mode", "auto") or "auto").strip().lower()
+
+    if enrollment_mode == "approval":
+        return {
+            "enrollment_status": "applied",
+            "approved_at": None,
+            "enrolled_at": None,
+        }
+
+    return {
+        "enrollment_status": "active",
+        "approved_at": now,
+        "enrolled_at": now,
+    }
+
+
+def _grant_course_access(
+    db: Session,
+    user_id: str,
+    course: Course,
+    now: datetime,
+):
+    enrollment_data = _prepare_enrollment_data(course, now)
+    target_status = enrollment_data["enrollment_status"]
+
+    enrolled = _get_existing_enrollment(db, user_id, course.id)
+
+    if not enrolled:
+        db.add(
+            CourseEnrollment(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                course_id=course.id,
+                enrollment_status=target_status,
+                enrollment_source="purchase",
+                applied_at=now,
+                approved_at=enrollment_data["approved_at"],
+                enrolled_at=enrollment_data["enrolled_at"],
+            )
+        )
+
+        if (
+            target_status in ACTIVE_ENROLLMENT_STATUSES
+            and hasattr(course, "current_students")
+            and course.current_students is not None
+        ):
+            course.current_students = int(course.current_students or 0) + 1
+        return
+
+    old_status = (enrolled.enrollment_status or "").strip().lower()
+
+    enrolled.enrollment_source = "purchase"
+    if not getattr(enrolled, "applied_at", None):
+        enrolled.applied_at = now
+
+    if old_status not in BLOCK_CART_ENROLLMENT_STATUSES:
+        enrolled.enrollment_status = target_status
+        enrolled.approved_at = enrollment_data["approved_at"]
+        enrolled.enrolled_at = enrollment_data["enrolled_at"]
+
+    elif old_status == "applied":
+        if target_status == "active":
+            enrolled.enrollment_status = "active"
+            enrolled.approved_at = now
+            enrolled.enrolled_at = now
+
+    if (
+        old_status not in ACTIVE_ENROLLMENT_STATUSES
+        and (enrolled.enrollment_status or "").strip().lower() in ACTIVE_ENROLLMENT_STATUSES
+        and hasattr(course, "current_students")
+        and course.current_students is not None
+    ):
+        course.current_students = int(course.current_students or 0) + 1
+
+
+def checkout(
+    db: Session,
+    user_id: str,
+    coupon_code: str | None = None,
+    payment_method: str = "wallet",
+):
+    payment_method = (payment_method or "wallet").strip().lower()
+    if payment_method not in SUPPORTED_PAYMENT_METHODS:
+        return {"status": "error", "message": "Phương thức thanh toán không hợp lệ."}
+
+    summary = build_checkout_summary(
+        db=db,
+        user_id=user_id,
+        coupon_code=coupon_code,
+        payment_method=payment_method,
+    )
+    cart_items = summary["items"]
+
+    if not cart_items:
+        return {"status": "empty", "message": "Giỏ hàng trống."}
+
+    subtotal = D(summary["subtotal"])
+    discounted = D(summary["discounted"])
+    discount_amount = D(summary["discount_amount"])
+    fee = D(summary["fee"])
+    total_paid = D(summary["total_paid"])
+    valid_coupon = summary["valid_coupon"]
+    wallet_balance_before = D(summary["wallet_balance"])
+
+    if payment_method == "wallet" and wallet_balance_before < total_paid:
+        return {
+            "status": "error",
+            "message": "Số dư ví không đủ để thanh toán đơn hàng này.",
+            **summary,
+        }
+
+    try:
+        now = datetime.utcnow()
+
+        order = Order(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            total_amount=total_paid,
+            status="pending",
+            payment_method=payment_method,
+            paid_at=None,
+        )
+        db.add(order)
+        db.flush()
+
+        valid_cart_items = []
+        for item in cart_items:
+            course = item.course
+            if not course:
+                continue
+
+            if has_course_access(db, user_id, course.id):
+                db.delete(item)
+                continue
+
+            course_price = D(getattr(course, "price", 0) or 0)
+            final_course_price = get_final_price(course)
+            course_discount_percent = int(getattr(course, "discount_percent", 0) or 0)
+
+            db.add(
+                OrderItem(
+                    id=str(uuid.uuid4()),
+                    order_id=order.id,
+                    course_id=item.course_id,
+                    price=course_price,
+                    discount_percent=course_discount_percent,
+                    final_price=final_course_price,
+                )
+            )
+            valid_cart_items.append(item)
+
+        if not valid_cart_items:
+            db.rollback()
+            return {"status": "error", "message": "Không có khóa học hợp lệ trong giỏ hàng."}
+
+        if payment_method == "wallet":
+            tx = student_pay(
+                db=db,
+                user_id=user_id,
+                amount=float(total_paid),
+                description=f"Thanh toán đơn hàng {order.id}",
+                order_id=order.id,
+                auto_commit=False,
+            )
+
+            order.status = "paid"
+            order.paid_at = now
+
+            purchased_list: list[str] = []
+            for item in valid_cart_items:
+                course = item.course
+                _grant_course_access(db, user_id, course, now)
+                purchased_list.append(course.course_name)
+                db.delete(item)
+
+            db.commit()
+            db.refresh(order)
+
+            wallet_after = D(tx.balance_after)
+
+            return {
+                "status": "success",
+                "order_id": order.id,
+                "transaction_id": tx.id,
+                "subtotal": as_vnd_number(subtotal),
+                "discounted": as_vnd_number(discounted),
+                "discount_amount": as_vnd_number(discount_amount),
+                "fee": as_vnd_number(fee),
+                "total_paid": as_vnd_number(total_paid),
+                "coupon_code": valid_coupon or "",
+                "payment_method": payment_method,
+                "payment_label": get_payment_label(payment_method),
+                "wallet_before": as_vnd_number(wallet_balance_before),
+                "wallet_after": as_vnd_number(wallet_after),
+                "wallet_delta": as_vnd_number(total_paid),
+                "purchased_courses": purchased_list,
+                "demo_gateway": False,
+            }
+
+        db.commit()
+        db.refresh(order)
+
+        return {
+            "status": "pending_payment",
+            "order_id": order.id,
+            "transaction_id": None,
+            "subtotal": as_vnd_number(subtotal),
+            "discounted": as_vnd_number(discounted),
+            "discount_amount": as_vnd_number(discount_amount),
+            "fee": as_vnd_number(fee),
+            "total_paid": as_vnd_number(total_paid),
+            "coupon_code": valid_coupon or "",
+            "payment_method": payment_method,
+            "payment_label": get_payment_label(payment_method),
+            "wallet_before": as_vnd_number(wallet_balance_before),
+            "wallet_after": as_vnd_number(wallet_balance_before),
+            "wallet_delta": 0.0,
+            "purchased_courses": [],
+            "demo_gateway": True,
+            "message": "Đơn hàng đã được tạo và đang chờ thanh toán.",
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {"status": "error", "message": str(e), **summary}

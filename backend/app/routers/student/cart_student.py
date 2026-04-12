@@ -1,295 +1,284 @@
 """
 ==========================================================
-🛒 ROUTER: Student - Cart (PREMIUM 2025 - WALLET EDITION)
+🛒 ROUTER: Student - Cart (SYNC FIX 2026)
 ==========================================================
 """
+
+from __future__ import annotations
 
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-import uuid
-import traceback
 
 from app.database.connection import get_db
 from app.config.template_config import templates
-
 import app.services.student.cart_service as cart_service
-from app.services.wallet_service import get_balance  # ⭐ NEW
 
 
 router = APIRouter(
     prefix="/student/cart",
-    tags=["Student - Cart"]
+    tags=["Student - Cart"],
 )
 
+
+def get_current_student_id(request: Request) -> str | None:
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+    if not user_id or role != "student":
+        return None
+    return user_id
+
+
 # ======================================================
-# ⚡ BUY NOW (Add → Redirect Checkout)
+# ⚡ BUY NOW (clear cart -> add 1 item -> checkout page)
 # ======================================================
 @router.post("/buy-now/{course_id}")
 async def buy_now(
     request: Request,
     course_id: str,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login", status_code=302)
 
-    # Xóa giỏ → thêm 1 item duy nhất
     cart_service.clear_cart(db, user_id)
     cart_service.add_to_cart(db, user_id, course_id)
+    request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
 
-    request.session["cart_count"] = 1
-
-    return RedirectResponse("/student/cart/checkout", 303)
+    return RedirectResponse("/student/cart/checkout", status_code=303)
 
 
 # ======================================================
-# 🛒 Xem giỏ hàng
+# 🛒 View Cart
 # ======================================================
 @router.get("/", response_class=HTMLResponse)
 async def cart_page(
     request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
-
-    try:
-        items = cart_service.get_cart(db, user_id)
-
-        # Nếu giỏ trống
-        if not items:
-            request.session["cart_count"] = 0
-            return templates["student"].TemplateResponse(
-                "cart/cart_empty.html",
-                {
-                    "request": request,
-                    "page_title": "🛒 Giỏ hàng trống",
-                    "active_page": "courses",
-                },
-            )
-
-        subtotal = cart_service.get_cart_total(db, user_id)
-        request.session["cart_count"] = len(items)
-
-        return templates["student"].TemplateResponse(
-            "cart/cart.html",
-            {
-                "request": request,
-                "items": items,
-                "subtotal": subtotal,
-                "page_title": "🛒 Giỏ hàng của bạn",
-                "active_page": "courses",
-            },
-        )
-
-    except Exception as e:
-        print("❌ [Cart View] Lỗi:", e)
-        return HTMLResponse("Lỗi tải giỏ hàng.", status_code=500)
-
-
-# ======================================================
-# ➕ Thêm 1 khóa học vào giỏ
-# ======================================================
-@router.get("/add/{course_id}")
-async def cart_add(
-    request: Request,
-    course_id: str,
-    db: Session = Depends(get_db)
-):
-
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse("/auth/login", 302)
-
-    try:
-        cart_service.add_to_cart(db, user_id, course_id)
-        request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
-
-        return RedirectResponse("/student/cart", 303)
-
-    except Exception as e:
-        print("❌ [Cart Add] Lỗi:", e)
-        return RedirectResponse("/student/course", 303)
-
-
-# ======================================================
-# ❌ Xóa 1 item khỏi giỏ
-# ======================================================
-@router.get("/remove/{item_id}")
-async def cart_remove(
-    request: Request,
-    item_id: str,
-    db: Session = Depends(get_db)
-):
-
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse("/auth/login", 302)
-
-    cart_service.remove_from_cart(db, user_id, item_id)
-    request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
-
-    return RedirectResponse("/student/cart", 303)
-
-
-# ======================================================
-# 🧹 Xóa toàn bộ giỏ
-# ======================================================
-@router.get("/clear")
-async def cart_clear(
-    request: Request,
-    db: Session = Depends(get_db)
-):
-
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse("/auth/login", 302)
-
-    cart_service.clear_cart(db, user_id)
-    request.session["cart_count"] = 0
-
-    return RedirectResponse("/student/cart", 303)
-
-
-# ======================================================
-# 🧾 Trang thanh toán
-# ======================================================
-@router.get("/checkout", response_class=HTMLResponse)
-async def checkout_page(
-    request: Request,
-    error: str = None,
-    db: Session = Depends(get_db)
-):
-
-    user_id = request.session.get("user_id")
-    if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login", status_code=302)
 
     items = cart_service.get_cart(db, user_id)
-    if not items:
-        return RedirectResponse("/student/cart", 303)
-
     subtotal = cart_service.get_cart_total(db, user_id)
+    wallet_balance = cart_service.build_checkout_summary(db, user_id)["wallet_balance"]
+    request.session["cart_count"] = len(items)
 
     return templates["student"].TemplateResponse(
-        "cart/checkout.html",
+        "cart/cart.html",
         {
             "request": request,
             "items": items,
             "subtotal": subtotal,
-            "error": error,   # Hiển thị lỗi ví không đủ
-            "active_page": "courses",
+            "wallet_balance": wallet_balance,
+            "page_title": "🛒 Giỏ hàng của bạn",
+            "active_page": "cart",
         },
     )
 
 
 # ======================================================
-# 💳 TIẾN HÀNH THANH TOÁN (Wallet)
+# ➕ Add To Cart
+# ======================================================
+@router.get("/add/{course_id}")
+async def cart_add(
+    request: Request,
+    course_id: str,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    result = cart_service.add_to_cart(db, user_id, course_id)
+    request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
+    request.session["cart_notice"] = result.get("message") if isinstance(result, dict) else None
+
+    return RedirectResponse("/student/cart", status_code=303)
+
+
+# ======================================================
+# ❌ Remove One Item
+# ======================================================
+@router.get("/remove/{item_id}")
+async def cart_remove(
+    request: Request,
+    item_id: str,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    cart_service.remove_from_cart(db, user_id, item_id)
+    request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
+
+    return RedirectResponse("/student/cart", status_code=303)
+
+
+# ======================================================
+# 🧹 Clear Cart
+# ======================================================
+@router.get("/clear")
+async def cart_clear(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    cart_service.clear_cart(db, user_id)
+    request.session["cart_count"] = 0
+
+    return RedirectResponse("/student/cart", status_code=303)
+
+
+# ======================================================
+# 🧾 Checkout Page
+# ======================================================
+@router.get("/checkout", response_class=HTMLResponse)
+async def checkout_page(
+    request: Request,
+    coupon_code: str | None = None,
+    pay_method: str = "wallet",
+    error: str | None = None,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    summary = cart_service.build_checkout_summary(
+        db=db,
+        user_id=user_id,
+        coupon_code=coupon_code,
+        payment_method=pay_method,
+    )
+
+    if not summary["items"]:
+        return RedirectResponse("/student/cart", status_code=303)
+
+    return templates["student"].TemplateResponse(
+        "cart/checkout.html",
+        {
+            "request": request,
+            "items": summary["items"],
+            "subtotal": summary["subtotal"],
+            "discounted": summary["discounted"],
+            "discount_amount": summary["discount_amount"],
+            "fee": summary["fee"],
+            "total_paid": summary["total_paid"],
+            "coupon_code": summary["coupon_code"],
+            "valid_coupon": summary["valid_coupon"],
+            "wallet_balance": summary["wallet_balance"],
+            "pay_method": summary["payment_method"],
+            "payment_label": summary["payment_label"],
+            "error": error,
+            "active_page": "cart",
+        },
+    )
+
+
+# ======================================================
+# 💳 Confirm Checkout
 # ======================================================
 @router.post("/checkout")
 async def cart_checkout(
     request: Request,
-    coupon_code: str = Form(None),
-    pay_method: str = Form("wallet"),  # mặc định ví
-    db: Session = Depends(get_db)
+    coupon_code: str = Form(""),
+    pay_method: str = Form("wallet"),
+    db: Session = Depends(get_db),
 ):
-
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login", status_code=302)
 
-    try:
-        result = cart_service.checkout(
+    result = cart_service.checkout(
+        db=db,
+        user_id=user_id,
+        coupon_code=coupon_code,
+        payment_method=pay_method,
+    )
+
+    if result.get("status") == "empty":
+        request.session["cart_count"] = 0
+        return RedirectResponse("/student/cart", status_code=303)
+
+    if result.get("status") != "success":
+        summary = cart_service.build_checkout_summary(
             db=db,
             user_id=user_id,
             coupon_code=coupon_code,
-            payment_method=pay_method
+            payment_method=pay_method,
+        )
+        return templates["student"].TemplateResponse(
+            "cart/checkout.html",
+            {
+                "request": request,
+                "items": summary["items"],
+                "subtotal": summary["subtotal"],
+                "discounted": summary["discounted"],
+                "discount_amount": summary["discount_amount"],
+                "fee": summary["fee"],
+                "total_paid": summary["total_paid"],
+                "coupon_code": summary["coupon_code"],
+                "valid_coupon": summary["valid_coupon"],
+                "wallet_balance": summary["wallet_balance"],
+                "pay_method": summary["payment_method"],
+                "payment_label": summary["payment_label"],
+                "error": result.get("message", "Thanh toán thất bại."),
+                "active_page": "cart",
+            },
+            status_code=400,
         )
 
-        # 🧹 Clear giỏ
-        request.session["cart_count"] = 0  
+    request.session["cart_count"] = 0
+    request.session["last_checkout"] = result
 
-        # 💾 Lưu danh sách khóa học để hiển thị ở trang success
-        request.session["purchased_courses"] = result.get("purchased_courses", [])
-
-        return RedirectResponse(
-            f"/student/cart/checkout/success?"
-            f"subtotal={result['subtotal']}"
-            f"&discounted={result['discounted']}"
-            f"&fee={result['fee']}"
-            f"&total={result['total_paid']}"
-            f"&trans={result['transaction_id']}"
-            f"&order_id={result['order_id']}",
-            303,
-        )
-
-    except Exception as e:
-
-        # Lỗi ví không đủ tiền
-        if "không đủ" in str(e).lower():
-            return RedirectResponse(
-                f"/student/cart/checkout?error={str(e)}",
-                status_code=303
-            )
-
-        print("❌ [Checkout] Lỗi:", e)
-        return HTMLResponse(f"Lỗi thanh toán: {str(e)}", status_code=500)
+    return RedirectResponse("/student/cart/checkout/success", status_code=303)
 
 
 # ======================================================
-# 🎉 Payment Success Page (Wallet)
+# 🎉 Success Page
 # ======================================================
 @router.get("/checkout/success", response_class=HTMLResponse)
 async def checkout_success(
     request: Request,
-    subtotal: float = 0,
-    discounted: float = 0,
-    fee: float = 0,
-    total: float = 0,
-    trans: str = "",
-    order_id: str = "",
     db: Session = Depends(get_db),
 ):
-
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 302)
+        return RedirectResponse("/auth/login", status_code=302)
 
-    # 💰 Số dư sau giao dịch
-    wallet_after = get_balance(db, user_id)
+    result = request.session.get("last_checkout")
+    if not result:
+        return RedirectResponse("/student/cart", status_code=303)
 
-    # 💸 Tổng đã trừ từ ví (total đã là discounted + fee)
-    wallet_delta = float(total) if total else 0.0
-    wallet_before = wallet_after + wallet_delta
-
-    # 🎓 Khóa học đã kích hoạt từ session
-    purchased_courses = request.session.get("purchased_courses") or []
-    # Xóa cho sạch, tránh reuse
-    request.session["purchased_courses"] = []
+    request.session["last_checkout"] = None
 
     return templates["student"].TemplateResponse(
         "cart/payment_success.html",
         {
             "request": request,
-            "subtotal": subtotal,
-            "discounted": discounted,
-            "fee": fee,
-            "total": total,
-            "transaction_id": trans,
-            "order_id": order_id,
+            "subtotal": result.get("subtotal", 0),
+            "discounted": result.get("discounted", 0),
+            "discount_amount": result.get("discount_amount", 0),
+            "fee": result.get("fee", 0),
+            "total": result.get("total_paid", 0),
+            "transaction_id": result.get("transaction_id", ""),
+            "order_id": result.get("order_id", ""),
+            "payment_method": result.get("payment_method", "wallet"),
+            "payment_label": result.get("payment_label", "Thanh toán"),
+            "wallet_before": result.get("wallet_before", 0),
+            "wallet_after": result.get("wallet_after", 0),
+            "wallet_delta": result.get("wallet_delta", 0),
+            "coupon_code": result.get("coupon_code", ""),
+            "demo_gateway": result.get("demo_gateway", False),
+            "purchased_courses": result.get("purchased_courses", []),
             "page_title": "Thanh toán thành công",
-
-            # 💰 Info ví
-            "wallet_before": wallet_before,
-            "wallet_after": wallet_after,
-            "wallet_delta": wallet_delta,
-
-            "purchased_courses": purchased_courses,
-            "active_page": "courses",
+            "active_page": "cart",
         },
     )

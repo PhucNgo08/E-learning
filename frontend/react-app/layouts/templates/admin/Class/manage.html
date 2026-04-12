@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>📘 Quản lý lớp học</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -13,18 +11,16 @@
       background: #eef2f7;
       font-family: "Segoe UI", sans-serif;
     }
-
     .page-title {
       font-weight: 700;
       font-size: 1.9rem;
       color: #2b4eff;
     }
-
     .card {
       border-radius: 12px;
       overflow: hidden;
+      border: none;
     }
-
     .table thead th {
       background: #2b4eff !important;
       color: white;
@@ -33,38 +29,31 @@
       font-size: 0.78rem;
       letter-spacing: 0.5px;
     }
-
     .badge {
       font-size: 0.8rem;
       padding: 6px 10px;
     }
-
     .action-btns .btn {
       padding: 4px 8px !important;
     }
-
     .toolbar {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-
     .toolbar .btn {
       border-radius: 8px;
     }
-
     .table-hover tbody tr:hover {
       background-color: #f0f4ff !important;
     }
-
   </style>
 </head>
 
 <body>
-
   <div class="container py-5">
-
-    <!-- Page Title -->
     <div class="toolbar mb-4">
       <h2 class="page-title">
         <i class="bi bi-mortarboard-fill me-2"></i>Danh sách lớp học
@@ -75,11 +64,15 @@
       </a>
     </div>
 
+    {% if success %}
+      <div class="alert alert-success shadow-sm">{{ success }}</div>
+    {% endif %}
+    {% if error %}
+      <div class="alert alert-danger shadow-sm">{{ error }}</div>
+    {% endif %}
 
-    <!-- Table -->
     <div class="card shadow-sm">
       <div class="card-body p-0">
-
         <table class="table table-bordered table-hover align-middle mb-0">
           <thead class="text-center">
             <tr>
@@ -99,27 +92,19 @@
             {% for c in classes %}
             <tr>
               <td class="text-center">{{ loop.index }}</td>
-
               <td class="fw-semibold text-primary">{{ c.class_code }}</td>
-
               <td>{{ c.class_name }}</td>
-
-              <td>{{ c.major.major_name if c.major else "—" }}</td>
-
-              <td>{{ c.academic_year.year_name if c.academic_year else "—" }}</td>
-
+              <td>{{ c.major_name }}</td>
+              <td>{{ c.academic_year_name }}</td>
               <td>
-                {% if c.homeroom_teacher %}
-                  {{ c.homeroom_teacher.full_name }}
+                {% if c.teacher_name and c.teacher_name != "Chưa phân công" %}
+                  {{ c.teacher_name }}
                 {% else %}
                   <span class="text-muted fst-italic">Chưa phân công</span>
                 {% endif %}
               </td>
-
               <td class="text-center fw-semibold">
-                <span class="text-dark">
-                  {{ c.current_students }}/{{ c.max_students }}
-                </span>
+                <span class="text-dark">{{ c.current_students }}/{{ c.max_students }}</span>
               </td>
 
               <td class="text-center">
@@ -137,31 +122,25 @@
               </td>
 
               <td class="text-center action-btns">
-
-                <!-- STUDENT MANAGEMENT -->
                 <a href="/admin/Class/students/{{ c.id }}"
                    class="btn btn-sm btn-outline-success"
                    data-bs-toggle="tooltip" title="Quản lý sinh viên">
                   <i class="bi bi-people-fill"></i>
                 </a>
 
-                <!-- EDIT -->
                 <a href="/admin/Class/edit/{{ c.id }}"
                    class="btn btn-sm btn-outline-primary"
                    data-bs-toggle="tooltip" title="Chỉnh sửa">
                   <i class="bi bi-pencil-square"></i>
                 </a>
 
-                <!-- DELETE -->
                 <a href="/admin/Class/delete/{{ c.id }}"
                    class="btn btn-sm btn-outline-danger"
                    data-bs-toggle="tooltip" title="Xóa lớp">
                   <i class="bi bi-trash"></i>
                 </a>
-
               </td>
             </tr>
-
             {% else %}
             <tr>
               <td colspan="9" class="text-center text-muted py-4">
@@ -170,26 +149,20 @@
               </td>
             </tr>
             {% endfor %}
-
           </tbody>
         </table>
-
       </div>
     </div>
-
 
     <a href="/admin/dashboard" class="btn btn-secondary mt-4">
       <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
     </a>
-
   </div>
 
-  <!-- Tooltip -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
     [...tooltipTriggerList].forEach(el => new bootstrap.Tooltip(el));
   </script>
-
 </body>
 </html>

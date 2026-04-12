@@ -1,5 +1,4 @@
 {% extends "layout_student.html" %}
-
 {% block title %}⚙️ Cài đặt thông báo{% endblock %}
 
 {% block content %}
@@ -42,7 +41,6 @@
 
     <form method="post" action="/student/notifications/settings">
 
-      <!-- 1️⃣ Hệ thống -->
       <div class="mb-3">
         <div class="setting-group-title">📌 Thông báo hệ thống</div>
 
@@ -57,7 +55,6 @@
 
       <hr>
 
-      <!-- 2️⃣ Khóa học -->
       <div class="mb-3">
         <div class="setting-group-title">📚 Khóa học</div>
 
@@ -72,7 +69,6 @@
 
       <hr>
 
-      <!-- 3️⃣ Bài tập & Quiz -->
       <div class="mb-3">
         <div class="setting-group-title">📝 Bài tập & Đánh giá</div>
 
@@ -95,7 +91,6 @@
 
       <hr>
 
-      <!-- 4️⃣ Tin nhắn -->
       <div class="mb-3">
         <div class="setting-group-title">💬 Tin nhắn</div>
 
@@ -108,9 +103,8 @@
         </div>
       </div>
 
-      <!-- Nút Lưu -->
       <div class="text-end mt-4">
-        <button class="btn btn-primary px-4 fw-semibold">
+        <button class="btn btn-primary px-4 fw-semibold" type="submit">
           <i class="bi bi-check-circle"></i> Lưu cài đặt
         </button>
       </div>

@@ -3,39 +3,38 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from datetime import datetime
 
-# ==============================
-# 📦 Import nội bộ
-# ==============================
 from app.services import course_service
 from app.services.teacher import module_service
 from app.database.connection import get_db
 from app.dependencies.auth import get_current_teacher
 from app.config.template_config import get_template_by_path
 
-
-# ==============================
-# 🚀 Khởi tạo Router
-# ==============================
 router = APIRouter(
     prefix="/teacher/modules",
     tags=["Teacher - Modules Management"]
 )
 
 
-# =========================================================
-# 🧭 0️⃣ Redirect gốc → /list-all
-# =========================================================
+def render_template(
+    request: Request,
+    template_name: str,
+    context: dict,
+    status_code: int = 200,
+):
+    templates = get_template_by_path(str(request.url.path))
+    base_context = {
+        "request": request,
+    }
+    base_context.update(context)
+    return templates.TemplateResponse(template_name, base_context, status_code=status_code)
+
+
 @router.get("/", include_in_schema=False)
 def redirect_root():
-    """Truy cập /teacher/modules → /teacher/modules/list-all"""
     return RedirectResponse("/teacher/modules/list-all", status_code=303)
 
 
-# =========================================================
-# 📋 1️⃣ Danh sách module theo khóa học
-# =========================================================
 @router.get("/list/{course_id}", response_class=HTMLResponse)
 def module_list(
     course_id: str,
@@ -43,18 +42,16 @@ def module_list(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị danh sách module của một khóa học."""
     course = course_service.get_course_owned(db, current_teacher.id, course_id, role="teacher")
     if not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học hoặc bạn không có quyền truy cập.")
 
     modules = module_service.list_modules_by_course(db, course_id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "modules/list.html",
         {
-            "request": request,
             "teacher": current_teacher,
             "course": course,
             "modules": modules or [],
@@ -63,23 +60,18 @@ def module_list(
     )
 
 
-# =========================================================
-# 📚 2️⃣ Danh sách tất cả module của giáo viên
-# =========================================================
 @router.get("/list-all", response_class=HTMLResponse)
 def list_all_modules(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Liệt kê toàn bộ module thuộc các khóa học mà giáo viên sở hữu."""
     modules = module_service.list_all_modules_by_teacher(db, current_teacher.id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "modules/list_all.html",
         {
-            "request": request,
             "teacher": current_teacher,
             "modules": modules,
             "page_title": "📘 Tất cả module của bạn",
@@ -87,9 +79,6 @@ def list_all_modules(
     )
 
 
-# =========================================================
-# ➕ 3️⃣ Trang tạo module
-# =========================================================
 @router.get("/create/{course_id}", response_class=HTMLResponse)
 def page_create(
     course_id: str,
@@ -97,16 +86,14 @@ def page_create(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị form tạo module mới."""
     course = course_service.get_course_owned(db, current_teacher.id, course_id, role="teacher")
     if not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy khóa học hoặc bạn không có quyền truy cập.")
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "modules/create.html",
         {
-            "request": request,
             "teacher": current_teacher,
             "course": course,
             "page_title": f"➕ Thêm module cho {course.course_name}",
@@ -114,9 +101,6 @@ def page_create(
     )
 
 
-# =========================================================
-# 💾 4️⃣ Xử lý tạo module
-# =========================================================
 @router.post("/create/{course_id}")
 def create_module(
     course_id: str,
@@ -127,20 +111,16 @@ def create_module(
     description: str = Form(""),
     learning_objectives: str = Form(""),
 ):
-    """Xử lý tạo module mới."""
     result = module_service.create_module(
         db, current_teacher.id, course_id, module_number, title, description, learning_objectives
     )
 
-    if isinstance(result, dict) and "error" in result:
+    if "error" in result:
         raise HTTPException(status_code=400, detail=result["error"])
 
     return RedirectResponse(f"/teacher/modules/list/{course_id}", status_code=303)
 
 
-# =========================================================
-# ✏️ 5️⃣ Trang chỉnh sửa module
-# =========================================================
 @router.get("/edit/{module_id}", response_class=HTMLResponse)
 def page_edit(
     module_id: str,
@@ -148,16 +128,14 @@ def page_edit(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị form chỉnh sửa module."""
     module, course = module_service.get_module_owned_with_course(db, current_teacher.id, module_id)
     if not module or not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy module hoặc bạn không có quyền chỉnh sửa.")
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "modules/edit.html",
         {
-            "request": request,
             "teacher": current_teacher,
             "module": module,
             "course": course,
@@ -166,9 +144,6 @@ def page_edit(
     )
 
 
-# =========================================================
-# 💾 6️⃣ Xử lý cập nhật module
-# =========================================================
 @router.post("/edit/{module_id}")
 def edit_module(
     module_id: str,
@@ -179,19 +154,16 @@ def edit_module(
     description: str = Form(""),
     learning_objectives: str = Form(""),
 ):
-    """Cập nhật thông tin module."""
-    course_id = module_service.update_module(
+    result = module_service.update_module(
         db, current_teacher.id, module_id, module_number, title, description, learning_objectives
     )
-    if not course_id:
-        raise HTTPException(status_code=404, detail="Không tìm thấy module hoặc không có quyền cập nhật.")
 
-    return RedirectResponse(f"/teacher/modules/list/{course_id}", status_code=303)
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
+
+    return RedirectResponse(f"/teacher/modules/list/{result['course_id']}", status_code=303)
 
 
-# =========================================================
-# ❌ 7️⃣ Trang xác nhận xóa module
-# =========================================================
 @router.get("/delete/{module_id}", response_class=HTMLResponse)
 def page_delete(
     module_id: str,
@@ -199,16 +171,14 @@ def page_delete(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Trang xác nhận xóa module."""
     module, course = module_service.get_module_owned_with_course(db, current_teacher.id, module_id)
     if not module or not course:
         raise HTTPException(status_code=404, detail="Không tìm thấy module hoặc bạn không có quyền xóa.")
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "modules/delete.html",
         {
-            "request": request,
             "teacher": current_teacher,
             "module": module,
             "course": course,
@@ -224,50 +194,38 @@ def delete_module(
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
+    module, course = module_service.get_module_owned_with_course(db, current_teacher.id, module_id)
+    if not module or not course:
+        raise HTTPException(status_code=404, detail="Không tìm thấy module hoặc bạn không có quyền xóa.")
+
     result = module_service.delete_module(db, current_teacher.id, module_id)
 
-    # Lỗi khi không được phép xóa (module đã đăng)
-    if isinstance(result, dict) and "error" in result:
-        templates = get_template_by_path(str(request.url.path))
-        return templates.TemplateResponse(
+    if "error" in result:
+        return render_template(
+            request,
             "modules/delete.html",
             {
-                "request": request,
-                "module": module_service.get_module_owned_with_course(db, current_teacher.id, module_id)[0],
-                "course": module_service.get_module_owned_with_course(db, current_teacher.id, module_id)[1],
-                "error_msg": result["error"]
+                "teacher": current_teacher,
+                "module": module,
+                "course": course,
+                "error_msg": result["error"],
+                "page_title": f"🗑️ Xóa module: {module.title}",
             },
-            status_code=400
+            status_code=400,
         )
 
-    # Không tồn tại hoặc không có quyền
-    if not result:
-        templates = get_template_by_path(str(request.url.path))
-        return templates.TemplateResponse(
-            "modules/delete.html",
-            {
-                "request": request,
-                "error_msg": "Không tìm thấy module hoặc bạn không có quyền xóa."
-            },
-            status_code=404
-        )
+    return RedirectResponse(f"/teacher/modules/list/{result['course_id']}", status_code=303)
 
-    # Thành công
-    return RedirectResponse(f"/teacher/modules/list/{result}", status_code=303)
 
-# =========================================================
-# 📢 9️⃣ Đăng / Gỡ đăng module
-# =========================================================
-@router.get("/publish/{module_id}", response_class=RedirectResponse)
+@router.post("/publish/{module_id}")
 def publish_module(
     module_id: str,
     publish: bool = True,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Cập nhật trạng thái xuất bản module."""
     result = module_service.publish_module(db, current_teacher.id, module_id, publish)
-    if not result:
-        raise HTTPException(status_code=404, detail="Không thể cập nhật trạng thái module.")
+    if "error" in result:
+        raise HTTPException(status_code=400, detail=result["error"])
 
-    return RedirectResponse(f"/teacher/modules/list/{result.course_id}", status_code=303)
+    return RedirectResponse(f"/teacher/modules/list/{result['module'].course_id}", status_code=303)

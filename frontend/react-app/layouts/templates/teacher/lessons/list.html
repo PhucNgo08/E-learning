@@ -10,20 +10,26 @@
 
 <div class="container py-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold text-primary">📘 Danh sách bài học</h3>
+    <div>
+      <h3 class="fw-bold text-primary mb-1">📘 Danh sách bài học</h3>
+      <p class="text-muted mb-0">
+        Chương: {{ module.title }} | Khóa học: {{ course.course_name }}
+      </p>
+    </div>
+
     <a href="/teacher/dashboard" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left"></i> Quay lại
     </a>
   </div>
 
   <div class="text-end mb-3">
-    <a href="/teacher/lessons/create/{{ module_id }}" class="btn btn-primary">
+    <a href="/teacher/lessons/create/{{ module.id }}" class="btn btn-primary">
       <i class="bi bi-plus-circle"></i> Thêm bài học
     </a>
   </div>
 
   {% if lessons %}
-  <table class="table table-bordered align-middle shadow-sm">
+  <table class="table table-bordered align-middle shadow-sm bg-white">
     <thead class="table-primary">
       <tr>
         <th>#</th>
@@ -39,7 +45,7 @@
       <tr>
         <td>{{ loop.index }}</td>
         <td>{{ lesson.title }}</td>
-        <td>{{ lesson.content_type }}</td>
+        <td>{{ lesson.content_type or "—" }}</td>
         <td>
           {% if lesson.is_published %}
             <span class="badge bg-success">Đã xuất bản</span>
@@ -47,10 +53,14 @@
             <span class="badge bg-secondary">Bản nháp</span>
           {% endif %}
         </td>
-        <td>{{ lesson.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ lesson.created_at.strftime('%d/%m/%Y') if lesson.created_at else "—" }}</td>
         <td class="text-center">
-          <a href="/teacher/lessons/edit/{{ lesson.id }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil-square"></i></a>
-          <a href="/teacher/lessons/delete/{{ lesson.id }}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
+          <a href="/teacher/lessons/edit/{{ lesson.id }}" class="btn btn-sm btn-warning">
+            <i class="bi bi-pencil-square"></i>
+          </a>
+          <a href="/teacher/lessons/delete/{{ lesson.id }}" class="btn btn-sm btn-danger">
+            <i class="bi bi-trash"></i>
+          </a>
         </td>
       </tr>
       {% endfor %}

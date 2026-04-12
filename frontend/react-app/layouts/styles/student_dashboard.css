@@ -1,124 +1,157 @@
 /* =====================================================
-🎓 STUDENT DASHBOARD – Glass Neo 2025 (Full Upgrade)
+🎓 STUDENT DASHBOARD CSS – Premium + Fixed Stats
 ===================================================== */
 
-/* === Global Variables === */
-:root {
-  --bg: #f5f7fb;
-  --text: #1f2937;
-
-  --card-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.25);
-
-  --card-size: 140px;
-  --thumb-size: 65px;
-}
-
-/* === Dark Mode Support === */
-.dark-theme {
-  --bg: #0f172a;
-  --text: #e2e8f0;
-
-  --card-bg: rgba(30, 41, 59, 0.55);
-  --glass-border: rgba(148,163,184,0.2);
-}
-
-/* === Main Container === */
 .dashboard-container {
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding-bottom: 3rem;
-  transition: background 0.4s, color 0.4s;
+  padding: 1rem;
 }
 
 /* =====================================================
-✨ WELCOME CARD
+🚀 HERO
+===================================================== */
+.dashboard-hero {
+  margin-bottom: 1.1rem;
+}
+
+.dashboard-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.95rem;
+  font-weight: 800;
+  line-height: 1.2;
+  background: linear-gradient(90deg, #0d6efd, #6f42c1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.dashboard-subtitle {
+  margin-bottom: 0;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+}
+
+/* =====================================================
+👋 WELCOME
 ===================================================== */
 .welcome-card {
-  background: var(--card-bg);
-  border-radius: 18px;
-  padding: 1.8rem 2rem;
-  border: 1px solid var(--glass-border);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  margin-bottom: 1.25rem;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
 }
 
-.welcome-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    130deg,
-    rgba(255, 255, 255, 0.10),
-    rgba(59, 130, 246, 0.18)
-  );
-  opacity: 0;
-  transition: opacity 0.6s ease;
+.welcome-card h5 {
+  color: var(--text);
+  font-weight: 700;
 }
 
-.welcome-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12);
+.welcome-card p {
+  color: var(--text-muted);
 }
-
-.welcome-card:hover::before { opacity: 1; }
 
 /* =====================================================
-📊 STAT CARDS
+📌 SECTION
 ===================================================== */
-.stat-card {
-  position: relative;
-  border-radius: 18px;
-  color: #fff;
-  text-align: center;
-  height: 140px;
-  overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.22);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.14);
-  transition: transform 0.45s ease, box-shadow 0.45s ease;
-  backdrop-filter: blur(12px);
+.section-header {
+  margin-bottom: 0.85rem;
 }
 
-.stat-card::before {
+.section-title {
+  margin: 0;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+/* =====================================================
+📊 STATS – FIX CHỖ BỊ MẤT ICON / SỐ
+===================================================== */
+.stat-card {
+  min-height: 172px;
+  border-radius: 22px;
+  position: relative;
+  overflow: hidden;
+
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.25rem;
+
+  padding: 1.35rem 1rem !important;
+  text-align: center !important;
+  color: #ffffff !important;
+
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  transition: transform 0.28s ease, box-shadow 0.28s ease, filter 0.28s ease;
+}
+
+.stat-card::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background-size: 300% 300%;
-  animation: gradientFlow 7s ease infinite alternate;
-}
-
-@keyframes gradientFlow {
-  0% { background-position: 0% 40%; }
-  100% { background-position: 100% 60%; }
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent 48%);
+  pointer-events: none;
 }
 
 .stat-card:hover {
-  transform: translateY(-6px) scale(1.025);
-  box-shadow: 0 12px 26px rgba(0,0,0,0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.20);
+  filter: brightness(1.02);
 }
 
-.stat-card i { font-size: 2rem; }
-.stat-card h5 { font-size: 2rem; margin: .4rem 0; }
-.stat-card p { font-size: .95rem; opacity: .9; }
+/* Ép mọi phần tử trong stat card luôn nổi lên trên */
+.stat-card > * {
+  position: relative !important;
+  z-index: 2 !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
 
-/* Gradient Themes */
-.gradient-blue::before {
-  background: linear-gradient(120deg,#3b82f6,#2563eb,#60a5fa);
+/* Icon */
+.stat-card i {
+  font-size: 2rem !important;
+  line-height: 1 !important;
+  margin-bottom: 0.45rem !important;
+  color: #ffffff !important;
 }
-.gradient-green::before {
-  background: linear-gradient(120deg,#22c55e,#15803d,#4ade80);
+
+/* Số */
+.stat-card h5 {
+  margin: 0 0 0.3rem !important;
+  font-size: 2.05rem !important;
+  font-weight: 800 !important;
+  line-height: 1.15 !important;
+  color: #ffffff !important;
 }
-.gradient-gold::before {
-  background: linear-gradient(120deg,#fbbf24,#f59e0b,#d97706);
+
+/* Nhãn */
+.stat-card p {
+  margin: 0 !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  line-height: 1.35 !important;
+  color: rgba(255, 255, 255, 0.96) !important;
 }
-/* Missing earlier → Added now */
-.gradient-purple::before {
-  background: linear-gradient(120deg,#a855f7,#7e22ce,#c084fc);
+
+/* Gradient riêng */
+.gradient-blue {
+  background: linear-gradient(135deg, #2563eb, #60a5fa);
+}
+
+.gradient-green {
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+}
+
+.gradient-purple {
+  background: linear-gradient(135deg, #9333ea, #c084fc);
+}
+
+.gradient-gold {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24);
 }
 
 /* =====================================================
@@ -126,72 +159,88 @@
 ===================================================== */
 .courses-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(var(--card-size),1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 205px));
   gap: 1rem;
+  justify-content: start;
 }
 
 .course-card-mini {
-  background: var(--card-bg);
-  border-radius: 16px;
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  text-align: center;
-  padding: .7rem;
-  transition: transform 0.35s ease, box-shadow 0.35s ease;
-  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .course-card-mini:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.12);
+  box-shadow: var(--shadow-strong);
 }
 
 .course-thumb {
   width: 100%;
-  height: var(--thumb-size);
-  border-radius: 10px;
+  height: 180px;
   object-fit: cover;
+  display: block;
+  background: #f1f3f5;
 }
 
-.thumb-placeholder {
-  height: var(--thumb-size);
-  background: rgba(37,99,235,0.12);
-  display: flex; align-items: center; justify-content: center;
-  color: #2563eb;
-  font-size: 1.6rem;
+.course-title {
+  margin: 0.9rem 0 0;
+  padding: 0 0.9rem;
+  font-weight: 700;
+  font-size: 0.98rem;
+  text-align: center;
+  color: var(--text);
 }
 
-/* =====================================================
-📈 PROGRESS BAR
-===================================================== */
-.progress {
-  height: 6px;
-  border-radius: 30px;
-  background-color: rgba(229,231,235,0.6);
+.course-progress-bar-wrap {
+  margin: 0.75rem 0.9rem 0;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
   overflow: hidden;
 }
 
-.progress-bar {
-  height: 100%;
-  border-radius: 30px;
-  background: linear-gradient(90deg,#22c55e,#16a34a,#4ade80);
+body.dark-mode .course-progress-bar-wrap {
+  background: rgba(148, 163, 184, 0.16);
+}
+
+.course-progress-bar-wrap .progress-bar {
+  background: linear-gradient(90deg, #22c55e, #16a34a, #4ade80);
+  border-radius: 999px;
   width: 0%;
   transition: width 1s ease-out;
   animation: progressGlow 2.5s ease-in-out infinite alternate;
 }
 
 @keyframes progressGlow {
-  0% { box-shadow: 0 0 6px rgba(34,197,94,0.3); }
-  100% { box-shadow: 0 0 14px rgba(16,185,129,0.45); }
+  0% { box-shadow: 0 0 6px rgba(34, 197, 94, 0.30); }
+  100% { box-shadow: 0 0 14px rgba(16, 185, 129, 0.45); }
+}
+
+.course-progress-text {
+  display: block;
+  margin: 0;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #334155 !important;
+  opacity: 1 !important;
+}
+
+body.dark-mode .course-progress-text {
+  color: #e2e8f0 !important;
 }
 
 /* =====================================================
-🪄 REVEAL ANIMATION
+🪄 REVEAL
 ===================================================== */
 .reveal {
   opacity: 0;
-  transform: translateY(22px);
-  transition: all 0.65s ease;
+  transform: translateY(12px);
+  transition: all 0.5s ease;
 }
 
 .reveal.visible {
@@ -200,10 +249,39 @@
 }
 
 /* =====================================================
-📱 RESPONSIVE DESIGN
+📱 RESPONSIVE
 ===================================================== */
-@media (max-width:768px){
-  .stat-card { height: 120px; }
-  .course-card-mini { font-size: .85rem; }
-  .welcome-card { padding:1.2rem; }
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 0.75rem;
+  }
+
+  .dashboard-title {
+    font-size: 1.55rem;
+  }
+
+  .welcome-card {
+    padding: 1rem 1.1rem;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-thumb {
+    height: 160px;
+  }
+
+  .stat-card {
+    min-height: 150px;
+    border-radius: 18px;
+  }
+
+  .stat-card h5 {
+    font-size: 1.75rem !important;
+  }
+
+  .stat-card p {
+    font-size: 0.95rem !important;
+  }
 }

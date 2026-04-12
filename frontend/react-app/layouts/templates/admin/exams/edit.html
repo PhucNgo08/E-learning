@@ -4,33 +4,22 @@
 {% block content %}
 <div class="container py-5 fade-in">
 
-  <!-- TITLE -->
   <h2 class="fw-bold mb-3 edit-title">
     <i class="bi bi-pencil-square"></i> Chỉnh sửa kỳ thi
   </h2>
 
-  <!-- QUICK ACTION BUTTONS -->
   <div class="d-flex flex-wrap gap-2 mb-4">
-
-    <a href="/admin/exams/{{ exam.id }}/questions"
-       class="btn btn-primary shadow-sm">
+    <a href="/admin/exams/{{ exam.id }}/questions" class="btn btn-primary shadow-sm">
       <i class="bi bi-list-check"></i> Quản lý câu hỏi
     </a>
-
- 
-
- 
-
   </div>
 
-  <!-- ====================================================
-       FORM CHỈNH SỬA KỲ THI
-  ==================================================== -->
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
   <form action="/admin/exams/{{ exam.id }}/edit" method="post" class="form-box">
 
-    <!-- =============================
-         THÔNG TIN CHUNG
-    ============================== -->
     <h5 class="section-title">
       <i class="bi bi-info-circle"></i> Thông tin chung
     </h5>
@@ -43,34 +32,29 @@
 
     <div class="mb-3">
       <label class="form-label fw-semibold">Mô tả</label>
-      <textarea name="description" class="form-control" rows="3">{{ exam.description }}</textarea>
+      <textarea name="description" class="form-control" rows="3">{{ exam.description or '' }}</textarea>
     </div>
 
-    <!-- KHÓA HỌC -->
     <div class="mb-3">
       <label class="form-label fw-semibold">Khóa học</label>
       <select class="form-select" disabled>
         {% for course in courses %}
-          <option value="{{ course.id }}" {% if course.id == exam.course_id %} selected {% endif %}>
+          <option value="{{ course.id }}" {% if course.id == exam.course_id %}selected{% endif %}>
             {{ course.course_name }}
           </option>
         {% endfor %}
       </select>
     </div>
 
-    <!-- Tổng câu hỏi -->
     <div class="mb-3">
       <label class="form-label fw-semibold">
         Tổng số câu hỏi
         <span class="text-muted">(tự cập nhật sau khi import)</span>
       </label>
       <input type="number" name="total_questions" class="form-control"
-             min="1" value="{{ exam.total_questions }}" required />
+             min="1" value="{{ exam.total_questions or 0 }}" required />
     </div>
 
-    <!-- =============================
-         CẤU HÌNH KỲ THI
-    ============================== -->
     <h5 class="section-title">
       <i class="bi bi-gear"></i> Cấu hình kỳ thi
     </h5>
@@ -79,25 +63,22 @@
       <div class="col-md-4 mb-3">
         <label class="form-label">⏱ Thời gian làm bài (phút)</label>
         <input type="number" name="time_limit" class="form-control"
-               min="1" value="{{ exam.time_limit_minutes }}" required />
+               min="1" value="{{ exam.time_limit_minutes or 1 }}" required />
       </div>
 
       <div class="col-md-4 mb-3">
         <label class="form-label">🔁 Số lần làm bài</label>
         <input type="number" name="max_attempts" class="form-control"
-               min="1" value="{{ exam.max_attempts }}" required />
+               min="1" value="{{ exam.max_attempts or 1 }}" required />
       </div>
 
       <div class="col-md-4 mb-3">
         <label class="form-label">📊 Điểm qua môn (%)</label>
         <input type="number" name="passing_score" class="form-control"
-               min="0" max="100" value="{{ exam.passing_score }}" required />
+               min="0" max="100" value="{{ exam.passing_score or 0 }}" required />
       </div>
     </div>
 
-    <!-- =============================
-         THỜI GIAN MỞ / ĐÓNG
-    ============================== -->
     <h5 class="section-title">
       <i class="bi bi-calendar-event"></i> Thời gian mở / đóng
     </h5>
@@ -127,11 +108,8 @@
     </div>
 
   </form>
-
-  <!-- ====================================================
-       DANH SÁCH CÂU HỎI
-  ==================================================== -->
 </div>
+
 <style>
   body { background: #f3f4f7; }
 
@@ -163,5 +141,4 @@
     to   { opacity:1; transform: translateY(0); }
   }
 </style>
-
 {% endblock %}

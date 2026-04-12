@@ -14,7 +14,7 @@ import app.routers.admin.course_category as course_category
 import app.routers.admin.class_management as class_management
 import app.routers.admin.enrollment_management as enrollment_management
 import app.routers.admin.backup_management as backup_management
-import app.routers.admin.exam_management as exam_management
+
 import app.routers.admin.report_management as report_management
 import app.routers.admin.course_review as course_review
 import app.routers.admin.academic_years as academic_years
@@ -43,7 +43,7 @@ admin_router.include_router(course_category.category_router)
 admin_router.include_router(class_management.class_router)
 admin_router.include_router(enrollment_management.enrollment_router)
 admin_router.include_router(backup_management.backup_router)
-admin_router.include_router(exam_management.exam_router)
+
 admin_router.include_router(report_management.report_router)
 admin_router.include_router(course_review.review_router)
 admin_router.include_router(academic_years.router)

@@ -2,7 +2,6 @@
 {% block title %}🧠 Danh sách Mẫu Quiz{% endblock %}
 
 {% block content %}
-
 <style>
   body {
     background: #f5f7fb;
@@ -16,11 +15,13 @@
     align-items: center;
     margin-bottom: 25px;
     flex-wrap: wrap;
+    gap: 12px;
   }
 
   .page-header h3 {
     font-weight: 700;
     color: #0d47a1;
+    margin: 0;
   }
 
   .btn-create {
@@ -74,9 +75,7 @@
   }
 </style>
 
-<div class="container py-4 fade-in">
-
-  <!-- Tiêu đề -->
+<div class="container py-4">
   <div class="page-header">
     <div class="d-flex align-items-center gap-2">
       <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
@@ -94,7 +93,6 @@
     </div>
   </div>
 
-  <!-- Bảng danh sách -->
   <div class="card p-3">
     {% if templates %}
     <div class="table-responsive">
@@ -116,28 +114,27 @@
           <tr>
             <td>{{ loop.index }}</td>
 
-            <!-- Tên mẫu -->
             <td class="text-start fw-semibold text-primary td-name">
               <i class="bi bi-file-earmark-text"></i> {{ t.name }}
             </td>
 
-            <!-- Mô tả -->
             <td class="text-muted text-start">
               {{ t.description or "Không có mô tả" }}
             </td>
 
-            <!-- Người tạo -->
             <td class="text-start">
               {% if t.creator %}
-                <strong>{{ t.creator.full_name }}</strong><br>
-                <span class="text-muted small">{{ t.creator.email }}</span><br>
-                <span class="badge bg-info">{{ t.creator.role.value }}</span>
+                <strong>
+                  {{ t.creator.full_name if t.creator.full_name else (t.creator.username if t.creator.username else "Không xác định") }}
+                </strong>
+                {% if t.creator.username %}
+                  <div class="text-muted small">@{{ t.creator.username }}</div>
+                {% endif %}
               {% else %}
                 <em class="text-muted">Không xác định</em>
               {% endif %}
             </td>
 
-            <!-- Trạng thái -->
             <td>
               {% if t.is_public %}
                 <span class="badge bg-success badge-status">Công khai</span>
@@ -146,10 +143,8 @@
               {% endif %}
             </td>
 
-            <!-- Ngày tạo -->
-            <td>{{ t.created_at.strftime('%d/%m/%Y') }}</td>
+            <td>{{ t.created_at.strftime('%d/%m/%Y') if t.created_at else "—" }}</td>
 
-            <!-- Thao tác -->
             <td>
               <div class="dropdown text-center">
                 <button class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
@@ -162,57 +157,38 @@
                       ✏️ Chỉnh sửa
                     </a>
                   </li>
-
                   <li>
                     <a class="dropdown-item text-danger" href="/admin/quiz-template/delete/{{ t.id }}">
                       🗑 Xóa
                     </a>
                   </li>
-
-                  <li><hr class="dropdown-divider"></li>
-
-                  <li>
-                    <a class="dropdown-item text-info" href="/admin/quiz-template/report/{{ t.id }}">
-                      📊 Xem báo cáo
-                    </a>
-                  </li>
                 </ul>
               </div>
             </td>
-
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
-
     {% else %}
     <div class="alert alert-info text-center py-4 mb-0">
       <i class="bi bi-info-circle"></i> Hiện chưa có mẫu quiz nào trong hệ thống.
     </div>
     {% endif %}
   </div>
-
-  <footer class="mt-3 text-center text-muted">
-    © {{ now().year }} Hệ thống E-Learning — Quản lý Mẫu Quiz
-  </footer>
-
 </div>
 
-
 <script>
-  // Tìm kiếm theo tên hoặc mô tả
   const searchInput = document.getElementById("searchInput");
   const rows = document.querySelectorAll("#quizTable tbody tr");
 
-  searchInput.addEventListener("input", () => {
-    const keyword = searchInput.value.toLowerCase();
+  searchInput?.addEventListener("input", () => {
+    const keyword = searchInput.value.toLowerCase().trim();
     rows.forEach(row => {
-      const name = row.cells[1].innerText.toLowerCase();
-      const desc = row.cells[2].innerText.toLowerCase();
+      const name = row.cells[1]?.innerText.toLowerCase() || "";
+      const desc = row.cells[2]?.innerText.toLowerCase() || "";
       row.style.display = (name.includes(keyword) || desc.includes(keyword)) ? "" : "none";
     });
   });
 </script>
-
 {% endblock %}

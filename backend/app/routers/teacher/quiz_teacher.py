@@ -1,14 +1,14 @@
 """
 =============================================================
-🎓 ROUTER: Teacher – Quiz Management (v16.5 ULTRA FINAL)
-Hoàn chỉnh 100%:
+🎓 ROUTER: Teacher – Quiz Management (v17 FIXED)
+Hoàn chỉnh:
 - CRUD Practice + Graded Quiz
 - Import TXT / CSV / XLSX using SERVER-SIDE CACHE
-- Auto-mapping headers + auto-fill missing columns
-- Không dùng cookie để lưu dữ liệu → KHÔNG BAO GIỜ mất session
+- Auto-mapping headers + validate dữ liệu trước khi lưu
 - Statistics + Score Chart API
 =============================================================
 """
+
 from app.models.quiz_template import QuizTemplate
 
 from fastapi import (
@@ -20,7 +20,9 @@ from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 import pandas as pd
-import uuid, io
+import uuid
+import io
+import json
 
 # ======================================================
 # Dependencies
@@ -78,6 +80,24 @@ def auto_get_quiz(db: Session, teacher_id: str, quiz_id: str):
     if not quiz:
         return None, None
     return quiz, quiz.quiz_type
+
+
+def parse_dt_local(value: str | None):
+    value = (value or "").strip()
+    if not value:
+        return None
+    return datetime.fromisoformat(value)
+
+
+def ensure_import_cache(request: Request):
+    if not hasattr(request.app.state, "import_cache"):
+        request.app.state.import_cache = {}
+    return request.app.state.import_cache
+
+
+def refresh_total_questions(db: Session, quiz: Quiz):
+    quiz.total_questions = db.query(Question).filter(Question.quiz_id == quiz.id).count()
+    db.flush()
 
 
 # ======================================================
@@ -140,14 +160,19 @@ def create_quiz_post(
     max_attempts: int = Form(1),
     passing_score: float = Form(60.0),
     total_questions: int = Form(10),
-):
 
+    available_from: str = Form(""),
+    available_to: str = Form(""),
+):
     time_limit_minutes = int(time_limit_minutes)
     max_attempts = int(max_attempts)
     total_questions = int(total_questions)
     passing_score = float(passing_score)
 
     if quiz_type == "graded":
+        af = parse_dt_local(available_from) or datetime.utcnow()
+        at = parse_dt_local(available_to) or datetime.utcnow().replace(hour=23, minute=59, second=0, microsecond=0)
+
         create_exam(
             db=db,
             user_id=teacher.id,
@@ -159,8 +184,8 @@ def create_quiz_post(
             time_limit=time_limit_minutes,
             max_attempts=max_attempts,
             passing_score=passing_score,
-            available_from=datetime.utcnow(),
-            available_to=datetime.utcnow().replace(hour=23, minute=59),
+            available_from=af,
+            available_to=at,
         )
     else:
         create_quiz(
@@ -220,8 +245,10 @@ def edit_post(
     max_attempts: int = Form(1),
     passing_score: float = Form(60.0),
     total_questions: int = Form(10),
-):
 
+    available_from: str = Form(""),
+    available_to: str = Form(""),
+):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
@@ -232,8 +259,13 @@ def edit_post(
     passing_score = float(passing_score)
 
     if mode == "graded":
+        af = parse_dt_local(available_from) or quiz.available_from
+        at = parse_dt_local(available_to) or quiz.available_to
+
         update_exam(
-            db=db, user_id=teacher.id, role="teacher",
+            db=db,
+            user_id=teacher.id,
+            role="teacher",
             exam_id=quiz_id,
             title=title,
             description=description,
@@ -241,12 +273,14 @@ def edit_post(
             time_limit=time_limit_minutes,
             max_attempts=max_attempts,
             passing_score=passing_score,
-            available_from=quiz.available_from,
-            available_to=quiz.available_to
+            available_from=af,
+            available_to=at
         )
     else:
         update_quiz(
-            db=db, teacher_id=teacher.id, quiz_id=quiz_id,
+            db=db,
+            teacher_id=teacher.id,
+            quiz_id=quiz_id,
             course_id=course_id,
             title=title,
             description=description,
@@ -360,24 +394,30 @@ def score_distribution_api(
 
     attempts = (
         db.query(QuizAttempt.score)
-        .filter(QuizAttempt.quiz_id == quiz_id,
-                QuizAttempt.status == "submitted")
+        .filter(
+            QuizAttempt.quiz_id == quiz_id,
+            QuizAttempt.status == "submitted"
+        )
         .all()
     )
 
     buckets = [0, 0, 0, 0]
     for a in attempts:
         s = a[0] or 0
-        if s < 50: buckets[0] += 1
-        elif s < 70: buckets[1] += 1
-        elif s < 90: buckets[2] += 1
-        else: buckets[3] += 1
+        if s < 50:
+            buckets[0] += 1
+        elif s < 70:
+            buckets[1] += 1
+        elif s < 90:
+            buckets[2] += 1
+        else:
+            buckets[3] += 1
 
     return JSONResponse({"counts": buckets})
 
 
 # ======================================================
-# 11) IMPORT — UPLOAD PAGE
+# 11) IMPORT — HELPERS
 # ======================================================
 REQUIRED_COLS = ["question_text", "option_a", "option_b", "option_c", "option_d", "correct"]
 
@@ -396,7 +436,7 @@ HEADER_ALIASES = {
     "c": "option_c", "pc": "option_c", "option3": "option_c",
     "d": "option_d", "pd": "option_d", "option4": "option_d",
 
-    "correct": "correct", 
+    "correct": "correct",
     "answer": "correct",
     "correct_answer": "correct",
     "dap_an": "correct",
@@ -405,43 +445,36 @@ HEADER_ALIASES = {
 
 
 def detect_delimiter(text: str):
-    if "|" in text: return "|"
-    if ";" in text: return ";"
-    if "\t" in text: return "\t"
+    if "|" in text:
+        return "|"
+    if ";" in text:
+        return ";"
+    if "\t" in text:
+        return "\t"
     return ","
 
 
 def auto_map_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Chuẩn hóa: auto-map, tự thêm cột, tự sửa header
-    """
-
     raw_cols = list(df.columns)
 
-    # CASE 1 — file không có header (0,1,2...)
     if all(str(c).isdigit() for c in raw_cols):
-
-        # thêm cột cho đủ
         while len(raw_cols) < 6:
             df[len(df.columns)] = ""
-
+            raw_cols = list(df.columns)
         df = df.iloc[:, :6]
         df.columns = REQUIRED_COLS
         return df
 
-    # CASE 2 — có header nhưng sai định dạng
     normalized = [
         str(c).lower().strip().replace(" ", "_").replace("-", "_")
         for c in raw_cols
     ]
-
     mapped = [HEADER_ALIASES.get(c) for c in normalized]
 
-    # nếu map toàn bộ đều None → fallback chuẩn
     if all(m is None for m in mapped):
         while len(raw_cols) < 6:
             df[len(df.columns)] = ""
-
+            raw_cols = list(df.columns)
         df = df.iloc[:, :6]
         df.columns = REQUIRED_COLS
         return df
@@ -452,12 +485,19 @@ def auto_map_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
     df.columns = final_cols
 
-    # thêm cột thiếu
     for col in REQUIRED_COLS:
         if col not in df.columns:
             df[col] = ""
 
     return df[REQUIRED_COLS]
+
+
+def normalize_import_value(v):
+    if v is None:
+        return ""
+    if isinstance(v, float) and pd.isna(v):
+        return ""
+    return str(v).strip()
 
 
 # ======================================================
@@ -481,8 +521,7 @@ def import_upload(
 
 
 # ======================================================
-# 13) IMPORT — PREVIEW 
-#     🔥 SỬ DỤNG SERVER-SIDE CACHE (KHÔNG LƯU VÀO COOKIE)
+# 13) IMPORT — PREVIEW
 # ======================================================
 @router.post("/{quiz_id}/import/preview", response_class=HTMLResponse)
 async def import_preview(
@@ -492,18 +531,18 @@ async def import_preview(
     db=Depends(get_db),
     teacher=Depends(get_current_teacher)
 ):
-
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
 
+    cache = ensure_import_cache(request)
+
     content = await file.read()
     name = file.filename.lower()
 
-    # đọc file
     try:
         if name.endswith(".xlsx"):
-            df = pd.read_excel(io.BytesIO(content), header=None)
+            df = pd.read_excel(io.BytesIO(content))
         elif name.endswith(".csv"):
             sample = content.decode("utf-8", errors="ignore")[:200]
             delimiter = detect_delimiter(sample)
@@ -512,31 +551,22 @@ async def import_preview(
                 encoding="utf-8",
                 sep=delimiter,
                 on_bad_lines="skip",
-                header=None,
                 engine="python"
             )
         elif name.endswith(".txt"):
             lines = content.decode("utf-8", errors="ignore").splitlines()
-            df = pd.DataFrame([row.split("|") for row in lines])
+            df = pd.DataFrame([row.split("|") for row in lines], columns=REQUIRED_COLS[:6])
         else:
             raise HTTPException(400, "Định dạng file không hỗ trợ.")
     except Exception as e:
         raise HTTPException(400, f"Lỗi đọc file: {e}")
 
-    # chuẩn hóa
     df = auto_map_dataframe(df)
-    questions = df.to_dict(orient="records")
+    questions = df.fillna("").to_dict(orient="records")
 
-    # ======================================================
-    # LƯU SERVER-SIDE CACHE (không bao giờ mất như cookie)
-    # ======================================================
     uid = request.session.get("user_id")
-
     key = f"import_quiz_{quiz_id}_{uid}"
-
-    request.app.state.import_cache[key] = questions
-
-    print("🔥 PREVIEW SAVED:", key, "TOTAL:", len(questions))
+    cache[key] = questions
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
@@ -551,7 +581,7 @@ async def import_preview(
 
 
 # ======================================================
-# 14) IMPORT — CONFIRM SAVE (FIXED v16.6)
+# 14) IMPORT — CONFIRM SAVE
 # ======================================================
 @router.post("/{quiz_id}/import/confirm")
 def import_confirm(
@@ -560,16 +590,15 @@ def import_confirm(
     db=Depends(get_db),
     teacher=Depends(get_current_teacher)
 ):
-
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
 
+    cache = ensure_import_cache(request)
+
     uid = request.session.get("user_id")
     key = f"import_quiz_{quiz_id}_{uid}"
-
-    questions = request.app.state.import_cache.get(key)
-    print("🔥 CONFIRM LOAD:", key, "| DATA:", len(questions) if questions else "None")
+    questions = cache.get(key)
 
     if not questions:
         raise HTTPException(
@@ -577,38 +606,40 @@ def import_confirm(
             "Không có dữ liệu để import. Vui lòng làm lại bước Upload."
         )
 
-    # ------------------------------------------------------
-    # Hàm chuẩn hóa giá trị thành string an toàn
-    # ------------------------------------------------------
-    def normalize(v):
-        """
-        Chuẩn hóa mọi giá trị:
-        - None → ""
-        - float/NaN → ""
-        - int/float → "..."
-        - string → strip()
-        """
-        if v is None:
-            return ""
+    invalid_rows = []
+    for idx, q in enumerate(questions, start=1):
+        q_text = normalize_import_value(q.get("question_text"))
+        a = normalize_import_value(q.get("option_a"))
+        b = normalize_import_value(q.get("option_b"))
+        c = normalize_import_value(q.get("option_c"))
+        d = normalize_import_value(q.get("option_d"))
+        correct = normalize_import_value(q.get("correct")).lower()
 
-        # Nếu là float nhưng là NaN → bỏ
-        if isinstance(v, float):
-            if pd.isna(v):
-                return ""
-            return str(v).strip()
-
-        # Convert mọi thứ còn lại thành chuỗi
-        return str(v).strip()
-
-    # ======================================================
-    # LƯU DB AN TOÀN
-    # ======================================================
-    for q in questions:
-
-        # ----- Question text -----
-        text = normalize(q.get("question_text"))
-        if not text:
+        if not q_text or not a or not b or not c or not d or not correct:
+            invalid_rows.append(idx)
             continue
+
+        valid_correct = {
+            "a", "b", "c", "d",
+            "option_a", "option_b", "option_c", "option_d",
+            a.lower(), b.lower(), c.lower(), d.lower()
+        }
+        if correct not in valid_correct:
+            invalid_rows.append(idx)
+
+    if invalid_rows:
+        raise HTTPException(
+            400,
+            f"Dữ liệu import còn lỗi ở các dòng: {', '.join(map(str, invalid_rows[:20]))}"
+        )
+
+    for q in questions:
+        text = normalize_import_value(q.get("question_text"))
+        a = normalize_import_value(q.get("option_a"))
+        b = normalize_import_value(q.get("option_b"))
+        c = normalize_import_value(q.get("option_c"))
+        d = normalize_import_value(q.get("option_d"))
+        correct_raw = normalize_import_value(q.get("correct")).lower()
 
         new_q = Question(
             id=str(uuid.uuid4()),
@@ -618,35 +649,34 @@ def import_confirm(
         db.add(new_q)
         db.flush()
 
-        # ----- Options A → D -----
-        for opt in ["option_a", "option_b", "option_c", "option_d"]:
-            val = normalize(q.get(opt))
-            if not val:
-                continue
+        options = {
+            "a": a,
+            "b": b,
+            "c": c,
+            "d": d,
+        }
 
-            correct_raw = normalize(q.get("correct")).lower()
-
-            # EXCEL/TXT/CSV có thể ghi:
-            # A / a / Option_A / 1 / "Đáp án A" → phải nhận đúng
-            is_correct = (
-                correct_raw == opt[-1] or
-                correct_raw == opt or
-                correct_raw == val.lower()
-            )
-
+        for key_opt, val in options.items():
             db.add(QuestionOption(
                 id=str(uuid.uuid4()),
                 question_id=new_q.id,
                 option_text=val,
-                is_correct=is_correct
+                is_correct=(
+                    correct_raw == key_opt or
+                    correct_raw == f"option_{key_opt}" or
+                    correct_raw == val.lower()
+                )
             ))
 
+    db.flush()
+    refresh_total_questions(db, quiz)
     db.commit()
 
-    # Xoá cache sau khi lưu
-    request.app.state.import_cache.pop(key, None)
+    cache.pop(key, None)
 
     return RedirectResponse(f"/teacher/quizzes/detail/{quiz_id}", 303)
+
+
 # ======================================================
 # 15) CREATE QUESTION – PAGE
 # ======================================================
@@ -686,13 +716,12 @@ def create_question_post(
     option_b: str = Form(...),
     option_c: str = Form(...),
     option_d: str = Form(...),
-    correct: str = Form(...),       # "a" | "b" | "c" | "d"
+    correct: str = Form(...),
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
 
-    # Tạo question
     new_q = Question(
         id=str(uuid.uuid4()),
         quiz_id=quiz_id,
@@ -701,7 +730,6 @@ def create_question_post(
     db.add(new_q)
     db.flush()
 
-    # Thêm option
     options = {
         "a": option_a,
         "b": option_b,
@@ -710,19 +738,27 @@ def create_question_post(
     }
 
     for key, text in options.items():
-        if text.strip():
+        text = text.strip()
+        if text:
             db.add(QuestionOption(
                 id=str(uuid.uuid4()),
                 question_id=new_q.id,
-                option_text=text.strip(),
+                option_text=text,
                 is_correct=(correct == key)
             ))
 
+    db.flush()
+    refresh_total_questions(db, quiz)
     db.commit()
 
     return RedirectResponse(
         f"/teacher/quizzes/detail/{quiz_id}", 303
     )
+
+
+# ======================================================
+# 17) TEMPLATE LIST
+# ======================================================
 @router.get("/templates", response_class=HTMLResponse)
 def quiz_templates(request: Request, db=Depends(get_db), teacher=Depends(get_current_teacher)):
     tpl = get_template_by_path(request.url.path)

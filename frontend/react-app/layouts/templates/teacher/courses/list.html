@@ -2,7 +2,6 @@
 {% block title %}📘 Khóa học của tôi{% endblock %}
 
 {% block content %}
-
 <style>
   body {
     background: linear-gradient(135deg, #dbe8ff, #f6f9ff);
@@ -10,8 +9,6 @@
     min-height: 100vh;
     padding-bottom: 80px;
   }
-
-  /* Navbar Glass */
   .navbar-glass {
     backdrop-filter: blur(16px);
     background: rgba(255, 255, 255, 0.18);
@@ -21,8 +18,6 @@
     font-weight: 700;
     color: #003087 !important;
   }
-
-  /* Course Card */
   .course-card {
     backdrop-filter: blur(18px);
     background: rgba(255, 255, 255, 0.28);
@@ -37,20 +32,16 @@
     flex-direction: column;
     position: relative;
   }
-
   .course-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
   }
-
   .course-thumb {
     height: 160px;
     width: 100%;
     object-fit: cover;
     border-radius: 20px 20px 0 0;
   }
-
-  /* Status Badge */
   .status-badge {
     position: absolute;
     top: 12px;
@@ -72,16 +63,6 @@
     padding: 3px 9px;
   }
 
-  /* Prevent click bubble for buttons */
-  .btn-action { pointer-events: auto; }
-
-  /* Mobile */
-  @media (max-width: 576px) {
-    .course-thumb { height: 140px; }
-    .status-badge { font-size: 0.65rem; padding: 4px 10px; }
-    .footer-text { font-size: 0.75rem; }
-  }
-
   footer.course-footer {
     text-align: center;
     padding: 12px 0;
@@ -94,7 +75,6 @@
   }
 </style>
 
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-glass shadow-sm py-3">
   <div class="container">
     <a class="navbar-brand" href="/teacher/dashboard">
@@ -112,33 +92,25 @@
   </div>
 </nav>
 
-<!-- MAIN -->
 <div class="container py-4">
-
   <h3 class="fw-bold text-primary mb-3">
     <i class="bi bi-journal-bookmark"></i> Khóa học của tôi
   </h3>
 
-  <!-- Thông báo nghiệp vụ ngắn -->
   <div class="alert alert-info py-2 mb-4">
     <i class="bi bi-info-circle"></i>
-    Khóa học ở trạng thái <strong>Nháp / Chờ duyệt</strong> sẽ cần Admin kiểm duyệt
-    và xuất bản trước khi hiển thị cho sinh viên.
+    Khóa học ở trạng thái <strong>Nháp / Chờ duyệt</strong> sẽ cần Admin kiểm duyệt và xuất bản.
   </div>
 
   {% if courses %}
   <div class="row g-4">
-
     {% for c in courses %}
     <div class="col-lg-4 col-md-6">
       <div class="course-card" onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
-
-        <!-- Thumbnail -->
         <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.src='/uploads/course_thumbnails/default-course.png'"
              class="course-thumb">
 
-        <!-- Status -->
         <span class="status-badge {{ c.status }}">
           {% if c.status == 'published' %}
             Đã xuất bản
@@ -149,9 +121,7 @@
           {% endif %}
         </span>
 
-        <!-- Content -->
         <div class="p-3 d-flex flex-column flex-grow-1">
-
           <h5 class="text-truncate">{{ c.course_name }}</h5>
           <p class="text-muted small text-truncate">{{ c.description or "Chưa có mô tả..." }}</p>
 
@@ -167,7 +137,6 @@
             <span><i class="bi bi-clock-history"></i> {{ c.credit_hours }} TC</span>
           </div>
 
-          <!-- Meta badges: trạng thái + công khai -->
           <div class="meta-badges mt-2 d-flex flex-wrap gap-1">
             {% if c.status == 'draft' %}
               <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
@@ -196,49 +165,42 @@
 
           <hr class="my-2">
 
-          <!-- Action Buttons -->
-          <div class="d-flex justify-content-between mt-auto" style="pointer-events: none;">
-
-            <a class="btn btn-outline-primary btn-sm btn-action"
-               href="/teacher/modules/list/{{ c.id }}">
+          <div class="d-flex justify-content-between mt-auto">
+            <a class="btn btn-outline-primary btn-sm"
+               href="/teacher/modules/list/{{ c.id }}"
+               onclick="event.stopPropagation()">
               <i class="bi bi-layers"></i>
             </a>
 
-            <a class="btn btn-outline-success btn-sm btn-action"
-               href="/teacher/courses/edit/{{ c.id }}">
+            <a class="btn btn-outline-success btn-sm"
+               href="/teacher/courses/edit/{{ c.id }}"
+               onclick="event.stopPropagation()">
               <i class="bi bi-pencil"></i>
             </a>
 
             <form method="post"
                   action="/teacher/courses/delete/{{ c.id }}"
-                  class="btn-action"
-                  onpointerdown="event.stopPropagation()"
-                  onsubmit="return confirm('Bạn chắc chắn muốn xóa khóa học này?');">
+                  onclick="event.stopPropagation()"
+                  onsubmit="event.stopPropagation(); return confirm('Bạn chắc chắn muốn xóa khóa học này?');">
               <button type="submit" class="btn btn-outline-danger btn-sm">
                 <i class="bi bi-trash"></i>
               </button>
             </form>
-
           </div>
-
         </div>
 
       </div>
     </div>
     {% endfor %}
-
   </div>
-
   {% else %}
   <div class="alert alert-info text-center shadow-sm mt-5">
     <i class="bi bi-info-circle"></i> Bạn chưa tạo khóa học nào.
   </div>
   {% endif %}
-
 </div>
 
 <footer class="footer-text course-footer">
   © {{ now.year }} E-Learning | Giáo viên {{ teacher.full_name }}
 </footer>
-
 {% endblock %}

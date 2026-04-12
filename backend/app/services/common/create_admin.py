@@ -1,19 +1,30 @@
 import mysql.connector
 from uuid import uuid4
 import bcrypt
-from datetime import datetime
 
 # =====================================================
-# ⚙️ Thông tin kết nối MySQL
+# CẤU HÌNH DB
 # =====================================================
 DB_HOST = "localhost"
-DB_PORT = 3309  # đổi nếu bạn dùng port khác (mặc định 3306)
+DB_PORT = 3309
 DB_USER = "root"
-DB_PASS = "111004@"   # mật khẩu MySQL
+DB_PASS = "111004@"
 DB_NAME = "e_learning"
 
 # =====================================================
-# 🧩 Hàm kết nối tới cơ sở dữ liệu
+# CẤU HÌNH ADMIN MẶC ĐỊNH
+# =====================================================
+ADMIN_USERNAME = "admin"
+ADMIN_EMAIL = "admin@school.edu.vn"
+ADMIN_FULL_NAME = "Quản trị hệ thống"
+ADMIN_PASSWORD = "admin@123"
+
+ADMIN_ROLE_CODE = "admin"
+ADMIN_ROLE_NAME = "Quản trị viên"
+
+
+# =====================================================
+# KẾT NỐI DB
 # =====================================================
 def get_db_connection():
     return mysql.connector.connect(
@@ -21,110 +32,301 @@ def get_db_connection():
         port=DB_PORT,
         user=DB_USER,
         password=DB_PASS,
-        database=DB_NAME
+        database=DB_NAME,
     )
 
 
 # =====================================================
-# 👑 Tạo hoặc khôi phục tài khoản admin
+# BCRYPT
+# =====================================================
+def make_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def is_valid_bcrypt_hash(value: str | None) -> bool:
+    if not value:
+        return False
+
+    try:
+        bcrypt.checkpw(b"__probe__", value.encode("utf-8"))
+        return True
+    except ValueError:
+        return False
+    except Exception:
+        return False
+
+
+# =====================================================
+# ROLE ADMIN
+# =====================================================
+def ensure_admin_role(cursor) -> str:
+    cursor.execute(
+        "SELECT id FROM roles WHERE role_code = %s LIMIT 1",
+        (ADMIN_ROLE_CODE,),
+    )
+    role = cursor.fetchone()
+
+    if role:
+        return role["id"]
+
+    role_id = str(uuid4())
+    cursor.execute(
+        """
+        INSERT INTO roles (id, role_code, role_name, description, created_at)
+        VALUES (%s, %s, %s, %s, NOW())
+        """,
+        (
+            role_id,
+            ADMIN_ROLE_CODE,
+            ADMIN_ROLE_NAME,
+            "Toàn quyền hệ thống",
+        ),
+    )
+    print("✅ Đã tạo role admin.")
+    return role_id
+
+
+# =====================================================
+# USER PROFILE ADMIN
+# =====================================================
+def ensure_admin_profile(cursor, user_id: str):
+    cursor.execute(
+        "SELECT user_id FROM user_profiles WHERE user_id = %s LIMIT 1",
+        (user_id,),
+    )
+    profile = cursor.fetchone()
+
+    if profile:
+        cursor.execute(
+            """
+            UPDATE user_profiles
+            SET full_name = %s,
+                updated_at = NOW()
+            WHERE user_id = %s
+            """,
+            (ADMIN_FULL_NAME, user_id),
+        )
+        return
+
+    cursor.execute(
+        """
+        INSERT INTO user_profiles (
+            user_id, full_name, phone, avatar_url, date_of_birth, gender, created_at, updated_at
+        )
+        VALUES (%s, %s, NULL, NULL, NULL, NULL, NOW(), NOW())
+        """,
+        (user_id, ADMIN_FULL_NAME),
+    )
+    print("✅ Đã tạo hồ sơ admin.")
+
+
+# =====================================================
+# SECURITY SETTINGS ADMIN
+# =====================================================
+def ensure_admin_security(cursor, user_id: str):
+    cursor.execute(
+        "SELECT id FROM security_settings WHERE user_id = %s LIMIT 1",
+        (user_id,),
+    )
+    sec = cursor.fetchone()
+
+    if not sec:
+        cursor.execute(
+            """
+            INSERT INTO security_settings (
+                id, user_id, two_factor_enabled, last_password_change,
+                failed_login_attempts, account_locked_until, created_at, updated_at
+            )
+            VALUES (%s, %s, 0, NOW(), 0, NULL, NOW(), NOW())
+            """,
+            (str(uuid4()), user_id),
+        )
+        print("✅ Đã tạo security_settings cho admin.")
+        return
+
+    cursor.execute(
+        """
+        UPDATE security_settings
+        SET failed_login_attempts = 0,
+            account_locked_until = NULL,
+            updated_at = NOW()
+        WHERE user_id = %s
+        """,
+        (user_id,),
+    )
+    print("🔁 Đã mở khóa admin nếu trước đó bị khóa.")
+
+
+# =====================================================
+# GÁN ROLE ADMIN
+# =====================================================
+def ensure_admin_user_role(cursor, user_id: str, role_id: str):
+    cursor.execute(
+        """
+        SELECT 1
+        FROM user_roles
+        WHERE user_id = %s AND role_id = %s
+        LIMIT 1
+        """,
+        (user_id, role_id),
+    )
+    row = cursor.fetchone()
+
+    if row:
+        return
+
+    cursor.execute(
+        """
+        INSERT INTO user_roles (user_id, role_id, assigned_at)
+        VALUES (%s, %s, NOW())
+        """,
+        (user_id, role_id),
+    )
+    print("✅ Đã gán role admin cho tài khoản admin.")
+
+
+# =====================================================
+# TẠO / KHÔI PHỤC ADMIN
 # =====================================================
 def ensure_admin_account():
     conn = None
     cursor = None
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # 1️⃣ Kiểm tra xem admin có tồn tại không
-        cursor.execute("SELECT * FROM users WHERE username = 'admin' LIMIT 1;")
+        role_id = ensure_admin_role(cursor)
+
+        cursor.execute(
+            """
+            SELECT id, username, email, password_hash, status
+            FROM users
+            WHERE username = %s
+            LIMIT 1
+            """,
+            (ADMIN_USERNAME,),
+        )
         admin = cursor.fetchone()
 
-        # 2️⃣ Nếu chưa có -> tạo mới
+        # 1. Chưa có admin -> tạo mới
         if not admin:
-            print("⚙️ Không tìm thấy admin, tạo mới...")
-            password = "admin@123"
-            hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            print("⚙️ Không tìm thấy admin, đang tạo mới...")
 
-            cursor.execute("""
-                INSERT INTO users (id, username, email, password_hash, full_name, role, status, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, NOW(), NOW())
-            """, (
-                str(uuid4()), "admin", "admin@school.edu.vn", hashed_password,
-                "Quản trị hệ thống", "admin", "active"
-            ))
+            admin_id = str(uuid4())
+            new_hash = make_password_hash(ADMIN_PASSWORD)
+
+            cursor.execute(
+                """
+                INSERT INTO users (
+                    id, username, email, password_hash, status,
+                    last_login, login_count, created_at, updated_at, deleted_at
+                )
+                VALUES (%s, %s, %s, %s, 'active', NULL, 0, NOW(), NOW(), NULL)
+                """,
+                (
+                    admin_id,
+                    ADMIN_USERNAME,
+                    ADMIN_EMAIL,
+                    new_hash,
+                ),
+            )
+
+            ensure_admin_profile(cursor, admin_id)
+            ensure_admin_security(cursor, admin_id)
+            ensure_admin_user_role(cursor, admin_id, role_id)
+
             conn.commit()
-            print("✅ Đã tạo tài khoản admin mới (mật khẩu: admin@123)")
+            print(f"✅ Đã tạo admin mới. Mật khẩu mặc định: {ADMIN_PASSWORD}")
             return
 
-        # 3️⃣ Nếu tồn tại nhưng bị vô hiệu hóa → kích hoạt lại
-        if admin["status"] != "active":
-            cursor.execute("""
-                UPDATE users SET status = 'active', updated_at = NOW()
-                WHERE username = 'admin'
-            """)
-            conn.commit()
+        # 2. Đã có admin -> khôi phục
+        admin_id = admin["id"]
+
+        if str(admin.get("status", "")).strip().lower() != "active":
+            cursor.execute(
+                """
+                UPDATE users
+                SET status = 'active',
+                    deleted_at = NULL,
+                    updated_at = NOW()
+                WHERE id = %s
+                """,
+                (admin_id,),
+            )
             print("🔓 Đã kích hoạt lại tài khoản admin.")
 
-        # 4️⃣ Kiểm tra bảng bảo mật (security_settings)
-        cursor.execute("""
-            SELECT * FROM security_settings WHERE user_id = %s
-        """, (admin["id"],))
-        security = cursor.fetchone()
+        # 3. Nếu hash cũ lỗi / giả -> reset về mật khẩu mặc định
+        if not is_valid_bcrypt_hash(admin.get("password_hash")):
+            new_hash = make_password_hash(ADMIN_PASSWORD)
+            cursor.execute(
+                """
+                UPDATE users
+                SET password_hash = %s,
+                    updated_at = NOW()
+                WHERE id = %s
+                """,
+                (new_hash, admin_id),
+            )
+            print(f"🔑 Đã reset mật khẩu admin về: {ADMIN_PASSWORD}")
 
-        if not security:
-            cursor.execute("""
-                INSERT INTO security_settings (id, user_id, two_factor_enabled, failed_login_attempts, account_locked_until)
-                VALUES (%s, %s, 0, 0, NULL)
-            """, (str(uuid4()), admin["id"]))
-            print("✅ Đã tạo bản ghi bảo mật cho admin.")
-        else:
-            # reset lại nếu bị khóa tạm thời
-            cursor.execute("""
-                UPDATE security_settings
-                SET failed_login_attempts = 0,
-                    account_locked_until = NULL
-                WHERE user_id = %s
-            """, (admin["id"],))
-            print("🔁 Đã xóa trạng thái khóa tạm thời của admin.")
+        ensure_admin_profile(cursor, admin_id)
+        ensure_admin_security(cursor, admin_id)
+        ensure_admin_user_role(cursor, admin_id, role_id)
 
         conn.commit()
-        print("🎯 Admin hiện đang hoạt động bình thường!")
+        print("🎯 Tài khoản admin đã sẵn sàng sử dụng.")
 
     except mysql.connector.Error as err:
         print(f"❌ Lỗi MySQL: {err}")
+
     finally:
         if cursor:
             cursor.close()
         if conn:
             conn.close()
-            print("🔒 Kết nối MySQL đã đóng.")
+            print("🔒 Đã đóng kết nối MySQL.")
 
 
 # =====================================================
-# 🔐 Hàm xác thực đăng nhập kiểm tra nhanh
+# KIỂM TRA ĐĂNG NHẬP NHANH
 # =====================================================
 def quick_login_check():
     conn = None
     cursor = None
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT password_hash FROM users WHERE username = 'admin'")
+        cursor.execute(
+            "SELECT password_hash FROM users WHERE username = %s LIMIT 1",
+            (ADMIN_USERNAME,),
+        )
         user = cursor.fetchone()
 
         if not user:
-            print("❌ Không tìm thấy tài khoản admin để kiểm tra.")
+            print("❌ Không tìm thấy admin để kiểm tra.")
             return
 
-        entered_password = "admin@123"
-        if bcrypt.checkpw(entered_password.encode("utf-8"), user["password_hash"].encode("utf-8")):
-            print("✅ Đăng nhập thử admin thành công (mật khẩu đúng).")
+        hashed = user["password_hash"]
+
+        if not is_valid_bcrypt_hash(hashed):
+            print("❌ password_hash của admin chưa hợp lệ.")
+            return
+
+        ok = bcrypt.checkpw(ADMIN_PASSWORD.encode("utf-8"), hashed.encode("utf-8"))
+
+        if ok:
+            print("✅ Kiểm tra đăng nhập thành công.")
+            print(f"👤 Username: {ADMIN_USERNAME}")
+            print(f"🔑 Password: {ADMIN_PASSWORD}")
         else:
-            print("⚠️ Sai mật khẩu admin hoặc đã đổi mật khẩu khác.")
+            print("⚠️ Admin tồn tại nhưng mật khẩu hiện tại không phải mật khẩu mặc định.")
 
     except mysql.connector.Error as err:
         print(f"❌ Lỗi MySQL: {err}")
+
     finally:
         if cursor:
             cursor.close()
@@ -133,9 +335,9 @@ def quick_login_check():
 
 
 # =====================================================
-# 🚀 CHẠY TRỰC TIẾP
+# CHẠY FILE
 # =====================================================
 if __name__ == "__main__":
-    print("=== 🧩 KIỂM TRA / KHỞI TẠO ADMIN ACCOUNT ===")
+    print("=== KIỂM TRA / KHỞI TẠO ADMIN ===")
     ensure_admin_account()
     quick_login_check()

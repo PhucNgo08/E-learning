@@ -4,17 +4,35 @@
 Quản lý CRUD thông báo hệ thống
 ==========================================================
 """
-from sqlalchemy.orm import Session
-from app.models.notification import Notification
 from datetime import datetime
 import uuid
 
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
-def get_all_notifications(db: Session):
+from app.models.notification import Notification
+
+
+def get_all_notifications(db: Session) -> list[Notification]:
     return db.query(Notification).order_by(Notification.created_at.desc()).all()
 
 
-def create_notification(db: Session, user_id: str, title: str, message: str, notification_type: str = "system", link_url: str = None):
+def get_notification_by_id(db: Session, noti_id: str) -> Notification | None:
+    return db.query(Notification).filter(Notification.id == noti_id).first()
+
+
+def create_notification(
+    db: Session,
+    user_id: str,
+    title: str,
+    message: str,
+    notification_type: str = "system",
+    link_url: str | None = None,
+) -> Notification:
+    title = (title or "").strip()
+    message = (message or "").strip()
+    link_url = (link_url or "").strip() or None
+
     new_noti = Notification(
         id=str(uuid.uuid4()),
         user_id=user_id,
@@ -23,28 +41,46 @@ def create_notification(db: Session, user_id: str, title: str, message: str, not
         notification_type=notification_type,
         link_url=link_url,
         created_at=datetime.utcnow(),
-        is_read=0
+        is_read=False,
+        read_at=None,
     )
-    db.add(new_noti)
-    db.commit()
-    db.refresh(new_noti)
-    return new_noti
 
-
-def mark_as_read(db: Session, noti_id: str):
-    noti = db.query(Notification).filter(Notification.id == noti_id).first()
-    if noti:
-        noti.is_read = 1
-        noti.read_at = datetime.utcnow()
+    try:
+        db.add(new_noti)
         db.commit()
-        return True
-    return False
+        db.refresh(new_noti)
+        return new_noti
+    except SQLAlchemyError:
+        db.rollback()
+        raise
 
 
-def delete_notification(db: Session, noti_id: str):
-    noti = db.query(Notification).filter(Notification.id == noti_id).first()
+def mark_as_read(db: Session, noti_id: str) -> bool:
+    noti = get_notification_by_id(db, noti_id)
+    if not noti:
+        return False
+
+    if not noti.is_read:
+        try:
+            noti.is_read = True
+            noti.read_at = datetime.utcnow()
+            db.commit()
+        except SQLAlchemyError:
+            db.rollback()
+            raise
+
+    return True
+
+
+def delete_notification(db: Session, noti_id: str) -> Notification | None:
+    noti = get_notification_by_id(db, noti_id)
     if not noti:
         return None
-    db.delete(noti)
-    db.commit()
-    return noti
+
+    try:
+        db.delete(noti)
+        db.commit()
+        return noti
+    except SQLAlchemyError:
+        db.rollback()
+        raise

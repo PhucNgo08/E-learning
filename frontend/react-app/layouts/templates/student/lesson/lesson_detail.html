@@ -4,9 +4,23 @@
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <h3 class="fw-bold text-primary mb-3">{{ lesson.title }}</h3>
+  <h3 class="fw-bold text-primary mb-3">
+    {{ lesson.title if lesson and lesson.title else "Bài học" }}
+  </h3>
 
-  <p class="text-muted">{{ lesson.description }}</p>
+  <p class="text-muted">
+    {{ lesson.description if lesson and lesson.description else "Chưa có mô tả cho bài học này." }}
+  </p>
 
 </div>
+
+<style>
+.fade-in {
+  animation: fadeIn .4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %}

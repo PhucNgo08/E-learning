@@ -26,8 +26,16 @@
       <i class="bi bi-envelope-open"></i> Chi tiết tin nhắn
     </h4>
 
-    <p><strong>👤 Người gửi:</strong> {{ message.sender.full_name if message.sender else "Người gửi ẩn danh" }}</p>
-    <p><strong>🎯 Người nhận:</strong> {{ message.receiver.full_name if message.receiver else "Không xác định" }}</p>
+    <p>
+      <strong>👤 Người gửi:</strong>
+      {{ message.sender.full_name if message.sender and message.sender.full_name else (message.sender.username if message.sender else "Người gửi ẩn danh") }}
+    </p>
+
+    <p>
+      <strong>🎯 Người nhận:</strong>
+      {{ message.receiver.full_name if message.receiver and message.receiver.full_name else (message.receiver.username if message.receiver else "Không xác định") }}
+    </p>
+
     <p class="text-muted small">
       <i class="bi bi-clock"></i>
       {{ message.sent_at.strftime("%d/%m/%Y %H:%M") if message.sent_at else "" }}
@@ -41,8 +49,9 @@
       <i class="bi bi-paperclip"></i>
       <strong>{{ message.attachment_name }}</strong>
       <small class="text-muted">({{ message.attachment_size }})</small>
+
       <div class="mt-2">
-        <a href="/{{ message.attachment_url }}" class="btn btn-sm btn-outline-primary" download>
+        <a href="{{ message.attachment_url }}" class="btn btn-sm btn-outline-primary" download>
           <i class="bi bi-download"></i> Tải xuống
         </a>
       </div>
@@ -51,7 +60,7 @@
   </div>
 
   <div class="text-center mt-4">
-    <a href="/teacher/message/" class="btn btn-secondary">
+    <a href="/teacher/message/inbox" class="btn btn-secondary">
       <i class="bi bi-arrow-left"></i> Quay lại hộp thư đến
     </a>
   </div>

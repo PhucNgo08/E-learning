@@ -1,18 +1,21 @@
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 import uuid
+from typing import Optional
+
 import pytz
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from app.models.quiz import Quiz
 from app.models.course import Course
-from app.models.enrollment import Enrollment
+from app.models.course_enrollment import CourseEnrollment
 from app.models.question import Question
 from app.models.question_option import QuestionOption
 from app.models.quiz_attempt import QuizAttempt
 
 
 TZ = pytz.timezone("Asia/Ho_Chi_Minh")
+ACTIVE_COURSE_ENROLLMENT_STATUSES = {"active", "approved", "completed"}
 
 
 def to_utc(dt):
@@ -29,6 +32,14 @@ def _format_option(letter: str, text: str) -> str:
     if letter in ["A", "B", "C", "D"]:
         return f"{letter}. {text}"
     return text
+
+
+def get_exam_by_id(db: Session, exam_id: str) -> Optional[Quiz]:
+    return db.query(Quiz).filter(Quiz.id == exam_id).first()
+
+
+def get_course_by_id(db: Session, course_id: str) -> Optional[Course]:
+    return db.query(Course).filter(Course.id == course_id).first()
 
 
 def get_exams(db: Session, user_id: str, role: str):
@@ -49,10 +60,10 @@ def get_exams(db: Session, user_id: str, role: str):
         now = datetime.utcnow()
         return (
             base.join(Course, Quiz.course_id == Course.id)
-            .join(Enrollment, Enrollment.course_id == Course.id)
+            .join(CourseEnrollment, CourseEnrollment.course_id == Course.id)
             .filter(
-                Enrollment.user_id == user_id,
-                Enrollment.enrollment_status.in_(["active", "approved", "completed"]),
+                CourseEnrollment.user_id == user_id,
+                CourseEnrollment.enrollment_status.in_(ACTIVE_COURSE_ENROLLMENT_STATUSES),
                 Quiz.is_approved == True,
                 Quiz.status == "published",
                 Quiz.available_from <= now,
@@ -260,14 +271,7 @@ def get_student_attempt_count(db: Session, user_id: str, exam_id: str):
     )
 
 
-# ============================================================
-# ✅ FIX: update_question_count hỗ trợ new_total để khỏi count lại
-# ============================================================
 def update_question_count(db: Session, exam_id: str, new_total: int | None = None, commit: bool = True):
-    """
-    - Nếu new_total = None: sẽ count() trong DB
-    - Nếu new_total có giá trị: set thẳng total_questions (nhanh hơn, dùng cho import)
-    """
     if new_total is None:
         new_total = db.query(Question).filter(Question.quiz_id == exam_id).count()
 
@@ -318,6 +322,7 @@ def create_question(
             difficulty_level=exam.difficulty_level
         )
         db.add(new_q)
+        db.flush()
 
         options = {"A": option_a, "B": option_b, "C": option_c, "D": option_d}
         for letter, text in options.items():

@@ -4,22 +4,62 @@
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <h3 class="fw-bold text-primary mb-3">
-    <i class="bi bi-collection"></i> Danh sách chương
-  </h3>
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="fw-bold text-primary mb-0">
+      <i class="bi bi-collection"></i> Danh sách chương
+    </h3>
 
-  {% if modules %}
-    {% for module in modules %}
-    <a href="/student/lesson/module/{{ module.id }}" class="text-decoration-none">
-      <div class="card shadow-sm border-0 mb-3 glass-card p-3">
-        <h5 class="mb-0 text-dark">{{ module.title }}</h5>
-        <small class="text-muted">{{ module.description or "" }}</small>
-      </div>
+    <a href="/student/lesson/progress" class="btn btn-outline-primary rounded-pill">
+      <i class="bi bi-bar-chart-line"></i> Xem tiến độ
     </a>
-    {% endfor %}
+  </div>
+
+  {% set safe_modules = modules|default([], true) %}
+
+  {% if safe_modules %}
+    <div class="row g-3">
+      {% for module in safe_modules %}
+      <div class="col-12">
+        <a href="/student/lesson/module/{{ module.id }}" class="text-decoration-none">
+          <div class="card shadow-sm border-0 glass-card p-3 h-100">
+            <h5 class="mb-1 text-dark">{{ module.title }}</h5>
+            <small class="text-muted d-block">{{ module.description or "Chưa có mô tả." }}</small>
+
+            {% if module.course %}
+            <small class="text-primary mt-2 d-inline-block">
+              <i class="bi bi-book"></i> {{ module.course.course_name }}
+            </small>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
   {% else %}
-    <div class="alert alert-info">Không có chương nào.</div>
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle"></i> Không có chương nào.
+    </div>
   {% endif %}
 
 </div>
+
+<style>
+.fade-in {
+  animation: fadeIn .4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.glass-card {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  transition: .25s ease;
+}
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0,0,0,.08);
+}
+</style>
 {% endblock %}

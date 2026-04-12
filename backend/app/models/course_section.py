@@ -21,6 +21,10 @@ class CourseSection(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    # 🔗 Quan hệ ORM
     course = relationship("Course", back_populates="sections")
     teacher = relationship("User", back_populates="teaching_sections")
+    schedules = relationship(
+        "ClassSchedule",
+        back_populates="section",
+        cascade="all, delete-orphan"
+    )

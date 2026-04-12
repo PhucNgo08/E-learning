@@ -1,73 +1,43 @@
 <div class="card cart-item-card glass glass-hover shadow-sm border-0 h-100">
+  <div class="position-relative">
+    <img src="{{ item.course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
+         onerror="this.src='/uploads/course_thumbnails/default-course.png'"
+         class="card-img-top course-thumb"
+         alt="{{ item.course.course_name }}">
 
-    <div class="position-relative">
+    {% if item.course.discount_percent and item.course.discount_percent > 0 %}
+    <span class="discount-badge">-{{ item.course.discount_percent }}%</span>
+    {% endif %}
+  </div>
 
-        <img src="{{ item.course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-             onerror="this.src='/uploads/course_thumbnails/default-course.png'"
-             class="card-img-top course-thumb">
+  <div class="card-body d-flex flex-column">
+    <h5 class="card-title fw-semibold text-dark text-truncate" title="{{ item.course.course_name }}">
+      {{ item.course.course_name }}
+    </h5>
 
-        {% if item.course.discount_percent > 0 %}
-        <span class="discount-badge">
-            -{{ item.course.discount_percent }}%
-        </span>
+    <p class="text-muted small mb-3">
+      {% if item.course.description %}
+        {{ item.course.description[:100] }}{% if item.course.description|length > 100 %}...{% endif %}
+      {% else %}
+        Khóa học chưa có mô tả.
+      {% endif %}
+    </p>
+
+    <div class="mt-auto d-flex justify-content-between align-items-center gap-3">
+      <div>
+        {% if item.course.discount_percent and item.course.discount_percent > 0 %}
+          <div class="fw-bold price-final">{{ "{:,.0f}".format(item.course.final_price) }}₫</div>
+          <div class="text-muted small text-decoration-line-through">{{ "{:,.0f}".format(item.course.price or 0) }}₫</div>
+        {% else %}
+          <div class="fw-bold price-main">{{ "{:,.0f}".format(item.course.final_price) }}₫</div>
         {% endif %}
+      </div>
+
+      <a href="/student/cart/remove/{{ item.id }}"
+         class="btn btn-soft border btn-sm rounded-circle remove-btn shadow-sm"
+         title="Xóa khỏi giỏ">
+        <i class="bi bi-trash-fill text-danger"></i>
+      </a>
     </div>
-
-    <div class="card-body d-flex flex-column">
-
-        <h5 class="card-title fw-semibold text-dark text-truncate"
-            title="{{ item.course.course_name }}">
-            {{ item.course.course_name }}
-        </h5>
-
-        <p class="text-muted small mb-3">
-            {% if item.course.description %}
-                {{ item.course.description[:100] }}{% if item.course.description|length > 100 %}...{% endif %}
-            {% else %}
-                Khóa học chưa có mô tả.
-            {% endif %}
-        </p>
-
-        <div class="mt-auto d-flex justify-content-between align-items-center">
-
-            <div>
-                {% if item.course.discount_percent > 0 %}
-                    <div class="fw-bold price-final">
-                        {{ "{:,.0f}".format(item.course.final_price) }}₫
-                    </div>
-
-                    <div class="text-muted small text-decoration-line-through">
-                        {{ "{:,.0f}".format(item.course.price or 0) }}₫
-                    </div>
-                {% else %}
-                    <div class="fw-bold price-main">
-                        {{ "{:,.0f}".format(item.course.final_price) }}₫
-                    </div>
-                {% endif %}
-            </div>
-
-            <a href="/student/cart/remove/{{ item.id }}"
-               class="btn btn-soft border btn-sm rounded-circle remove-btn shadow-sm"
-               title="Xóa khỏi giỏ">
-                <i class="bi bi-trash-fill text-danger"></i>
-            </a>
-
-        </div>
-    </div>
-
+  </div>
 </div>
-
-<style>
-.cart-item-card {
-    border-radius: 16px;
-}
-.course-thumb {
-    height: 165px;
-    width: 100%;
-    object-fit: cover;
-    border-radius: 16px 16px 0 0;
-}
-.remove-btn:hover {
-    background: #ffe8e8 !important;
-}
-</style>

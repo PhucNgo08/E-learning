@@ -29,10 +29,9 @@ class Lesson(Base):
     thumbnail_url = Column(String(500))
 
     duration_minutes = Column(Integer, default=0)
-    is_preview = Column(Integer, default=0)    # ✅ TINYINT trong MySQL
-    is_published = Column(Integer, default=0)  # ✅ TINYINT trong MySQL
+    is_preview = Column(Integer, default=0)
+    is_published = Column(Integer, default=0)
 
-    # 🕒 Thời gian học (dùng cho lịch giảng dạy)
     start_time = Column(DateTime, nullable=True)
     end_time = Column(DateTime, nullable=True)
 
@@ -41,7 +40,13 @@ class Lesson(Base):
 
     # === Quan hệ ORM ===
     module = relationship("Module", back_populates="lessons")
-    # ⭐ Thêm dòng này:
     quizzes = relationship("Quiz", back_populates="lesson")
+    lesson_notes = relationship(
+        "LessonNote",
+        back_populates="lesson",
+        cascade="all, delete-orphan",
+    )
+    lesson_progresses = relationship("LessonProgress", back_populates="lesson", cascade="all, delete-orphan")
+    learning_activity_logs = relationship("LearningActivityLog", back_populates="lesson")
     def __repr__(self):
         return f"<Lesson(id={self.id}, title={self.title}, start={self.start_time}, end={self.end_time})>"

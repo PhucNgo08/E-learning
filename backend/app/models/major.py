@@ -1,32 +1,35 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime
-from sqlalchemy.orm import relationship
-from datetime import datetime
 import uuid
+
+from sqlalchemy import Boolean, Column, DateTime, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
 from app.database.connection import Base
 
 
 class Major(Base):
     __tablename__ = "majors"
 
-    # ===========================
-    # 🧩 Cấu trúc bảng majors
-    # ===========================
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    major_code = Column(String(10), unique=True, nullable=False)       # Mã ngành
-    major_name = Column(String(100), nullable=False)                   # Tên ngành
-    faculty_name = Column(String(100))                                 # Khoa trực thuộc
-    is_active = Column(Boolean, default=True)                          # Trạng thái hoạt động
-    created_at = Column(DateTime, default=datetime.utcnow)             # Ngày tạo
+    major_code = Column(String(20), unique=True, nullable=False)
+    major_name = Column(String(150), nullable=False)
+    faculty_name = Column(String(150), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
 
-    # ===========================
-    # 🔗 Quan hệ ORM
-    # ===========================
-    users = relationship("User", back_populates="major", cascade="all, delete-orphan")
-    classes = relationship("Class", back_populates="major")  
-    courses = relationship("Course", back_populates="major", cascade="all, delete-orphan")
+    student_profiles = relationship("StudentProfile", back_populates="major")
+    teacher_profiles = relationship("TeacherProfile", back_populates="major")
+    classes = relationship("Class", back_populates="major")
+    courses = relationship("Course", back_populates="major")
 
-    # ===========================
-    # 🧾 Hiển thị gọn trong console
-    # ===========================
     def __repr__(self):
-        return f"<Major(code='{self.major_code}', name='{self.major_name}', active={self.is_active})>"
+        return (
+            f"<Major(major_code='{self.major_code}', "
+            f"major_name='{self.major_name}', is_active={self.is_active})>"
+        )

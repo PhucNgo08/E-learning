@@ -1,0 +1,112 @@
+{% extends "layout_admin.html" %}
+{% block title %}📊 Dashboard thống kê{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">📊 Dashboard thống kê</h3>
+      <p class="text-muted mb-0">Tổng quan nhanh tình hình hệ thống.</p>
+    </div>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary">← Quay lại</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="text-muted">Tổng người dùng</h6>
+        <h3 class="fw-bold text-primary">{{ user_stats.get("total_users", 0) if user_stats else 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="text-muted">Tổng khóa học</h6>
+        <h3 class="fw-bold text-success">{{ course_stats.get("total_courses", 0) if course_stats else 0 }}</h3>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="card shadow-sm border-0 text-center p-3">
+        <h6 class="text-muted">Tổng đánh giá</h6>
+        <h3 class="fw-bold text-warning">{{ review_stats.get("total_reviews", 0) if review_stats else 0 }}</h3>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3 text-primary">👥 Thống kê người dùng</h5>
+          {% if user_stats %}
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+              <tbody>
+                {% for key, value in user_stats.items() %}
+                <tr>
+                  <th style="width: 55%;">{{ key }}</th>
+                  <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info mb-0">Chưa có dữ liệu người dùng.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3 text-success">📘 Thống kê khóa học</h5>
+          {% if course_stats %}
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+              <tbody>
+                {% for key, value in course_stats.items() %}
+                <tr>
+                  <th style="width: 55%;">{{ key }}</th>
+                  <td>{{ value }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="alert alert-info mb-0">Chưa có dữ liệu khóa học.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5 class="fw-bold mb-3 text-warning">⭐ Thống kê đánh giá</h5>
+          {% if review_stats %}
+          <div class="mb-3">
+            <div class="small text-muted">Điểm trung bình</div>
+            <div class="fs-3 fw-bold text-dark">{{ review_stats.get("avg_rating", 0) }}</div>
+          </div>
+
+          <div class="small text-muted mb-2">Phân bố sao</div>
+          {% set labels = ["5 sao", "4 sao", "3 sao", "2 sao", "1 sao"] %}
+          {% for count in review_stats.get("star_distribution", []) %}
+          <div class="d-flex justify-content-between border rounded px-3 py-2 mb-2">
+            <span>{{ labels[loop.index0] }}</span>
+            <strong>{{ count }}</strong>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="alert alert-info mb-0">Chưa có dữ liệu đánh giá.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

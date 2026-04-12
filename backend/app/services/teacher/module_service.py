@@ -1,16 +1,24 @@
 import uuid
 from datetime import datetime
+
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+
 from app.models.module import Module
 from app.models.course import Course
+
+
+def _clean_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
 
 
 # =========================================================
 # 🔒 Kiểm tra quyền sở hữu khóa học
 # =========================================================
 def _course_owned(db: Session, teacher_id: str, course_id: str):
-    """Kiểm tra giáo viên có sở hữu khóa học này không."""
     return (
         db.query(Course)
         .filter(Course.id == course_id, Course.teacher_id == teacher_id)
@@ -26,12 +34,11 @@ def list_modules_by_course(db: Session, course_id: str):
         db.query(Module)
         .filter(
             Module.course_id == course_id,
-            Module.deleted_at.is_(None)     # <-- BẮT BUỘC THÊM
+            Module.deleted_at.is_(None)
         )
         .order_by(Module.module_number.asc())
         .all()
     )
-
 
 
 # =========================================================
@@ -43,12 +50,11 @@ def list_all_modules_by_teacher(db: Session, teacher_id: str):
         .join(Course, Module.course_id == Course.id)
         .filter(
             Course.teacher_id == teacher_id,
-            Module.deleted_at.is_(None)     # <-- BẮT BUỘC THÊM
+            Module.deleted_at.is_(None)
         )
         .order_by(Course.course_name.asc(), Module.module_number.asc())
         .all()
     )
-
 
 
 # =========================================================
@@ -63,21 +69,25 @@ def create_module(
     description: str,
     learning_objectives: str,
 ):
-    """Tạo module mới trong khóa học của giáo viên."""
     try:
-        # Kiểm tra quyền
         course = _course_owned(db, teacher_id, course_id)
         if not course:
             return {"error": "Bạn không có quyền tạo module cho khóa học này."}
 
-        # Kiểm tra trùng module_number
+        title = _clean_text(title)
+        description = _clean_text(description)
+        learning_objectives = _clean_text(learning_objectives)
+
+        if not title:
+            return {"error": "Tên chương không được để trống."}
+
         existed = (
             db.query(Module)
             .filter(
-        Module.course_id == course_id,
-        Module.module_number == module_number,
-        Module.deleted_at.is_(None)
-    )
+                Module.course_id == course_id,
+                Module.module_number == module_number,
+                Module.deleted_at.is_(None)
+            )
             .first()
         )
         if existed:
@@ -87,9 +97,9 @@ def create_module(
             id=str(uuid.uuid4()),
             course_id=course_id,
             module_number=module_number,
-            title=title.strip(),
-            description=description.strip() if description else None,
-            learning_objectives=learning_objectives.strip() if learning_objectives else None,
+            title=title,
+            description=description,
+            learning_objectives=learning_objectives,
             is_published=0,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
@@ -98,13 +108,10 @@ def create_module(
         db.add(new_module)
         db.commit()
         db.refresh(new_module)
+        return {"success": True, "module": new_module}
 
-        print(f"✅ [Tạo module] {new_module.title} (#{new_module.module_number}) thuộc khóa học {course.course_name}")
-        return new_module
-
-    except SQLAlchemyError as e:
+    except SQLAlchemyError:
         db.rollback()
-        print("❌ [Lỗi tạo module]", str(e))
         return {"error": "Đã xảy ra lỗi khi tạo module."}
 
 
@@ -112,15 +119,19 @@ def create_module(
 # 🔍 Lấy thông tin Module + kiểm tra quyền
 # =========================================================
 def get_module_owned_with_course(db: Session, teacher_id: str, module_id: str):
-    """Trả về (module, course) nếu giáo viên có quyền truy cập."""
-    module = db.query(Module).filter(Module.id == module_id).first()
+    module = (
+        db.query(Module)
+        .filter(
+            Module.id == module_id,
+            Module.deleted_at.is_(None)
+        )
+        .first()
+    )
     if not module:
-        print("⚠️ [Module] Không tồn tại.")
         return None, None
 
     course = _course_owned(db, teacher_id, module.course_id)
     if not course:
-        print("⛔ [Từ chối] Giáo viên không sở hữu khóa học chứa module này.")
         return None, None
 
     return module, course
@@ -138,92 +149,88 @@ def update_module(
     description: str,
     learning_objectives: str,
 ):
-    """Cập nhật thông tin module."""
-    module = db.query(Module).filter(Module.id == module_id).first()
-    if not module:
-        print("⚠️ [Cập nhật] Không tìm thấy module.")
-        return None
+    module, course = get_module_owned_with_course(db, teacher_id, module_id)
+    if not module or not course:
+        return {"error": "Không tìm thấy module hoặc bạn không có quyền cập nhật."}
 
-    course = _course_owned(db, teacher_id, module.course_id)
-    if not course:
-        print("⛔ [Từ chối] Không có quyền chỉnh sửa module này.")
-        return None
+    title = _clean_text(title)
+    description = _clean_text(description)
+    learning_objectives = _clean_text(learning_objectives)
 
-    # Kiểm tra trùng thứ tự module
+    if not title:
+        return {"error": "Tên chương không được để trống."}
+
     duplicate = (
         db.query(Module)
         .filter(
-        Module.course_id == module.course_id,
-        Module.module_number == module_number,
-        Module.id != module_id,
-        Module.deleted_at.is_(None)
-    )
+            Module.course_id == module.course_id,
+            Module.module_number == module_number,
+            Module.id != module_id,
+            Module.deleted_at.is_(None)
+        )
         .first()
     )
     if duplicate:
-        print(f"⚠️ [Cập nhật] Module số {module_number} đã tồn tại.")
-        return None
+        return {"error": f"Module số {module_number} đã tồn tại trong khóa học này."}
 
-    # Cập nhật thông tin
-    module.module_number = module_number
-    module.title = title.strip()
-    module.description = description.strip() if description else None
-    module.learning_objectives = learning_objectives.strip() if learning_objectives else None
-    module.updated_at = datetime.utcnow()
+    try:
+        module.module_number = module_number
+        module.title = title
+        module.description = description
+        module.learning_objectives = learning_objectives
+        module.updated_at = datetime.utcnow()
 
-    db.commit()
-    db.refresh(module)
+        db.commit()
+        db.refresh(module)
 
-    print(f"✏️ [Cập nhật] Module '{module.title}' đã được chỉnh sửa.")
-    return module.course_id
+        return {"success": True, "course_id": module.course_id}
+
+    except SQLAlchemyError:
+        db.rollback()
+        return {"error": "Đã xảy ra lỗi khi cập nhật module."}
 
 
 # =========================================================
 # ❌ Xóa Module
 # =========================================================
 def delete_module(db: Session, teacher_id: str, module_id: str):
-    """Xóa hoặc đánh dấu xóa module."""
-    module = db.query(Module).filter(Module.id == module_id).first()
-    if not module:
-        print("⚠️ [Xóa] Không tìm thấy module.")
-        return None
+    module, course = get_module_owned_with_course(db, teacher_id, module_id)
+    if not module or not course:
+        return {"error": "Không tìm thấy module hoặc bạn không có quyền xóa."}
 
-    course = _course_owned(db, teacher_id, module.course_id)
-    if not course:
-        print("⛔ [Từ chối] Không có quyền xóa module này.")
-        return None
-
-    # 🚫 CHẶN XÓA MODULE ĐÃ ĐĂNG
     if module.is_published == 1:
         return {"error": "Chương đã đăng, không thể xóa."}
 
+    try:
+        if hasattr(module, "deleted_at"):
+            module.deleted_at = datetime.utcnow()
+            module.updated_at = datetime.utcnow()
+        else:
+            db.delete(module)
 
-    # Xóa mềm
-    if hasattr(module, "deleted_at"):
-        module.deleted_at = datetime.utcnow()
-        print(f"🕒 [Xóa mềm] Module '{module.title}' đã được đánh dấu xóa.")
-    else:
-        db.delete(module)
-        print(f"🗑️ [Xóa cứng] Module '{module.title}' đã bị xóa hoàn toàn.")
+        db.commit()
+        return {"success": True, "course_id": module.course_id}
 
-    db.commit()
-    return module.course_id
+    except SQLAlchemyError:
+        db.rollback()
+        return {"error": "Đã xảy ra lỗi khi xóa module."}
+
 
 # =========================================================
 # 📢 Đăng / Gỡ đăng module
 # =========================================================
 def publish_module(db: Session, teacher_id: str, module_id: str, publish: bool):
-    """Cập nhật trạng thái xuất bản module."""
     module, course = get_module_owned_with_course(db, teacher_id, module_id)
-    if not module:
-        print("⚠️ [Xuất bản] Không tìm thấy module hoặc không có quyền.")
-        return None
+    if not module or not course:
+        return {"error": "Không tìm thấy module hoặc không có quyền cập nhật trạng thái."}
 
-    module.is_published = 1 if publish else 0
-    module.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(module)
+    try:
+        module.is_published = 1 if publish else 0
+        module.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(module)
+        return {"success": True, "module": module}
 
-    state = "✅ [Xuất bản]" if publish else "🚫 [Gỡ đăng]"
-    print(f"{state} Module '{module.title}' thuộc khóa học '{course.course_name}'.")
-    return module
+    except SQLAlchemyError:
+        db.rollback()
+        return {"error": "Không thể cập nhật trạng thái module."}

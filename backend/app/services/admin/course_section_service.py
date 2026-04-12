@@ -1,89 +1,140 @@
-"""
-==========================================================
-📘 app/services/admin/course_section_service.py
-Quản lý HỌC PHẦN (Course Section) – Dành cho ADMIN
-==========================================================
-"""
-
 import uuid
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+
+from app.models.course import Course
 from app.models.course_section import CourseSection
 
 
-# =====================================================
-# ➕ 1️⃣ Tạo học phần mới
-# =====================================================
-def create_section(
+def get_section_by_id(db: Session, section_id: str):
+    return db.query(CourseSection).filter(CourseSection.id == section_id).first()
+
+
+def get_section_by_code(db: Session, section_code: str):
+    return db.query(CourseSection).filter(CourseSection.section_code == section_code).first()
+
+
+def get_all_sections(db: Session):
+    try:
+        return (
+            db.query(CourseSection)
+            .order_by(CourseSection.section_code.asc())
+            .all()
+        )
+    except SQLAlchemyError as e:
+        raise RuntimeError(f"Lỗi khi truy vấn học phần: {str(e)}") from e
+
+
+def _validate_section_payload(
     db: Session,
     section_code: str,
     section_name: str,
     course_id: str,
     max_students: int,
-    location: str,
-    schedule_info: str,
+    section_id: str | None = None,
 ):
-    """Tạo học phần mới"""
+    section_code = (section_code or "").strip()
+    section_name = (section_name or "").strip()
+    course_id = (course_id or "").strip()
+
+    if not section_code:
+        raise ValueError("Mã học phần không được để trống.")
+
+    if not section_name:
+        raise ValueError("Tên học phần không được để trống.")
+
+    if not course_id:
+        raise ValueError("Bạn phải chọn khóa học.")
+
+    course = db.query(Course).filter(Course.id == course_id).first()
+    if not course:
+        raise ValueError("Khóa học không tồn tại.")
+
+    if max_students is None or int(max_students) <= 0:
+        raise ValueError("Số lượng tối đa phải lớn hơn 0.")
+
+    existing = get_section_by_code(db, section_code)
+    if existing and existing.id != section_id:
+        raise ValueError("Mã học phần đã tồn tại.")
+
+    return section_code, section_name, course_id, int(max_students)
+
+
+def create_section(
+    db: Session,
+    section_code: str,
+    section_name: str,
+    course_id: str,
+    max_students: int = 50,
+    location: str = "",
+    schedule_info: str = "",
+):
     try:
-        new_section = CourseSection(
-            id=str(uuid.uuid4()),
-            section_code=section_code.strip(),
-            section_name=section_name.strip(),
+        section_code, section_name, course_id, max_students = _validate_section_payload(
+            db=db,
+            section_code=section_code,
+            section_name=section_name,
             course_id=course_id,
             max_students=max_students,
+        )
+
+        new_section = CourseSection(
+            id=str(uuid.uuid4()),
+            section_code=section_code,
+            section_name=section_name,
+            course_id=course_id,
+            max_students=max_students,
+            current_students=0,
             location=location.strip() if location else None,
             schedule_info=schedule_info.strip() if schedule_info else None,
         )
+
         db.add(new_section)
         db.commit()
         db.refresh(new_section)
-        print(f"✅ [ADMIN] Tạo học phần mới: {new_section.section_name}")
         return new_section
+
+    except ValueError:
+        db.rollback()
+        raise
+    except IntegrityError as e:
+        db.rollback()
+        raise ValueError("Dữ liệu học phần bị trùng hoặc không hợp lệ.") from e
     except SQLAlchemyError as e:
         db.rollback()
-        print("❌ [ADMIN] Lỗi khi tạo học phần:", e)
-        raise RuntimeError(f"Lỗi khi tạo học phần: {str(e)}")
+        raise RuntimeError(f"Lỗi khi tạo học phần: {str(e)}") from e
 
 
-# =====================================================
-# 📋 2️⃣ Lấy danh sách học phần
-# =====================================================
-def get_all_sections(db: Session):
-    """Lấy toàn bộ học phần"""
-    try:
-        sections = (
-            db.query(CourseSection)
-            .order_by(CourseSection.section_code.asc())
-            .all()
-        )
-        print(f"📚 [ADMIN] Tổng số học phần: {len(sections)}")
-        return sections
-    except SQLAlchemyError as e:
-        print("❌ [ADMIN] Lỗi khi truy vấn học phần:", e)
-        raise RuntimeError(f"Lỗi khi truy vấn học phần: {str(e)}")
-
-
-# =====================================================
-# ✏️ 3️⃣ Cập nhật học phần
-# =====================================================
 def update_section(
     db: Session,
     section_id: str,
     section_code: str,
     section_name: str,
     course_id: str,
-    max_students: int,
-    location: str,
-    schedule_info: str,
+    max_students: int = 50,
+    location: str = "",
+    schedule_info: str = "",
 ):
-    """Cập nhật thông tin học phần"""
-    section = db.query(CourseSection).filter(CourseSection.id == section_id).first()
+    section = get_section_by_id(db, section_id)
     if not section:
         raise ValueError("Không tìm thấy học phần cần cập nhật.")
 
     try:
-        section.section_code = section_code.strip()
-        section.section_name = section_name.strip()
+        section_code, section_name, course_id, max_students = _validate_section_payload(
+            db=db,
+            section_code=section_code,
+            section_name=section_name,
+            course_id=course_id,
+            max_students=max_students,
+            section_id=section_id,
+        )
+
+        current_students = getattr(section, "current_students", 0) or 0
+        if max_students < current_students:
+            raise ValueError("Số lượng tối đa không được nhỏ hơn số sinh viên hiện tại.")
+
+        section.section_code = section_code
+        section.section_name = section_name
         section.course_id = course_id
         section.max_students = max_students
         section.location = location.strip() if location else None
@@ -91,29 +142,31 @@ def update_section(
 
         db.commit()
         db.refresh(section)
-        print(f"✏️ [ADMIN] Đã cập nhật học phần: {section.section_name}")
         return section
+
+    except ValueError:
+        db.rollback()
+        raise
+    except IntegrityError as e:
+        db.rollback()
+        raise ValueError("Dữ liệu học phần bị trùng hoặc không hợp lệ.") from e
     except SQLAlchemyError as e:
         db.rollback()
-        print("❌ [ADMIN] Lỗi khi cập nhật học phần:", e)
-        raise RuntimeError(f"Lỗi khi cập nhật học phần: {str(e)}")
+        raise RuntimeError(f"Lỗi khi cập nhật học phần: {str(e)}") from e
 
 
-# =====================================================
-# ❌ 4️⃣ Xóa học phần
-# =====================================================
 def delete_section(db: Session, section_id: str):
-    """Xóa học phần khỏi hệ thống"""
-    section = db.query(CourseSection).filter(CourseSection.id == section_id).first()
+    section = get_section_by_id(db, section_id)
     if not section:
         raise ValueError("Không tìm thấy học phần để xóa.")
 
     try:
         db.delete(section)
         db.commit()
-        print(f"🗑️ [ADMIN] Đã xóa học phần: {section.section_name}")
         return True
+    except IntegrityError as e:
+        db.rollback()
+        raise ValueError("Không thể xóa học phần vì đang có dữ liệu liên kết.") from e
     except SQLAlchemyError as e:
         db.rollback()
-        print("❌ [ADMIN] Lỗi khi xóa học phần:", e)
-        raise RuntimeError(f"Lỗi khi xóa học phần: {str(e)}")
+        raise RuntimeError(f"Lỗi khi xóa học phần: {str(e)}") from e

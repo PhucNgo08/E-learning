@@ -1,117 +1,220 @@
 {% extends "layout_student.html" %}
 {% block title %}🎓 Bảng điều khiển Sinh viên{% endblock %}
+
 {% block head_extra %}
 <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student_dashboard.css" />
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container fade-in">
+<div class="dashboard-container">
 
-  <!-- HEADER -->
-  <div class="mb-4 text-center text-md-start reveal">
-    <h2 class="fw-bold text-gradient">
-      <i class="bi bi-speedometer2 me-2"></i> Bảng điều khiển
-    </h2>
-    <p class="text-muted">Theo dõi tiến độ học tập, bài tập và kết quả của bạn.</p>
+  <!-- HERO -->
+  <div class="dashboard-hero reveal">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <span class="badge rounded-pill text-bg-primary px-3 py-2 mb-3 fw-semibold">
+          <i class="bi bi-stars me-1"></i> Trung tâm học tập cá nhân
+        </span>
+
+        <h2 class="dashboard-title">
+          <i class="bi bi-speedometer2 me-2"></i>
+          Bảng điều khiển
+        </h2>
+
+        <p class="dashboard-subtitle mb-0">
+          Theo dõi tiến độ học tập, bài tập và kết quả của bạn trong một màn hình duy nhất.
+        </p>
+      </div>
+
+      <div class="text-md-end">
+        <div class="small text-muted">Hôm nay là thời điểm tốt để tiếp tục khóa học đang học.</div>
+      </div>
+    </div>
   </div>
 
-  <!-- WELCOME CARD -->
-  <div class="welcome-card shadow-sm mb-4 reveal">
-    <h5>Xin chào, 
-      <span class="text-primary">{{ user.full_name }}</span> 👋
-    </h5>
-    <p class="text-secondary mb-0">Chúc bạn một ngày học tập hiệu quả!</p>
+  <!-- WELCOME -->
+  <div class="welcome-card reveal">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+      <div>
+        <h5 class="mb-2">
+          Xin chào,
+          <span class="text-primary">
+            {{ user.full_name if user is defined and user and user.full_name else (request.session.get('user_fullname') or 'Học viên') }}
+          </span>
+          👋
+        </h5>
+        <p class="mb-0">
+          Chúc bạn một ngày học tập hiệu quả. Hãy tiếp tục hoàn thành các bài học còn dang dở để nâng cao tiến độ.
+        </p>
+      </div>
+
+      <div class="text-md-end">
+        <span class="badge rounded-pill text-bg-light border px-3 py-2 fw-semibold">
+          <i class="bi bi-lightning-charge-fill text-warning me-1"></i>
+          Sẵn sàng học tập
+        </span>
+      </div>
+    </div>
   </div>
 
-  <!-- STATISTICS -->
+  <!-- STATS -->
   <div class="row g-3 mb-4">
 
-    <div class="col-md-3 reveal">
-      <div class="stat-card gradient-blue">
+    <div class="col-12 col-sm-6 col-xl-3 reveal">
+      <div class="stat-card gradient-blue h-100">
         <i class="bi bi-journal-text"></i>
-        <h5>{{ enrolled_courses|length or 0 }}</h5>
+        <h5>{{ enrolled_courses|default([], true)|length }}</h5>
         <p>Khóa học</p>
       </div>
     </div>
 
-    <div class="col-md-3 reveal">
-      <div class="stat-card gradient-green">
+    <div class="col-12 col-sm-6 col-xl-3 reveal">
+      <div class="stat-card gradient-green h-100">
         <i class="bi bi-clipboard-check"></i>
-        <h5>{{ progress_stats.completed }}</h5>
+        <h5>{{ progress_stats.completed if progress_stats is defined and progress_stats and progress_stats.completed is defined else 0 }}</h5>
         <p>Bài học hoàn thành</p>
       </div>
     </div>
 
-    <div class="col-md-3 reveal">
-      <div class="stat-card gradient-purple">
+    <div class="col-12 col-sm-6 col-xl-3 reveal">
+      <div class="stat-card gradient-purple h-100">
         <i class="bi bi-question-circle"></i>
-        <h5>{{ total_quizzes }}</h5>
+        <h5>{{ total_quizzes|default(0, true) }}</h5>
         <p>Lần làm trắc nghiệm</p>
       </div>
     </div>
 
-    <div class="col-md-3 reveal">
-      <div class="stat-card gradient-gold">
+    <div class="col-12 col-sm-6 col-xl-3 reveal">
+      <div class="stat-card gradient-gold h-100">
         <i class="bi bi-trophy"></i>
-        <h5>{{ total_assignments }}</h5>
+        <h5>{{ total_assignments|default(0, true) }}</h5>
         <p>Bài tập đã nộp</p>
       </div>
     </div>
 
   </div>
 
-  <!-- COURSE LIST -->
-  <h5 class="fw-semibold text-secondary mb-3 reveal">
-    <i class="bi bi-journals me-2"></i>Khóa học của bạn
-  </h5>
+  <!-- COURSE SECTION -->
+  <div class="section-header reveal">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <h5 class="section-title mb-0">
+        <i class="bi bi-journals me-2"></i>
+        Khóa học của bạn
+      </h5>
 
-  {% if course_progress_list %}
-  <div class="courses-grid reveal">
-    {% for item in course_progress_list %}
-    <div class="course-card-mini shadow-sm">
-
-      <img src="{{ item.course.thumbnail_url or '/static/images/course-placeholder.png' }}" 
-           class="course-thumb" alt="Ảnh khóa học" />
-
-      <h6 class="fw-semibold mt-2 text-center text-truncate">
-        {{ item.course.course_name }}
-      </h6>
-
-      <!-- PROGRESS BAR -->
-      <div class="progress mx-2 mt-1">
-        <div class="progress-bar bg-success" data-progress="{{ item.percent }}"></div>
-      </div>
-
-      <small class="text-muted d-block text-center">{{ item.percent }}%</small>
+      <span class="small text-muted">
+        {{ course_progress_list|default([], true)|length }} khóa học đang theo dõi
+      </span>
     </div>
+  </div>
+
+  {% set safe_course_progress_list = course_progress_list|default([], true) %}
+
+  {% if safe_course_progress_list %}
+  <div class="courses-grid reveal">
+    {% for item in safe_course_progress_list %}
+      {% set safe_percent = item.percent|default(0, true)|float %}
+      {% set display_percent = safe_percent|round(0)|int %}
+      <article class="course-card-mini">
+
+        <div class="position-relative">
+          <img
+            src="{{ item.course.thumbnail_url if item.course and item.course.thumbnail_url else '/uploads/course_thumbnails/default-course.png' }}"
+            class="course-thumb"
+            alt="Ảnh khóa học"
+            onerror="this.onerror=null;this.src='/uploads/course_thumbnails/default-course.png';"
+          />
+
+          <div class="position-absolute top-0 end-0 m-2">
+            <span class="badge rounded-pill text-bg-dark bg-opacity-75 px-3 py-2">
+              {{ display_percent }}%
+            </span>
+          </div>
+        </div>
+
+        <div class="px-2 pb-2">
+          <h6
+            class="course-title text-truncate"
+            title="{{ item.course.course_name if item.course else 'Khóa học' }}"
+          >
+            {{ item.course.course_name if item.course else "Khóa học không xác định" }}
+          </h6>
+
+          <div class="progress course-progress-bar-wrap">
+            <div
+              class="progress-bar"
+              role="progressbar"
+              style="width: 0%;"
+              aria-valuenow="{{ display_percent }}"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              data-progress="{{ safe_percent }}">
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center justify-content-between mt-2 px-1">
+            <small class="course-progress-text mb-0">{{ display_percent }}%</small>
+            <small class="text-muted fw-semibold">
+              {% if display_percent >= 100 %}
+                Hoàn thành
+              {% elif display_percent >= 70 %}
+                Gần xong
+              {% elif display_percent > 0 %}
+                Đang học
+              {% else %}
+                Chưa bắt đầu
+              {% endif %}
+            </small>
+          </div>
+        </div>
+
+      </article>
     {% endfor %}
   </div>
   {% else %}
-  <div class="alert alert-info text-center shadow-sm reveal">
-    <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
+  <div class="alert alert-info text-center shadow-sm reveal border-0 rounded-4 py-4">
+    <div class="mb-2" style="font-size: 1.6rem;">
+      <i class="bi bi-info-circle"></i>
+    </div>
+    <div class="fw-semibold mb-1">Bạn chưa đăng ký khóa học nào</div>
+    <div class="small text-muted">
+      Hãy khám phá danh sách khóa học và bắt đầu hành trình học tập của bạn.
+    </div>
   </div>
   {% endif %}
 
 </div>
+{% endblock %}
 
-<!-- PROGRESS BAR ANIMATION -->
+{% block scripts %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".progress-bar").forEach(bar => {
-    const val = bar.dataset.progress || 0;
-    setTimeout(() => bar.style.width = val + "%", 300);
+  document.querySelectorAll(".progress-bar[data-progress]").forEach((bar) => {
+    const raw = parseFloat(bar.dataset.progress || "0");
+    const value = Math.max(0, Math.min(100, Number.isNaN(raw) ? 0 : raw));
+
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        bar.style.width = `${value}%`;
+      }, 160);
+    });
   });
 
   const reveals = document.querySelectorAll(".reveal");
+
   const revealOnScroll = () => {
-    const h = window.innerHeight;
-    reveals.forEach(el => {
-      if (el.getBoundingClientRect().top < h - 80) el.classList.add("visible");
+    const viewportHeight = window.innerHeight;
+
+    reveals.forEach((el) => {
+      if (el.getBoundingClientRect().top < viewportHeight - 80) {
+        el.classList.add("visible");
+      }
     });
   };
-  window.addEventListener("scroll", revealOnScroll);
+
+  revealOnScroll();
+  window.addEventListener("scroll", revealOnScroll, { passive: true });
   window.addEventListener("load", revealOnScroll);
 });
 </script>
-
 {% endblock %}

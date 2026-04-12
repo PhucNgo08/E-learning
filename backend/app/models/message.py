@@ -1,7 +1,10 @@
-from sqlalchemy import Column, String, DateTime, ForeignKey, Text
-from sqlalchemy.orm import relationship
-from app.database.connection import Base
+
 from datetime import datetime
+
+from sqlalchemy import BigInteger, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy.orm import relationship
+
+from app.database.connection import Base
 
 
 class Message(Base):
@@ -11,25 +14,27 @@ class Message(Base):
     sender_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     receiver_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     content = Column(Text, nullable=False)
-    sent_at = Column(DateTime, default=datetime.utcnow)
+    sent_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    read_at = Column(DateTime, nullable=True)
+    is_read = Column(Integer, nullable=False, default=0)
 
-    # File đính kèm
     attachment_url = Column(String(500), nullable=True)
     attachment_name = Column(String(255), nullable=True)
-    attachment_size = Column(String(50), nullable=True)
+    attachment_size = Column(BigInteger, nullable=True)
 
-    # ✅ Quan hệ ORM TWO-WAY đúng chuẩn
     sender = relationship(
         "User",
         foreign_keys=[sender_id],
-        back_populates="messages_sent"
+        back_populates="messages_sent",
     )
 
     receiver = relationship(
         "User",
         foreign_keys=[receiver_id],
-        back_populates="messages_received"
+        back_populates="messages_received",
     )
 
     def __repr__(self):
         return f"<Message from={self.sender_id} to={self.receiver_id} sent_at={self.sent_at}>"
+
+

@@ -2,13 +2,11 @@
 {% block title %}👤 Hồ sơ học viên{% endblock %}
 
 {% block content %}
+{% set profile = user.profile if user.profile else None %}
+{% set avatar_url = profile.avatar_url if profile and profile.avatar_url else (user.avatar_url if user.avatar_url else '/uploads/avatars/default-avatar.png') %}
+{% set display_name = profile.full_name if profile and profile.full_name else (user.full_name if user.full_name else user.username) %}
 
 <style>
-/* =====================================================
-   👤 PROFILE STUDENT – Glass Neo v4.0 (Premium 2025)
-===================================================== */
-
-/* Avatar */
 .profile-avatar {
   width: 155px;
   height: 155px;
@@ -24,7 +22,6 @@
   box-shadow: 0 0 40px rgba(37, 99, 235, 0.65);
 }
 
-/* Cards */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--glass-border);
@@ -40,7 +37,7 @@
 .card-header {
   border-radius: 18px 18px 0 0 !important;
   font-weight: 600;
- 	color: #fff;
+  color: #fff;
   letter-spacing: .2px;
   padding: 14px 18px;
   background: linear-gradient(135deg, #2563eb, #1e3a8a);
@@ -49,7 +46,6 @@
   background: linear-gradient(135deg, #16a34a, #065f46);
 }
 
-/* Buttons */
 .btn-edit {
   background: linear-gradient(135deg, #0ea5e9, #0369a1);
   color: #fff;
@@ -75,7 +71,6 @@
   box-shadow: 0 6px 18px rgba(37,99,235,.35);
 }
 
-/* Progress */
 .progress {
   height: 22px;
   border-radius: 30px;
@@ -89,7 +84,6 @@
   transition: width 1s ease-in-out;
 }
 
-/* Stats */
 .stat-box {
   padding: 18px 0;
 }
@@ -102,7 +96,6 @@
   font-weight: 700;
 }
 
-/* Toast */
 .profile-toast {
   position: fixed;
   top: 70px;
@@ -115,7 +108,6 @@
   to {transform: translateX(0); opacity: 1;}
 }
 
-/* Dark-mode */
 body.dark-mode .card {
   background: rgba(15, 23, 42, 0.7);
 }
@@ -136,7 +128,6 @@ body.dark-mode .progress {
 
 <div class="container py-4 fade-in">
 
-  <!-- Toast thông báo -->
   {% if request.query_params.get('success') == 'avatar_updated' %}
   <div class="alert alert-success profile-toast shadow-lg">
     📸 Ảnh đại diện đã được cập nhật thành công!
@@ -157,12 +148,11 @@ body.dark-mode .progress {
 
   <div class="row g-4">
 
-    <!-- AVATAR + BASIC INFO -->
     <div class="col-lg-4">
       <div class="card p-3 shadow-sm text-center">
 
         <form id="avatarForm" action="/student/profile/upload-avatar" method="post" enctype="multipart/form-data">
-          <img src="{{ user.avatar_url or '/uploads/avatars/default-avatar.png' }}"
+          <img src="{{ avatar_url }}"
                id="avatarPreview"
                class="profile-avatar mb-2"
                title="Nhấn để thay đổi ảnh đại diện">
@@ -172,7 +162,7 @@ body.dark-mode .progress {
 
         <p class="text-muted mb-2">📸 Nhấn vào ảnh để thay đổi</p>
 
-        <h5 class="fw-bold">{{ user.full_name }}</h5>
+        <h5 class="fw-bold">{{ display_name }}</h5>
         <p class="text-muted small mb-1">{{ user.email }}</p>
         <p class="text-muted small">Mã số sinh viên: {{ user.mssv or 'Chưa cập nhật' }}</p>
 
@@ -187,10 +177,8 @@ body.dark-mode .progress {
       </div>
     </div>
 
-    <!-- ACADEMIC INFO + PROGRESS -->
     <div class="col-lg-8">
 
-      <!-- ACADEMIC CARD -->
       <div class="card shadow-sm mb-4">
         <div class="card-header">
           <i class="bi bi-mortarboard"></i> Thông tin học vụ
@@ -203,7 +191,7 @@ body.dark-mode .progress {
               <p class="text-muted mb-0">{{ major.major_name if major else 'Chưa cập nhật' }}</p>
             </div>
             <div class="col-md-6">
-              <strong>Khóa học:</strong>
+              <strong>Năm học:</strong>
               <p class="text-muted mb-0">{{ academic_year.year_name if academic_year else 'Chưa cập nhật' }}</p>
             </div>
           </div>
@@ -211,13 +199,10 @@ body.dark-mode .progress {
           <div class="row">
             <div class="col-md-6">
               <strong>Trạng thái tài khoản:</strong><br>
-              <span class="badge 
-                {% if user.status == 'active' %} bg-success
-                {% elif user.status == 'suspended' %} bg-danger
-                {% else %} bg-secondary {% endif %}">
-                {% if user.status == 'active' %} Hoạt động
-                {% elif user.status == 'suspended' %} Tạm khóa
-                {% else %} Không xác định {% endif %}
+              <span class="badge {% if user.status == 'active' %}bg-success{% elif user.status == 'suspended' %}bg-danger{% else %}bg-secondary{% endif %}">
+                {% if user.status == 'active' %}Hoạt động
+                {% elif user.status == 'suspended' %}Tạm khóa
+                {% else %}Không xác định{% endif %}
               </span>
             </div>
 
@@ -230,7 +215,6 @@ body.dark-mode .progress {
         </div>
       </div>
 
-      <!-- PROGRESS CARD -->
       <div class="card shadow-sm">
         <div class="card-header success">
           <i class="bi bi-graph-up-arrow"></i> Tiến độ học tập
@@ -275,8 +259,6 @@ body.dark-mode .progress {
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
-  /* Avatar click */
   const avatar = document.getElementById("avatarPreview");
   const input = document.getElementById("avatarInput");
   const form = document.getElementById("avatarForm");
@@ -284,23 +266,19 @@ document.addEventListener("DOMContentLoaded", () => {
   avatar.addEventListener("click", () => input.click());
   input.addEventListener("change", () => {
     if (input.files.length > 0) {
-      // Hiển thị trước ảnh đang chọn
       const reader = new FileReader();
       reader.onload = e => avatar.src = e.target.result;
       reader.readAsDataURL(input.files[0]);
-
       setTimeout(() => form.submit(), 200);
     }
   });
 
-  /* Progress animation */
   const bar = document.getElementById("progressBar");
   if (bar) {
     bar.style.width = "0%";
     setTimeout(() => bar.style.width = bar.dataset.progress + "%", 150);
   }
 
-  /* Auto-hide toast */
   setTimeout(() => {
     document.querySelectorAll(".profile-toast").forEach(el => {
       el.style.transition = "opacity .5s";
@@ -308,7 +286,6 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => el.remove(), 600);
     });
   }, 3500);
-
 });
 </script>
 

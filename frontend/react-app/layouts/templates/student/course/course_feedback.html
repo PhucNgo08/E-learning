@@ -4,7 +4,6 @@
 {% block content %}
 <div class="container mt-3">
 
-  <!-- 🔙 Nút quay lại -->
   <div class="mb-3">
     <a href="{{ url_for('student_course_detail', course_id=course.id) }}"
        class="btn btn-outline-secondary btn-sm rounded-pill">
@@ -12,54 +11,51 @@
     </a>
   </div>
 
-  <!-- 🔹 Header khóa học -->
   <div class="mb-4 text-center">
     <h3 class="fw-bold text-primary mb-1">⭐ Đánh giá khóa học</h3>
-
     <p class="text-muted mb-0 fs-5">{{ course.course_name }}</p>
 
-    {% if course.teacher %}
+    {% if teacher %}
     <p class="text-secondary mt-1">
       👨‍🏫 Giảng viên:
-      <strong>{{ course.teacher.full_name }}</strong>
+      <strong>{{ teacher.full_name if teacher.full_name else teacher.username }}</strong>
     </p>
     {% endif %}
   </div>
 
-  <!-- 📊 Điểm trung bình -->
   <div class="card shadow-sm border-0 mb-4 rating-summary-card">
     <div class="card-body text-center">
-
       <h3 class="fw-bold mb-1 text-warning">{{ average_rating or 0 }}/5.0</h3>
 
       <div class="star-display mb-2">
         {% set avg_int = (average_rating or 0) | round(0, 'floor') | int %}
-        {% for i in range(avg_int) %}
+        {% for _ in range(avg_int) %}
           <i class="bi bi-star-fill text-warning fs-4"></i>
         {% endfor %}
-        {% for i in range(5 - avg_int) %}
+        {% for _ in range(5 - avg_int) %}
           <i class="bi bi-star text-warning fs-4"></i>
         {% endfor %}
       </div>
 
-      <p class="text-muted small">
+      <p class="text-muted small mb-0">
         Dựa trên {{ reviews|length }} đánh giá từ học viên
       </p>
     </div>
   </div>
 
-  <!-- 💬 Danh sách đánh giá -->
   {% if reviews %}
   <div class="list-group shadow-sm">
-
     {% for r in reviews %}
     <div class="list-group-item list-group-item-action review-item py-3 px-4">
 
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
         <div>
           <strong class="text-dark">
-            {{ r.user.full_name if r.user else "Ẩn danh" }}
+            {% if r.user %}
+              {{ r.user.full_name if r.user.full_name else (r.user.username if r.user.username else "Học viên") }}
+            {% else %}
+              Ẩn danh
+            {% endif %}
           </strong>
           <span class="text-muted small ms-2">
             {{ r.created_at.strftime("%d/%m/%Y") if r.created_at else "" }}
@@ -67,29 +63,26 @@
         </div>
 
         <div class="text-warning small">
-          {% set star = r.overall_rating | int %}
-          {% for i in range(star) %}
+          {% set star = (r.overall_rating or 0) | int %}
+          {% for _ in range(star) %}
             <i class="bi bi-star-fill"></i>
           {% endfor %}
-          {% for i in range(5 - star) %}
+          {% for _ in range(5 - star) %}
             <i class="bi bi-star"></i>
           {% endfor %}
         </div>
       </div>
 
-      <!-- Title -->
       {% if r.title %}
       <div class="fw-semibold text-primary mb-1">{{ r.title }}</div>
       {% endif %}
 
-      <!-- Comment -->
       <p class="mb-1">{{ r.comment or "Không có nhận xét." }}</p>
 
-      <!-- Sub ratings -->
-      <div class="d-flex justify-content-between align-items-center mt-2">
+      <div class="d-flex justify-content-between align-items-center mt-2 flex-wrap gap-2">
         <small class="text-muted">
-          Nội dung: {{ r.rating_content or "-" }}/5 • 
-          Giảng viên: {{ r.rating_teacher or "-" }}/5 • 
+          Nội dung: {{ r.rating_content or "-" }}/5 •
+          Giảng viên: {{ r.rating_teacher or "-" }}/5 •
           Hỗ trợ: {{ r.rating_support or "-" }}/5
         </small>
 
@@ -100,7 +93,6 @@
 
     </div>
     {% endfor %}
-
   </div>
   {% else %}
   <div class="alert alert-info text-center shadow-sm">
@@ -108,7 +100,6 @@
   </div>
   {% endif %}
 
-  <!-- 📝 Form đánh giá -->
   {% if enrolled %}
   <div class="card mt-4 shadow-sm review-form-card">
     <div class="card-body">
@@ -130,8 +121,7 @@
                     placeholder="Chia sẻ trải nghiệm của bạn..." required></textarea>
         </div>
 
-        <!-- ⭐ Rating UI -->
-        <div class="row mb-3">
+        <div class="row mb-3 g-3">
           <div class="col-md-3 text-center">
             <label class="form-label fw-bold">⭐ Tổng thể</label>
             <div class="rating-stars" data-target="overall_rating"></div>
@@ -172,23 +162,21 @@
 
 </div>
 
-<!-- ⭐ CSS Nâng Cao -->
 <style>
-  .review-item { border-left: 4px solid transparent; transition: 0.25s; }
-  .review-item:hover { background: rgba(13,110,253,0.05); border-left: 4px solid #0d6efd; }
+.review-item { border-left: 4px solid transparent; transition: 0.25s; }
+.review-item:hover { background: rgba(13,110,253,0.05); border-left: 4px solid #0d6efd; }
 
-  .rating-summary-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); }
-  .review-form-card { background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); }
+.rating-summary-card { background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); }
+.review-form-card { background: rgba(255,255,255,0.75); backdrop-filter: blur(8px); }
 
-  .rating-stars i { cursor: pointer; font-size: 22px; color: #ccc; }
-  .rating-stars i.active { color: #ffc107; }
+.rating-stars i { cursor: pointer; font-size: 22px; color: #ccc; margin: 0 2px; }
+.rating-stars i.active { color: #ffc107; }
 </style>
 
-<!-- ⭐ RATING STAR SCRIPT -->
 <script>
 document.querySelectorAll(".rating-stars").forEach(container => {
   const target = container.dataset.target;
-  const input = document.querySelector(`input[name="${target}"]`);
+  const input = container.parentElement.querySelector(`input[name="${target}"]`);
 
   for (let i = 1; i <= 5; i++) {
     const star = document.createElement("i");
@@ -207,9 +195,10 @@ document.querySelectorAll(".rating-stars").forEach(container => {
 function updateStars(container, count) {
   const stars = container.querySelectorAll("i");
   stars.forEach(star => {
-    star.classList.toggle("bi-star-fill", star.dataset.value <= count);
-    star.classList.toggle("bi-star", star.dataset.value > count);
-    star.classList.toggle("active", star.dataset.value <= count);
+    const val = parseInt(star.dataset.value || "0", 10);
+    star.classList.toggle("bi-star-fill", val <= count);
+    star.classList.toggle("bi-star", val > count);
+    star.classList.toggle("active", val <= count);
   });
 }
 </script>

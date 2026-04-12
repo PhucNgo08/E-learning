@@ -8,25 +8,26 @@
     <i class="bi bi-arrow-left"></i> Quay lại bài học
   </a>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-primary">
-      <i class="bi bi-journal-text me-2"></i>{{ lesson.title }}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="fw-bold text-primary m-0">
+      <i class="bi bi-journal-text me-2"></i>{{ lesson.title if lesson and lesson.title else "Bài học" }}
     </h3>
 
-    <!-- ❗ FIX ROUTE TẠI ĐÂY -->
     <a href="/student/lesson/notes/add/{{ lesson.id }}" class="btn btn-success">
       <i class="bi bi-plus-circle"></i> Thêm ghi chú
     </a>
   </div>
 
-  {% if notes %}
+  {% set safe_notes = notes|default([], true) %}
+
+  {% if safe_notes %}
     <ul class="list-group shadow-sm">
-      {% for note in notes %}
+      {% for note in safe_notes %}
       <li class="list-group-item">
-        <p class="mb-1">{{ note.content }}</p>
+        <p class="mb-1" style="white-space: pre-line;">{{ note.content }}</p>
         <small class="text-muted">
           <i class="bi bi-clock me-1"></i>
-          {{ note.created_at.strftime("%d/%m/%Y %H:%M") }}
+          {{ note.created_at.strftime("%d/%m/%Y %H:%M") if note.created_at else "" }}
         </small>
       </li>
       {% endfor %}
@@ -38,4 +39,14 @@
   {% endif %}
 
 </div>
+
+<style>
+.fade-in {
+  animation: fadeIn .4s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %}

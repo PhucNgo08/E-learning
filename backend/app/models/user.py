@@ -1,41 +1,12 @@
-from sqlalchemy import (
-    Column, String, Integer, Date, DateTime, Text, Enum, ForeignKey
-)
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.database.connection import Base
-import enum
 import uuid
 
+from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
-# ============================================
-# 🧩 ENUM DEFINITIONS
-# ============================================
-class GenderEnum(str, enum.Enum):
-    male = "male"
-    female = "female"
-    other = "other"
+from app.database.connection import Base
 
 
-class RoleEnum(str, enum.Enum):
-    student = "student"
-    teacher = "teacher"
-    admin = "admin"
-    teaching_assistant = "teaching_assistant"
-    prospective_student = "prospective_student"
-
-
-class StatusEnum(str, enum.Enum):
-    active = "active"
-    inactive = "inactive"
-    graduated = "graduated"
-    suspended = "suspended"
-    pending_enrollment = "pending_enrollment"
-
-
-# ============================================
-# 🧩 USER MODEL
-# ============================================
 class User(Base):
     __tablename__ = "users"
 
@@ -43,189 +14,332 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
-    full_name = Column(String(100), nullable=False)
+    status = Column(String(30), nullable=False, default="active")
+    last_login = Column(DateTime, nullable=True)
+    login_count = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+    )
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
-    # ===== Academic Info =====
-    mssv = Column(String(20), unique=True)
-    academic_year_id = Column(String(36), ForeignKey("academic_years.id"))
-    major_id = Column(String(36), ForeignKey("majors.id"))
-
-    academic_year = relationship("AcademicYear", back_populates="users")
-    major = relationship("Major", back_populates="users")
-
-    # ===== Relationship with Class =====
-    homeroom_classes = relationship(
-        "Class",
-        back_populates="homeroom_teacher",
-        foreign_keys="Class.homeroom_teacher_id",
-        cascade="all, delete-orphan"
+    # =====================================================
+    # CORE PROFILE / SECURITY / RBAC
+    # =====================================================
+    profile = relationship(
+        "UserProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
 
-    # ===== Security Setting =====
+    student_profile = relationship(
+        "StudentProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
+    teacher_profile = relationship(
+        "TeacherProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+
     security_setting = relationship(
         "SecuritySettings",
         back_populates="user",
         uselist=False,
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
-    # ===== Personal Info =====
-    phone = Column(String(20))
-    avatar_url = Column(String(500))
-    date_of_birth = Column(Date)
-    gender = Column(Enum(GenderEnum))
+    roles = relationship(
+        "Role",
+        secondary="user_roles",
+        back_populates="users",
+        lazy="selectin",
+    )
 
-    # ===== Role & Status =====
-    role = Column(Enum(RoleEnum), default=RoleEnum.student)
-    status = Column(Enum(StatusEnum), default=StatusEnum.active)
+    # =====================================================
+    # CLASS / COURSE MANAGEMENT
+    # =====================================================
+    homeroom_classes = relationship(
+        "Class",
+        back_populates="homeroom_teacher",
+        foreign_keys="Class.homeroom_teacher_id",
+    )
 
-    # ===== Learning Stats =====
-    points = Column(Integer, default=0)
-    level = Column(Integer, default=1)
-    last_login = Column(DateTime)
-    login_count = Column(Integer, default=0)
-    total_learning_time = Column(Integer, default=0)
-
-    # ===== Assignment Tracking =====
-    total_assignments_submitted = Column(Integer, default=0)
-    total_assignments_graded = Column(Integer, default=0)
-    total_assignments_created = Column(Integer, default=0)
-
-    # ===== Timestamp =====
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True),
-                        onupdate=func.now(),
-                        server_default=func.now())
-
-    # ============================================
-    # 🔗 RELATIONSHIPS
-    # ============================================
-
-    # === Course Management ===
     courses_taught = relationship(
         "Course",
         back_populates="teacher",
-        foreign_keys="Course.teacher_id"
+        foreign_keys="Course.teacher_id",
     )
 
-    # === Course Reviews ===
+    teaching_sections = relationship(
+        "CourseSection",
+        back_populates="teacher",
+    )
+
+    class_enrollments = relationship(
+        "ClassEnrollment",
+        back_populates="student",
+        cascade="all, delete-orphan",
+        foreign_keys="ClassEnrollment.student_id",
+    )
+
+    approved_class_enrollments = relationship(
+        "ClassEnrollment",
+        back_populates="approved_user",
+        foreign_keys="ClassEnrollment.approved_by",
+    )
+
+    course_enrollments = relationship(
+        "CourseEnrollment",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        foreign_keys="CourseEnrollment.user_id",
+    )
+
+    approved_course_enrollments = relationship(
+        "CourseEnrollment",
+        back_populates="approved_user",
+        foreign_keys="CourseEnrollment.approved_by",
+    )
+
+    # =====================================================
+    # REVIEWS / ASSIGNMENTS / QUIZZES
+    # =====================================================
     course_reviews = relationship(
         "CourseReview",
         back_populates="user",
         foreign_keys="CourseReview.user_id",
-        overlaps="moderated_reviews"
+        overlaps="moderated_reviews",
     )
+
     moderated_reviews = relationship(
         "CourseReview",
         back_populates="moderator",
         foreign_keys="CourseReview.moderated_by",
-        overlaps="course_reviews"
+        overlaps="course_reviews",
     )
 
-    teaching_sections = relationship("CourseSection", back_populates="teacher")
-
-    # ======================================================
-    # 🔥 Enrollment (FIX FULL)
-    # ======================================================
-
-    # User → enrollments (FK: user_id)
-    enrollments = relationship(
-        "Enrollment",
-        back_populates="user",
-        cascade="all, delete-orphan",
-        foreign_keys="Enrollment.user_id"
-    )
-
-    # User → enrollments (FK: approved_by)
-    approved_enrollments = relationship(
-        "Enrollment",
-        back_populates="approved_user",
-        foreign_keys="Enrollment.approved_by"
-    )
-
-    # ======================================================
-
-    # === Assignments ===
     assignments_created = relationship(
         "Assignment",
         back_populates="teacher",
-        foreign_keys="Assignment.teacher_id"
+        foreign_keys="Assignment.teacher_id",
     )
+
     assignment_submissions = relationship(
         "AssignmentSubmission",
         back_populates="student",
-        foreign_keys="AssignmentSubmission.student_id"
+        foreign_keys="AssignmentSubmission.student_id",
     )
+
     assignment_groups_led = relationship(
         "AssignmentGroup",
         back_populates="leader",
-        foreign_keys="AssignmentGroup.leader_id"
+        foreign_keys="AssignmentGroup.leader_id",
     )
 
-    # === Quiz Attempts ===
     quiz_attempts = relationship(
         "QuizAttempt",
         back_populates="user",
         foreign_keys="QuizAttempt.user_id",
-        overlaps="graded_quiz_attempts"
+        overlaps="graded_quiz_attempts",
     )
+
     graded_quiz_attempts = relationship(
         "QuizAttempt",
         back_populates="graded_by_user",
         foreign_keys="QuizAttempt.graded_by",
-        overlaps="quiz_attempts"
+        overlaps="quiz_attempts",
     )
 
-    # === Discussions ===
+    quiz_templates = relationship(
+        "QuizTemplate",
+        back_populates="creator",
+        foreign_keys="QuizTemplate.created_by",
+        cascade="all, delete-orphan",
+    )
+
+    # =====================================================
+    # DISCUSSION / MESSAGE / NOTIFICATION / AI
+    # =====================================================
     discussions = relationship(
         "Discussion",
         back_populates="user",
-        cascade="all, delete"
+        cascade="all, delete",
     )
 
-    # === Cart / Orders / Purchased Courses ===
-    cart_items = relationship("CartItem", back_populates="user", cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
-    user_courses = relationship("UserCourse", back_populates="user", cascade="all, delete-orphan")
+    discussion_likes = relationship(
+        "DiscussionLike",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
 
-    # === Messages ===
     messages_sent = relationship(
         "Message",
         back_populates="sender",
         foreign_keys="Message.sender_id",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
+
     messages_received = relationship(
         "Message",
         back_populates="receiver",
         foreign_keys="Message.receiver_id",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
-    # === Notifications ===
     notifications = relationship(
         "Notification",
         back_populates="user",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
-    # === AI Chat History ===
     ai_chat_history = relationship(
         "AIChatHistory",
         back_populates="user",
-        cascade="all, delete-orphan"
-    )
-    quiz_templates = relationship(
-    "QuizTemplate",
-    back_populates="creator",
-    foreign_keys="QuizTemplate.created_by",
-    cascade="all, delete-orphan"
-    )
-    wallet = relationship(
-    "WalletAccount",
-    uselist=False,
-    back_populates="user"
+        cascade="all, delete-orphan",
     )
 
+    lesson_notes = relationship(
+        "LessonNote",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    # =====================================================
+    # CART / ORDER / WALLET / ACCESS
+    # =====================================================
+    cart_items = relationship(
+        "CartItem",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    orders = relationship(
+        "Order",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    wallet = relationship(
+        "WalletAccount",
+        uselist=False,
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    # Legacy compatibility only
+    user_courses = relationship(
+        "UserCourse",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+
+    certificates = relationship(
+        "Certificate",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    lesson_progresses = relationship("LessonProgress", back_populates="user", cascade="all, delete-orphan")
+    course_progresses = relationship("CourseProgress", back_populates="user", cascade="all, delete-orphan")
+    learning_activity_logs = relationship("LearningActivityLog", back_populates="user", cascade="all, delete-orphan")
+
+    # =====================================================
+    # READ-ONLY COMPATIBILITY HELPERS
+    # =====================================================
+    @property
+    def full_name(self):
+        return self.profile.full_name if self.profile else None
+
+    @property
+    def phone(self):
+        return self.profile.phone if self.profile else None
+
+    @property
+    def avatar_url(self):
+        return self.profile.avatar_url if self.profile else None
+
+    @property
+    def date_of_birth(self):
+        return self.profile.date_of_birth if self.profile else None
+
+    @property
+    def gender(self):
+        return self.profile.gender if self.profile else None
+
+    @property
+    def mssv(self):
+        return self.student_profile.mssv if self.student_profile else None
+
+    @property
+    def employee_code(self):
+        return self.teacher_profile.employee_code if self.teacher_profile else None
+
+    @property
+    def academic_year_id(self):
+        return self.student_profile.academic_year_id if self.student_profile else None
+
+    @property
+    def academic_year(self):
+        return self.student_profile.academic_year if self.student_profile else None
+
+    @property
+    def major_id(self):
+        if self.teacher_profile and self.teacher_profile.major_id:
+            return self.teacher_profile.major_id
+        return self.student_profile.major_id if self.student_profile else None
+
+    @property
+    def major(self):
+        if self.teacher_profile and self.teacher_profile.major:
+            return self.teacher_profile.major
+        return self.student_profile.major if self.student_profile else None
+
+    @property
+    def points(self):
+        return self.student_profile.points if self.student_profile else 0
+
+    @property
+    def level(self):
+        return self.student_profile.level_no if self.student_profile else 1
+
+    @property
+    def total_learning_time(self):
+        return self.student_profile.total_learning_time if self.student_profile else 0
+
+    @property
+    def total_assignments_submitted(self):
+        return self.student_profile.total_assignments_submitted if self.student_profile else 0
+
+    @property
+    def total_assignments_graded(self):
+        return self.student_profile.total_assignments_graded if self.student_profile else 0
+
+    @property
+    def total_assignments_created(self):
+        return self.teacher_profile.total_assignments_created if self.teacher_profile else 0
+
+    @property
+    def role(self):
+        if not self.roles:
+            return None
+
+        priority = ["admin", "teacher", "teaching_assistant", "student"]
+        role_codes = [getattr(role, "role_code", None) for role in self.roles]
+        for code in priority:
+            if code in role_codes:
+                return code
+        return role_codes[0]
+
     def __repr__(self):
-        return f"<User(username='{self.username}', role='{self.role}', status='{self.status}')>"
+        return (
+            f"<User(username='{self.username}', email='{self.email}', "
+            f"status='{self.status}')>"
+        )

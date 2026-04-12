@@ -23,14 +23,12 @@
 </head>
 
 <body>
-
 <div class="page-wrapper">
 
   <h3 class="text-primary fw-bold mb-3">
     <i class="bi bi-plus-circle"></i> Tạo Khóa Học Mới (Giảng viên)
   </h3>
 
-  <!-- ℹ️ Thông báo nghiệp vụ -->
   <div class="alert alert-info d-flex align-items-start mb-4">
     <i class="bi bi-shield-check me-2 fs-4"></i>
     <div>
@@ -42,7 +40,6 @@
     </div>
   </div>
 
-  <!-- Tabs -->
   <ul class="nav nav-tabs mb-4">
     <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">Thông tin chính</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time">Lịch - Học vụ</button></li>
@@ -54,10 +51,8 @@
   <form method="post" action="/teacher/courses/create" enctype="multipart/form-data">
     <div class="tab-content">
 
-      <!-- TAB 1 – BASIC -->
       <div class="tab-pane fade show active" id="tab-basic">
         <div class="row g-3">
-
           <div class="col-md-6">
             <label class="form-label">Tên khóa học *</label>
             <input type="text" class="form-control" name="course_name" required>
@@ -65,12 +60,12 @@
 
           <div class="col-md-6">
             <label class="form-label">Môn học *</label>
-            <input type="text" class="form-control" name="subject" placeholder="VD: Lập trình Python">
+            <input type="text" class="form-control" name="subject" placeholder="VD: Lập trình Python" required>
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Số tín chỉ *</label>
-            <input type="number" class="form-control" name="credit_hours" value="3" min="1">
+            <input type="number" class="form-control" name="credit_hours" value="3" min="1" required>
           </div>
 
           <div class="col-md-4">
@@ -91,16 +86,13 @@
             <label class="form-label">Mô tả</label>
             <textarea class="form-control" name="description" rows="3"></textarea>
           </div>
-
         </div>
       </div>
 
-      <!-- TAB 2 – TIME / YEAR -->
       <div class="tab-pane fade" id="tab-time">
         <div class="row g-3">
-
           <div class="col-md-6">
-            <label class="form-label">Năm học *</label>
+            <label class="form-label">Năm học</label>
             <select class="form-select" name="academic_year_id">
               <option value="">-- Chọn năm học --</option>
               {% for y in years %}
@@ -115,20 +107,15 @@
                    value="{{ teacher.major.major_name if teacher.major else 'Không xác định' }}">
           </div>
 
-          <!-- Không gửi major_id nữa (backend tự xử lý) -->
-
           <div class="col-md-6">
             <label class="form-label">Học kỳ</label>
             <input type="number" class="form-control" name="semester" min="1" max="10">
           </div>
-
         </div>
       </div>
 
-      <!-- TAB 3 – SETTINGS -->
       <div class="tab-pane fade" id="tab-settings">
         <div class="row g-3">
-
           <div class="col-md-6">
             <label class="form-label">Cho phép bài tập</label>
             <select class="form-select" name="allow_assignments">
@@ -149,14 +136,11 @@
             <label class="form-label">Tiên quyết</label>
             <textarea class="form-control" name="prerequisites"></textarea>
           </div>
-
         </div>
       </div>
 
-      <!-- TAB 4 – LIMIT -->
       <div class="tab-pane fade" id="tab-limit">
         <div class="row g-3">
-
           <div class="col-md-6">
             <label class="form-label">Giá khóa học (VNĐ)</label>
             <input type="number" class="form-control" name="price" min="0" step="1000">
@@ -172,11 +156,9 @@
             <select class="form-select" name="enrollment_mode">
               <option value="auto">Tự động</option>
               <option value="approval">Chờ duyệt</option>
-              <option value="invite_only">Mời</option>
             </select>
           </div>
 
-          <!-- ⚠ Trạng thái publish / public do Admin xử lý -->
           <div class="col-md-6">
             <label class="form-label">Trạng thái sau khi tạo</label>
             <input type="text" class="form-control bg-light" value="Bản nháp (Chờ admin duyệt)" readonly>
@@ -184,11 +166,9 @@
               Admin sẽ duyệt và xuất bản khóa học, sau đó mới hiển thị cho sinh viên.
             </div>
           </div>
-
         </div>
       </div>
 
-      <!-- TAB 5 – THUMBNAIL -->
       <div class="tab-pane fade" id="tab-thumb">
         <div class="col-md-6">
           <label class="form-label">Ảnh đại diện</label>
@@ -208,7 +188,6 @@
         <i class="bi bi-check-lg"></i> Tạo khóa học
       </button>
     </div>
-
   </form>
 
 </div>

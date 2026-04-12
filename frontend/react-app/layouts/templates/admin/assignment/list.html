@@ -2,7 +2,6 @@
 {% block title %}📋 Danh sách bài tập{% endblock %}
 
 {% block content %}
-
 <style>
   .card {
     border: none;
@@ -29,31 +28,30 @@
 </style>
 
 <div class="container py-4">
-
-  <!-- HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary fw-bold mb-0">
-      📋 Danh sách bài tập
-    </h3>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h3 class="text-primary fw-bold mb-0">📋 Danh sách bài tập</h3>
 
     <div>
       <a href="/admin/dashboard" class="btn btn-light text-primary fw-semibold">
         <i class="bi bi-house"></i> Trang chủ
       </a>
-
       <a href="/admin/assignment/create" class="btn btn-success ms-2">
         <i class="bi bi-plus-lg"></i> Tạo bài tập
       </a>
-
       <a href="/admin/assignment/stats" class="btn btn-primary ms-2">
         <i class="bi bi-bar-chart"></i> Thống kê
       </a>
     </div>
   </div>
 
-  <!-- STATS -->
-  <div class="row mb-4 text-center">
+  {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
 
+  <div class="row mb-4 text-center">
     <div class="col-md-3">
       <div class="card shadow-sm p-3">
         <h6 class="text-muted mb-1">Tổng bài tập</h6>
@@ -81,13 +79,10 @@
         <h3 class="text-warning fw-bold">{{ stats.average_grade }}</h3>
       </div>
     </div>
-
   </div>
 
-  <!-- TABLE -->
   <div class="card shadow-sm">
     <div class="card-body">
-
       <table class="table table-hover align-middle">
         <thead>
           <tr>
@@ -101,13 +96,11 @@
         </thead>
 
         <tbody>
-        {% for a in assignments %}
+          {% for a in assignments %}
           <tr>
             <td class="fw-semibold text-start">{{ a.title }}</td>
 
-            <td class="text-start">
-              {{ a.description or "—" }}
-            </td>
+            <td class="text-start">{{ a.description or "—" }}</td>
 
             <td>
               {% if a.course %}
@@ -117,14 +110,12 @@
               {% endif %}
             </td>
 
-            <td>
-              {{ a.created_at.strftime('%d/%m/%Y') if a.created_at else '-' }}
-            </td>
+            <td>{{ a.created_at.strftime('%d/%m/%Y') if a.created_at else '-' }}</td>
 
             <td>
               {% if a.due_date %}
                 <span class="badge bg-danger text-light badge-deadline">
-                  {{ a.due_date.strftime('%d/%m/%Y') }}
+                  {{ a.due_date.strftime('%d/%m/%Y %H:%M') }}
                 </span>
               {% else %}
                 <span class="text-muted">—</span>
@@ -132,57 +123,37 @@
             </td>
 
             <td>
-
-              <!-- Chỉnh sửa -->
-              <a href="/admin/assignment/edit/{{ a.id }}"
-                 class="btn btn-sm btn-warning"
-                 title="Chỉnh sửa">
+              <a href="/admin/assignment/edit/{{ a.id }}" class="btn btn-sm btn-warning" title="Chỉnh sửa">
                 <i class="bi bi-pencil-square"></i>
               </a>
 
-              <!-- Xóa -->
-              <a href="/admin/assignment/delete/{{ a.id }}"
-                 class="btn btn-sm btn-danger"
-                 title="Xóa bài tập">
+              <a href="/admin/assignment/delete/{{ a.id }}" class="btn btn-sm btn-danger" title="Xóa bài tập">
                 <i class="bi bi-trash3"></i>
               </a>
 
-              <!-- Thống kê theo khóa học -->
-              <a href="/admin/assignment/manage/{{ a.course_id }}"
-                 class="btn btn-sm btn-info text-white"
-                 title="Thống kê khóa học">
+              <a href="/admin/assignment/manage/{{ a.course_id }}" class="btn btn-sm btn-info text-white" title="Thống kê khóa học">
                 <i class="bi bi-graph-up"></i>
               </a>
 
-              <!-- 📄 Danh sách bài nộp -->
-              <a href="/admin/assignment/submissions/{{ a.id }}"
-                 class="btn btn-sm btn-primary text-white"
-                 title="Xem bài nộp">
+              <a href="/admin/assignment/submissions/{{ a.id }}" class="btn btn-sm btn-primary text-white" title="Xem bài nộp">
                 <i class="bi bi-folder2-open"></i>
               </a>
-
             </td>
           </tr>
-
-        {% else %}
+          {% else %}
           <tr>
             <td colspan="6" class="text-center text-muted py-3">
               <i class="bi bi-emoji-frown"></i> Không có bài tập nào.
             </td>
           </tr>
-        {% endfor %}
+          {% endfor %}
         </tbody>
-
       </table>
-
     </div>
   </div>
 
-  <!-- FOOTER -->
   <div class="text-center mt-4 text-secondary small">
     © {{ current_year }} E-Learning Admin Panel
   </div>
-
 </div>
-
 {% endblock %}

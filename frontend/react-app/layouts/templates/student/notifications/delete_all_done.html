@@ -1,0 +1,35 @@
+{% extends "layout_student.html" %}
+{% block title %}🧹 Đã xóa tất cả thông báo{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0 text-center">
+        <div class="card-body p-5">
+          <div class="display-4 mb-3">🧹</div>
+          <h3 class="fw-bold text-success">Đã xóa tất cả thông báo</h3>
+          <p class="text-muted mb-2">
+            Toàn bộ thông báo của bạn đã được xóa thành công.
+          </p>
+
+          {% if count is not none %}
+          <p class="fw-semibold small">
+            Tổng số thông báo đã xóa: <span class="text-success">{{ count }}</span>
+          </p>
+          {% endif %}
+
+          <div class="d-flex justify-content-center gap-2 flex-wrap mt-4">
+            <a href="/student/notifications" class="btn btn-primary px-4">
+              Quay lại danh sách
+            </a>
+            <a href="/student/dashboard" class="btn btn-outline-secondary px-4">
+              Về trang chính
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

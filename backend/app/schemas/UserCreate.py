@@ -1,13 +1,11 @@
-# app/schemas/user_create.py
-
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import date
 
 
 class UserCreate(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     full_name: str
     password: str
 
@@ -29,7 +27,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
     full_name: Optional[str] = None
     password: Optional[str] = None
 
@@ -49,8 +47,27 @@ class UserUpdate(BaseModel):
 class UserResponse(BaseModel):
     id: str
     username: str
-    email: Optional[str]
-    full_name: Optional[str]
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+
+    mssv: Optional[str] = None
+    academic_year_id: Optional[str] = None
+    major_id: Optional[str] = None
+
+    phone: Optional[str] = None
+    avatar_url: Optional[str] = None
+    date_of_birth: Optional[date] = None
+    gender: Optional[str] = None
+
+    role: Optional[str] = None
+    status: Optional[str] = None
+
+    points: Optional[int] = None
+    level: Optional[int] = None
+    total_learning_time: Optional[int] = None
+
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
     class Config:
         from_attributes = True

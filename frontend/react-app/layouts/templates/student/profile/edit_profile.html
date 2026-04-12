@@ -2,12 +2,12 @@
 {% block title %}✏️ Chỉnh sửa hồ sơ{% endblock %}
 
 {% block content %}
+{% set profile = user.profile if user.profile else None %}
+{% set student_profile = user.student_profile if user.student_profile else None %}
+{% set current_major_id = student_profile.major_id if student_profile and student_profile.major_id else '' %}
+{% set current_year_id = student_profile.academic_year_id if student_profile and student_profile.academic_year_id else '' %}
 
 <style>
-/* =====================================================
-✏️ EDIT PROFILE – Glass Neo 2025 (Premium)
-===================================================== */
-
 .edit-area {
   display: flex;
   justify-content: center;
@@ -21,7 +21,7 @@
   background: #ffffff;
   border-radius: 22px;
   width: 100%;
-  max-width: 650px;
+  max-width: 720px;
   padding: 40px 45px;
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
   animation: fadeIn 0.6s ease;
@@ -52,11 +52,11 @@ h3 {
   color: #003087;
 }
 
-.form-control {
+.form-control, .form-select {
   border-radius: 12px;
   border-color: #cfd9e6;
 }
-.form-control:focus {
+.form-control:focus, .form-select:focus {
   border-color: #0d6efd;
   box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15);
 }
@@ -85,18 +85,17 @@ h3 {
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 
-/* Alerts */
 .alert {
   border-radius: 12px;
   font-weight: 500;
 }
 
-/* Dark mode */
 body.dark-mode .edit-box {
   background: rgba(15, 23, 42, 0.85);
   color: #e2e8f0;
 }
-body.dark-mode .form-control {
+body.dark-mode .form-control,
+body.dark-mode .form-select {
   background: rgba(30, 41, 59, 0.85);
   border-color: #475569;
   color: #e2e8f0;
@@ -108,34 +107,33 @@ body.dark-mode .form-label {
   color: #93c5fd;
 }
 
-/* Animation */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>
 
-
 <div class="edit-area">
   <div class="edit-box">
 
     <h3><i class="bi bi-person-lines-fill"></i> Chỉnh sửa thông tin hồ sơ</h3>
 
-    <!-- 🔔 Thông báo lỗi -->
     {% if request.query_params.get("error") == "update_failed" %}
     <div class="alert alert-danger text-center py-2">
       ❌ Không thể cập nhật. Vui lòng thử lại sau.
     </div>
     {% endif %}
 
-    <!-- 📝 Form chỉnh sửa -->
     <form method="post" action="/student/profile/edit">
 
       <div class="row">
         <div class="col-md-6 mb-3">
           <label class="form-label">👤 Họ và tên</label>
-          <input type="text" class="form-control" name="full_name"
-                 value="{{ user.full_name }}" required>
+          <input type="text"
+                 class="form-control"
+                 name="full_name"
+                 value="{{ profile.full_name if profile and profile.full_name else (user.full_name if user.full_name else '') }}"
+                 required>
         </div>
 
         <div class="col-md-6 mb-3">
@@ -148,14 +146,19 @@ body.dark-mode .form-label {
 
         <div class="col-md-6 mb-3">
           <label class="form-label">📱 Số điện thoại</label>
-          <input type="text" class="form-control" name="phone"
-                 value="{{ user.phone or '' }}" placeholder="Nhập số điện thoại">
+          <input type="text"
+                 class="form-control"
+                 name="phone"
+                 value="{{ profile.phone if profile and profile.phone else '' }}"
+                 placeholder="Nhập số điện thoại">
         </div>
 
         <div class="col-md-6 mb-3">
           <label class="form-label">📅 Ngày sinh</label>
-          <input type="date" class="form-control" name="date_of_birth"
-                 value="{{ user.date_of_birth }}">
+          <input type="date"
+                 class="form-control"
+                 name="date_of_birth"
+                 value="{{ profile.date_of_birth.strftime('%Y-%m-%d') if profile and profile.date_of_birth else '' }}">
         </div>
 
       </div>
@@ -164,18 +167,24 @@ body.dark-mode .form-label {
 
         <div class="col-md-6 mb-3">
           <label class="form-label">⚧ Giới tính</label>
-          <select class="form-select form-control" name="gender">
+          <select class="form-select" name="gender">
             <option value="">-- Chọn giới tính --</option>
-            <option value="male"   {% if user.gender == 'male' %}selected{% endif %}>Nam</option>
-            <option value="female" {% if user.gender == 'female' %}selected{% endif %}>Nữ</option>
-            <option value="other"  {% if user.gender == 'other' %}selected{% endif %}>Khác</option>
+            <option value="male" {% if profile and profile.gender == 'male' %}selected{% endif %}>Nam</option>
+            <option value="female" {% if profile and profile.gender == 'female' %}selected{% endif %}>Nữ</option>
+            <option value="other" {% if profile and profile.gender == 'other' %}selected{% endif %}>Khác</option>
           </select>
         </div>
 
         <div class="col-md-6 mb-3">
           <label class="form-label">🎓 Ngành học</label>
-          <input type="text" class="form-control"
-                 value="{{ major.major_name if major else 'Chưa cập nhật' }}" disabled>
+          <select class="form-select" name="major_id">
+            <option value="">-- Chọn ngành học --</option>
+            {% for m in majors %}
+            <option value="{{ m.id }}" {% if current_major_id == m.id %}selected{% endif %}>
+              {{ m.major_name }}
+            </option>
+            {% endfor %}
+          </select>
         </div>
 
       </div>
@@ -183,20 +192,27 @@ body.dark-mode .form-label {
       <div class="row">
 
         <div class="col-md-6 mb-4">
-          <label class="form-label">🏫 Khóa học</label>
-          <input type="text" class="form-control"
-                 value="{{ academic_year.year_name if academic_year else 'Chưa cập nhật' }}" disabled>
+          <label class="form-label">🏫 Năm học</label>
+          <select class="form-select" name="academic_year_id">
+            <option value="">-- Chọn năm học --</option>
+            {% for y in years %}
+            <option value="{{ y.id }}" {% if current_year_id == y.id %}selected{% endif %}>
+              {{ y.year_name }}
+            </option>
+            {% endfor %}
+          </select>
         </div>
 
         <div class="col-md-6 mb-4">
           <label class="form-label">🆔 Mã số sinh viên</label>
-          <input type="text" class="form-control"
-                 value="{{ user.mssv or 'Chưa có' }}" disabled>
+          <input type="text"
+                 class="form-control"
+                 value="{{ user.mssv or 'Chưa có' }}"
+                 disabled>
         </div>
 
       </div>
 
-      <!-- Action buttons -->
       <div class="d-flex justify-content-between mt-2">
         <a href="/student/profile" class="btn btn-outline-secondary btn-back">
           <i class="bi bi-arrow-left"></i> Quay lại
@@ -211,5 +227,4 @@ body.dark-mode .form-label {
 
   </div>
 </div>
-
 {% endblock %}

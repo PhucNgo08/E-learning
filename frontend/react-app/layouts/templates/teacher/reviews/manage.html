@@ -1,210 +1,309 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>⭐ Quản lý đánh giá khóa học</title>
+{% extends "layout_teacher.html" %}
+{% block title %}⭐ Đánh giá khóa học{% endblock %}
 
-  <!-- Bootstrap & Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block content %}
+<style>
+  .review-page {
+    padding: 1rem 0 2rem;
+  }
 
-  <style>
-    body {
-      background: linear-gradient(180deg, #f0f4ff, #f8f9fc);
-      min-height: 100vh;
-      font-family: "Inter", sans-serif;
-    }
-    .card { border-radius: 15px; transition: transform 0.2s, box-shadow 0.2s; }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); }
+  .review-card {
+    border: 0;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  }
 
-    .header-bar {
-      background: #0d6efd; color: white; border-radius: 12px;
-      padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 25px; box-shadow: 0 4px 12px rgba(13,110,253,0.3);
-    }
-    .header-bar h3 { margin: 0; font-weight: 600; }
-    .back-btn { background-color: #ffc107; border: none; color: #000; font-weight: 500; transition: 0.2s; }
-    .back-btn:hover { background-color: #ffcd39; color: #000; }
+  .review-card .card-body,
+  .review-card .card-header {
+    padding: 1rem 1.1rem;
+  }
 
-    .filter-form label { font-weight: 500; color: #333; }
-  </style>
-</head>
+  .summary-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
 
-<body class="p-4">
-  <div class="container">
+  .summary-label {
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
 
-    <!-- 🌟 Header -->
-    <div class="header-bar">
-      <h3><i class="bi bi-star-fill me-2"></i> Quản lý đánh giá khóa học</h3>
-      <a href="/teacher/dashboard" class="btn back-btn">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại trang chính
-      </a>
+  .rating-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: #eef2f7;
+    overflow: hidden;
+  }
+
+  .rating-bar > div {
+    height: 100%;
+    border-radius: 999px;
+    width: 0;
+    transition: width 0.35s ease;
+  }
+
+  .filter-label {
+    font-weight: 600;
+    font-size: 0.92rem;
+  }
+
+  .review-message {
+    max-width: 420px;
+    white-space: normal;
+  }
+
+  .status-badge {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .status-approved {
+    background: rgba(25, 135, 84, 0.12);
+    color: #198754;
+  }
+
+  .status-pending {
+    background: rgba(255, 193, 7, 0.18);
+    color: #8a6d03;
+  }
+
+  .status-rejected {
+    background: rgba(220, 53, 69, 0.12);
+    color: #dc3545;
+  }
+</style>
+
+<div class="container-fluid review-page">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">⭐ Đánh giá khóa học</h3>
+      {% if teacher %}
+      <p class="text-muted mb-0">
+        Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+      </p>
+      {% endif %}
     </div>
 
-    <!-- 📊 Thống kê tổng quan -->
-    <div class="row g-3 mb-4">
-      <div class="col-md-4">
-        <div class="card shadow-sm text-center p-3">
-          <h6 class="text-muted">⭐ Điểm trung bình</h6>
-          <h2 class="text-warning fw-bold">{{ avg_rating or 0 }}/5</h2>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm text-center p-3">
-          <h6 class="text-muted">💬 Số lượt đánh giá</h6>
-          <h2 class="text-primary fw-bold">{{ total_reviews or 0 }}</h2>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div class="card shadow-sm text-center p-3">
-          <h6 class="text-muted">🏆 Khóa học nổi bật</h6>
-          <h5 class="fw-bold text-success">{{ top_course.course_name if top_course else 'Chưa có dữ liệu' }}</h5>
-        </div>
-      </div>
-    </div>
+    <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
 
-    <!-- 📈 Biểu đồ -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <h6 class="mb-3 text-secondary"><i class="bi bi-bar-chart-line"></i> Phân bố điểm đánh giá (tổng hợp)</h6>
-        <canvas id="ratingChart" height="100"></canvas>
-      </div>
-    </div>
-
-    <!-- 🔍 Bộ lọc nâng cao -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-        <form method="get" class="row g-3 filter-form">
-          <div class="col-md-3">
-            <label>Khóa học</label>
-            <select name="course_id" class="form-select">
-              <option value="">-- Tất cả --</option>
-              {% for c in courses %}
-              <option value="{{ c.id }}" {% if filters.course_id == c.id %}selected{% endif %}>{{ c.course_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label>Trạng thái</label>
-            <select name="status" class="form-select">
-              <option value="">-- Tất cả --</option>
-              <option value="approved" {% if filters.status == 'approved' %}selected{% endif %}>Đã duyệt</option>
-              <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Chờ duyệt</option>
-              <option value="rejected" {% if filters.status == 'rejected' %}selected{% endif %}>Từ chối</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label>Điểm từ</label>
-            <input type="number" step="0.1" name="rating_min" value="{{ filters.rating_min or '' }}" class="form-control">
-          </div>
-          <div class="col-md-2">
-            <label>Đến</label>
-            <input type="number" step="0.1" name="rating_max" value="{{ filters.rating_max or '' }}" class="form-control">
-          </div>
-          <div class="col-md-3 d-flex align-items-end">
-            <button type="submit" class="btn btn-primary w-100">
-              <i class="bi bi-funnel"></i> Lọc kết quả
-            </button>
-          </div>
-        </form>
+  <div class="row g-3 mb-3">
+    <div class="col-12 col-md-4">
+      <div class="review-card h-100">
+        <div class="card-body">
+          <div class="summary-label">Điểm trung bình</div>
+          <div class="summary-value text-warning">{{ avg_rating or 0 }}</div>
+          <div class="text-muted small">Dựa trên tất cả đánh giá đã lọc</div>
+        </div>
       </div>
     </div>
 
-    <!-- 📋 Danh sách đánh giá -->
-    <div class="card shadow-sm mb-5">
-      <div class="card-body">
-        {% if reviews %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle">
-            <thead class="table-primary">
-              <tr>
-                <th>Khóa học</th>
-                <th>Học viên</th>
-                <th>⭐ Nội dung</th>
-                <th>⭐ Giảng viên</th>
-                <th>⭐ Hỗ trợ</th>
-                <th>⭐ Trung bình</th>
-                <th>Bình luận</th>
-                <th>Trạng thái</th>
-                <th>Ngày</th>
-                <th class="text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in reviews %}
-              <tr>
-                <td>{{ r.course.course_name }}</td>
-                <td>{{ r.user.full_name }}</td>
-                <td>{{ r.rating_content or '-' }}</td>
-                <td>{{ r.rating_teacher or '-' }}</td>
-                <td>{{ r.rating_support or '-' }}</td>
-                <td><span class="badge bg-warning text-dark">{{ "%.1f"|format(r.overall_rating or 0) }}</span></td>
-                <td>{{ r.comment or '-' }}</td>
-                <td>
-                  {% if r.status == 'approved' %}
-                    <span class="badge bg-success">Đã duyệt</span>
-                  {% elif r.status == 'pending' %}
-                    <span class="badge bg-secondary">Chờ duyệt</span>
-                  {% elif r.status == 'rejected' %}
-                    <span class="badge bg-danger">Từ chối</span>
-                  {% endif %}
-                </td>
-                <td>{{ r.created_at.strftime('%d/%m/%Y') }}</td>
-                <td class="text-center">
-                  <div class="btn-group">
-                    <a href="/teacher/reviews/detail/{{ r.id }}" class="btn btn-sm btn-outline-info" title="Xem chi tiết">
-                      <i class="bi bi-eye"></i>
-                    </a>
-                    {% if r.status != 'approved' %}
-                    <form method="post" action="/teacher/reviews/approve/{{ r.id }}" class="d-inline">
-                      <button type="submit" class="btn btn-sm btn-outline-success" title="Duyệt">
-                        <i class="bi bi-check2-circle"></i>
-                      </button>
-                    </form>
-                    {% endif %}
-                    {% if r.status != 'rejected' %}
-                    <form method="post" action="/teacher/reviews/reject/{{ r.id }}" class="d-inline">
-                      <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối">
-                        <i class="bi bi-x-circle"></i>
-                      </button>
-                    </form>
-                    {% endif %}
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    <div class="col-12 col-md-4">
+      <div class="review-card h-100">
+        <div class="card-body">
+          <div class="summary-label">Tổng số đánh giá</div>
+          <div class="summary-value text-primary">{{ total_reviews or 0 }}</div>
+          <div class="text-muted small">Tổng đánh giá thuộc khóa học của bạn</div>
         </div>
-        {% else %}
-          <div class="alert alert-warning text-center py-4">
-            <i class="bi bi-exclamation-circle"></i> Chưa có đánh giá nào phù hợp với bộ lọc.
+      </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+      <div class="review-card h-100">
+        <div class="card-body">
+          <div class="summary-label">Khóa học nổi bật</div>
+          <div class="summary-value text-success" style="font-size: 1.15rem;">
+            {{ top_course.course_name if top_course else "—" }}
           </div>
-        {% endif %}
+          <div class="text-muted small">Khóa học có điểm trung bình cao nhất theo bộ lọc hiện tại</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- 📊 Biểu đồ Chart.js -->
-  <script>
-    const ctx = document.getElementById('ratingChart');
-    const ratingData = JSON.parse('{{ rating_distribution | tojson | safe }}');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['⭐1', '⭐2', '⭐3', '⭐4', '⭐5'],
-        datasets: [{
-          label: 'Số lượt đánh giá',
-          data: ratingData,
-          backgroundColor: ['#dc3545','#fd7e14','#ffc107','#0d6efd','#198754']
-        }]
-      },
-      options: {
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-      }
-    });
-  </script>
-</body>
-</html>
+  <div class="review-card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-funnel me-2"></i>Bộ lọc đánh giá
+    </div>
+    <div class="card-body">
+      <form method="get" action="/teacher/reviews/manage">
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label class="filter-label">Khóa học</label>
+            <select name="course_id" class="form-select">
+              <option value="">-- Tất cả khóa học --</option>
+              {% for c in courses %}
+              <option value="{{ c.id }}" {% if filters.course_id == c.id %}selected{% endif %}>
+                {{ c.course_name }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label class="filter-label">Trạng thái</label>
+            <select name="status" class="form-select">
+              <option value="">-- Tất cả --</option>
+              <option value="pending" {% if filters.status == "pending" %}selected{% endif %}>Pending</option>
+              <option value="approved" {% if filters.status == "approved" %}selected{% endif %}>Approved</option>
+              <option value="rejected" {% if filters.status == "rejected" %}selected{% endif %}>Rejected</option>
+            </select>
+          </div>
+
+          <div class="col-md-2">
+            <label class="filter-label">Điểm từ</label>
+            <input type="number" step="0.1" min="0" max="5" name="rating_min" class="form-control"
+                   value="{{ filters.rating_min if filters.rating_min is not none else '' }}">
+          </div>
+
+          <div class="col-md-2">
+            <label class="filter-label">Đến</label>
+            <input type="number" step="0.1" min="0" max="5" name="rating_max" class="form-control"
+                   value="{{ filters.rating_max if filters.rating_max is not none else '' }}">
+          </div>
+
+          <div class="col-md-3">
+            <label class="filter-label">Từ ngày</label>
+            <input type="date" name="date_from" class="form-control" value="{{ filters.date_from or '' }}">
+          </div>
+
+          <div class="col-md-3">
+            <label class="filter-label">Đến ngày</label>
+            <input type="date" name="date_to" class="form-control" value="{{ filters.date_to or '' }}">
+          </div>
+
+          <div class="col-12 d-flex justify-content-end gap-2">
+            <a href="/teacher/reviews/manage" class="btn btn-outline-secondary">Xóa lọc</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-search"></i> Lọc
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% set total_rating_count = (rating_distribution[0] + rating_distribution[1] + rating_distribution[2] + rating_distribution[3] + rating_distribution[4]) if rating_distribution else 0 %}
+  <div class="review-card mb-3">
+    <div class="card-header fw-bold">
+      <i class="bi bi-bar-chart me-2"></i>Phân bố đánh giá
+    </div>
+    <div class="card-body">
+      {% for i in range(5) %}
+      {% set star = i + 1 %}
+      {% set count = rating_distribution[i] if rating_distribution else 0 %}
+      {% set width = ((count / total_rating_count) * 100) if total_rating_count else 0 %}
+      <div class="d-grid mb-2" style="grid-template-columns: 70px 1fr 45px; gap: 10px; align-items: center;">
+        <div>⭐ {{ star }}</div>
+        <div class="rating-bar">
+          <div class="js-review-progress {% if star == 5 %}bg-success{% elif star == 4 %}bg-primary{% elif star == 3 %}bg-info{% elif star == 2 %}bg-warning{% else %}bg-danger{% endif %}"
+               data-width="{{ width }}"></div>
+        </div>
+        <div class="text-end">{{ count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="review-card">
+    <div class="card-header fw-bold">
+      <i class="bi bi-chat-left-text me-2"></i>Danh sách đánh giá
+    </div>
+    <div class="card-body">
+      {% if reviews %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Khóa học</th>
+              <th>Người đánh giá</th>
+              <th>Điểm</th>
+              <th>Nội dung</th>
+              <th>Trạng thái</th>
+              <th>Ngày tạo</th>
+              <th class="text-center">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for review in reviews %}
+            <tr>
+              <td>{{ review.course.course_name if review.course else "—" }}</td>
+              <td>
+                {% if review.user %}
+                  {{ review.user.full_name if review.user.full_name else review.user.username }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                <span class="fw-bold text-warning">{{ review.overall_rating }}</span>/5
+              </td>
+              <td class="review-message">
+                {% if review.comment %}
+                  {{ review.comment[:120] }}{% if review.comment|length > 120 %}...{% endif %}
+                {% elif review.title %}
+                  {{ review.title }}
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                {% if review.status == "approved" %}
+                  <span class="status-badge status-approved">Approved</span>
+                {% elif review.status == "rejected" %}
+                  <span class="status-badge status-rejected">Rejected</span>
+                {% else %}
+                  <span class="status-badge status-pending">Pending</span>
+                {% endif %}
+              </td>
+              <td>{{ review.created_at.strftime('%d/%m/%Y %H:%M') if review.created_at else "—" }}</td>
+              <td class="text-center">
+                <div class="d-flex justify-content-center gap-1 flex-wrap">
+                  <a href="/teacher/reviews/detail/{{ review.id }}" class="btn btn-sm btn-outline-primary" title="Chi tiết">
+                    <i class="bi bi-eye"></i>
+                  </a>
+
+                  {% if review.status != "approved" %}
+                  <form method="post" action="/teacher/reviews/approve/{{ review.id }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-success" title="Duyệt">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+
+                  {% if review.status != "rejected" %}
+                  <form method="post" action="/teacher/reviews/reject/{{ review.id }}" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Từ chối">
+                      <i class="bi bi-x-circle"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info mb-0 text-center">
+        Chưa có đánh giá nào phù hợp với bộ lọc hiện tại.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.js-review-progress').forEach(function (el) {
+    const width = parseFloat(el.dataset.width || '0');
+    el.style.width = Math.max(0, Math.min(100, width)) + '%';
+  });
+</script>
+{% endblock %}

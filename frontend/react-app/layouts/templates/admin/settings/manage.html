@@ -1,38 +1,13 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>⚙️ Cấu hình hệ thống</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% extends "layout_admin.html" %}
+{% block title %}⚙️ Cấu hình hệ thống{% endblock %}
 
-  <style>
-    body {
-      background: linear-gradient(135deg, #f7f9fc, #e9f1ff);
-      font-family: "Segoe UI", "Inter", sans-serif;
-    }
-    .container { max-width: 1100px; }
-    .card-header {
-      background: linear-gradient(90deg, #0066ff, #0048b5);
-      color: white;
-      font-weight: 600;
-    }
-    .table-hover tbody tr:hover {
-      background-color: #f1f5ff;
-      transition: 0.2s;
-    }
-    .btn { border-radius: 8px; }
-  </style>
-</head>
-
-<body>
-<div class="container mt-5">
+{% block content %}
+<div class="container mt-4 mb-5">
   <div class="card shadow border-0">
-    <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
       <h4 class="mb-0"><i class="bi bi-gear"></i> ⚙️ Cấu hình hệ thống</h4>
-      <div>
-        <button class="btn btn-light text-primary me-2" data-bs-toggle="modal" data-bs-target="#createModal">
+      <div class="d-flex gap-2">
+        <button class="btn btn-light text-primary" data-bs-toggle="modal" data-bs-target="#createModal">
           <i class="bi bi-plus-circle"></i> Thêm cấu hình
         </button>
         <a href="/admin/dashboard" class="btn btn-light text-secondary">
@@ -42,59 +17,57 @@
     </div>
 
     <div class="card-body">
-      {% if settings|length == 0 %}
-        <div class="alert alert-info text-center">
-          <i class="bi bi-info-circle"></i> Chưa có cấu hình nào trong hệ thống.
-        </div>
-      {% else %}
-        <div class="table-responsive">
-          <table class="table table-striped table-hover align-middle">
-            <thead class="table-primary">
-              <tr class="text-center">
-                <th>Khóa</th>
-                <th>Giá trị</th>
-                <th>Mô tả</th>
-                <th>Cập nhật</th>
-                <th>Xóa</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in settings %}
-              <tr>
-                <form method="post" action="/admin/settings/update">
-                  <td>
-                    <input type="hidden" name="key" value="{{ s.setting_key }}">
-                    <strong>{{ s.setting_key }}</strong>
-                  </td>
-                  <td>
-                    <input type="text" name="value" class="form-control" value="{{ s.setting_value }}" required>
-                  </td>
-                  <td>
-                    <input type="text" name="description" class="form-control" value="{{ s.description or '' }}">
-                  </td>
-                  <td class="text-center">
-                    <button type="submit" class="btn btn-success btn-sm">
-                      <i class="bi bi-save"></i> Lưu
-                    </button>
-                  </td>
-                  <td class="text-center">
-                    <a href="/admin/settings/delete/{{ s.setting_key }}" class="btn btn-outline-danger btn-sm"
-                       onclick="return confirm('Bạn có chắc muốn xóa cấu hình này không?');">
-                      <i class="bi bi-trash"></i>
-                    </a>
-                  </td>
+      {% if settings and settings|length > 0 %}
+      <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+          <thead class="table-primary">
+            <tr class="text-center">
+              <th>Khóa</th>
+              <th>Giá trị</th>
+              <th>Mô tả</th>
+              <th>Lưu</th>
+              <th>Xóa</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in settings %}
+            <tr>
+              <td class="fw-semibold">{{ s.setting_key }}</td>
+              <td style="min-width: 260px;">
+                <form method="post" action="/admin/settings/update" class="d-flex flex-column gap-2">
+                  <input type="hidden" name="key" value="{{ s.setting_key }}">
+                  <input type="text" name="value" class="form-control" value="{{ s.setting_value or '' }}" required>
+              </td>
+              <td style="min-width: 240px;">
+                  <input type="text" name="description" class="form-control" value="{{ s.description or '' }}">
+              </td>
+              <td class="text-center">
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <i class="bi bi-save"></i> Lưu
+                  </button>
                 </form>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+              </td>
+              <td class="text-center">
+                <a href="/admin/settings/delete/{{ s.setting_key }}"
+                   class="btn btn-outline-danger btn-sm"
+                   onclick="return confirm('Bạn có chắc muốn xóa cấu hình này không?');">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info text-center mb-0">
+        <i class="bi bi-info-circle"></i> Chưa có cấu hình nào trong hệ thống.
+      </div>
       {% endif %}
     </div>
   </div>
 </div>
 
-<!-- 🌟 POPUP: Thêm mới cấu hình -->
 <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content shadow-lg border-0">
@@ -108,13 +81,15 @@
           <div class="mb-3">
             <label class="form-label">🔑 Khóa (Key)</label>
             <input type="text" name="key" id="keyInput" class="form-control"
-                   placeholder="Ví dụ: site_name" onkeyup="validateKey(this.value)" required>
+                   placeholder="Ví dụ: site_name"
+                   onkeyup="validateKey(this.value)" required>
             <div id="validateResult" class="mt-1 small"></div>
           </div>
 
           <div class="mb-3">
             <label class="form-label">💬 Giá trị (Value)</label>
-            <input type="text" name="value" class="form-control" placeholder="Ví dụ: E-Learning System" required>
+            <input type="text" name="value" id="createValueInput" class="form-control"
+                   placeholder="Ví dụ: E-Learning System" required>
           </div>
 
           <div class="mb-3">
@@ -132,12 +107,10 @@
   </div>
 </div>
 
-<!-- ⚙️ Scripts -->
 <script>
-  // Kiểm tra form đầy đủ trước khi gửi
   function validateForm() {
     const key = document.getElementById("keyInput").value.trim();
-    const val = document.querySelector('input[name="value"]').value.trim();
+    const val = document.getElementById("createValueInput").value.trim();
     if (!key || !val) {
       alert("⚠️ Vui lòng nhập đầy đủ thông tin!");
       return false;
@@ -145,13 +118,13 @@
     return true;
   }
 
-  // AJAX kiểm tra key hợp lệ
   function validateKey(value) {
     const resultDiv = document.getElementById("validateResult");
     if (!value) {
       resultDiv.innerHTML = "";
       return;
     }
+
     fetch(`/admin/settings/validate?key=${encodeURIComponent(value)}`)
       .then(res => res.text())
       .then(html => resultDiv.innerHTML = html)
@@ -160,6 +133,4 @@
       });
   }
 </script>
-
-</body>
-</html>
+{% endblock %}

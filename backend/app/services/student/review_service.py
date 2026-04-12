@@ -12,10 +12,13 @@ Xử lý nghiệp vụ đánh giá khóa học:
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime
-from app.models.course_review import CourseReview
-from app.models.user import User
 import uuid
 import traceback
+
+from app.models.course_review import CourseReview
+from app.models.user import User
+from app.models.user_profile import UserProfile
+
 
 # ======================================================
 # ⚙️ Hàm tiện ích tạo UUID
@@ -43,10 +46,11 @@ def get_reviews_by_course(db: Session, course_id: str):
                 CourseReview.rating_support,
                 CourseReview.overall_rating,
                 CourseReview.created_at,
-                User.full_name.label("user_name"),
-                CourseReview.is_anonymous
+                UserProfile.full_name.label("user_name"),
+                CourseReview.is_anonymous,
             )
             .join(User, User.id == CourseReview.user_id)
+            .outerjoin(UserProfile, UserProfile.user_id == User.id)
             .filter(
                 CourseReview.course_id == course_id,
                 CourseReview.status == "approved",

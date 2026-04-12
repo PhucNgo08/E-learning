@@ -5,16 +5,19 @@ Quản lý file upload, CDN cache và tối ưu dung lượng
 ==========================================================
 """
 
+from datetime import datetime
+from urllib.parse import quote
+
 from fastapi import (
-    APIRouter, Request, Depends, UploadFile, File, Form, HTTPException
+    APIRouter, Request, Depends, UploadFile, File, Form, HTTPException, Query, status
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
+
 from app.database.connection import get_db
 from app.dependencies.auth import get_current_admin
 from app.config.template_config import get_template_by_path
 
-# ✅ Import services
 from app.services.admin.file_storage_service import (
     upload_file_service,
     delete_file_service,
@@ -25,56 +28,67 @@ from app.models.file_storage import FileStorage
 from app.models.cdn_cache import CDNCache
 
 
-# ==========================================================
-# ⚙️ Router
-# ==========================================================
 router = APIRouter(
     prefix="/admin/file-storage",
     tags=["Admin - File Storage"]
 )
 
 
-# ==========================================================
-# 📄 1️⃣ Danh sách File
-# ==========================================================
+def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
+    tpl = get_template_by_path(request.url.path)
+    base_context = {
+        "request": request,
+        "current_year": datetime.now().year,
+        "active_page": "file_storage",
+    }
+    base_context.update(context)
+    return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
+
+
 @router.get("/list", response_class=HTMLResponse)
 def list_files(
     request: Request,
+    success: str | None = Query(None),
+    error: str | None = Query(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Hiển thị danh sách file đã upload"""
-    tpl = get_template_by_path(request.url.path)
+    del current_user
+
     files = db.query(FileStorage).order_by(FileStorage.created_at.desc()).all()
     cdn_data = {c.file_id: c for c in db.query(CDNCache).all()}
-    total = len(files)
 
-    return tpl.TemplateResponse(
-        "file_storage/list.html",  # ✅ bỏ chữ "admin/"
+    return render_template(
+        request,
+        "file_storage/list.html",
         {
-            "request": request,
             "files": files,
             "cdn_data": cdn_data,
-            "total": total,
+            "total": len(files),
+            "success": success,
+            "error": error,
             "page_title": "📦 Quản lý File lưu trữ",
-            "active_page": "file_storage",
         }
     )
 
 
-# ==========================================================
-# ➕ 2️⃣ Upload File
-# ==========================================================
 @router.get("/upload", response_class=HTMLResponse)
-def upload_form(request: Request, current_user=Depends(get_current_admin)):
-    """Trang upload file"""
-    tpl = get_template_by_path(request.url.path)
-    return tpl.TemplateResponse(
-        "file_storage/upload.html",  # ✅ bỏ "admin/"
+def upload_form(
+    request: Request,
+    current_user=Depends(get_current_admin)
+):
+    del current_user
+
+    return render_template(
+        request,
+        "file_storage/upload.html",
         {
-            "request": request,
             "page_title": "📤 Upload File mới",
-            "active_page": "file_storage",
+            "error": None,
+            "form_data": {
+                "storage_provider": "local",
+                "is_public": 1,
+            },
         },
     )
 
@@ -88,7 +102,11 @@ async def upload_submit(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Xử lý upload file"""
+    form_data = {
+        "storage_provider": storage_provider,
+        "is_public": is_public,
+    }
+
     try:
         upload_file_service(
             file=file,
@@ -97,14 +115,37 @@ async def upload_submit(
             storage_provider=storage_provider,
             is_public=is_public
         )
-        return RedirectResponse(url="/admin/file-storage/list", status_code=303)
+
+        message = quote("Upload file thành công.")
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    except ValueError as e:
+        return render_template(
+            request,
+            "file_storage/upload.html",
+            {
+                "page_title": "📤 Upload File mới",
+                "error": str(e),
+                "form_data": form_data,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Lỗi khi upload file: {e}")
+        return render_template(
+            request,
+            "file_storage/upload.html",
+            {
+                "page_title": "📤 Upload File mới",
+                "error": f"Lỗi khi upload file: {str(e)}",
+                "form_data": form_data,
+            },
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
 
-# ==========================================================
-# ✏️ 3️⃣ Làm mới CDN Cache
-# ==========================================================
 @router.post("/cdn/cache")
 def refresh_cache(
     file_id: str = Form(...),
@@ -112,16 +153,32 @@ def refresh_cache(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Cập nhật CDN cache"""
-    updated = refresh_cdn_cache_service(db, file_id, cdn_provider)
-    if not updated:
-        raise HTTPException(status_code=404, detail="Không tìm thấy file để cache.")
-    return RedirectResponse(url="/admin/file-storage/list", status_code=303)
+    del current_user
+
+    try:
+        updated = refresh_cdn_cache_service(db, file_id, cdn_provider)
+        if not updated:
+            raise ValueError("Không tìm thấy file để cache.")
+
+        message = quote("Làm mới CDN cache thành công.")
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except ValueError as e:
+        message = quote(str(e))
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except Exception as e:
+        message = quote(f"Lỗi khi làm mới CDN cache: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
 
-# ==========================================================
-# 🗑️ 4️⃣ Xóa File
-# ==========================================================
 @router.get("/delete/{file_id}", response_class=HTMLResponse)
 def confirm_delete(
     file_id: str,
@@ -129,18 +186,18 @@ def confirm_delete(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Hiển thị trang xác nhận xóa file"""
-    tpl = get_template_by_path(request.url.path)
+    del current_user
+
     file_data = db.query(FileStorage).filter(FileStorage.id == file_id).first()
     if not file_data:
         raise HTTPException(status_code=404, detail="Không tìm thấy file.")
-    return tpl.TemplateResponse(
-        "file_storage/delete.html",  # ✅ bỏ "admin/"
+
+    return render_template(
+        request,
+        "file_storage/delete.html",
         {
-            "request": request,
             "file": file_data,
             "page_title": "🗑️ Xóa File",
-            "active_page": "file_storage",
         },
     )
 
@@ -151,31 +208,46 @@ def delete_file_action(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Xóa file khỏi DB và thư mục"""
-    deleted = delete_file_service(db, file_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="File không tồn tại.")
-    return RedirectResponse(url="/admin/file-storage/list", status_code=303)
+    del current_user
+
+    try:
+        deleted = delete_file_service(db, file_id)
+        if not deleted:
+            raise ValueError("File không tồn tại.")
+
+        message = quote("Xóa file thành công.")
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?success={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except ValueError as e:
+        message = quote(str(e))
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except Exception as e:
+        message = quote(f"Lỗi khi xóa file: {str(e)}")
+        return RedirectResponse(
+            url=f"/admin/file-storage/list?error={message}",
+            status_code=status.HTTP_303_SEE_OTHER
+        )
 
 
-# ==========================================================
-# 📊 5️⃣ Thống kê lưu trữ
-# ==========================================================
 @router.get("/stats", response_class=HTMLResponse)
 def storage_stats(
     request: Request,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_admin)
 ):
-    """Hiển thị thống kê file lưu trữ"""
-    tpl = get_template_by_path(request.url.path)
+    del current_user
+
     stats = get_storage_stats_service(db)
-    return tpl.TemplateResponse(
-        "file_storage/stats.html",  # ✅ bỏ "admin/"
+    return render_template(
+        request,
+        "file_storage/stats.html",
         {
-            "request": request,
             "stats": stats,
             "page_title": "📊 Thống kê Lưu trữ File",
-            "active_page": "file_storage",
         },
     )

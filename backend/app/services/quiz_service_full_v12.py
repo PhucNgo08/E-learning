@@ -1,44 +1,111 @@
 """
 =================================================================
-🧠 QUIZ SERVICE v12 – FINAL PRO MAX 2025
-Dành cho: Teacher + Admin + Student
-Tối ưu theo database E-Learning 2025 (31 bảng)
+QUIZ SERVICE v12 - FIXED CLEAN VERSION
+Teacher + Admin + Student
 =================================================================
 """
 
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, case, and_, or_
 from datetime import datetime
-import uuid
 import random
+import uuid
 
-# ============================
-# Models
-# ============================
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, case, or_
+
 from app.models.quiz import Quiz
 from app.models.course import Course
-from app.models.enrollment import Enrollment
+from app.models.course_enrollment import CourseEnrollment
 from app.models.question import Question
 from app.models.question_option import QuestionOption
 from app.models.quiz_attempt import QuizAttempt
 from app.models.attempt_answer import AttemptAnswer
 from app.models.user import User
+from app.models.user_profile import UserProfile
 
 
-# ============================================================
-# Utility
-# ============================================================
-def generate_uuid():
+VALID_ENROLLMENT_STATUSES = ["active", "approved", "completed"]
+VALID_QUIZ_TYPES = ["practice", "graded"]
+VALID_DIFFICULTY_LEVELS = ["easy", "medium", "hard", "beginner", "intermediate", "advanced"]
+VALID_QUIZ_STATUSES = ["draft", "pending", "published", "rejected", "archived"]
+
+
+def generate_uuid() -> str:
     return str(uuid.uuid4())
 
 
-# ===================================================================
-# 🔵 TEACHER SERVICE – CRUD + STATISTICS + IMPORT-FRIENDLY
-# ===================================================================
+# ============================================================
+# Utility validation
+# ============================================================
+def _clean_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
 
-# ------------------------------------------------------------
-# Lấy danh sách quiz của giáo viên
-# ------------------------------------------------------------
+
+def validate_quiz_inputs(
+    title: str,
+    quiz_type: str,
+    difficulty_level: str,
+    max_attempts: int,
+    passing_score: float,
+    total_questions: int,
+    available_from: datetime = None,
+    available_to: datetime = None,
+):
+    if not _clean_text(title):
+        raise ValueError("Tiêu đề quiz không được để trống.")
+
+    if quiz_type not in VALID_QUIZ_TYPES:
+        raise ValueError("Loại quiz không hợp lệ.")
+
+    if difficulty_level not in VALID_DIFFICULTY_LEVELS:
+        raise ValueError("Độ khó quiz không hợp lệ.")
+
+    if max_attempts is None or int(max_attempts) <= 0:
+        raise ValueError("Số lần làm phải lớn hơn 0.")
+
+    if total_questions is None or int(total_questions) <= 0:
+        raise ValueError("Tổng số câu hỏi phải lớn hơn 0.")
+
+    if passing_score is None or not (0 <= float(passing_score) <= 100):
+        raise ValueError("Điểm đạt phải từ 0 đến 100.")
+
+    if available_from and available_to and available_to <= available_from:
+        raise ValueError("Thời gian kết thúc phải lớn hơn thời gian bắt đầu.")
+
+
+def validate_exam_inputs(
+    title: str,
+    total_questions: int,
+    time_limit: int,
+    max_attempts: int,
+    passing_score: float,
+    available_from,
+    available_to,
+):
+    if not _clean_text(title):
+        raise ValueError("Tiêu đề bài thi không được để trống.")
+
+    if total_questions is None or int(total_questions) <= 0:
+        raise ValueError("Số câu hỏi phải lớn hơn 0.")
+
+    if time_limit is None or int(time_limit) <= 0:
+        raise ValueError("Thời gian làm bài phải lớn hơn 0.")
+
+    if max_attempts is None or int(max_attempts) <= 0:
+        raise ValueError("Số lần làm tối thiểu phải >= 1.")
+
+    if passing_score is None or not (0 <= float(passing_score) <= 100):
+        raise ValueError("Điểm qua môn phải từ 0 đến 100.")
+
+    if available_from and available_to and available_to <= available_from:
+        raise ValueError("Thời gian đóng phải lớn hơn thời gian mở.")
+
+
+# ===================================================================
+# TEACHER SERVICE
+# ===================================================================
 def get_quizzes_by_teacher(db: Session, teacher_id: str):
     return (
         db.query(Quiz)
@@ -50,9 +117,6 @@ def get_quizzes_by_teacher(db: Session, teacher_id: str):
     )
 
 
-# ------------------------------------------------------------
-# Lấy quiz theo ID (KHÔNG chặn import preview)
-# ------------------------------------------------------------
 def get_quiz_by_id(db: Session, quiz_id: str, teacher_id: str):
     return (
         db.query(Quiz)
@@ -63,9 +127,6 @@ def get_quiz_by_id(db: Session, quiz_id: str, teacher_id: str):
     )
 
 
-# ------------------------------------------------------------
-# Create Quiz
-# ------------------------------------------------------------
 def create_quiz(
     db: Session,
     teacher_id: str,
@@ -83,44 +144,57 @@ def create_quiz(
     status: str = "published",
     is_approved: bool = True,
 ):
+    validate_quiz_inputs(
+        title=title,
+        quiz_type=quiz_type,
+        difficulty_level=difficulty_level,
+        max_attempts=max_attempts,
+        passing_score=passing_score,
+        total_questions=total_questions,
+        available_from=available_from,
+        available_to=available_to,
+    )
 
-    # Check teacher owns course
+    if status not in VALID_QUIZ_STATUSES:
+        raise ValueError("Trạng thái quiz không hợp lệ.")
+
     course = (
         db.query(Course)
         .filter(Course.id == course_id, Course.teacher_id == teacher_id)
         .first()
     )
     if not course:
-        raise PermissionError("Bạn không có quyền tạo quiz trong khóa học này")
+        raise PermissionError("Bạn không có quyền tạo quiz trong khóa học này.")
 
-    quiz = Quiz(
-        id=generate_uuid(),
-        title=title.strip(),
-        description=description.strip() if description else None,
-        quiz_type=quiz_type,
-        difficulty_level=difficulty_level,
-        time_limit_minutes=time_limit_minutes,
-        max_attempts=max_attempts,
-        passing_score=passing_score,
-        total_questions=total_questions,
-        course_id=course_id,
-        available_from=available_from,
-        available_to=available_to,
-        status=status,
-        is_approved=is_approved,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-    )
+    try:
+        quiz = Quiz(
+            id=generate_uuid(),
+            title=title.strip(),
+            description=_clean_text(description),
+            quiz_type=quiz_type,
+            difficulty_level=difficulty_level,
+            time_limit_minutes=time_limit_minutes,
+            max_attempts=max_attempts,
+            passing_score=passing_score,
+            total_questions=total_questions,
+            course_id=course_id,
+            available_from=available_from,
+            available_to=available_to,
+            status=status,
+            is_approved=is_approved,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
 
-    db.add(quiz)
-    db.commit()
-    db.refresh(quiz)
-    return quiz
+        db.add(quiz)
+        db.commit()
+        db.refresh(quiz)
+        return quiz
+    except Exception:
+        db.rollback()
+        raise
 
 
-# ------------------------------------------------------------
-# Update Quiz
-# ------------------------------------------------------------
 def update_quiz(
     db: Session,
     teacher_id: str,
@@ -137,87 +211,100 @@ def update_quiz(
     available_from: datetime = None,
     available_to: datetime = None,
 ):
+    validate_quiz_inputs(
+        title=title,
+        quiz_type=quiz_type,
+        difficulty_level=difficulty_level,
+        max_attempts=max_attempts,
+        passing_score=passing_score,
+        total_questions=total_questions,
+        available_from=available_from,
+        available_to=available_to,
+    )
 
     quiz = (
         db.query(Quiz)
-        .join(Course)
+        .join(Course, Quiz.course_id == Course.id)
         .filter(Quiz.id == quiz_id, Course.teacher_id == teacher_id)
         .first()
     )
     if not quiz:
         return None
 
-    quiz.course_id = course_id
-    quiz.title = title.strip()
-    quiz.description = description.strip() if description else None
-    quiz.quiz_type = quiz_type
-    quiz.difficulty_level = difficulty_level
-    quiz.time_limit_minutes = time_limit_minutes
-    quiz.max_attempts = max_attempts
-    quiz.passing_score = passing_score
-    quiz.total_questions = total_questions
-    quiz.available_from = available_from
-    quiz.available_to = available_to
-    quiz.updated_at = datetime.utcnow()
+    target_course = (
+        db.query(Course)
+        .filter(Course.id == course_id, Course.teacher_id == teacher_id)
+        .first()
+    )
+    if not target_course:
+        raise PermissionError("Bạn không có quyền chuyển quiz sang khóa học này.")
 
-    db.commit()
-    db.refresh(quiz)
-    return quiz
+    try:
+        quiz.course_id = course_id
+        quiz.title = title.strip()
+        quiz.description = _clean_text(description)
+        quiz.quiz_type = quiz_type
+        quiz.difficulty_level = difficulty_level
+        quiz.time_limit_minutes = time_limit_minutes
+        quiz.max_attempts = max_attempts
+        quiz.passing_score = passing_score
+        quiz.total_questions = total_questions
+        quiz.available_from = available_from
+        quiz.available_to = available_to
+        quiz.updated_at = datetime.utcnow()
+
+        db.commit()
+        db.refresh(quiz)
+        return quiz
+    except Exception:
+        db.rollback()
+        raise
 
 
-# ------------------------------------------------------------
-# Delete Quiz
-# ------------------------------------------------------------
 def delete_quiz(db: Session, teacher_id: str, quiz_id: str):
-
     quiz = (
         db.query(Quiz)
-        .join(Course)
+        .join(Course, Quiz.course_id == Course.id)
         .filter(Quiz.id == quiz_id, Course.teacher_id == teacher_id)
         .first()
     )
     if not quiz:
         return False
 
-    # Delete options
-    db.query(QuestionOption).filter(
-        QuestionOption.question_id.in_(
-            db.query(Question.id).filter(Question.quiz_id == quiz_id)
-        )
-    ).delete(synchronize_session=False)
+    try:
+        db.query(QuestionOption).filter(
+            QuestionOption.question_id.in_(
+                db.query(Question.id).filter(Question.quiz_id == quiz_id)
+            )
+        ).delete(synchronize_session=False)
 
-    # Delete questions
-    db.query(Question).filter(Question.quiz_id == quiz_id).delete(synchronize_session=False)
+        db.query(Question).filter(Question.quiz_id == quiz_id).delete(synchronize_session=False)
 
-    db.delete(quiz)
-    db.commit()
-    return True
+        db.delete(quiz)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise
 
 
-# ------------------------------------------------------------
-# Quiz Detail
-# ------------------------------------------------------------
 def get_quiz_detail(db: Session, teacher_id: str, quiz_id: str):
     return (
         db.query(Quiz)
-        .join(Course)
+        .join(Course, Quiz.course_id == Course.id)
         .filter(Quiz.id == quiz_id, Course.teacher_id == teacher_id)
         .options(
             joinedload(Quiz.course),
-            joinedload(Quiz.questions).joinedload(Question.options)
+            joinedload(Quiz.questions).joinedload(Question.options),
         )
         .first()
     )
 
 
-# ------------------------------------------------------------
-# Quiz Statistics
-# ------------------------------------------------------------
 def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
-
     quiz = (
         db.query(Quiz)
-        .join(Course)
+        .join(Course, Quiz.course_id == Course.id)
         .filter(Quiz.id == quiz_id, Course.teacher_id == teacher_id)
         .first()
     )
@@ -238,14 +325,18 @@ def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
 
     top_students = (
         db.query(
-            User.full_name,
+            UserProfile.full_name.label("full_name"),
             QuizAttempt.score,
             QuizAttempt.attempt_number,
             QuizAttempt.submitted_at,
         )
         .join(User, User.id == QuizAttempt.user_id)
-        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.status == "submitted")
-        .order_by(QuizAttempt.score.desc())
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .filter(
+            QuizAttempt.quiz_id == quiz_id,
+            QuizAttempt.status == "submitted",
+        )
+        .order_by(QuizAttempt.score.desc(), QuizAttempt.submitted_at.asc())
         .limit(5)
         .all()
     )
@@ -253,14 +344,13 @@ def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
     return {
         "quiz": quiz,
         "stats": stats,
-        "top_students": top_students
+        "top_students": top_students,
     }
 
 
 # ===================================================================
-# 🔶 EXAM SERVICE – ROLE ADMIN + TEACHER + STUDENT (graded)
+# EXAM SERVICE
 # ===================================================================
-
 def get_exams(db: Session, user_id: str, role: str):
     base = db.query(Quiz).filter(Quiz.quiz_type == "graded")
 
@@ -279,16 +369,17 @@ def get_exams(db: Session, user_id: str, role: str):
         now = datetime.utcnow()
         return (
             base.join(Course, Quiz.course_id == Course.id)
-            .join(Enrollment, Enrollment.course_id == Course.id)
+            .join(CourseEnrollment, CourseEnrollment.course_id == Course.id)
             .filter(
-                Enrollment.user_id == user_id,
-                Enrollment.enrollment_status.in_(["active", "approved", "completed"]),
+                CourseEnrollment.user_id == user_id,
+                CourseEnrollment.enrollment_status.in_(VALID_ENROLLMENT_STATUSES),
                 Quiz.is_approved == True,
                 Quiz.status == "published",
-                Quiz.available_from <= now,
-                Quiz.available_to >= now,
+                or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
+                or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
             )
-            .order_by(Quiz.available_from.asc())
+            .distinct()
+            .order_by(Quiz.available_from.asc().nullsfirst(), Quiz.created_at.desc())
             .all()
         )
 
@@ -305,25 +396,6 @@ def is_teacher_owner(db: Session, teacher_id: str, exam_id: str):
     )
 
 
-def validate_exam_inputs(total_questions, time_limit, max_attempts,
-                         passing_score, available_from, available_to):
-
-    if total_questions <= 0:
-        raise ValueError("Số câu hỏi phải lớn hơn 0.")
-
-    if time_limit <= 0:
-        raise ValueError("Thời gian làm bài phải lớn hơn 0.")
-
-    if max_attempts <= 0:
-        raise ValueError("Số lần tối thiểu phải >= 1.")
-
-    if not (0 <= passing_score <= 100):
-        raise ValueError("Điểm qua môn phải từ 0–100.")
-
-    if available_from and available_to and available_to <= available_from:
-        raise ValueError("Thời gian đóng phải > thời gian mở.")
-
-
 def create_exam(
     db: Session,
     user_id: str,
@@ -338,41 +410,45 @@ def create_exam(
     available_from,
     available_to,
 ):
-
     if role == "teacher":
         course = db.query(Course).filter(Course.id == course_id, Course.teacher_id == user_id).first()
         if not course:
             raise PermissionError("Bạn không có quyền tạo bài thi cho khóa này.")
     else:
         course = db.query(Course).filter(Course.id == course_id).first()
+        if not course:
+            raise ValueError("Không tìm thấy khóa học.")
 
     validate_exam_inputs(
-        total_questions, time_limit, max_attempts,
-        passing_score, available_from, available_to
+        title, total_questions, time_limit, max_attempts, passing_score, available_from, available_to
     )
 
-    exam = Quiz(
-        id=generate_uuid(),
-        title=title.strip(),
-        description=description.strip() if description else None,
-        course_id=course_id,
-        quiz_type="graded",
-        total_questions=total_questions,
-        time_limit_minutes=time_limit,
-        max_attempts=max_attempts,
-        passing_score=passing_score,
-        available_from=available_from,
-        available_to=available_to,
-        status="pending",
-        is_approved=False,
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
-    )
+    try:
+        exam = Quiz(
+            id=generate_uuid(),
+            title=title.strip(),
+            description=_clean_text(description),
+            course_id=course_id,
+            quiz_type="graded",
+            total_questions=total_questions,
+            time_limit_minutes=time_limit,
+            max_attempts=max_attempts,
+            passing_score=passing_score,
+            available_from=available_from,
+            available_to=available_to,
+            status="pending",
+            is_approved=False,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
 
-    db.add(exam)
-    db.commit()
-    db.refresh(exam)
-    return exam
+        db.add(exam)
+        db.commit()
+        db.refresh(exam)
+        return exam
+    except Exception:
+        db.rollback()
+        raise
 
 
 def update_exam(
@@ -389,7 +465,6 @@ def update_exam(
     available_from,
     available_to,
 ):
-
     exam = db.query(Quiz).filter(Quiz.id == exam_id).first()
     if not exam:
         raise ValueError("Không tìm thấy bài thi.")
@@ -398,29 +473,31 @@ def update_exam(
         raise PermissionError("Bạn không có quyền sửa bài thi này.")
 
     validate_exam_inputs(
-        total_questions, time_limit, max_attempts,
-        passing_score, available_from, available_to
+        title, total_questions, time_limit, max_attempts, passing_score, available_from, available_to
     )
 
-    exam.title = title.strip()
-    exam.description = description.strip() if description else None
-    exam.total_questions = total_questions
-    exam.time_limit_minutes = time_limit
-    exam.max_attempts = max_attempts
-    exam.passing_score = passing_score
-    exam.available_from = available_from
-    exam.available_to = available_to
-    exam.status = "pending"
-    exam.is_approved = False
-    exam.updated_at = datetime.utcnow()
+    try:
+        exam.title = title.strip()
+        exam.description = _clean_text(description)
+        exam.total_questions = total_questions
+        exam.time_limit_minutes = time_limit
+        exam.max_attempts = max_attempts
+        exam.passing_score = passing_score
+        exam.available_from = available_from
+        exam.available_to = available_to
+        exam.status = "pending"
+        exam.is_approved = False
+        exam.updated_at = datetime.utcnow()
 
-    db.commit()
-    db.refresh(exam)
-    return exam
+        db.commit()
+        db.refresh(exam)
+        return exam
+    except Exception:
+        db.rollback()
+        raise
 
 
 def delete_exam(db: Session, user_id: str, role: str, exam_id: str):
-
     exam = db.query(Quiz).filter(Quiz.id == exam_id).first()
     if not exam:
         raise ValueError("Không tìm thấy bài thi.")
@@ -428,17 +505,21 @@ def delete_exam(db: Session, user_id: str, role: str, exam_id: str):
     if role == "teacher" and not is_teacher_owner(db, user_id, exam_id):
         raise PermissionError("Bạn không có quyền xóa bài thi này.")
 
-    db.query(QuestionOption).filter(
-        QuestionOption.question_id.in_(
-            db.query(Question.id).filter(Question.quiz_id == exam_id)
-        )
-    ).delete(synchronize_session=False)
+    try:
+        db.query(QuestionOption).filter(
+            QuestionOption.question_id.in_(
+                db.query(Question.id).filter(Question.quiz_id == exam_id)
+            )
+        ).delete(synchronize_session=False)
 
-    db.query(Question).filter(Question.quiz_id == exam_id).delete(synchronize_session=False)
+        db.query(Question).filter(Question.quiz_id == exam_id).delete(synchronize_session=False)
 
-    db.delete(exam)
-    db.commit()
-    return True
+        db.delete(exam)
+        db.commit()
+        return True
+    except Exception:
+        db.rollback()
+        raise
 
 
 def approve_exam(db: Session, exam_id: str):
@@ -446,13 +527,16 @@ def approve_exam(db: Session, exam_id: str):
     if not exam:
         raise ValueError("Không tìm thấy bài thi.")
 
-    exam.is_approved = True
-    exam.status = "published"
-    exam.updated_at = datetime.utcnow()
-
-    db.commit()
-    db.refresh(exam)
-    return exam
+    try:
+        exam.is_approved = True
+        exam.status = "published"
+        exam.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(exam)
+        return exam
+    except Exception:
+        db.rollback()
+        raise
 
 
 def reject_exam(db: Session, exam_id: str):
@@ -460,13 +544,16 @@ def reject_exam(db: Session, exam_id: str):
     if not exam:
         raise ValueError("Không tìm thấy bài thi.")
 
-    exam.is_approved = False
-    exam.status = "rejected"
-    exam.updated_at = datetime.utcnow()
-
-    db.commit()
-    db.refresh(exam)
-    return exam
+    try:
+        exam.is_approved = False
+        exam.status = "rejected"
+        exam.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(exam)
+        return exam
+    except Exception:
+        db.rollback()
+        raise
 
 
 def get_student_attempt_count(db: Session, user_id: str, exam_id: str):
@@ -478,12 +565,8 @@ def get_student_attempt_count(db: Session, user_id: str, exam_id: str):
 
 
 # ===================================================================
-# 🟩 STUDENT SERVICE – PRACTICE QUIZ + SUBMISSION
+# STUDENT SERVICE
 # ===================================================================
-
-# ------------------------------------------------------------
-# Practice Quiz List
-# ------------------------------------------------------------
 def get_all_quizzes_for_student(db: Session):
     now = datetime.utcnow()
     return (
@@ -491,17 +574,14 @@ def get_all_quizzes_for_student(db: Session):
         .filter(
             Quiz.quiz_type == "practice",
             Quiz.status == "published",
-            or_(Quiz.available_from == None, Quiz.available_from <= now),
-            or_(Quiz.available_to == None, Quiz.available_to >= now),
+            or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
+            or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
         )
         .order_by(Quiz.created_at.desc())
         .all()
     )
 
 
-# ------------------------------------------------------------
-# Practice Quiz theo khóa học
-# ------------------------------------------------------------
 def get_quizzes_by_course(db: Session, course_id: str):
     now = datetime.utcnow()
     return (
@@ -510,17 +590,14 @@ def get_quizzes_by_course(db: Session, course_id: str):
             Quiz.quiz_type == "practice",
             Quiz.course_id == course_id,
             Quiz.status == "published",
-            or_(Quiz.available_from == None, Quiz.available_from <= now),
-            or_(Quiz.available_to == None, Quiz.available_to >= now),
+            or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
+            or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
         )
         .order_by(Quiz.created_at.desc())
         .all()
     )
 
 
-# ------------------------------------------------------------
-# Lấy quiz + câu hỏi
-# ------------------------------------------------------------
 def get_quiz_with_questions(db: Session, quiz_id: str):
     quiz = (
         db.query(Quiz)
@@ -531,21 +608,18 @@ def get_quiz_with_questions(db: Session, quiz_id: str):
     if not quiz:
         return None
 
+    quiz.questions = list(quiz.questions or [])
     if quiz.randomize_questions:
-        quiz.questions = list(quiz.questions)
         random.shuffle(quiz.questions)
 
     if quiz.randomize_options:
         for q in quiz.questions:
-            q.options = list(q.options)
+            q.options = list(q.options or [])
             random.shuffle(q.options)
 
     return quiz
 
 
-# ------------------------------------------------------------
-# Anti-spam
-# ------------------------------------------------------------
 def has_recent_attempt(db: Session, user_id: str, quiz_id: str):
     latest = (
         db.query(QuizAttempt)
@@ -559,16 +633,18 @@ def has_recent_attempt(db: Session, user_id: str, quiz_id: str):
     return (datetime.utcnow() - latest.created_at).total_seconds() < 2
 
 
-# ------------------------------------------------------------
-# Submit practice quiz
-# ------------------------------------------------------------
 def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
-    quiz = db.query(Quiz).filter(Quiz.id == quiz_id).first()
+    quiz = (
+        db.query(Quiz)
+        .options(joinedload(Quiz.questions).joinedload(Question.options))
+        .filter(Quiz.id == quiz_id)
+        .first()
+    )
     if not quiz:
         return {"error": "Quiz không tồn tại"}
 
     if has_recent_attempt(db, user_id, quiz_id):
-        return {"error": "Vui lòng đợi 1–2 giây trước khi nộp lại."}
+        return {"error": "Vui lòng đợi 1-2 giây trước khi nộp lại."}
 
     prev = (
         db.query(QuizAttempt)
@@ -578,63 +654,74 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
     if quiz.max_attempts and prev >= quiz.max_attempts:
         return {"error": "Bạn đã hết lượt làm bài."}
 
-    attempt_id = generate_uuid()
-    attempt = QuizAttempt(
-        id=attempt_id,
-        quiz_id=quiz_id,
-        user_id=user_id,
-        attempt_number=prev + 1,
-        status="submitted",
-        started_at=datetime.utcnow(),
-        submitted_at=datetime.utcnow(),
-    )
-    db.add(attempt)
-    db.flush()
-
-    total_points = 0
-    earned = 0
-    correct = 0
-
-    for q in quiz.questions:
-        qid = str(q.id)
-        selected = form_data.get(f"question_{qid}", None)
-
-        total_points += float(q.points or 1)
-        option = db.query(QuestionOption).filter(QuestionOption.id == selected).first() if selected else None
-
-        is_correct = bool(option and option.is_correct)
-
-        if is_correct:
-            earned += float(q.points or 1)
-            correct += 1
-
-        db.add(
-            AttemptAnswer(
-                id=generate_uuid(),
-                attempt_id=attempt_id,
-                question_id=qid,
-                selected_option_id=selected,
-                is_correct=is_correct,
-                points_earned=float(q.points or 1) if is_correct else 0,
-            )
+    try:
+        attempt_id = generate_uuid()
+        attempt = QuizAttempt(
+            id=attempt_id,
+            quiz_id=quiz_id,
+            user_id=user_id,
+            attempt_number=prev + 1,
+            status="submitted",
+            started_at=datetime.utcnow(),
+            submitted_at=datetime.utcnow(),
         )
+        db.add(attempt)
+        db.flush()
 
-    score = round((earned / max(total_points, 1)) * 100, 2)
+        total_points = 0.0
+        earned = 0.0
+        correct = 0
 
-    attempt.score = score
-    attempt.correct_answers = correct
-    attempt.total_questions = len(quiz.questions)
-    attempt.time_spent_seconds = 0
+        for question in quiz.questions:
+            qid = str(question.id)
+            selected = form_data.get(f"question_{qid}")
 
-    db.commit()
-    db.refresh(attempt)
+            total_points += float(question.points or 1)
 
-    return {"attempt_id": attempt_id, "score": score}
+            option = None
+            if selected:
+                option = (
+                    db.query(QuestionOption)
+                    .filter(
+                        QuestionOption.id == selected,
+                        QuestionOption.question_id == qid,
+                    )
+                    .first()
+                )
+
+            is_correct = bool(option and option.is_correct)
+
+            if is_correct:
+                earned += float(question.points or 1)
+                correct += 1
+
+            db.add(
+                AttemptAnswer(
+                    id=generate_uuid(),
+                    attempt_id=attempt_id,
+                    question_id=qid,
+                    selected_option_id=selected if option else None,
+                    is_correct=is_correct,
+                    points_earned=float(question.points or 1) if is_correct else 0,
+                )
+            )
+
+        score = round((earned / max(total_points, 1)) * 100, 2)
+
+        attempt.score = score
+        attempt.correct_answers = correct
+        attempt.total_questions = len(quiz.questions)
+        attempt.time_spent_seconds = 0
+
+        db.commit()
+        db.refresh(attempt)
+
+        return {"attempt_id": attempt_id, "score": score}
+    except Exception:
+        db.rollback()
+        raise
 
 
-# ------------------------------------------------------------
-# Kết quả chi tiết
-# ------------------------------------------------------------
 def get_quiz_result(db: Session, attempt_id: str):
     return (
         db.query(QuizAttempt)
@@ -649,9 +736,6 @@ def get_quiz_result(db: Session, attempt_id: str):
     )
 
 
-# ------------------------------------------------------------
-# Lịch sử quiz theo user
-# ------------------------------------------------------------
 def get_quiz_history_for_student(db: Session, user_id: str):
     return (
         db.query(QuizAttempt)
@@ -672,46 +756,37 @@ def get_quiz_history_for_student_by_course(db: Session, user_id: str, course_id:
     )
 
 
-def get_latest_quiz_attempt_for_student(db, user_id, quiz_id):
+def get_latest_quiz_attempt_for_student(db: Session, user_id: str, quiz_id: str):
     return (
         db.query(QuizAttempt)
         .filter(QuizAttempt.user_id == user_id, QuizAttempt.quiz_id == quiz_id)
         .order_by(QuizAttempt.started_at.desc())
         .first()
     )
-# ------------------------------------------------------------
-# ĐẾM số lần làm quiz của học sinh (practice hoặc graded)
-# ------------------------------------------------------------
+
+
 def get_quiz_attempt_count_for_student(db: Session, user_id: str, quiz_id: str):
     return (
         db.query(QuizAttempt)
         .filter(
             QuizAttempt.user_id == user_id,
-            QuizAttempt.quiz_id == quiz_id
+            QuizAttempt.quiz_id == quiz_id,
         )
         .count()
     )
 
-# ------------------------------------------------------------
-# LẤY TẤT CẢ QUIZ CỦA KHÓA HỌC HỌC VIÊN ĐÃ GHI DANH
-# (Practice + Graded) — Không lọc thời gian / trạng thái
-# ------------------------------------------------------------
-def get_all_quizzes_for_student_enrolled(db: Session, student_id: str):
-    """
-    Lấy toàn bộ quiz (practice + graded)
-    thuộc các khóa học mà học viên đã ghi danh.
-    Không lọc trạng thái / thời gian – giống danh sách của giáo viên.
-    """
 
+def get_all_quizzes_for_student_enrolled(db: Session, student_id: str):
     return (
         db.query(Quiz)
         .join(Course, Quiz.course_id == Course.id)
-        .join(Enrollment, Enrollment.course_id == Course.id)
+        .join(CourseEnrollment, CourseEnrollment.course_id == Course.id)
         .filter(
-            Enrollment.user_id == student_id,
-            Enrollment.enrollment_status.in_(["active", "approved", "completed"])
+            CourseEnrollment.user_id == student_id,
+            CourseEnrollment.enrollment_status.in_(VALID_ENROLLMENT_STATUSES),
         )
         .options(joinedload(Quiz.course))
+        .distinct()
         .order_by(Quiz.created_at.desc())
         .all()
     )

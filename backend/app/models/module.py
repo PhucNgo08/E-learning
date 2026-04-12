@@ -38,5 +38,6 @@ class Module(Base):
     lessons = relationship("Lesson", back_populates="module", cascade="all, delete-orphan")
     assignments = relationship("Assignment", back_populates="module", cascade="all, delete-orphan")
 
+    learning_activity_logs = relationship("LearningActivityLog", back_populates="module")
     def __repr__(self):
         return f"<Module(title='{self.title}', has_assignment={self.has_assignment})>"

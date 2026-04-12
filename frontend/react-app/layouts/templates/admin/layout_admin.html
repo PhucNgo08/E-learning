@@ -7,98 +7,277 @@
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 
-  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin.css">
-  
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" onerror="this.disabled=true; this.media='all';">
-  
-  <link rel="icon" type="image/png" href="/static/images/fox-logo.png">
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin.css" />
+  <link rel="icon" type="image/png" href="/static/images/fox-logo.png" />
 
   {% block extra_css %}{% endblock %}
 </head>
-
 <body>
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
   <nav id="sidebar">
     <div class="sidebar-header">
-      <img src="/static/images/fox-logo.png" alt="Logo" />
-      <span>E-Learning Admin</span>
-      
-      <i class="bi bi-x-lg" id="closeSidebar"></i>
+      <div class="brand-logo">
+        <img src="/static/images/fox-logo.png" alt="Logo" />
+      </div>
+      <div class="brand-text">
+        <span class="title">Quản trị E-Learning</span>
+        <span class="subtitle">Hệ thống quản trị hiện đại</span>
+      </div>
+      <button id="closeSidebar" type="button" aria-label="Đóng menu">
+        <i class="bi bi-x-lg"></i>
+      </button>
     </div>
 
-    <a href="/admin/dashboard"><i class="bi bi-speedometer2"></i> Trang chủ</a>
-    <a href="/admin/Account/manage-users"><i class="bi bi-people-fill"></i> Người dùng</a>
-    <a href="/admin/Course/manage"><i class="bi bi-book-half"></i> Khóa học</a>
-    <a href="/admin/majors/list"><i class="bi bi-mortarboard-fill"></i> Ngành học</a>
-    <a href="/admin/academic_years/list"><i class="bi bi-calendar3"></i> Năm học</a>
-    <a href="/admin/settings/manage"><i class="bi bi-gear-fill"></i> Cấu hình</a>
-    <a href="/admin/wallets/list"><i class="bi bi-wallet2"></i> Quản lý Ví</a>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Tổng quan</div>
+        <a href="/admin/dashboard" class="nav-item {% block nav_dashboard %}{% endblock %}">
+          <i class="bi bi-speedometer2"></i>
+          <span>Trang chủ</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Quản lý chính</div>
+
+        <a href="/admin/Account/manage-users" class="nav-item {% block nav_users %}{% endblock %}">
+          <i class="bi bi-people-fill"></i>
+          <span>Người dùng</span>
+        </a>
+
+        <a href="/admin/Course/manage" class="nav-item {% block nav_courses %}{% endblock %}">
+          <i class="bi bi-book-half"></i>
+          <span>Khóa học</span>
+        </a>
+
+        <a href="/admin/majors/list" class="nav-item {% block nav_majors %}{% endblock %}">
+          <i class="bi bi-mortarboard-fill"></i>
+          <span>Ngành học</span>
+        </a>
+
+        <a href="/admin/academic_years/list" class="nav-item {% block nav_years %}{% endblock %}">
+          <i class="bi bi-calendar3"></i>
+          <span>Năm học</span>
+        </a>
+
+        <a href="/admin/wallets/list" class="nav-item {% block nav_wallets %}{% endblock %}">
+          <i class="bi bi-wallet2"></i>
+          <span>Quản lý ví</span>
+        </a>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-label">Hệ thống</div>
+
+        <a href="/admin/settings/manage" class="nav-item {% block nav_settings %}{% endblock %}">
+          <i class="bi bi-gear-fill"></i>
+          <span>Cấu hình</span>
+        </a>
+      </div>
+    </div>
 
     <div class="sidebar-footer">
-      👋 Xin chào, <strong>{{ username or "Admin" }}</strong><br />
-      <a href="/auth/logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a>
+      <div class="sidebar-user">
+        <img src="/static/images/fox-logo.png" alt="Ảnh đại diện quản trị" />
+        <div>
+          <strong>{{ username or "Quản trị viên" }}</strong>
+          <small>Quản trị viên hệ thống</small>
+        </div>
+      </div>
+
+      <a href="/auth/logout" class="logout-btn">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Đăng xuất</span>
+      </a>
     </div>
   </nav>
 
   <header class="admin-header">
-    <div class="nav-icons ms-auto">
-      
-      <button class="mode-toggle" id="toggleMode" title="Chế độ Sáng/Tối">
+    <div class="header-left">
+      <button class="toggle-btn" id="toggleSidebar" title="Mở menu" type="button">
+        <i class="bi bi-list"></i>
+      </button>
+
+      <div class="header-title">
+        <h1>{% block page_title %}Bảng điều khiển quản trị{% endblock %}</h1>
+        <p>{% block page_subtitle %}Quản lý toàn bộ hệ thống E-Learning{% endblock %}</p>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="header-search">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Tìm kiếm nhanh..." />
+      </div>
+
+      <div class="notification-wrap">
+        <button class="header-icon-btn" type="button" title="Thông báo">
+          <i class="bi bi-bell-fill"></i>
+        </button>
+        <span class="notification-badge">3</span>
+      </div>
+
+      <button class="mode-toggle" id="toggleMode" title="Chuyển chế độ sáng/tối" type="button">
         <i class="bi bi-moon-fill"></i>
       </button>
 
-      
-      
-      <div class="avatar ms-3">
-        <img src="/static/images/fox-logo.png" alt="Admin Avatar" />
+      <div class="header-profile">
+        <img src="/static/images/fox-logo.png" alt="Ảnh đại diện quản trị" />
+        <div class="meta">
+          <strong>{{ username or "Quản trị viên" }}</strong>
+          <small>Quản trị cấp cao</small>
+        </div>
       </div>
     </div>
   </header>
 
-  <button class="toggle-btn" id="toggleSidebar" title="Mở menu">
-    <i class="bi bi-list"></i>
-  </button>
-
   <main id="content">
-    {% block content %}{% endblock %}
+    <div class="page-container">
+      {% block page_banner %}
+      <section class="page-banner">
+        <div>
+          <h2>{% block banner_title %}Xin chào, {{ username or "Quản trị viên" }}{% endblock %}</h2>
+          <p>{% block banner_text %}Theo dõi, quản lý và vận hành nền tảng E-Learning với giao diện hiện đại và trực quan hơn.{% endblock %}</p>
+        </div>
+
+        <div class="page-banner-actions">
+          <a href="/admin/Course/manage" class="btn-glass-light">
+            <i class="bi bi-plus-circle"></i>
+            <span>Quản lý khóa học</span>
+          </a>
+          <a href="/admin/Account/manage-users" class="btn-glass-outline">
+            <i class="bi bi-people"></i>
+            <span>Xem người dùng</span>
+          </a>
+        </div>
+      </section>
+      {% endblock %}
+
+      {% block stats_overview %}
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Người dùng</span>
+            <span class="stat-icon"><i class="bi bi-people-fill"></i></span>
+          </div>
+          <div class="stat-value">1,284</div>
+          <div class="stat-meta">Tăng 12% so với tháng trước</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Khóa học</span>
+            <span class="stat-icon"><i class="bi bi-book-half"></i></span>
+          </div>
+          <div class="stat-value">86</div>
+          <div class="stat-meta">18 khóa học đang hoạt động</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Doanh thu</span>
+            <span class="stat-icon"><i class="bi bi-cash-stack"></i></span>
+          </div>
+          <div class="stat-value">124M</div>
+          <div class="stat-meta">Cập nhật trong 24 giờ gần nhất</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-top">
+            <span class="stat-label">Thông báo</span>
+            <span class="stat-icon"><i class="bi bi-bell-fill"></i></span>
+          </div>
+          <div class="stat-value">23</div>
+          <div class="stat-meta">5 thông báo chưa đọc</div>
+        </div>
+      </section>
+      {% endblock %}
+
+      {% block content %}{% endblock %}
+    </div>
   </main>
 
   <script>
     const sidebar = document.getElementById("sidebar");
     const toggleBtn = document.getElementById("toggleSidebar");
-    const closeBtn = document.getElementById("closeSidebar"); 
+    const closeBtn = document.getElementById("closeSidebar");
+    const overlay = document.getElementById("sidebarOverlay");
     const body = document.body;
     const modeToggle = document.getElementById("toggleMode");
 
-    // 1. Hàm bật/tắt menu chung
-    const toggleMenu = () => {
-      sidebar.classList.toggle("active");      
-      body.classList.toggle("sidebar-open");   
+    const openSidebar = () => {
+      body.classList.add("sidebar-open");
+      sidebar.classList.add("active");
+      if (window.innerWidth < 992) {
+        overlay.classList.add("show");
+      }
     };
 
-    // 2. Sự kiện Click nút 3 gạch
-    toggleBtn.addEventListener("click", toggleMenu);
-
-    // 3. Sự kiện Click nút X (Đóng sidebar)
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => {
-        sidebar.classList.remove("active");
+    const closeSidebar = () => {
+      if (window.innerWidth < 992) {
         body.classList.remove("sidebar-open");
-      });
+        sidebar.classList.remove("active");
+        overlay.classList.remove("show");
+      }
+    };
+
+    const toggleSidebar = () => {
+      const isOpen = sidebar.classList.contains("active");
+      if (window.innerWidth >= 992) {
+        body.classList.toggle("sidebar-open");
+        sidebar.classList.toggle("active");
+      } else {
+        isOpen ? closeSidebar() : openSidebar();
+      }
+    };
+
+    toggleBtn.addEventListener("click", toggleSidebar);
+
+    if (closeBtn) {
+      closeBtn.addEventListener("click", closeSidebar);
     }
 
-    // 4. Xử lý Dark Mode
+    if (overlay) {
+      overlay.addEventListener("click", closeSidebar);
+    }
+
     const setDarkMode = (isDark) => {
       document.body.classList.toggle("dark-mode", isDark);
-      // Đổi icon mặt trăng/mặt trời
-      modeToggle.innerHTML = isDark ? '<i class="bi bi-sun-fill"></i>' : '<i class="bi bi-moon-fill"></i>';
+      modeToggle.innerHTML = isDark
+        ? '<i class="bi bi-sun-fill"></i>'
+        : '<i class="bi bi-moon-fill"></i>';
       localStorage.setItem("darkMode", isDark);
     };
 
-    modeToggle.addEventListener("click", () => setDarkMode(!document.body.classList.contains("dark-mode")));
-    
-    // Giữ trạng thái Dark Mode khi load lại trang
-    if (localStorage.getItem("darkMode") === "true") setDarkMode(true);
+    if (modeToggle) {
+      modeToggle.addEventListener("click", () => {
+        setDarkMode(!document.body.classList.contains("dark-mode"));
+      });
+    }
+
+    if (localStorage.getItem("darkMode") === "true") {
+      setDarkMode(true);
+    }
+
+    const setupLayout = () => {
+      if (window.innerWidth >= 992) {
+        body.classList.add("sidebar-open");
+        sidebar.classList.add("active");
+        overlay.classList.remove("show");
+      } else {
+        body.classList.remove("sidebar-open");
+        sidebar.classList.remove("active");
+        overlay.classList.remove("show");
+      }
+    };
+
+    setupLayout();
+    window.addEventListener("resize", setupLayout);
   </script>
+
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

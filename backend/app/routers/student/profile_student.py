@@ -1,57 +1,58 @@
 """
 ==========================================================
-🎓 ROUTER: Student - Profile (PRODUCTION 2025 - FINAL)
-Quản lý hồ sơ cá nhân, avatar, password
-Tối ưu bảo mật – tốc độ – sạch – không rác
+🎓 ROUTER: Student - Profile
+Bản chốt cuối, khớp template profile/edit/change-password
 ==========================================================
 """
 
-from fastapi import (
-    APIRouter, Request, Depends, UploadFile, File, Form
-)
-from fastapi.responses import HTMLResponse, RedirectResponse
-from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import Optional
-import uuid, os, traceback
-from PIL import Image
 from io import BytesIO
+from pathlib import Path
+from typing import Optional
+import os
+import traceback
+import uuid
 
-# Database & templates
-from app.database.connection import get_db
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
+from fastapi.responses import HTMLResponse, RedirectResponse
+from PIL import Image
+from sqlalchemy.orm import Session
+
+from app.config.paths import UPLOAD_AVATARS
 from app.config.template_config import templates
-
-# Models
-from app.models.user import User
-from app.models.lesson_progress import LessonProgress
-from app.models.quiz_attempt import QuizAttempt
-from app.models.assignment_submission import AssignmentSubmission
+from app.database.connection import get_db
 from app.models.academic_year import AcademicYear
+from app.models.assignment_submission import AssignmentSubmission
+from app.models.lesson_progress import LessonProgress
 from app.models.major import Major
+from app.models.quiz_attempt import QuizAttempt
 from app.models.security_setting import SecuritySettings
-
-# Services
+from app.models.student_profile import StudentProfile
+from app.models.user import User
+from app.models.user_profile import UserProfile
 from app.services.common.password_service import change_user_password
 
-# Upload folder
-from app.config.paths import UPLOAD_AVATARS
 
-
-# =====================================================
-# ⚙️ Router init
-# =====================================================
 router = APIRouter(
     prefix="/student/profile",
-    tags=["Student - Profile"]
+    tags=["Student - Profile"],
 )
 
+DEFAULT_AVATAR_URL = "/uploads/avatars/default-avatar.png"
+MAX_AVATAR_SIZE_MB = 5
+ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
-# =====================================================
-# 🧩 Helper Functions
-# =====================================================
+
+def get_current_student_id(request: Request) -> str | None:
+    user_id = request.session.get("user_id")
+    role = request.session.get("user_role") or request.session.get("role")
+    if not user_id or role != "student":
+        return None
+    return user_id
+
 
 def resize_image(image_bytes: bytes, size=(512, 512)) -> bytes:
-    """Resize ảnh về 512x512 để tối ưu sidebar & storage."""
     image = Image.open(BytesIO(image_bytes)).convert("RGB")
     image = image.resize(size, Image.LANCZOS)
 
@@ -60,37 +61,66 @@ def resize_image(image_bytes: bytes, size=(512, 512)) -> bytes:
     return output.getvalue()
 
 
-def delete_old_avatar(path: str):
-    """Xoá avatar cũ (trừ avatar mặc định)."""
+def delete_old_avatar(old_url: str | None):
     try:
-        if path and "default-avatar.png" not in path:
-            abs_path = "." + path
-            if os.path.exists(abs_path):
-                os.remove(abs_path)
-    except:
-        pass  # Không để crash ứng dụng
+        if not old_url or "default-avatar.png" in old_url:
+            return
+
+        old_name = Path(old_url).name
+        old_path = Path(UPLOAD_AVATARS) / old_name
+        if old_path.exists():
+            old_path.unlink()
+    except Exception:
+        pass
 
 
-# =====================================================
-# 📄 1️⃣ Trang hồ sơ học viên
-# =====================================================
+def ensure_student_related_rows(user: User):
+    if not user.profile:
+        user.profile = UserProfile(
+            user_id=user.id,
+            full_name=user.username or (user.email.split("@")[0] if user.email else "Student"),
+        )
+
+    if not user.student_profile:
+        user.student_profile = StudentProfile(user_id=user.id)
+
+
+def get_student_major(user: User):
+    if getattr(user, "student_profile", None) and getattr(user.student_profile, "major", None):
+        return user.student_profile.major
+    return getattr(user, "major", None)
+
+
+def get_student_academic_year(user: User):
+    if getattr(user, "student_profile", None) and getattr(user.student_profile, "academic_year", None):
+        return user.student_profile.academic_year
+    return getattr(user, "academic_year", None)
+
+
 @router.get("/", response_class=HTMLResponse)
 def profile_page(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
-    # Đồng bộ avatar vào session để sidebar load đúng
-    avatar = user.avatar_url or "/uploads/avatars/default-avatar.png"
+    ensure_student_related_rows(user)
+    db.commit()
+    db.refresh(user)
+
+    avatar = (
+        getattr(user.profile, "avatar_url", None)
+        or getattr(user, "avatar_url", None)
+        or DEFAULT_AVATAR_URL
+    )
     if request.session.get("user_avatar") != avatar:
         request.session["user_avatar"] = avatar
 
-    major = db.query(Major).filter_by(id=user.major_id).first() if user.major_id else None
-    academic_year = db.query(AcademicYear).filter_by(id=user.academic_year_id).first() if user.academic_year_id else None
+    major = get_student_major(user)
+    academic_year = get_student_academic_year(user)
 
     total_lessons = db.query(LessonProgress).filter_by(user_id=user_id).count()
     completed_lessons = (
@@ -122,37 +152,33 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
-# =====================================================
-# 🖼️ 2️⃣ Upload avatar – Resize + Delete Old + Validation
-# =====================================================
-
-MAX_AVATAR_SIZE_MB = 5
-ALLOWED_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
-ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-
-
 @router.post("/upload-avatar")
 async def upload_avatar(
     request: Request,
     files: Optional[list[UploadFile]] = File(None),
     db: Session = Depends(get_db),
 ):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
     if not files:
-        return RedirectResponse("/student/profile?error=no_file", 303)
+        return RedirectResponse("/student/profile?error=no_file", status_code=303)
 
     os.makedirs(UPLOAD_AVATARS, exist_ok=True)
 
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
+
+    ensure_student_related_rows(user)
 
     new_avatar_url = None
 
     for file in files:
+        if not file or not file.filename:
+            continue
+
         ext = os.path.splitext(file.filename)[1].lower()
 
         if ext not in ALLOWED_EXT or file.content_type not in ALLOWED_TYPES:
@@ -162,48 +188,50 @@ async def upload_avatar(
         size_mb = len(contents) / (1024 * 1024)
 
         if size_mb > MAX_AVATAR_SIZE_MB:
-            return RedirectResponse("/student/profile?error=avatar_too_large", 303)
+            return RedirectResponse("/student/profile?error=avatar_too_large", status_code=303)
 
-        # Resize ảnh về 512x512
         resized = resize_image(contents)
 
-        filename = f"{uuid.uuid4()}.jpg"  # Lưu chuẩn JPG
+        filename = f"{uuid.uuid4()}.jpg"
         filepath = os.path.join(UPLOAD_AVATARS, filename)
 
         with open(filepath, "wb") as f:
             f.write(resized)
 
         new_avatar_url = f"/uploads/avatars/{filename}"
+        break
 
     if new_avatar_url:
-        # Xoá avatar cũ
-        delete_old_avatar(user.avatar_url)
+        old_avatar = (
+            getattr(user.profile, "avatar_url", None)
+            or getattr(user, "avatar_url", None)
+        )
+        delete_old_avatar(old_avatar)
 
-        user.avatar_url = new_avatar_url
-        user.updated_at = datetime.now()
+        user.profile.avatar_url = new_avatar_url
+        user.updated_at = datetime.utcnow()
         db.commit()
-
-        # Đồng bộ session
         request.session["user_avatar"] = new_avatar_url
 
-    return RedirectResponse("/student/profile?success=avatar_updated", 303)
+    return RedirectResponse("/student/profile?success=avatar_updated", status_code=303)
 
 
-# =====================================================
-# 👤 3️⃣ Trang chỉnh sửa thông tin cá nhân (GET)
-# =====================================================
 @router.get("/edit", response_class=HTMLResponse)
 def edit_profile_page(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
-    majors = db.query(Major).all()
-    years = db.query(AcademicYear).all()
+    ensure_student_related_rows(user)
+    db.commit()
+    db.refresh(user)
+
+    majors = db.query(Major).order_by(Major.major_name.asc()).all()
+    years = db.query(AcademicYear).order_by(AcademicYear.start_year.desc()).all()
 
     return templates["student"].TemplateResponse(
         "profile/edit_profile.html",
@@ -217,9 +245,6 @@ def edit_profile_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
-# =====================================================
-# 💾 4️⃣ Xử lý cập nhật thông tin hồ sơ (POST)
-# =====================================================
 @router.post("/edit")
 def update_profile(
     request: Request,
@@ -231,46 +256,53 @@ def update_profile(
     major_id: Optional[str] = Form(None),
     academic_year_id: Optional[str] = Form(None),
 ):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
     try:
         user = db.query(User).filter_by(id=user_id).first()
+        if not user:
+            return RedirectResponse("/auth/login", status_code=303)
 
-        user.full_name = full_name
-        user.phone = phone
-        user.gender = gender
-        user.date_of_birth = date_of_birth or None
-        user.major_id = major_id or user.major_id
-        user.academic_year_id = academic_year_id or user.academic_year_id
-        user.updated_at = datetime.now()
+        ensure_student_related_rows(user)
+
+        user.profile.full_name = full_name.strip()
+        user.profile.phone = phone.strip() if phone else None
+        user.profile.gender = gender or None
+        user.profile.date_of_birth = (
+            datetime.strptime(date_of_birth, "%Y-%m-%d").date()
+            if date_of_birth else None
+        )
+
+        user.student_profile.major_id = major_id or None
+        user.student_profile.academic_year_id = academic_year_id or None
+        user.updated_at = datetime.utcnow()
 
         db.commit()
-        return RedirectResponse("/student/profile?success=updated", 303)
+        return RedirectResponse("/student/profile?success=updated", status_code=303)
 
     except Exception:
         traceback.print_exc()
-        return RedirectResponse("/student/profile/edit?error=update_failed", 303)
+        db.rollback()
+        return RedirectResponse("/student/profile/edit?error=update_failed", status_code=303)
 
 
-# =====================================================
-# 🔐 5️⃣ Trang đổi mật khẩu (GET)
-# =====================================================
 @router.get("/change-password", response_class=HTMLResponse)
 def change_password_page(request: Request):
-    if not request.session.get("user_id"):
-        return RedirectResponse("/auth/login", 303)
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=303)
 
     return templates["student"].TemplateResponse(
         "profile/change_password.html",
-        {"request": request, "active_page": "profile"},
+        {
+            "request": request,
+            "active_page": "profile",
+        },
     )
 
 
-# =====================================================
-# 💾 6️⃣ Xử lý đổi mật khẩu (POST)
-# =====================================================
 @router.post("/change-password")
 def change_password(
     request: Request,
@@ -279,9 +311,9 @@ def change_password(
     new_password: str = Form(...),
     confirm_password: str = Form(...),
 ):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
-        return RedirectResponse("/auth/login", 303)
+        return RedirectResponse("/auth/login", status_code=303)
 
     result = change_user_password(
         db=db,
@@ -302,13 +334,10 @@ def change_password(
             status_code=400,
         )
 
-    # Log security: cập nhật ngày đổi mật khẩu
     security = db.query(SecuritySettings).filter_by(user_id=user_id).first()
     if security:
-        security.last_password_change = datetime.now()
+        security.last_password_change = datetime.utcnow()
         db.commit()
 
-    print(f"🔐 Student {user_id} đổi mật khẩu thành công.")
     request.session.clear()
-
-    return RedirectResponse("/auth/login?msg=password_changed", 303)
+    return RedirectResponse("/auth/login?msg=password_changed", status_code=303)

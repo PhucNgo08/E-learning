@@ -8,9 +8,11 @@ Chức năng:
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 import pandas as pd
+
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
 from app.models.user import User
+from app.models.user_profile import UserProfile
 
 
 # ======================================================
@@ -32,22 +34,28 @@ def get_assignment_analytics(db: Session, course_id: str):
 
     total_submitted = (
         db.query(func.count(AssignmentSubmission.id))
-        .join(Assignment)
+        .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
         .filter(Assignment.course_id == course_id)
         .scalar()
     )
 
     graded = (
         db.query(func.count(AssignmentSubmission.id))
-        .join(Assignment)
-        .filter(Assignment.course_id == course_id, AssignmentSubmission.status == "graded")
+        .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
+        .filter(
+            Assignment.course_id == course_id,
+            AssignmentSubmission.status == "graded",
+        )
         .scalar()
     )
 
     late = (
         db.query(func.count(AssignmentSubmission.id))
-        .join(Assignment)
-        .filter(Assignment.course_id == course_id, AssignmentSubmission.status == "late")
+        .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
+        .filter(
+            Assignment.course_id == course_id,
+            AssignmentSubmission.status == "late",
+        )
         .scalar()
     )
 
@@ -69,12 +77,13 @@ def export_assignment_scores_to_excel(db: Session, assignment_id: str, file_path
     """
     results = (
         db.query(
-            User.full_name.label("Họ và tên"),
+            UserProfile.full_name.label("Họ và tên"),
             AssignmentSubmission.status.label("Trạng thái"),
             AssignmentSubmission.grade.label("Điểm"),
             AssignmentSubmission.submission_time.label("Thời gian nộp"),
         )
         .join(AssignmentSubmission, AssignmentSubmission.student_id == User.id)
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
         .filter(AssignmentSubmission.assignment_id == assignment_id)
         .all()
     )
@@ -82,7 +91,16 @@ def export_assignment_scores_to_excel(db: Session, assignment_id: str, file_path
     if not results:
         df = pd.DataFrame(columns=["Họ và tên", "Trạng thái", "Điểm", "Thời gian nộp"])
     else:
-        df = pd.DataFrame(results)
+        rows = [
+            {
+                "Họ và tên": row[0],
+                "Trạng thái": row[1],
+                "Điểm": row[2],
+                "Thời gian nộp": row[3],
+            }
+            for row in results
+        ]
+        df = pd.DataFrame(rows)
 
     df.to_excel(file_path, index=False, sheet_name="Assignment Scores")
     return file_path

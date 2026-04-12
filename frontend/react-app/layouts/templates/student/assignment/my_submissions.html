@@ -4,25 +4,24 @@
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <h3 class="fw-bold mb-0">
-      <i class="bi bi-journal-check"></i> Bài tập đã nộp
+      <i class="bi bi-journal-check me-2"></i>Bài tập đã nộp
     </h3>
 
-    <!-- 🔥 Nút chuyển sang trang danh sách toàn bộ bài tập -->
-    <a href="/student/assignment/list"
-       class="btn btn-outline-secondary">
+    <a href="/student/assignment/list" class="btn btn-outline-secondary">
       <i class="bi bi-list-task"></i> Danh sách bài tập
     </a>
   </div>
 
   {% if submissions %}
     <div class="table-responsive shadow-sm rounded-3">
-      <table class="table table-hover align-middle">
+      <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th>#</th>
             <th>Bài tập</th>
+            <th>Khóa học</th>
             <th>Thời gian nộp</th>
             <th>Trạng thái</th>
             <th>Điểm</th>
@@ -34,11 +33,8 @@
         {% for s in submissions %}
           <tr>
             <td>{{ loop.index }}</td>
-
-            <td class="fw-semibold">
-              {{ s.assignment.title }}
-            </td>
-
+            <td class="fw-semibold">{{ s.assignment.title if s.assignment else '—' }}</td>
+            <td>{{ s.assignment.course.course_name if s.assignment and s.assignment.course else '—' }}</td>
             <td>
               {% if s.submission_time %}
                 {{ s.submission_time.strftime("%d/%m/%Y %H:%M") }}
@@ -46,7 +42,6 @@
                 <em class="text-muted">Chưa nộp</em>
               {% endif %}
             </td>
-
             <td>
               {% if s.status == 'submitted' %}
                 <span class="badge bg-info text-dark">Đã nộp</span>
@@ -60,7 +55,6 @@
                 <span class="badge bg-secondary">Chưa nộp</span>
               {% endif %}
             </td>
-
             <td>
               {% if s.grade is not none %}
                 <strong>{{ s.grade }}</strong>
@@ -68,10 +62,8 @@
                 —
               {% endif %}
             </td>
-
             <td class="text-center">
-              <a href="/student/assignment/submission/{{ s.id }}"
-                 class="btn btn-sm btn-outline-primary">
+              <a href="/student/assignment/submission/{{ s.id }}" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-eye"></i> Xem
               </a>
             </td>
@@ -80,11 +72,9 @@
         </tbody>
       </table>
     </div>
-
   {% else %}
     <div class="alert alert-info text-center py-4">
-      <i class="bi bi-info-circle me-2"></i>
-      Bạn chưa nộp bài tập nào.
+      <i class="bi bi-info-circle me-2"></i>Bạn chưa nộp bài tập nào.
     </div>
   {% endif %}
 

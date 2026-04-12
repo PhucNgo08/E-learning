@@ -1,30 +1,25 @@
-"""
-==========================================================
-📘 SERVICE: Message (Student ↔ Teacher)
-FULL VERSION 2025 – Hỗ trợ 2 role
-==========================================================
-"""
+
+from __future__ import annotations
+
+from datetime import datetime
+import os
+from pathlib import Path
+import shutil
+import traceback
+import uuid
 
 from sqlalchemy.orm import Session
+
+from app.config.paths import UPLOAD_MESSAGES, build_upload_url, resolve_upload_path_from_url
 from app.models.message import Message
 from app.models.user import User
-from datetime import datetime
-from pathlib import Path
-import uuid
-import shutil
-import os
-import traceback
-
-# 🔔 Import Notification
 from app.services.student.notification_service import create_notification
 
+UPLOAD_DIR = UPLOAD_MESSAGES
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-# ======================================================
-# 📥 Hộp thư đến (Receiver)
-# ======================================================
+
 def get_inbox_messages(db: Session, user_id: str):
-    """Trả về danh sách tin nhắn mà user nhận được."""
-
     try:
         return (
             db.query(Message)
@@ -37,12 +32,7 @@ def get_inbox_messages(db: Session, user_id: str):
         return []
 
 
-# ======================================================
-# 📤 Hộp thư đã gửi (Sender)
-# ======================================================
 def get_sent_messages(db: Session, user_id: str):
-    """Trả về danh sách tin nhắn mà user đã gửi."""
-
     try:
         return (
             db.query(Message)
@@ -55,80 +45,65 @@ def get_sent_messages(db: Session, user_id: str):
         return []
 
 
-# ======================================================
-# 📨 GỬI TIN NHẮN (có file) + Notification theo ROLE
-# ======================================================
+def _save_attachment(attachment) -> tuple[str | None, str | None, int | None]:
+    if not attachment or not getattr(attachment, "filename", None):
+        return None, None, None
+
+    safe_name = Path(attachment.filename).name.replace(" ", "_")
+    filename = f"{uuid.uuid4().hex}_{safe_name}"
+    file_path = UPLOAD_DIR / filename
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(attachment.file, buffer)
+
+    attachment_url = build_upload_url("messages", filename)
+    attachment_name = safe_name
+    attachment_size = os.path.getsize(file_path)
+    return attachment_url, attachment_name, attachment_size
+
+
 def send_message(db: Session, sender_id: str, receiver_id: str, content: str, attachment=None):
-    """
-    Gửi tin nhắn từ sender → receiver.
-    Nếu có file đính kèm sẽ upload và lưu metadata.
-    Tự động tạo thông báo "Tin nhắn mới" theo ROLE người nhận.
-    """
-
     try:
-        if not content and not (attachment and attachment.filename):
-            return None  # Không gửi tin rỗng
+        clean_content = (content or "").strip()
 
-        uploads_dir = Path("uploads/messages")
-        uploads_dir.mkdir(parents=True, exist_ok=True)
+        if sender_id == receiver_id:
+            return None
 
-        attachment_url = None
-        attachment_name = None
-        attachment_size = None
+        if not clean_content and not (attachment and attachment.filename):
+            return None
 
-        # ==============================================
-        # 📎 Upload file đính kèm
-        # ==============================================
-        if attachment and attachment.filename:
-            safe_name = attachment.filename.replace(" ", "_")
-            filename = f"{uuid.uuid4().hex}_{safe_name}"
-            file_path = uploads_dir / filename
+        attachment_url, attachment_name, attachment_size = _save_attachment(attachment)
 
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(attachment.file, buffer)
-
-            attachment_url = f"/uploads/messages/{filename}"
-            attachment_name = safe_name
-            attachment_size = os.path.getsize(file_path)
-
-        # ==============================================
-        # 📨 Tạo tin nhắn
-        # ==============================================
         msg = Message(
             id=str(uuid.uuid4()),
             sender_id=sender_id,
             receiver_id=receiver_id,
-            content=(content or "").strip(),
+            content=clean_content,
             attachment_url=attachment_url,
             attachment_name=attachment_name,
             attachment_size=attachment_size,
             sent_at=datetime.utcnow(),
+            is_read=0,
+            read_at=None,
         )
 
         db.add(msg)
         db.commit()
         db.refresh(msg)
 
-        # ==============================================
-        # 🎯 Lấy role người nhận
-        # ==============================================
         receiver = db.query(User).filter(User.id == receiver_id).first()
-
         if receiver:
-            # Chọn đúng prefix link tùy role
-            prefix = "/student" if receiver.role == "student" else "/teacher"
-            link = f"{prefix}/message/view/{msg.id}"
+            receiver_role = getattr(receiver, "role", "") or "student"
+            prefix = "/student" if receiver_role == "student" else "/teacher"
+            preview = clean_content[:80] if clean_content else "(Tệp đính kèm)"
 
-            preview = (content or "(Tệp đính kèm)")[:80]
-
-            # 🔔 Gửi thông báo
             create_notification(
                 db=db,
                 user_id=receiver_id,
                 title="📩 Tin nhắn mới",
-                message=f"Bạn có tin nhắn mới từ người dùng {sender_id}: \"{preview}\"",
+                message=f"Bạn có tin nhắn mới: '{preview}'",
                 notification_type="message",
-                link_url=link
+                link_url=f"{prefix}/message/view/{msg.id}",
             )
 
         return msg
@@ -139,9 +114,6 @@ def send_message(db: Session, sender_id: str, receiver_id: str, content: str, at
         return None
 
 
-# ======================================================
-# 🔍 Chi tiết tin nhắn
-# ======================================================
 def get_message_detail(db: Session, message_id: str):
     try:
         return db.query(Message).filter(Message.id == message_id).first()
@@ -150,34 +122,56 @@ def get_message_detail(db: Session, message_id: str):
         return None
 
 
-# ======================================================
-# 🗑 Xóa tin nhắn
-# ======================================================
-def delete_message(db: Session, message_id: str, user_id: str):
-    """
-    Xóa tin nhắn (chỉ người gửi hoặc người nhận).
-    Xóa file nếu có.
-    """
+def mark_as_read(db: Session, message_id: str, viewer_id: str):
+    try:
+        msg = db.query(Message).filter(Message.id == message_id).first()
+        if not msg:
+            return None
 
+        if msg.receiver_id != viewer_id:
+            return msg
+
+        if int(getattr(msg, "is_read", 0) or 0) != 1:
+            msg.is_read = 1
+            msg.read_at = datetime.utcnow()
+            db.commit()
+            db.refresh(msg)
+
+        return msg
+
+    except Exception:
+        db.rollback()
+        traceback.print_exc()
+        return None
+
+
+def resolve_attachment_path(msg: Message) -> Path | None:
+    try:
+        file_path = resolve_upload_path_from_url((msg.attachment_url or "").strip())
+        if file_path and file_path.exists() and file_path.is_file():
+            return file_path.resolve()
+        return None
+    except Exception:
+        traceback.print_exc()
+        return None
+
+
+def delete_message(db: Session, message_id: str, user_id: str):
     try:
         msg = db.query(Message).filter(Message.id == message_id).first()
         if not msg:
             return False
 
-        # Check quyền
         if msg.sender_id != user_id and msg.receiver_id != user_id:
             return False
 
-        # Xóa file vật lý nếu có
-        if msg.attachment_url:
-            physical_file = Path(msg.attachment_url.lstrip("/"))
-            if physical_file.exists():
-                try:
-                    os.remove(physical_file)
-                except:
-                    pass  # Không crash hệ thống
+        file_path = resolve_attachment_path(msg)
+        if file_path and file_path.exists():
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
 
-        # Xóa record DB
         db.delete(msg)
         db.commit()
         return True

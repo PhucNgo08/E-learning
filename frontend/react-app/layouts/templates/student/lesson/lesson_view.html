@@ -1,217 +1,289 @@
 {% extends "layout_student.html" %}
-{% block title %}📘 {{ lesson.title }}{% endblock %}
+{% block title %}📘 {{ lesson.title if lesson and lesson.title else "Chi tiết bài học" }}{% endblock %}
 
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <!-- Nút quay lại -->
-  <a href="/student/lesson/module/{{ lesson.module_id }}" 
+  <a href="/student/lesson/module/{{ lesson.module_id }}"
      class="btn btn-light rounded-pill shadow-sm mb-3 back-btn">
     <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách bài học
   </a>
 
-  <!-- Tiêu đề -->
-  <div class="d-flex align-items-center mb-4">
-    <div class="icon-circle me-3">
-      <i class="bi bi-journal-text"></i>
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <div class="d-flex align-items-center">
+      <div class="icon-circle me-3">
+        <i class="bi bi-journal-text"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold text-primary m-0">
+          {{ lesson.title if lesson and lesson.title else "Bài học" }}
+        </h3>
+        <div class="text-muted small mt-1">
+          {{ course.course_name if course else "" }}
+          {% if module %} • {{ module.title }}{% endif %}
+          {% if is_preview %} • Bài học xem trước{% endif %}
+        </div>
+      </div>
     </div>
-    <h3 class="fw-bold text-primary m-0 title-text">
-      {{ lesson.title }}
-    </h3>
+
+    {% if progress and progress.progress_status == "completed" %}
+    <span class="badge bg-success fs-6">
+      <i class="bi bi-check-circle-fill"></i> Đã hoàn thành
+    </span>
+    {% elif progress and progress.progress_status == "in_progress" %}
+    <span class="badge bg-warning text-dark fs-6">
+      <i class="bi bi-play-circle-fill"></i> Đang học
+    </span>
+    {% endif %}
   </div>
 
-  <!-- 📘 MỤC TIÊU BÀI HỌC -->
-  {% if lesson.objectives %}
+  {% if lesson.objectives is defined and lesson.objectives %}
   <div class="lesson-objective-box mb-4">
-      <h5 class="mb-2 fw-bold text-primary">🎯 Mục tiêu học tập</h5>
-      <p class="m-0">{{ lesson.objectives }}</p>
+    <h5 class="mb-2 fw-bold text-primary">🎯 Mục tiêu học tập</h5>
+    <p class="m-0">{{ lesson.objectives }}</p>
   </div>
   {% endif %}
 
-  <!-- 📌 TÓM TẮT -->
-  {% if lesson.summary %}
+  {% if lesson.summary is defined and lesson.summary %}
   <div class="lesson-summary-box mb-4">
-      <h5 class="mb-2 fw-bold text-success">📌 Nội dung chính</h5>
-      <p class="m-0">{{ lesson.summary }}</p>
+    <h5 class="mb-2 fw-bold text-success">📌 Nội dung chính</h5>
+    <p class="m-0">{{ lesson.summary }}</p>
   </div>
   {% endif %}
 
-  <!-- ====================================================== -->
-  <!--            NỘI DUNG BÀI HỌC (VIDEO / DOCUMENT)          -->
-  <!-- ====================================================== -->
+  {% set has_video = lesson.video_url if lesson and lesson.video_url else None %}
+  {% set has_document = lesson.document_url if lesson and lesson.document_url else None %}
+  {% set has_ref_video = lesson.ref_video if lesson is defined and lesson.ref_video is defined and lesson.ref_video else None %}
 
   <div class="card lesson-card shadow glass-card mb-4">
     <div class="card-body">
 
-      <!-- VIDEO -->
-      {% if lesson.video_url %}
+      {% if has_video %}
         {% set fixed_url = lesson.video_url.replace("watch?v=", "embed/") %}
         <div class="video-box mb-4">
-          <iframe src="{{ fixed_url }}?rel=0&modestbranding=1&controls=1" allowfullscreen></iframe>
+          <iframe
+            src="{{ fixed_url }}?rel=0&modestbranding=1&controls=1"
+            allowfullscreen
+            loading="lazy">
+          </iframe>
         </div>
       {% endif %}
 
-      <!-- DOCUMENT -->
-      {% if lesson.document_url %}
-      <a href="{{ lesson.document_url }}" target="_blank"
+      {% if has_document %}
+      <a href="{{ lesson.document_url }}"
+         target="_blank"
          class="btn btn-outline-primary px-4 py-2 rounded-pill shadow-sm mb-4">
         <i class="bi bi-file-earmark-text"></i> Mở tài liệu bài học
       </a>
       {% endif %}
 
-      <!-- VIDEO THAM KHẢO -->
-      {% if lesson.ref_video %}
-      <div class="ref-video-title mt-3">Video tham khảo</div>
+      {% if has_ref_video %}
+      <div class="ref-video-title mt-3 fw-bold mb-2">Video tham khảo</div>
       <div class="video-box mb-4">
-          <iframe src="{{ lesson.ref_video.replace('watch?v=', 'embed/') }}" allowfullscreen></iframe>
+        <iframe
+          src="{{ lesson.ref_video.replace('watch?v=', 'embed/') }}"
+          allowfullscreen
+          loading="lazy">
+        </iframe>
       </div>
       {% endif %}
 
-      <!-- DESCRIPTION -->
       {% if lesson.description %}
-        <div class="lesson-description mt-3">
-          <h5 class="fw-semibold mb-2">📘 Giới thiệu bài học</h5>
-          <p class="mb-0">{{ lesson.description }}</p>
-        </div>
+      <div class="lesson-description mt-3">
+        <h5 class="fw-semibold mb-2">📘 Giới thiệu bài học</h5>
+        <p class="mb-0">{{ lesson.description }}</p>
+      </div>
       {% endif %}
 
-      {% if not lesson.video_url and not lesson.document_url %}
-        <p class="text-muted text-center py-3">
-          <i class="bi bi-exclamation-circle"></i> Không có nội dung để hiển thị.
-        </p>
+      {% if not has_video and not has_document and not has_ref_video %}
+      <p class="text-muted text-center py-3">
+        <i class="bi bi-exclamation-circle"></i> Không có nội dung để hiển thị.
+      </p>
       {% endif %}
 
     </div>
   </div>
 
-  <!-- ====================================================== -->
-  <!--                          QUIZ                          -->
-  <!-- ====================================================== -->
-  {% if quiz %}
+  {% if quiz and quiz.questions %}
   <div class="quiz-box mt-4">
-      <h4 class="fw-bold text-primary mb-3">📝 Câu hỏi trắc nghiệm</h4>
+    <h4 class="fw-bold text-primary mb-3">📝 Câu hỏi trắc nghiệm</h4>
 
-      {% for q in quiz.questions %}
-      <div class="quiz-question mb-4 p-2 rounded">
-          <div class="fw-semibold mb-2">
-            Câu {{ loop.index }}: {{ q.question_text }}
-          </div>
-
-          {% for opt in q.options %}
-          <div class="form-check mb-1 p-2 rounded">
-              <input class="form-check-input"
-                     type="radio"
-                     name="q{{ q.id }}"
-                     onclick="checkAnswer('{{ q.id }}', '{{ opt.id }}', this)">
-              <label class="form-check-label">
-                {{ opt.option_text }}
-              </label>
-          </div>
-          {% endfor %}
+    {% for q in quiz.questions %}
+    <div class="quiz-question mb-4 p-2 rounded">
+      <div class="fw-semibold mb-2">
+        Câu {{ loop.index }}: {{ q.question_text }}
       </div>
-      <hr>
-      {% endfor %}
 
-      <!-- Nút gửi bài -->
-      <button id="submitQuizBtn" class="btn btn-primary px-4" onclick="showCorrectAnswers()">
-          Gửi bài
-      </button>
+      {% for opt in q.options %}
+      <div class="form-check mb-2 p-2 rounded quiz-option">
+        <input class="form-check-input"
+               type="radio"
+               name="q{{ q.id }}"
+               value="{{ opt.id }}"
+               onclick="checkAnswer('{{ q.id }}', '{{ opt.id }}', this)">
+        <label class="form-check-label">
+          {{ opt.option_text }}
+        </label>
+      </div>
+      {% endfor %}
+    </div>
+    <hr>
+    {% endfor %}
+
+    <button id="submitQuizBtn" class="btn btn-primary px-4" type="button" onclick="showCorrectAnswers()">
+      Xem đáp án
+    </button>
   </div>
   {% endif %}
 
-  <!-- ====================================================== -->
-  <!--             ACTION BUTTONS (NOTES / COMPLETE)          -->
-  <!-- ====================================================== -->
-  <div class="d-flex justify-content-between mt-4">
-
+  <div class="d-flex justify-content-between mt-4 flex-wrap gap-2">
     <a href="/student/lesson/notes/{{ lesson.id }}" class="btn btn-outline-secondary shadow-sm">
       <i class="bi bi-pencil-square"></i> Ghi chú bài học
     </a>
 
+    {% if not progress or progress.progress_status != "completed" %}
     <form action="/student/lesson/complete/{{ lesson.id }}" method="post">
-      <button class="btn btn-success shadow-sm">
+      <button class="btn btn-success shadow-sm" type="submit">
         <i class="bi bi-check-circle-fill"></i> Đánh dấu hoàn thành
       </button>
     </form>
-
+    {% else %}
+    <button class="btn btn-outline-success shadow-sm" disabled>
+      <i class="bi bi-check-circle-fill"></i> Đã hoàn thành
+    </button>
+    {% endif %}
   </div>
 
 </div>
 
-<!-- ====================================================== -->
-<!--                          CSS                            -->
-<!-- ====================================================== -->
 <style>
-.fade-in { animation: fadeIn .6s ease-in-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(10px);} to {opacity: 1;} }
+.fade-in {
+  animation: fadeIn .6s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.glass-card {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: blur(12px);
+  border-radius: 18px;
+}
+
+.icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(13,110,253,.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0d6efd;
+  font-size: 1.4rem;
+}
+
+.lesson-objective-box,
+.lesson-summary-box {
+  background: #fff;
+  border: 1px solid #e8edf5;
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 3px 12px rgba(0,0,0,.04);
+}
 
 .video-box iframe {
-  width: 100%; height: 430px; border-radius: 8px; border: none;
+  width: 100%;
+  height: 430px;
+  border-radius: 8px;
+  border: none;
 }
 
 .quiz-box {
-  background: white; padding: 18px; border-radius: 12px; border: 1px solid #ddd;
+  background: white;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+}
+
+.quiz-option {
+  transition: background .2s ease;
+}
+
+@media (max-width: 768px) {
+  .video-box iframe {
+    height: 240px;
+  }
 }
 </style>
 
-<!-- ====================================================== -->
-<!--                  JS CHECK ĐÚNG / SAI                    -->
-<!-- ====================================================== -->
 <script>
+function resetQuestionColors(questionId) {
+  const group = document.getElementsByName("q" + questionId);
+  group.forEach(radio => {
+    radio.parentElement.style.background = "transparent";
+  });
+}
+
 function checkAnswer(questionId, optionId, el) {
-    let formData = new FormData();
+  const formData = new FormData();
+  formData.append("question_id", questionId);
+  formData.append("option_id", optionId);
+
+  fetch("/student/lesson/check-answer", {
+    method: "POST",
+    body: formData
+  })
+  .then(res => res.json())
+  .then(data => {
+    resetQuestionColors(questionId);
+
+    if (data.status !== "ok") {
+      el.parentElement.style.background = "#fff3cd";
+      return;
+    }
+
+    if (data.correct) {
+      el.parentElement.style.background = "#d4f8d4";
+    } else {
+      el.parentElement.style.background = "#ffd6d6";
+    }
+  })
+  .catch(() => {
+    el.parentElement.style.background = "#fff3cd";
+  });
+}
+
+function showCorrectAnswers() {
+  const radios = document.querySelectorAll("input[type='radio']");
+
+  radios.forEach(radio => {
+    const questionId = radio.name.replace("q", "");
+    const optionId = radio.value;
+
+    const formData = new FormData();
     formData.append("question_id", questionId);
     formData.append("option_id", optionId);
 
     fetch("/student/lesson/check-answer", {
-        method: "POST",
-        body: formData
+      method: "POST",
+      body: formData
     })
     .then(res => res.json())
     .then(data => {
-
-        const group = document.getElementsByName("q" + questionId);
-        group.forEach(r => r.parentElement.style.background = "transparent");
-
-        if (data.correct) {
-            el.parentElement.style.background = "#d4f8d4";
-        } else {
-            el.parentElement.style.background = "#ffd6d6";
-        }
+      if (data.status === "ok" && data.correct) {
+        radio.parentElement.style.background = "#b7ffb7";
+      }
+      radio.disabled = true;
+    })
+    .catch(() => {
+      radio.disabled = true;
     });
-}
+  });
 
-function showCorrectAnswers() {
-    const radios = document.querySelectorAll("input[type='radio']");
-
-    radios.forEach(radio => {
-        const onclickAttr = radio.getAttribute("onclick");
-        const parts = onclickAttr.split("'");
-
-        const questionId = parts[1];
-        const optionId = parts[3];
-
-        let formData = new FormData();
-        formData.append("question_id", questionId);
-        formData.append("option_id", optionId);
-
-        fetch("/student/lesson/check-answer", {
-            method: "POST",
-            body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-
-            if (data.correct) {
-                radio.parentElement.style.background = "#b7ffb7"; // xanh cho đáp án đúng
-            }
-
-            radio.disabled = true; // khoá radio
-        });
-    });
-
-    document.getElementById("submitQuizBtn").style.display = "none"; // ẩn nút gửi
+  const btn = document.getElementById("submitQuizBtn");
+  if (btn) btn.style.display = "none";
 }
 </script>
-
 {% endblock %}

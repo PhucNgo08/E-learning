@@ -4,12 +4,11 @@
 
 <div class="container py-4 fade-in">
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h3 class="fw-bold mb-0">
       <i class="bi bi-journal-text me-2"></i>{{ page_title }}
     </h3>
 
-    <!-- Quay lại bài đã nộp -->
     <a href="/student/assignment" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left"></i> Bài đã nộp
     </a>
@@ -17,12 +16,13 @@
 
   {% if assignments %}
     <div class="table-responsive shadow-sm rounded-3">
-      <table class="table table-hover align-middle">
+      <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
             <th>#</th>
             <th>Tên bài tập</th>
             <th>Khóa học</th>
+            <th>Hình thức</th>
             <th>Hạn nộp</th>
             <th>Trạng thái</th>
             <th class="text-center">Hành động</th>
@@ -31,22 +31,19 @@
 
         <tbody>
         {% for a in assignments %}
+          {% set my_submission = submission_by_assignment.get(a.id) if submission_by_assignment else None %}
+          {% set my_status = status_by_assignment.get(a.id) if status_by_assignment else None %}
           <tr>
             <td>{{ loop.index }}</td>
-
-            <!-- Tên bài -->
             <td class="fw-semibold">{{ a.title }}</td>
-
-            <!-- Khóa học -->
+            <td>{{ a.course.course_name if a.course else '—' }}</td>
             <td>
-              {% if a.course %}
-                {{ a.course.course_name }}
+              {% if a.submission_type == 'group' %}
+                <span class="badge bg-primary">Nhóm</span>
               {% else %}
-                —
+                <span class="badge bg-info text-dark">Cá nhân</span>
               {% endif %}
             </td>
-
-            <!-- Hạn nộp -->
             <td>
               {% if a.due_date %}
                 {{ a.due_date.strftime("%d/%m/%Y %H:%M") }}
@@ -54,42 +51,45 @@
                 —
               {% endif %}
             </td>
-
-            <!-- Trạng thái -->
             <td>
-              {% if a.due_date and a.due_date < now %}
-                <span class="badge bg-danger">
-                  <i class="bi bi-x-circle"></i> Đã quá hạn
-                </span>
+              {% if my_submission %}
+                {% if my_status == 'graded' %}
+                  <span class="badge bg-success">Đã chấm</span>
+                {% elif my_status == 'late' %}
+                  <span class="badge bg-warning text-dark">Nộp trễ</span>
+                {% elif my_status == 'resubmitted' %}
+                  <span class="badge bg-primary">Nộp lại</span>
+                {% elif my_status == 'submitted' %}
+                  <span class="badge bg-info text-dark">Đã nộp</span>
+                {% else %}
+                  <span class="badge bg-secondary">Đã có bài nộp</span>
+                {% endif %}
+              {% elif a.due_date and a.due_date < now %}
+                <span class="badge bg-danger">Đã quá hạn</span>
               {% else %}
-                <span class="badge bg-secondary">
-                  <i class="bi bi-hourglass-split"></i> Chưa nộp
-                </span>
+                <span class="badge bg-secondary">Chưa nộp</span>
               {% endif %}
             </td>
-
-            <!-- Nút hành động -->
             <td class="text-center">
-              <a href="/student/assignment/detail/{{ a.id }}"
-                 class="btn btn-outline-primary btn-sm">
-                <i class="bi bi-eye"></i> Xem
-              </a>
+              <div class="d-flex flex-wrap justify-content-center gap-2">
+                <a href="/student/assignment/detail/{{ a.id }}" class="btn btn-outline-primary btn-sm">
+                  <i class="bi bi-eye"></i> Xem
+                </a>
 
-              <a href="/student/assignment/submit/{{ a.id }}"
-                 class="btn btn-outline-success btn-sm">
-                <i class="bi bi-upload"></i> Nộp bài
-              </a>
+                <a href="/student/assignment/submit/{{ a.id }}" class="btn btn-outline-success btn-sm">
+                  <i class="bi bi-upload"></i>
+                  {% if my_submission %}Nộp lại{% else %}Nộp bài{% endif %}
+                </a>
+              </div>
             </td>
           </tr>
         {% endfor %}
         </tbody>
-
       </table>
     </div>
-
   {% else %}
     <div class="alert alert-info text-center mt-3">
-      <i class="bi bi-info-circle me-2"></i> Chưa có bài tập nào.
+      <i class="bi bi-info-circle me-2"></i>Chưa có bài tập nào.
     </div>
   {% endif %}
 

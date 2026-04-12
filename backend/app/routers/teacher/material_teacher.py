@@ -10,93 +10,76 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
-from starlette import status
 from datetime import datetime
 
-# ✅ Import cấu hình hệ thống
 from app.database.connection import get_db
 from app.config.template_config import get_template_by_path
-
-# ✅ Import dependencies & services
 from app.dependencies.auth import get_current_teacher
 from app.services.teacher import material_teacher_service as material_service
 
-
-# ======================================================
-# ⚙️ Cấu hình Router
-# ======================================================
 router = APIRouter(
     prefix="/teacher/materials",
     tags=["Teacher - Materials"]
 )
 
 
-# ======================================================
-# 🧭 0️⃣ Redirect gốc → /list
-# ======================================================
+def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
+    templates = get_template_by_path(str(request.url.path))
+    base_context = {
+        "request": request,
+        "now": datetime.now(),
+    }
+    base_context.update(context)
+    return templates.TemplateResponse(template_name, base_context, status_code=status_code)
+
+
 @router.get("/", include_in_schema=False)
 def redirect_root_to_list():
-    """Tự động chuyển /teacher/materials → /teacher/materials/list"""
     return RedirectResponse("/teacher/materials/list", status_code=303)
 
 
-# ======================================================
-# 📋 1️⃣ Danh sách tài liệu của giáo viên
-# ======================================================
 @router.get("/list", response_class=HTMLResponse)
 async def list_materials(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị danh sách tài liệu mà giáo viên đã upload"""
     teacher = current_teacher
     materials = material_service.get_all(db, teacher.id)
     stats = material_service.get_statistics(db, teacher.id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "materials/list.html",
         {
-            "request": request,
             "teacher": teacher,
             "materials": materials,
             "stats": stats,
             "page_title": "📂 Danh sách tài liệu khóa học",
-            "now": datetime.now(),
         },
     )
 
 
-# ======================================================
-# 📤 2️⃣ Trang upload tài liệu
-# ======================================================
 @router.get("/upload", response_class=HTMLResponse)
 async def upload_form(
     request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Hiển thị form upload tài liệu"""
     teacher = current_teacher
     courses = material_service.get_courses_by_teacher(db, teacher.id)
 
-    templates = get_template_by_path(str(request.url.path))
-    return templates.TemplateResponse(
+    return render_template(
+        request,
         "materials/upload.html",
         {
-            "request": request,
             "teacher": teacher,
             "courses": courses,
             "page_title": "📤 Upload tài liệu khóa học",
-            "now": datetime.now(),
         },
     )
 
 
-# ======================================================
-# 🚀 3️⃣ Upload tài liệu (POST)
-# ======================================================
 @router.post("/upload")
 async def upload_material(
     request: Request,
@@ -107,7 +90,6 @@ async def upload_material(
     description: str = Form(""),
     file: UploadFile = File(...),
 ):
-    """Xử lý upload tài liệu"""
     teacher = current_teacher
     result = await material_service.create_material(
         db=db,
@@ -124,9 +106,29 @@ async def upload_material(
     return RedirectResponse("/teacher/materials/list", status_code=303)
 
 
-# ======================================================
-# ✏️ 4️⃣ Cập nhật tài liệu
-# ======================================================
+@router.get("/edit/{material_id}", response_class=HTMLResponse)
+async def edit_material_form(
+    material_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
+):
+    teacher = current_teacher
+    material = material_service.get_by_id(db, teacher.id, material_id)
+    if not material:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu hoặc không có quyền truy cập.")
+
+    return render_template(
+        request,
+        "materials/edit.html",
+        {
+            "teacher": teacher,
+            "material": material,
+            "page_title": "✏️ Chỉnh sửa tài liệu",
+        },
+    )
+
+
 @router.post("/edit/{material_id}")
 async def edit_material(
     material_id: str,
@@ -136,7 +138,6 @@ async def edit_material(
     description: str = Form(""),
     file: UploadFile | None = File(None),
 ):
-    """Cập nhật thông tin tài liệu"""
     teacher = current_teacher
     result = await material_service.update_material(
         db, teacher.id, material_id, title, description, file
@@ -148,16 +149,12 @@ async def edit_material(
     return RedirectResponse("/teacher/materials/list", status_code=303)
 
 
-# ======================================================
-# 🗑️ 5️⃣ Xóa tài liệu
-# ======================================================
 @router.post("/delete/{material_id}")
 async def delete_material(
     material_id: str,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher)
 ):
-    """Xóa tài liệu"""
     teacher = current_teacher
     result = material_service.delete_material(db, teacher.id, material_id)
 
@@ -165,3 +162,24 @@ async def delete_material(
         raise HTTPException(status_code=400, detail=result["error"])
 
     return RedirectResponse("/teacher/materials/list", status_code=303)
+@router.get("/delete/{material_id}", response_class=HTMLResponse)
+async def delete_material_form(
+    material_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
+):
+    teacher = current_teacher
+    material = material_service.get_by_id(db, teacher.id, material_id)
+    if not material:
+        raise HTTPException(status_code=404, detail="Không tìm thấy tài liệu hoặc không có quyền truy cập.")
+
+    return render_template(
+        request,
+        "materials/delete.html",
+        {
+            "teacher": teacher,
+            "material": material,
+            "page_title": "🗑️ Xóa tài liệu",
+        },
+    )

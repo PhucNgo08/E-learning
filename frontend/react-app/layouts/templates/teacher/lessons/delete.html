@@ -5,23 +5,83 @@
   <title>🗑️ Xóa bài học</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f5f7fb;
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
+
+    .confirm-card {
+      max-width: 640px;
+      margin: 80px auto;
+      border-radius: 18px;
+      border: none;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+
+    .confirm-header {
+      background: linear-gradient(90deg, #dc3545, #b02a37);
+      color: #fff;
+      padding: 18px 24px;
+    }
+
+    .confirm-body {
+      background: #fff;
+      padding: 28px 24px;
+    }
+
+    .meta-box {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 12px;
+      padding: 14px 16px;
+    }
+  </style>
 </head>
 
-<body class="bg-light">
-  <div class="container py-5">
-    <div class="card shadow-sm border-0 mx-auto" style="max-width: 600px;">
-      <div class="card-body text-center">
-        <h4 class="fw-bold text-danger mb-3">Xác nhận xóa bài học</h4>
-        <p class="text-muted">Bạn có chắc chắn muốn xóa bài học 
-          <strong class="text-dark">{{ lesson.title }}</strong> không?</p>
+<body>
+  <div class="container">
+    <div class="card confirm-card">
+      <div class="confirm-header">
+        <h4 class="fw-bold mb-0">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>
+          Xác nhận xóa bài học
+        </h4>
+      </div>
+
+      <div class="confirm-body">
+        <p class="text-muted mb-3">
+          Bạn có chắc chắn muốn xóa bài học này không? Thao tác này không thể hoàn tác.
+        </p>
+
+        <div class="meta-box mb-4">
+          <div class="mb-2">
+            <strong>Bài học:</strong> {{ lesson.title }}
+          </div>
+          {% if module %}
+          <div class="mb-2">
+            <strong>Chương:</strong> {{ module.title }}
+          </div>
+          {% endif %}
+          {% if course %}
+          <div class="mb-0">
+            <strong>Khóa học:</strong> {{ course.course_name }}
+          </div>
+          {% endif %}
+        </div>
 
         <form method="post" action="/teacher/lessons/delete/{{ lesson.id }}">
-          <button type="submit" class="btn btn-danger px-4">
-            <i class="bi bi-trash"></i> Xóa
-          </button>
-          <a href="/teacher/lessons/list/{{ lesson.module_id }}" class="btn btn-secondary px-4 ms-2">
-            <i class="bi bi-arrow-left"></i> Hủy
-          </a>
+          <div class="d-flex justify-content-end gap-2 flex-wrap">
+            <a href="/teacher/lessons/list/{{ module.id if module else lesson.module_id }}" class="btn btn-outline-secondary px-4">
+              <i class="bi bi-arrow-left"></i> Hủy
+            </a>
+
+            <button type="submit" class="btn btn-danger px-4">
+              <i class="bi bi-trash"></i> Xóa bài học
+            </button>
+          </div>
         </form>
       </div>
     </div>

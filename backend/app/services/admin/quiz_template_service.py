@@ -1,12 +1,19 @@
-from sqlalchemy.orm import Session
-from app.models.quiz_template import QuizTemplate
+"""
+==========================================================
+📘 SERVICE: Quiz Template Management
+CRUD cho mẫu đề quiz
+==========================================================
+"""
 from datetime import datetime
 import uuid
 
-# ============================================================
-# 📌 Lấy tất cả Template
-# ============================================================
-def get_all(db: Session):
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, joinedload
+
+from app.models.quiz_template import QuizTemplate
+
+
+def get_all(db: Session) -> list[QuizTemplate]:
     return (
         db.query(QuizTemplate)
         .order_by(QuizTemplate.created_at.desc())
@@ -14,71 +21,91 @@ def get_all(db: Session):
     )
 
 
-# ============================================================
-# 📌 Lấy tất cả Template kèm thông tin người tạo
-# ============================================================
-def get_all_with_creator(db: Session):
-    return (
-        db.query(QuizTemplate)
-        .join(QuizTemplate.creator)       # 🔥 JOIN đúng quan hệ
-        .order_by(QuizTemplate.created_at.desc())
-        .all()
-    )
+def get_all_with_creator(db: Session) -> list[QuizTemplate]:
+    query = db.query(QuizTemplate)
+
+    # Nếu model có relationship "creator" thì preload luôn
+    if hasattr(QuizTemplate, "creator"):
+        query = query.options(joinedload(QuizTemplate.creator))
+
+    return query.order_by(QuizTemplate.created_at.desc()).all()
 
 
-# ============================================================
-# 📌 Lấy template theo ID
-# ============================================================
-def get_by_id(db: Session, template_id: str):
-    return db.query(QuizTemplate).filter(QuizTemplate.id == template_id).first()
+def get_by_id(db: Session, template_id: str) -> QuizTemplate | None:
+    query = db.query(QuizTemplate)
+
+    if hasattr(QuizTemplate, "creator"):
+        query = query.options(joinedload(QuizTemplate.creator))
+
+    return query.filter(QuizTemplate.id == template_id).first()
 
 
-# ============================================================
-# 📌 Tạo template mới
-# ============================================================
-def create(db: Session, name: str, description: str, rules: str, created_by: str):
+def create(
+    db: Session,
+    name: str,
+    description: str,
+    rules: str,
+    created_by: str,
+) -> QuizTemplate:
+    name = (name or "").strip()
+    description = (description or "").strip() or None
+    rules = (rules or "").strip()
+
     qt = QuizTemplate(
         id=str(uuid.uuid4()),
         name=name,
         description=description,
         rules=rules,
         created_by=created_by,
-        is_public=0,
-        created_at=datetime.utcnow()
+        is_public=False,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
 
-    db.add(qt)
-    db.commit()
-    db.refresh(qt)
-    return qt
+    try:
+        db.add(qt)
+        db.commit()
+        db.refresh(qt)
+        return qt
+    except SQLAlchemyError:
+        db.rollback()
+        raise
 
 
-# ============================================================
-# 📌 Update Template
-# ============================================================
-def update(db: Session, template_id: str, name: str, description: str, rules: str):
+def update(
+    db: Session,
+    template_id: str,
+    name: str,
+    description: str,
+    rules: str,
+) -> QuizTemplate | None:
     qt = get_by_id(db, template_id)
     if not qt:
         return None
 
-    qt.name = name
-    qt.description = description
-    qt.rules = rules
+    qt.name = (name or "").strip()
+    qt.description = (description or "").strip() or None
+    qt.rules = (rules or "").strip()
     qt.updated_at = datetime.utcnow()
 
-    db.commit()
-    db.refresh(qt)
-    return qt
+    try:
+        db.commit()
+        db.refresh(qt)
+        return qt
+    except SQLAlchemyError:
+        db.rollback()
+        raise
 
 
-# ============================================================
-# 📌 Delete Template
-# ============================================================
-def delete(db: Session, template_id: str):
+def delete(db: Session, template_id: str) -> bool:
     qt = get_by_id(db, template_id)
     if not qt:
         return False
 
-    db.delete(qt)
-    db.commit()
-    return True
+    try:
+        db.delete(qt)
+        db.commit()
+        return True
+    except SQLAlchemyError:
+        db.rollback()
+        raise

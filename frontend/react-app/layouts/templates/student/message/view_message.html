@@ -1,12 +1,7 @@
 {% extends "layout_student.html" %}
 {% block title %}📨 Xem tin nhắn{% endblock %}
 {% block content %}
-
 <style>
-/* ==========================================================
-📨 VIEW MESSAGE – Glass Neo v4.5 (Final 2025)
-========================================================== */
-
 .message-wrapper {
   max-width: 760px;
   margin: 0 auto;
@@ -54,10 +49,7 @@
   transition: .3s ease;
 }
 .fab-back:hover { transform: scale(1.12); }
-
 </style>
-
-
 
 <div class="message-wrapper fade-in">
   <div class="message-card">
@@ -65,9 +57,9 @@
     {% set sender = message.sender %}
     {% set receiver = message.receiver %}
 
-    <div class="message-header d-flex gap-3">
+    <div class="message-header d-flex gap-3 flex-wrap">
 
-      <img src="{{ sender.avatar_url or '/uploads/avatars/default-avatar.png' }}"
+      <img src="{{ sender.avatar_url if sender and sender.avatar_url else '/uploads/avatars/default-avatar.png' }}"
            onerror="this.src='/uploads/avatars/default-avatar.png'"
            class="msg-avatar">
 
@@ -77,11 +69,13 @@
         </h4>
 
         <p class="mb-1">
-          <strong>👤 Người gửi:</strong> {{ sender.full_name }}
+          <strong>👤 Người gửi:</strong>
+          {{ sender.full_name if sender and sender.full_name else (sender.username if sender else "Không rõ") }}
         </p>
 
         <p class="mb-1">
-          <strong>🎯 Người nhận:</strong> {{ receiver.full_name }}
+          <strong>🎯 Người nhận:</strong>
+          {{ receiver.full_name if receiver and receiver.full_name else (receiver.username if receiver else "Không rõ") }}
         </p>
 
         <p class="text-muted small">
@@ -91,7 +85,7 @@
 
     </div>
 
-    <div class="message-body mt-3">
+    <div class="message-body mt-3" style="white-space: pre-line;">
       {% if message.content %}
         {{ message.content }}
       {% else %}
@@ -99,35 +93,46 @@
       {% endif %}
     </div>
 
-
     {% if message.attachment_url %}
     <div class="attachment-box mt-3 p-3 border rounded-3">
 
-      <div class="d-flex justify-content-between">
+      <div class="d-flex justify-content-between flex-wrap gap-2">
         <div>
           <i class="bi bi-paperclip me-2"></i>
-          <strong>{{ message.attachment_name }}</strong>
+          <strong>{{ message.attachment_name or "Tệp đính kèm" }}</strong>
         </div>
 
-        <a href="/student/message/download/{{ message.id }}"
-           class="btn btn-sm btn-outline-primary">
-          <i class="bi bi-download me-1"></i> Tải xuống
-        </a>
+        <div class="d-flex gap-2">
+          <a href="/student/message/download/{{ message.id }}"
+             class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-download me-1"></i> Tải xuống
+          </a>
+
+          <a href="/student/message/delete/{{ message.id }}"
+             class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash me-1"></i> Xóa
+          </a>
+        </div>
       </div>
 
-      {% if message.attachment_name.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
+      {% if message.attachment_name and message.attachment_name.lower().endswith(('.png','.jpg','.jpeg','.gif','.webp')) %}
         <img src="{{ message.attachment_url }}" class="attachment-preview">
       {% endif %}
 
+    </div>
+    {% else %}
+    <div class="mt-4">
+      <a href="/student/message/delete/{{ message.id }}"
+         class="btn btn-outline-danger">
+        <i class="bi bi-trash me-1"></i> Xóa tin nhắn
+      </a>
     </div>
     {% endif %}
 
   </div>
 </div>
 
-
 <a href="/student/message" class="fab-back">
   <i class="bi bi-arrow-left"></i>
 </a>
-
 {% endblock %}

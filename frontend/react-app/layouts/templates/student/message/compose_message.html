@@ -2,11 +2,7 @@
 {% block title %}✉️ Soạn tin nhắn{% endblock %}
 
 {% block content %}
-
 <style>
-/* ==========================================================
-💎 Compose Message – Glass Neo PRO MAX v4.0 (2025)
-========================================================== */
 .compose-wrapper {
   display: flex;
   justify-content: center;
@@ -51,7 +47,6 @@ textarea.form-control {
   text-align: center;
 }
 
-/* Floating Back */
 .fab-back {
   position: fixed;
   bottom: 34px;
@@ -68,7 +63,6 @@ textarea.form-control {
 }
 </style>
 
-
 <div class="compose-wrapper">
   <div class="compose-container">
 
@@ -79,10 +73,8 @@ textarea.form-control {
       Bạn có thể nhập <b>Email</b>, <b>Username</b> hoặc <b>ID</b> để gửi tin nhắn.
     </p>
 
-    <!-- FORM GỬI TIN -->
     <form method="post" action="/student/message/compose" enctype="multipart/form-data" onsubmit="return disableSubmit()">
 
-      <!-- Người nhận -->
       <div class="mb-3">
         <label class="form-label fw-semibold">👤 Người nhận</label>
 
@@ -95,21 +87,19 @@ textarea.form-control {
 
         <datalist id="user_suggestions">
           {% for u in users %}
-            <option value="{{ u.email }}">{{ u.full_name }} – ID: {{ u.id }} – @{{ u.username }}</option>
-            <option value="{{ u.username }}">{{ u.full_name }} – Email: {{ u.email }}</option>
-            <option value="{{ u.id }}">{{ u.full_name }} – @{{ u.username }}</option>
+            <option value="{{ u.email }}">{{ u.full_name if u.full_name else u.username }} – ID: {{ u.id }} – @{{ u.username }}</option>
+            <option value="{{ u.username }}">{{ u.full_name if u.full_name else u.username }} – Email: {{ u.email }}</option>
+            <option value="{{ u.id }}">{{ u.full_name if u.full_name else u.username }} – @{{ u.username }}</option>
           {% endfor %}
         </datalist>
       </div>
 
-      <!-- Nội dung -->
       <div class="mb-3">
         <label class="form-label fw-semibold">💬 Nội dung</label>
         <textarea name="content" class="form-control shadow-sm"
                   placeholder="Nhập nội dung tin nhắn..."></textarea>
       </div>
 
-      <!-- Upload file -->
       <div class="mb-3">
         <label class="form-label fw-semibold">📎 Đính kèm tệp</label>
 
@@ -132,11 +122,9 @@ textarea.form-control {
   </div>
 </div>
 
-<!-- Floating Back -->
 <a href="/student/message/" class="fab-back">
   <i class="bi bi-arrow-left"></i>
 </a>
-
 
 <script>
 function openFilePicker() {
@@ -173,5 +161,4 @@ function disableSubmit() {
   return true;
 }
 </script>
-
 {% endblock %}

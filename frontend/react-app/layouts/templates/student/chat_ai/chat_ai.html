@@ -3,10 +3,8 @@
 
 {% block content %}
 
-<!-- ============================================================
-🌈 Gemini Chat v6.2 – Ultra Smooth / Error-Free / VSCode-Safe
-============================================================== -->
 <style>
+/* (giữ nguyên CSS của bạn) */
 .chat-container {
   max-width: 900px;
   margin: 0 auto;
@@ -85,6 +83,23 @@ body.dark-mode .message.assistant .bubble {
   color:#eee;
 }
 
+/* ✅ Markdown styling trong bubble */
+.bubble p { margin: 0 0 .6rem; }
+.bubble p:last-child { margin-bottom: 0; }
+.bubble ul, .bubble ol { margin: .4rem 0 .6rem 1.2rem; }
+.bubble li { margin: .2rem 0; }
+.bubble code { padding: .12rem .35rem; border-radius: 6px; background: rgba(0,0,0,.06); }
+body.dark-mode .bubble code { background: rgba(255,255,255,.08); }
+.bubble pre {
+  padding: .75rem 1rem;
+  border-radius: 12px;
+  overflow: auto;
+  background: rgba(0,0,0,.06);
+}
+body.dark-mode .bubble pre { background: rgba(255,255,255,.08); }
+.bubble pre code { background: transparent; padding: 0; }
+.bubble a { text-decoration: underline; }
+
 .typing {
   color:#6c757d;
   font-size:.9rem;
@@ -142,55 +157,51 @@ body.dark-mode .message.assistant .bubble {
 }
 </style>
 
-
 <div class="container mt-4">
   <div class="chat-container">
 
-    <!-- HEADER -->
     <div class="chat-header">
       <h4><i class="bi bi-stars"></i> Gemini AI Trợ lý học tập</h4>
       <div>
-        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm">
+        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm" type="button">
           <i class="bi bi-download"></i>
         </button>
-        <button id="clearBtn" class="btn btn-outline-danger btn-sm">
+        <button id="clearBtn" class="btn btn-outline-danger btn-sm" type="button">
           <i class="bi bi-trash3"></i>
         </button>
       </div>
     </div>
 
-    <!-- SUGGESTIONS -->
     {% if suggestions %}
     <div class="suggestions">
       {% for s in suggestions %}
-      <!-- Không dùng onclick, dùng data-text để JS bắt sự kiện -->
-      <button type="button"
-              class="suggestion-btn"
-              data-text="{{ s|e }}">
-        {{ s }}
-      </button>
+      <button type="button" class="suggestion-btn" data-text="{{ s|e }}">{{ s }}</button>
       {% endfor %}
     </div>
     {% endif %}
 
-    <!-- CHAT HISTORY -->
     <div id="chatBox" class="chat-box">
       {% for chat in history|reverse %}
         {% if chat.role == 'user' %}
         <div class="message user">
-          <img src="{{ user.avatar_url or '/uploads/avatars/default-avatar.png' }}" class="avatar" alt="User">
+          <!-- ✅ dùng student_globals để lấy avatar hồ sơ -->
+          <img src="{{ student_globals(request).avatar_url }}"
+               class="avatar" alt="User"
+               onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
           <div class="bubble">{{ chat.message }}</div>
         </div>
         {% else %}
         <div class="message assistant">
-          <img src="/frontend/react-app/assets/ai_avatar.png" class="avatar" alt="AI">
-          <div class="bubble">{{ chat.response|safe }}</div>
+          <!-- ✅ đúng static -->
+          <img src="{{ request.url_for('static', path='assets/ai_avatar.png') }}"
+               class="avatar" alt="AI"
+               onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
+          <div class="bubble md-bubble">{{ chat.response }}</div>
         </div>
         {% endif %}
       {% endfor %}
     </div>
 
-    <!-- INPUT -->
     <form id="chatForm" class="chat-input">
       <input id="messageInput" type="text" name="message"
              placeholder="Nhập câu hỏi..." autocomplete="off" required>
@@ -206,57 +217,93 @@ body.dark-mode .message.assistant .bubble {
   </div>
 </div>
 
-<!-- ============================================================
-JS – Tối ưu để không lỗi VSCode
-============================================================== -->
+<!-- ✅ VSCode-safe: đưa biến Jinja ra data-* -->
+<div id="chatConfig"
+     data-user-avatar="{{ student_globals(request).avatar_url|e }}"
+     data-ai-avatar="{{ request.url_for('static', path='assets/ai_avatar.png')|e }}"
+     style="display:none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
+
 <script>
+/* global marked, DOMPurify */
+
 const chatBox = document.getElementById("chatBox");
 const form = document.getElementById("chatForm");
 const input = document.getElementById("messageInput");
 const typing = document.getElementById("typingIndicator");
 
-// Các giá trị này sau khi render sẽ trở thành string JS bình thường
-const USER_AVATAR = "{{ (user.avatar_url or '/uploads/avatars/default-avatar.png') }}";
-const AI_AVATAR   = "/frontend/react-app/assets/ai_avatar.png";
+const cfg = document.getElementById("chatConfig");
+const USER_AVATAR = (cfg && cfg.dataset.userAvatar) ? cfg.dataset.userAvatar : "/uploads/avatars/default-avatar.png";
+const AI_AVATAR   = (cfg && cfg.dataset.aiAvatar) ? cfg.dataset.aiAvatar : "/static/assets/ai_avatar.png";
 
-/* Tạo message bubble */
-function addMessage(role, content, avatar) {
+function avatarImgHtml(src, alt) {
+  const fallback = "/uploads/avatars/default-avatar.png";
+  return `<img src="${src}" class="avatar" alt="${alt}"
+              onerror="this.onerror=null;this.src='${fallback}';">`;
+}
+
+function renderMarkdown(mdText) {
+  const html = marked.parse(mdText || "", { gfm: true, breaks: true });
+  return DOMPurify.sanitize(html);
+}
+
+function renderAllAssistantBubbles() {
+  document.querySelectorAll(".md-bubble").forEach(b => {
+    const raw = b.textContent || "";
+    b.innerHTML = renderMarkdown(raw);
+  });
+}
+
+function addMessage(role, content, avatar, isMarkdown = false) {
   const wrapper = document.createElement("div");
   wrapper.className = "message " + role;
 
   wrapper.innerHTML = `
-    <img src="${avatar}" class="avatar" alt="${role === 'user' ? 'User' : 'AI'}">
-    <div class="bubble"></div>
+    ${avatarImgHtml(avatar, role === "user" ? "User" : "AI")}
+    <div class="bubble ${isMarkdown ? "md-bubble" : ""}"></div>
   `;
 
   const bubble = wrapper.querySelector(".bubble");
-  bubble.textContent = content;
+  bubble.textContent = content || "";
+
   chatBox.appendChild(wrapper);
   chatBox.scrollTop = chatBox.scrollHeight;
   return bubble;
 }
 
-/* Hiệu ứng gõ */
-function typeEffect(el, text, speed = 18) {
+function typeEffectThenRenderMarkdown(el, text, speed = 16) {
+  const t = text || "";
+  const SKIP_TYPEWRITER_AT = 1200;
+
+  if (t.length > SKIP_TYPEWRITER_AT) {
+    el.innerHTML = renderMarkdown(t);
+    return;
+  }
+
+  el.textContent = "";
   let i = 0;
-  function typingLoop() {
-    if (i < text.length) {
-      el.textContent += text.charAt(i);
+
+  function loop() {
+    if (i < t.length) {
+      el.textContent += t.charAt(i);
       i++;
-      setTimeout(typingLoop, speed);
+      setTimeout(loop, speed);
+    } else {
+      el.innerHTML = renderMarkdown(t);
     }
   }
-  typingLoop();
+  loop();
 }
 
-/* Submit */
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const msg = input.value.trim();
+  const msg = (input.value || "").trim();
   if (!msg) return;
 
-  addMessage("user", msg, USER_AVATAR);
+  addMessage("user", msg, USER_AVATAR, false);
   input.value = "";
   typing.style.display = "block";
 
@@ -267,27 +314,32 @@ form.addEventListener("submit", async (e) => {
       body: new URLSearchParams({ message: msg })
     });
 
-    const data = await res.json();
+    let data;
+    try {
+      data = await res.json();
+    } catch (e2) {
+      const raw = await res.text();
+      data = { error: raw || "⚠️ API không trả JSON." };
+    }
+
     const reply = data.reply || data.error || "⚠️ Không có phản hồi.";
 
     typing.style.display = "none";
-    const bubble = addMessage("assistant", "", AI_AVATAR);
-    typeEffect(bubble, reply, 20);
+    const bubble = addMessage("assistant", "", AI_AVATAR, true);
+    typeEffectThenRenderMarkdown(bubble, reply, 16);
 
   } catch (err) {
     typing.style.display = "none";
-    const bubble = addMessage("assistant", "", AI_AVATAR);
+    const bubble = addMessage("assistant", "", AI_AVATAR, true);
     bubble.innerHTML = "<span class='text-danger'>❌ Lỗi mạng. Hãy thử lại!</span>";
   }
 });
 
-/* Quick suggestion */
 function sendQuick(text) {
-  input.value = text;
+  input.value = text || "";
   form.requestSubmit();
 }
 
-/* Bắt click vào các suggestion button qua event delegation */
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".suggestion-btn");
   if (!btn) return;
@@ -295,25 +347,31 @@ document.addEventListener("click", (e) => {
   sendQuick(text);
 });
 
-/* Clear chat */
 document.getElementById("clearBtn").onclick = async () => {
   if (!confirm("Bạn có chắc muốn xoá toàn bộ lịch sử?")) return;
+
   try {
     await fetch("/student/chat-ai/clear", { method: "POST" });
-  } catch (e) {
-    // nếu API lỗi vẫn clear UI cho đỡ khó chịu
-  }
+  } catch (e) {}
+
   chatBox.innerHTML = `
     <div class="message assistant">
-      <img src="${AI_AVATAR}" class="avatar" alt="AI">
-      <div class="bubble">🧹 Lịch sử đã được xoá.</div>
-    </div>`;
+      ${avatarImgHtml(AI_AVATAR, "AI")}
+      <div class="bubble md-bubble">🧹 Lịch sử đã được xoá.</div>
+    </div>
+  `;
+  renderAllAssistantBubbles();
+  chatBox.scrollTop = chatBox.scrollHeight;
 };
 
-/* Download history */
 document.getElementById("downloadBtn").onclick = () => {
-  const text = Array.from(document.querySelectorAll(".bubble"))
-    .map(x => x.innerText)
+  const text = Array.from(document.querySelectorAll(".message"))
+    .map(m => {
+      const isUser = m.classList.contains("user");
+      const bubble = m.querySelector(".bubble");
+      const role = isUser ? "USER" : "AI";
+      return `${role}: ${bubble ? bubble.innerText : ""}`;
+    })
     .join("\n\n-----------------------------\n\n");
 
   const blob = new Blob([text], { type: "text/plain" });
@@ -327,6 +385,9 @@ document.getElementById("downloadBtn").onclick = () => {
   a.remove();
   URL.revokeObjectURL(url);
 };
+
+renderAllAssistantBubbles();
+chatBox.scrollTop = chatBox.scrollHeight;
 </script>
 
 {% endblock %}

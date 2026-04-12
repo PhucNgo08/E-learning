@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>🧮 Chấm điểm bài nộp</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
     body { background-color: #f4f7fb; }
     .card-custom {
@@ -26,10 +23,7 @@
 </head>
 
 <body class="p-4">
-
   <div class="container card-custom p-4 shadow-sm" style="max-width: 760px;">
-
-    <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h4 class="fw-bold text-primary">
         <i class="bi bi-pencil-square"></i> Chấm điểm bài nộp
@@ -40,21 +34,24 @@
       </a>
     </div>
 
-    <!-- THÔNG TIN SINH VIÊN -->
     <div class="mb-3">
       <label class="form-label">👨‍🎓 Học viên</label>
-      <p class="form-control bg-light">{{ student.full_name }}</p>
+      <p class="form-control bg-light">
+        {% if student %}
+          {{ student.full_name if student.full_name else (student.username if student.username else 'Không rõ') }}
+        {% else %}
+          Không rõ
+        {% endif %}
+      </p>
     </div>
 
-    <!-- THỜI GIAN NỘP + Trạng thái nộp trễ -->
     <div class="mb-3">
       <label class="form-label">🗓️ Thời gian nộp</label>
-
       <p class="form-control bg-light">
         {% if submission.submission_time %}
           {{ submission.submission_time.strftime('%d/%m/%Y %H:%M') }}
 
-          {% if submission.assignment.due_date and submission.submission_time > submission.assignment.due_date %}
+          {% if assignment.due_date and submission.submission_time > assignment.due_date %}
             <span class="badge bg-danger ms-2">Nộp trễ</span>
           {% else %}
             <span class="badge bg-success ms-2">Đúng hạn</span>
@@ -65,7 +62,6 @@
       </p>
     </div>
 
-    <!-- FILE ĐÍNH KÈM -->
     <div class="mb-4">
       <label class="form-label">📎 File đính kèm</label>
 
@@ -87,17 +83,13 @@
       {% endif %}
     </div>
 
-    <!-- FORM CHẤM ĐIỂM -->
     <form method="post" action="/teacher/assignments/grade/{{ submission.id }}">
-
-      <!-- Điểm -->
       <div class="mb-3">
         <label class="form-label">💯 Điểm</label>
         <input type="number" name="grade" class="form-control" min="0" max="100" step="0.1"
-               value="{{ submission.grade if submission.grade else '' }}" required>
+               value="{{ submission.grade if submission.grade is not none else '' }}" required>
       </div>
 
-      <!-- Feedback -->
       <div class="mb-3">
         <label class="form-label">📝 Nhận xét</label>
         <textarea name="feedback" class="form-control" rows="4">{{ submission.feedback or '' }}</textarea>
@@ -113,8 +105,6 @@
         </a>
       </div>
     </form>
-
   </div>
-
 </body>
 </html>

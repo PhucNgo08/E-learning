@@ -1,39 +1,48 @@
-from sqlalchemy import Column, String, DECIMAL, Enum, DateTime, ForeignKey, VARCHAR
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.database.connection import Base
 import enum
 import uuid
 
+from sqlalchemy import Column, DateTime, DECIMAL, ForeignKey, String
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
-# ============================================================
-# 🧩 ENUM – Loại giao dịch ví điện tử (Chuẩn 2025)
-# ============================================================
+from app.database.connection import Base
+
+
 class WalletTransactionType(str, enum.Enum):
-    deposit = "deposit"        # + tiền (nạp thủ công / VietQR / nhận chuyển tiền)
-    payment = "payment"        # - tiền (thanh toán khóa học / gửi tiền cho user khác)
-    withdraw = "withdraw"      # - tiền (rút về ngân hàng)
-    refund = "refund"          # + tiền (hoàn tiền giao dịch)
-    adjust = "adjust"          # +/- (admin điều chỉnh số dư)
+    deposit = "deposit"
+    payment = "payment"
+    withdraw = "withdraw"
+    refund = "refund"
+    adjust = "adjust"
 
 
-# ============================================================
-# 🧩 MODEL – Lưu lịch sử giao dịch ví
-# ============================================================
 class WalletTransaction(Base):
     __tablename__ = "wallet_transactions"
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    wallet_id = Column(String(36), ForeignKey("wallet_accounts.id", ondelete="CASCADE"), nullable=False)
+    wallet_id = Column(
+        String(36),
+        ForeignKey("wallet_accounts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    order_id = Column(
+        String(36),
+        ForeignKey("orders.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
-    amount = Column(DECIMAL(12, 2), nullable=False)   # Số tiền thay đổi (+ hoặc -)
-    type = Column(Enum(WalletTransactionType), nullable=False)  # Loại giao dịch
+    amount = Column(DECIMAL(12, 2), nullable=False)
+    type = Column(String(20), nullable=False)
+    description = Column(String(255), nullable=True)
+    balance_before = Column(DECIMAL(12, 2), nullable=True)
+    balance_after = Column(DECIMAL(12, 2), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
 
-    description = Column(VARCHAR(255))        # Mô tả giao dịch
-    balance_before = Column(DECIMAL(12, 2))   # Số dư trước khi thực hiện
-    balance_after = Column(DECIMAL(12, 2))    # Số dư sau khi thực hiện
-
-    created_at = Column(DateTime, server_default=func.now())    # Thời gian tạo
-
-    # RELATION
     wallet = relationship("WalletAccount", back_populates="transactions")
+    order = relationship("Order", back_populates="wallet_transactions")
+
+    def __repr__(self):
+        return (
+            f"<WalletTransaction wallet_id={self.wallet_id} "
+            f"order_id={self.order_id} type={self.type} amount={self.amount}>"
+        )

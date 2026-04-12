@@ -2,8 +2,21 @@
 {% block title %}📘 Tất cả module của bạn{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <h4 class="fw-bold text-primary mb-3">📘 Danh sách toàn bộ chương</h4>
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h4 class="fw-bold text-primary mb-1">📘 Danh sách toàn bộ chương</h4>
+      {% if teacher %}
+      <small class="text-muted">
+        Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+      </small>
+      {% endif %}
+    </div>
+
+    <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
 
   {% if modules %}
   <div class="table-responsive shadow-sm rounded">
@@ -21,18 +34,25 @@
       <tbody>
         {% for module in modules %}
         <tr>
-          <td>{{ module.course.course_name }}</td>
+          <td>{{ module.course.course_name if module.course else '—' }}</td>
           <td>{{ module.module_number }}</td>
           <td class="fw-semibold">{{ module.title }}</td>
           <td>{{ module.description or "—" }}</td>
           <td>
             {% if module.is_published %}
-            <span class="badge bg-success"><i class="bi bi-check-circle"></i> Đã đăng</span>
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle"></i> Đã đăng
+            </span>
             {% else %}
-            <span class="badge bg-secondary"><i class="bi bi-eye-slash"></i> Nháp</span>
+            <span class="badge bg-secondary">
+              <i class="bi bi-eye-slash"></i> Nháp
+            </span>
             {% endif %}
           </td>
           <td class="text-center">
+            <a href="/teacher/modules/list/{{ module.course_id }}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-list-ul"></i>
+            </a>
             <a href="/teacher/modules/edit/{{ module.id }}" class="btn btn-outline-primary btn-sm">
               <i class="bi bi-pencil-square"></i>
             </a>

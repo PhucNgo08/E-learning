@@ -4,7 +4,6 @@
 {% block content %}
 <div class="container py-5 fade-in">
 
-  <!-- Header -->
   <div class="page-header d-flex justify-content-between align-items-center mb-4">
     <div class="d-flex align-items-center gap-2">
       <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
@@ -18,16 +17,19 @@
     </a>
   </div>
 
-  <!-- Content -->
+  {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
   <div class="card p-4 shadow-sm border-0 rounded-4">
 
     {% if exams %}
     <div class="table-responsive">
       <table class="table table-hover align-middle text-center">
-
-        <!-- HEADER -->
-        <thead class="text-white"
-          style="background: linear-gradient(90deg, #007bff, #0048b4);">
+        <thead class="text-white" style="background: linear-gradient(90deg, #007bff, #0048b4);">
           <tr>
             <th>#</th>
             <th>Tên kỳ thi</th>
@@ -43,20 +45,15 @@
           </tr>
         </thead>
 
-        <!-- BODY -->
         <tbody>
           {% for exam in exams %}
           <tr>
-
-            <!-- STT -->
             <td class="fw-bold text-primary">{{ loop.index }}</td>
 
-            <!-- Title -->
             <td class="text-start fw-semibold text-primary">
               <i class="bi bi-journal-bookmark"></i> {{ exam.title }}
             </td>
 
-            <!-- Course -->
             <td>
               {% if exam.course %}
                 <span class="badge bg-secondary">{{ exam.course.course_name }}</span>
@@ -65,29 +62,20 @@
               {% endif %}
             </td>
 
-            <!-- Time -->
             <td>
               <span class="badge bg-info text-dark">
-                <i class="bi bi-clock"></i>
-                {{ exam.time_limit_minutes or 0 }}’
+                <i class="bi bi-clock"></i> {{ exam.time_limit_minutes or 0 }}’
               </span>
             </td>
 
-            <!-- Attempts -->
             <td>
-              <span class="badge bg-warning text-dark">
-                {{ exam.max_attempts or 1 }}
-              </span>
+              <span class="badge bg-warning text-dark">{{ exam.max_attempts or 1 }}</span>
             </td>
 
-            <!-- Passing Score -->
             <td>
-              <span class="badge bg-success text-light">
-                {{ exam.passing_score or 0 }}%
-              </span>
+              <span class="badge bg-success text-light">{{ exam.passing_score or 0 }}%</span>
             </td>
 
-            <!-- Available Time -->
             <td class="text-start small">
               {% if exam.available_from %}
               <div>
@@ -106,33 +94,30 @@
               {% endif %}
             </td>
 
-            <!-- STATUS -->
             <td>
               {% if exam.status == "pending" %}
                 <span class="badge bg-warning text-dark">
                   <i class="bi bi-hourglass-split"></i> Chờ duyệt
                 </span>
-
               {% elif exam.status == "published" %}
                 <span class="badge bg-success">
                   <i class="bi bi-check2-circle"></i> Đã duyệt
                 </span>
-
               {% elif exam.status == "rejected" %}
                 <span class="badge bg-danger">
                   <i class="bi bi-x-circle"></i> Từ chối
                 </span>
+              {% else %}
+                <span class="badge bg-secondary">{{ exam.status or "—" }}</span>
               {% endif %}
             </td>
 
-            <!-- Created At -->
             <td>
               <span class="badge text-bg-light border">
                 {{ exam.created_at.strftime("%d/%m/%Y") if exam.created_at else "-" }}
               </span>
             </td>
 
-            <!-- Total Questions -->
             <td>
               <a href="/admin/exams/{{ exam.id }}/questions"
                 class="badge bg-primary px-3 text-decoration-none"
@@ -141,45 +126,38 @@
               </a>
             </td>
 
-            <!-- ACTIONS -->
             <td>
               <div class="d-flex justify-content-center gap-2 flex-wrap">
 
-                <!-- EDIT -->
                 <a href="/admin/exams/{{ exam.id }}/edit"
                   class="btn btn-sm btn-warning shadow-sm"
                   title="Chỉnh sửa">
                   <i class="bi bi-pencil"></i>
                 </a>
 
-                <!-- IMPORT -->
                 <a href="/admin/exams/{{ exam.id }}/import"
                   class="btn btn-sm btn-info text-white shadow-sm"
                   title="Import câu hỏi">
                   <i class="bi bi-upload"></i>
                 </a>
 
-                <!-- APPROVE / REJECT -->
                 {% if exam.status == "pending" %}
-
-                  <a href="/admin/exams/{{ exam.id }}/approve"
-                    class="btn btn-sm btn-success shadow-sm"
-                    onclick="return confirm('Duyệt kỳ thi này?')">
+                <form method="post" action="/admin/exams/{{ exam.id }}/approve" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-success shadow-sm" title="Duyệt">
                     <i class="bi bi-check2-circle"></i>
-                  </a>
+                  </button>
+                </form>
 
-                  <a href="/admin/exams/{{ exam.id }}/reject"
-                    class="btn btn-sm btn-danger shadow-sm"
-                    onclick="return confirm('Từ chối kỳ thi này?')">
+                <form method="post" action="/admin/exams/{{ exam.id }}/reject" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-danger shadow-sm" title="Từ chối">
                     <i class="bi bi-x-circle"></i>
-                  </a>
-
+                  </button>
+                </form>
                 {% endif %}
 
-                <!-- DELETE (GET) -->
                 <a href="/admin/exams/{{ exam.id }}/delete"
                   class="btn btn-sm btn-outline-danger shadow-sm"
-                  onclick="return confirm('Bạn chắc chắn muốn xóa kỳ thi này?')">
+                  title="Xóa">
                   <i class="bi bi-trash"></i>
                 </a>
 
@@ -202,5 +180,4 @@
   </div>
 
 </div>
-
 {% endblock %}

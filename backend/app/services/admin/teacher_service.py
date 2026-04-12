@@ -1,134 +1,143 @@
-import uuid
 import os
 import shutil
-from passlib.hash import bcrypt
+import uuid
+from pathlib import Path
+from typing import BinaryIO
+
 from sqlalchemy.orm import Session
 
+from app.config.paths import UPLOAD_AVATARS
 from app.models.user import User
-from app.models.major import Major
+from app.services import user_service
+from app.services.common.auth_service import (
+    DEFAULT_AVATAR_URL,
+    TEACHER_ROLE_CODES,
+    get_user_profile_context,
+    hydrate_user_context,
+    normalize_role_code,
+    resolve_primary_role,
+    upsert_user_profile,
+)
+from app.services.common.password_service import get_password_hash
 
-# 🎯 Role hợp lệ theo ENUM users.role
 VALID_ROLES = ["teacher", "teaching_assistant"]
-
-# Thư mục upload avatar
-AVATAR_DIR = "app/static/uploads/avatars"
-os.makedirs(AVATAR_DIR, exist_ok=True)
+UPLOAD_AVATARS.mkdir(parents=True, exist_ok=True)
 
 
-# ================================================================
-# 📌 1. Danh sách & chi tiết giáo viên
-# ================================================================
+# =====================================================
+# HELPERS
+# =====================================================
+def _normalize_teacher_role(role: str | None) -> str:
+    role_value = normalize_role_code(role)
+    return role_value if role_value in TEACHER_ROLE_CODES else "teacher"
+
+
+def _safe_filename_extension(filename: str | None) -> str:
+    ext = Path(filename or "").suffix.lower()
+    return ext if ext in {".png", ".jpg", ".jpeg", ".webp", ".gif"} else ".png"
+
+
+# =====================================================
+# 1. READ TEACHERS
+# =====================================================
 def get_all_teachers(db: Session):
-    """Lấy toàn bộ giảng viên và trợ giảng"""
-    return (
-        db.query(User)
-        .outerjoin(Major)
-        .filter(User.role.in_(VALID_ROLES))
-        .all()
-    )
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    results = []
+    for user in users:
+        hydrate_user_context(db, user)
+        if resolve_primary_role(db, user.id) in TEACHER_ROLE_CODES:
+            results.append(user)
+    return results
 
 
 def get_teacher(db: Session, teacher_id: str):
-    return db.query(User).filter(User.id == teacher_id).first()
+    user = db.query(User).filter(User.id == teacher_id).first()
+    if not user:
+        return None
+
+    hydrate_user_context(db, user)
+    if resolve_primary_role(db, user.id) not in TEACHER_ROLE_CODES:
+        return None
+    return user
 
 
-# ================================================================
-# 📌 2. Tạo tài khoản giáo viên
-# ================================================================
+# =====================================================
+# 2. CREATE TEACHER
+# =====================================================
 def create_teacher(db: Session, username: str, email: str, full_name: str, role: str):
-    if role not in VALID_ROLES:
-        role = "teacher"
-
-    # 👇 Tạo password mặc định
-    default_password = "123456"
-    password_hash = bcrypt.hash(default_password)
-
-    new_teacher = User(
-        id=str(uuid.uuid4()),
+    return user_service.create_user(
         username=username,
         email=email,
+        password="123456",
         full_name=full_name,
-        role=role,
-        password_hash=password_hash
+        role=_normalize_teacher_role(role),
+        db=db,
     )
 
-    db.add(new_teacher)
-    db.commit()
-    db.refresh(new_teacher)
-    return new_teacher
 
-
-# ================================================================
-# 📌 3. Cập nhật thông tin giáo viên
-# ================================================================
+# =====================================================
+# 3. UPDATE TEACHER
+# =====================================================
 def update_teacher(db: Session, teacher_id: str, full_name: str, email: str, role: str):
-    if role not in VALID_ROLES:
-        role = "teacher"
-
-    teacher = db.query(User).filter(User.id == teacher_id).first()
-
-    if teacher:
-        teacher.full_name = full_name
-        teacher.email = email
-        teacher.role = role
-        db.commit()
-        db.refresh(teacher)
-
-    return teacher
-
-
-# ================================================================
-# 📌 4. Upload Avatar cho giáo viên
-# ================================================================
-def update_teacher_avatar(db: Session, teacher_id: str, file):
-    """
-    Upload avatar:
-    - Lưu vào /app/static/uploads/avatars
-    - Update users.avatar_url = '/static/uploads/avatars/...'
-    """
-
-    teacher = db.query(User).filter(User.id == teacher_id).first()
+    teacher = get_teacher(db, teacher_id)
     if not teacher:
         return None
 
-    # Tạo tên file
-    ext = os.path.splitext(file.filename)[1]
+    return user_service.update_user(
+        user_id=teacher_id,
+        username=teacher.username,
+        email=email,
+        password="",
+        full_name=full_name,
+        role=_normalize_teacher_role(role),
+        db=db,
+        major_id=getattr(teacher, "major_id", None),
+    )
+
+
+# =====================================================
+# 4. UPDATE AVATAR
+# =====================================================
+def update_teacher_avatar(db: Session, teacher_id: str, file):
+    teacher = get_teacher(db, teacher_id)
+    if not teacher:
+        return None
+
+    ext = _safe_filename_extension(getattr(file, "filename", None))
     filename = f"{teacher_id}{ext}"
-    avatar_path = os.path.join(AVATAR_DIR, filename)
+    avatar_path = UPLOAD_AVATARS / filename
 
-    # Lưu file
-    with open(avatar_path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+    file_obj: BinaryIO = file.file
+    with open(avatar_path, "wb") as output:
+        shutil.copyfileobj(file_obj, output)
 
-    # URL để Jinja render
-    teacher.avatar_url = f"/static/uploads/avatars/{filename}"
-
+    current_profile = get_user_profile_context(db, teacher_id, teacher)
+    upsert_user_profile(
+        db,
+        teacher_id,
+        full_name=current_profile["full_name"] or teacher.username,
+        phone=current_profile["phone"],
+        avatar_url=f"/uploads/avatars/{filename}",
+        date_of_birth=current_profile["date_of_birth"],
+        gender=current_profile["gender"],
+    )
     db.commit()
-    db.refresh(teacher)
 
-    return teacher
+    refreshed = db.query(User).filter(User.id == teacher_id).first()
+    return hydrate_user_context(db, refreshed)
 
 
-# ================================================================
-# 📌 5. Reset Password
-# ================================================================
+# =====================================================
+# 5. RESET PASSWORD
+# =====================================================
 def reset_teacher_password(db: Session, teacher_id: str):
-    """
-    Reset mật khẩu cho giáo viên:
-    - Sinh mật khẩu mới ngẫu nhiên
-    - Hash bằng bcrypt
-    """
-
-    teacher = db.query(User).filter(User.id == teacher_id).first()
+    teacher = get_teacher(db, teacher_id)
     if not teacher:
         return None, None
 
-    # 🔐 Sinh mật khẩu mới (8 ký tự)
     new_password = uuid.uuid4().hex[:8]
-
-    teacher.password_hash = bcrypt.hash(new_password)
+    teacher.password_hash = get_password_hash(new_password)
     db.commit()
     db.refresh(teacher)
-
-    # Trả về mật khẩu plain để hiển thị cho admin
+    hydrate_user_context(db, teacher)
     return teacher, new_password

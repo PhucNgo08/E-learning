@@ -1,139 +1,115 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🗑️ Xóa tài liệu</title>
+{% extends "layout_admin.html" %}
+{% block title %}🗑️ Xóa tài liệu{% endblock %}
 
-  <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block head_extra %}
+<style>
+  .danger-box {
+    border-left: 5px solid #dc3545;
+    background: #fff1f1;
+    padding: 20px;
+    border-radius: 10px;
+  }
+  .info-label {
+    font-weight: 600;
+  }
+  .version-box {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+</style>
+{% endblock %}
 
-  <style>
-    .danger-box {
-      border-left: 5px solid #dc3545;
-      background: #fff1f1;
-      padding: 20px;
-      border-radius: 10px;
-    }
-    .info-label {
-      font-weight: 600;
-    }
-    .version-box {
-      background: #f8f9fa;
-      border: 1px solid #e0e0e0;
-      padding: 12px;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-  </style>
-</head>
+{% block content %}
+<div class="container py-5" style="max-width: 680px;">
+  <h3 class="text-danger fw-bold mb-4 text-center">
+    <i class="bi bi-exclamation-octagon"></i> Xóa tài liệu
+  </h3>
 
-<body class="bg-light">
-
-  <div class="container py-5" style="max-width: 680px;">
-
-    <!-- Title -->
-    <h3 class="text-danger fw-bold mb-4 text-center">
-      <i class="bi bi-exclamation-octagon"></i> Xóa tài liệu
-    </h3>
-
-    <!-- Warning Box -->
-    <div class="danger-box mb-4 shadow-sm">
-      <h5 class="text-danger fw-semibold">
-        <i class="bi bi-trash"></i> Bạn có chắc chắn muốn xóa tài liệu này?
-      </h5>
-      <p class="mb-0">
-        Hành động này <strong>không thể hoàn tác</strong>.  
-        Tài liệu và <strong>toàn bộ phiên bản (nếu có)</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống.
-      </p>
-    </div>
-
-    <!-- File Details -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body">
-
-        <h5 class="fw-bold mb-1">{{ material.title }}</h5>
-        <p class="text-muted">{{ material.description or "Không có mô tả" }}</p>
-
-        <ul class="list-unstyled small">
-
-          <li><span class="info-label">📚 Khóa học:</span>
-            {{ material.course.course_name if material.course else "Không xác định" }}
-          </li>
-
-          <li><span class="info-label">📁 Định dạng:</span> {{ material.file_format }}</li>
-
-          <li><span class="info-label">🗂 Loại tài liệu:</span> {{ material.material_type }}</li>
-
-          <li><span class="info-label">📦 Dung lượng:</span>
-            {{ (material.file_size / 1024 / 1024) | round(2) }} MB
-          </li>
-
-          <li><span class="info-label">🔢 Phiên bản mới nhất:</span> {{ material.version or "1.0" }}</li>
-
-          <li><span class="info-label">🔐 Quyền:</span>
-            {% if material.is_public %}
-              <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
-            {% else %}
-              <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
-            {% endif %}
-          </li>
-
-          <li><span class="info-label">⏱️ Tải lên lúc:</span>
-            {{ material.created_at.strftime("%d/%m/%Y %H:%M") }}
-          </li>
-
-          <li><span class="info-label">👤 Người tạo:</span> {{ material.created_by }}</li>
-
-          {% if material.available_from %}
-          <li><span class="info-label">📅 Hiển thị từ:</span>
-            {{ material.available_from.strftime("%d/%m/%Y") }}
-          </li>
-          {% endif %}
-
-          {% if material.available_to %}
-          <li><span class="info-label">⏳ Hiển thị đến:</span>
-            {{ material.available_to.strftime("%d/%m/%Y") }}
-          </li>
-          {% endif %}
-
-        </ul>
-
-        <!-- Versions Display -->
-        {% if versions and versions|length > 0 %}
-        <div class="version-box mt-3">
-          <h6 class="fw-bold mb-2"><i class="bi bi-layers"></i> Các phiên bản tài liệu</h6>
-
-          <ul class="list-unstyled small">
-            {% for v in versions %}
-            <li class="mb-1">
-              <i class="bi bi-file-earmark"></i>
-              <strong>v{{ v.version }}</strong>
-              – {{ (v.file_size / 1024 / 1024) | round(2) }} MB
-              <span class="text-muted">({{ v.created_at.strftime("%d/%m/%Y %H:%M") }})</span>
-            </li>
-            {% endfor %}
-          </ul>
-        </div>
-        {% endif %}
-
-      </div>
-    </div>
-
-    <!-- Confirm Buttons -->
-    <form method="post" class="text-center">
-      <button type="submit" class="btn btn-danger px-4">
-        <i class="bi bi-trash3"></i> Xóa tài liệu
-      </button>
-
-      <a href="/admin/course-material/list" class="btn btn-secondary px-4 ms-2">
-        <i class="bi bi-x-circle"></i> Hủy
-      </a>
-    </form>
-
+  <div class="danger-box mb-4 shadow-sm">
+    <h5 class="text-danger fw-semibold">
+      <i class="bi bi-trash"></i> Bạn có chắc chắn muốn xóa tài liệu này?
+    </h5>
+    <p class="mb-0">
+      Hành động này <strong>không thể hoàn tác</strong>.
+      Tài liệu và <strong>toàn bộ phiên bản (nếu có)</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống.
+    </p>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <h5 class="fw-bold mb-1">{{ material.title }}</h5>
+      <p class="text-muted">{{ material.description or "Không có mô tả" }}</p>
+
+      <ul class="list-unstyled small">
+        <li><span class="info-label">📚 Khóa học:</span>
+          {{ material.course.course_name if material.course else "Không xác định" }}
+        </li>
+
+        <li><span class="info-label">📁 Định dạng:</span> {{ material.file_format }}</li>
+        <li><span class="info-label">🗂 Loại tài liệu:</span> {{ material.material_type }}</li>
+
+        <li><span class="info-label">📦 Dung lượng:</span>
+          {{ (material.file_size / 1024 / 1024) | round(2) }} MB
+        </li>
+
+        <li><span class="info-label">🔢 Phiên bản mới nhất:</span> {{ material.version or "1.0" }}</li>
+
+        <li><span class="info-label">🔐 Quyền:</span>
+          {% if material.is_public %}
+            <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
+          {% else %}
+            <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
+          {% endif %}
+        </li>
+
+        <li><span class="info-label">⏱️ Tải lên lúc:</span>
+          {{ material.created_at.strftime("%d/%m/%Y %H:%M") if material.created_at else "—" }}
+        </li>
+
+        <li><span class="info-label">👤 Người tạo:</span> {{ material.created_by }}</li>
+
+        {% if material.available_from %}
+        <li><span class="info-label">📅 Hiển thị từ:</span>
+          {{ material.available_from.strftime("%d/%m/%Y") }}
+        </li>
+        {% endif %}
+
+        {% if material.available_to %}
+        <li><span class="info-label">⏳ Hiển thị đến:</span>
+          {{ material.available_to.strftime("%d/%m/%Y") }}
+        </li>
+        {% endif %}
+      </ul>
+
+      {% if versions and versions|length > 0 %}
+      <div class="version-box mt-3">
+        <h6 class="fw-bold mb-2"><i class="bi bi-layers"></i> Các phiên bản tài liệu</h6>
+        <ul class="list-unstyled small">
+          {% for v in versions %}
+          <li class="mb-1">
+            <i class="bi bi-file-earmark"></i>
+            <strong>v{{ v.version }}</strong>
+            – {{ (v.file_size / 1024 / 1024) | round(2) }} MB
+            <span class="text-muted">({{ v.created_at.strftime("%d/%m/%Y %H:%M") }})</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <form method="post" action="/admin/course-material/delete/{{ material.id }}" class="text-center">
+    <button type="submit" class="btn btn-danger px-4">
+      <i class="bi bi-trash3"></i> Xóa tài liệu
+    </button>
+
+    <a href="/admin/course-material/list" class="btn btn-secondary px-4 ms-2">
+      <i class="bi bi-x-circle"></i> Hủy
+    </a>
+  </form>
+</div>
+{% endblock %}

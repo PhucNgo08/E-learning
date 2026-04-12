@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>➕ Tạo bài tập mới</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
     .card-custom {
       border-radius: 14px;
@@ -21,22 +18,22 @@
 </head>
 
 <body class="bg-light p-4">
-
   <div class="container card-custom p-4 shadow-sm">
 
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="fw-bold"><i class="bi bi-journal-plus"></i> Tạo bài tập mới</h4>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold mb-0"><i class="bi bi-journal-plus"></i> Tạo bài tập mới</h4>
+        {% if teacher_name %}
+        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+        {% endif %}
+      </div>
 
       <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
       </a>
     </div>
 
-    <!-- Form -->
-    <form method="post">
-
-      <!-- Chọn khóa học -->
+    <form method="post" action="/teacher/assignments/create">
       <div class="mb-3">
         <label class="form-label">Chọn khóa học <span class="text-danger">*</span></label>
         <select name="course_id" id="courseSelect" class="form-select" required>
@@ -47,12 +44,10 @@
         </select>
       </div>
 
-      <!-- Chọn module -->
       <div class="mb-3">
         <label class="form-label">Chọn Module (tùy chọn)</label>
         <select name="module_id" id="moduleSelect" class="form-select" disabled>
           <option value="">-- Chọn khóa học trước --</option>
-
           {% for m in modules %}
             <option value="{{ m.id }}" data-course="{{ m.course_id }}">
               {{ m.module_number }}. {{ m.title }}
@@ -61,42 +56,38 @@
         </select>
       </div>
 
-      <!-- Tiêu đề -->
       <div class="mb-3">
         <label class="form-label">Tiêu đề bài tập <span class="text-danger">*</span></label>
         <input type="text" name="title" class="form-control" required>
       </div>
 
-      <!-- Mô tả -->
       <div class="mb-3">
         <label class="form-label">Mô tả</label>
         <textarea name="description" class="form-control" rows="4" placeholder="Nhập mô tả (không bắt buộc)..."></textarea>
       </div>
 
-      <!-- Hạn nộp -->
       <div class="mb-3">
         <label class="form-label">Hạn nộp <span class="text-danger">*</span></label>
         <input type="datetime-local" name="due_date" class="form-control" required>
       </div>
 
-      <!--------- Submit --------->
       <div class="text-end">
         <button type="submit" class="btn btn-success px-4">
           <i class="bi bi-save2"></i> Lưu bài tập
         </button>
       </div>
     </form>
-
   </div>
 
-  <!-- JS Lọc Module theo Course -->
   <script>
     const courseSelect = document.getElementById("courseSelect");
     const moduleSelect = document.getElementById("moduleSelect");
-    const moduleOptions = moduleSelect.querySelectorAll("option[data-course]");
+    const moduleOptions = Array.from(moduleSelect.querySelectorAll("option[data-course]"));
 
     courseSelect.addEventListener("change", () => {
       const selectedCourse = courseSelect.value;
+
+      moduleSelect.innerHTML = "";
 
       if (!selectedCourse) {
         moduleSelect.disabled = true;
@@ -114,6 +105,5 @@
       });
     });
   </script>
-
 </body>
 </html>

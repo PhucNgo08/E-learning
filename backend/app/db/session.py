@@ -1,22 +1,31 @@
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+
 from app.core.config import Settings
 
 settings = Settings()
+
+Base = declarative_base()
+
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=True,
+    echo=getattr(settings, "DEBUG", False),
+    pool_pre_ping=True,
+    pool_recycle=1800,
     future=True,
 )
 
 SessionLocal = sessionmaker(
+    bind=engine,
     autocommit=False,
     autoflush=False,
-    bind=engine,
+    future=True,
 )
 
-# ✅ HÀM get_db dùng để tạo session DB khi xử lý request
-def get_db():
+
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db

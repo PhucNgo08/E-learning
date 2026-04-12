@@ -3,9 +3,6 @@
 
 {% block content %}
 <style>
-/* ==========================================================
-🎨 File Manager – Neon Glass v3.1
-========================================================== */
 .file-header {
   background: linear-gradient(90deg, #0061ff, #60efff);
   color: white;
@@ -15,10 +12,6 @@
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 4px 15px rgba(0, 97, 255, 0.2);
-}
-
-.file-header h4 i {
-  color: #fff;
 }
 
 .file-header .btn {
@@ -39,20 +32,9 @@
   overflow: hidden;
 }
 
-body.dark-mode .table-card {
-  background: rgba(30, 30, 35, 0.75);
-  color: #e5e5e5;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-}
-
 .table th {
   font-weight: 600;
   background: rgba(240, 243, 255, 0.9);
-}
-
-body.dark-mode .table th {
-  background: rgba(50, 50, 60, 0.9);
-  color: #eaeaea;
 }
 
 .table td {
@@ -64,18 +46,16 @@ body.dark-mode .table th {
   padding: 0.45em 0.7em;
   border-radius: 10px;
 }
-
-.btn-sm i {
-  font-size: 0.9rem;
-}
 </style>
 
 <div class="container mt-4 mb-5">
-  <!-- 🗂️ Header -->
   <div class="file-header mb-4">
-    <h4 class="fw-bold mb-0">
-      <i class="bi bi-folder2-open me-2"></i> Danh sách File
-    </h4>
+    <div>
+      <h4 class="fw-bold mb-0">
+        <i class="bi bi-folder2-open me-2"></i> Danh sách File
+      </h4>
+      <small class="opacity-75">Tổng số file: {{ total }}</small>
+    </div>
     <div>
       <a href="/admin/file-storage/upload" class="btn btn-light text-primary me-2">
         <i class="bi bi-upload"></i> Upload File
@@ -86,7 +66,13 @@ body.dark-mode .table th {
     </div>
   </div>
 
-  <!-- 📋 Danh sách File -->
+  {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+  {% endif %}
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
   <div class="table-card p-3">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
@@ -107,12 +93,12 @@ body.dark-mode .table th {
           <td>
             <i class="bi bi-file-earmark-text text-primary me-1"></i>
             <a href="{{ f.file_url }}" target="_blank" class="fw-semibold text-decoration-none text-dark">
-              {{ f.file_name }}
+              {{ f.original_name or f.file_name }}
             </a>
           </td>
           <td>{{ (f.file_size / 1024) | round(2) }} KB</td>
           <td>
-            <span class="badge bg-gradient bg-primary bg-opacity-75 text-white">
+            <span class="badge bg-primary text-white">
               {{ f.storage_provider }}
             </span>
           </td>
@@ -126,21 +112,22 @@ body.dark-mode .table th {
           <td>
             {% set cdn = cdn_data.get(f.id) %}
             {% if cdn %}
-              <span class="badge bg-info text-dark"><i class="bi bi-check2-circle"></i> {{ cdn.cache_status }}</span><br>
+              <span class="badge bg-info text-dark">
+                <i class="bi bi-check2-circle"></i> {{ cdn.cache_status }}
+              </span><br>
               <small class="text-muted"><i class="bi bi-cloud me-1"></i>{{ cdn.cdn_provider }}</small>
             {% else %}
               <form method="post" action="/admin/file-storage/cdn/cache" class="d-inline">
                 <input type="hidden" name="file_id" value="{{ f.id }}">
-                <button class="btn btn-sm btn-outline-info rounded-pill">
+                <button class="btn btn-sm btn-outline-info rounded-pill" type="submit">
                   <i class="bi bi-cloud-plus"></i> Cache
                 </button>
               </form>
             {% endif %}
           </td>
           <td>
-            <a href="/admin/file-storage/delete/{{ f.id }}" 
-               class="btn btn-sm btn-outline-danger rounded-pill" 
-               onclick="return confirm('Bạn có chắc muốn xóa file này?');">
+            <a href="/admin/file-storage/delete/{{ f.id }}"
+               class="btn btn-sm btn-outline-danger rounded-pill">
               <i class="bi bi-trash"></i> Xóa
             </a>
           </td>
@@ -158,7 +145,6 @@ body.dark-mode .table th {
   </div>
 </div>
 
-<!-- ✨ Hiệu ứng nhỏ -->
 <script>
 document.querySelectorAll(".fade-in").forEach((el, i) => {
   el.style.opacity = 0;

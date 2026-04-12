@@ -1,11 +1,10 @@
 """
 ==========================================================
-🎓 ROUTER: Student - Notifications (FINAL FIXED 2025)
-Đã sửa toàn bộ path template theo template_config.py
+🎓 ROUTER: Student - Notifications (SYNC FIXED)
 ==========================================================
 """
 
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from starlette import status
@@ -20,12 +19,18 @@ router = APIRouter(
     tags=["Student - Notifications"]
 )
 
-# ======================================================
-# 🏠 1️⃣ Danh sách thông báo
-# ======================================================
+
+def get_current_student_id(request: Request) -> str | None:
+    user_id = request.session.get("user_id")
+    role = request.session.get("user_role") or request.session.get("role")
+    if not user_id or role != "student":
+        return None
+    return user_id
+
+
 @router.get("/", response_class=HTMLResponse)
 async def list_notifications(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -46,15 +51,12 @@ async def list_notifications(request: Request, db: Session = Depends(get_db)):
 
     except Exception:
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi khi tải thông báo.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi khi tải thông báo.</h4>", status_code=500)
 
 
-# ======================================================
-# 🔍 2️⃣ Chi tiết thông báo
-# ======================================================
 @router.get("/detail/{notification_id}", response_class=HTMLResponse)
 async def notification_detail(request: Request, notification_id: str, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -80,15 +82,12 @@ async def notification_detail(request: Request, notification_id: str, db: Sessio
 
     except Exception:
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi khi xem chi tiết.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi khi xem chi tiết.</h4>", status_code=500)
 
 
-# ======================================================
-# 👁️ 3️⃣ Đánh dấu đã đọc
-# ======================================================
 @router.get("/read/{notification_id}")
 async def mark_as_read(request: Request, notification_id: str, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -107,15 +106,12 @@ async def mark_as_read(request: Request, notification_id: str, db: Session = Dep
     except Exception:
         db.rollback()
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi đánh dấu đã đọc.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi đánh dấu đã đọc.</h4>", status_code=500)
 
 
-# ======================================================
-# 🔁 4️⃣ Toggle trạng thái
-# ======================================================
 @router.get("/toggle/{notification_id}")
 async def toggle_read(request: Request, notification_id: str, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -133,15 +129,12 @@ async def toggle_read(request: Request, notification_id: str, db: Session = Depe
 
     except Exception:
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi toggle trạng thái.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi toggle trạng thái.</h4>", status_code=500)
 
 
-# ======================================================
-# 🧹 5️⃣ Đánh dấu tất cả đã đọc
-# ======================================================
 @router.get("/read_all", response_class=HTMLResponse)
 async def mark_all_as_read(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -153,6 +146,7 @@ async def mark_all_as_read(request: Request, db: Session = Depends(get_db)):
             {
                 "request": request,
                 "count": count,
+                "message": "Tất cả thông báo đã được đánh dấu là đã đọc.",
                 "page_title": "🔔 Đã đọc tất cả",
                 "active_page": "notifications",
             },
@@ -161,15 +155,43 @@ async def mark_all_as_read(request: Request, db: Session = Depends(get_db)):
     except Exception:
         db.rollback()
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi khi đánh dấu tất cả.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi khi đánh dấu tất cả.</h4>", status_code=500)
 
 
-# ======================================================
-# 🗑️ 6️⃣ Xóa thông báo
-# ======================================================
-@router.get("/delete/{notification_id}")
+@router.get("/delete/{notification_id}", response_class=HTMLResponse)
+async def delete_notification_confirm(request: Request, notification_id: str, db: Session = Depends(get_db)):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
+
+    try:
+        notification = notification_service.get_notification_for_user(db, notification_id, user_id)
+
+        if not notification:
+            return templates["student"].TemplateResponse(
+                "error.html",
+                {"request": request, "message": "❌ Không tìm thấy thông báo."},
+                status_code=404,
+            )
+
+        return templates["student"].TemplateResponse(
+            "notifications/delete_confirm.html",
+            {
+                "request": request,
+                "notification": notification,
+                "page_title": "🗑️ Xóa thông báo",
+                "active_page": "notifications",
+            },
+        )
+
+    except Exception:
+        traceback.print_exc()
+        return HTMLResponse("<h4>❌ Lỗi tải trang xác nhận xóa.</h4>", status_code=500)
+
+
+@router.post("/delete/{notification_id}")
 async def delete_notification(request: Request, notification_id: str, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -188,15 +210,12 @@ async def delete_notification(request: Request, notification_id: str, db: Sessio
     except Exception:
         db.rollback()
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi xóa thông báo.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi xóa thông báo.</h4>", status_code=500)
 
 
-# ======================================================
-# 🗑️⚠️ 7️⃣ Xóa tất cả thông báo
-# ======================================================
-@router.get("/delete_all")
+@router.get("/delete_all", response_class=HTMLResponse)
 async def delete_all(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -216,15 +235,12 @@ async def delete_all(request: Request, db: Session = Depends(get_db)):
     except Exception:
         db.rollback()
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi khi xóa tất cả.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi khi xóa tất cả.</h4>", status_code=500)
 
 
-# ======================================================
-# ⚙️ 8️⃣ Trang cài đặt
-# ======================================================
 @router.get("/settings", response_class=HTMLResponse)
 async def notification_settings(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -243,15 +259,12 @@ async def notification_settings(request: Request, db: Session = Depends(get_db))
 
     except Exception:
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi tải cài đặt.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi tải cài đặt.</h4>", status_code=500)
 
 
-# ======================================================
-# 💾 9️⃣ Lưu cài đặt
-# ======================================================
 @router.post("/settings", response_class=HTMLResponse)
 async def update_settings(request: Request, db: Session = Depends(get_db)):
-    user_id = request.session.get("user_id")
+    user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status.HTTP_302_FOUND)
 
@@ -281,4 +294,4 @@ async def update_settings(request: Request, db: Session = Depends(get_db)):
 
     except Exception:
         traceback.print_exc()
-        return HTMLResponse("<h4>❌ Lỗi lưu cài đặt.</h4>", 500)
+        return HTMLResponse("<h4>❌ Lỗi lưu cài đặt.</h4>", status_code=500)

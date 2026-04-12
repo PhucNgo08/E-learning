@@ -1,0 +1,59 @@
+{% extends "layout_admin.html" %}
+{% block title %}🖼️ Cập nhật ảnh đại diện{% endblock %}
+
+{% block content %}
+<style>
+  .avatar-preview {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #fff;
+    box-shadow: 0 3px 14px rgba(0,0,0,0.15);
+  }
+</style>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-4 text-center">
+          <h3 class="fw-bold text-primary mb-3">🖼️ Cập nhật Avatar</h3>
+          <p class="text-muted">Giảng viên: <strong>{{ teacher.full_name if teacher.full_name else teacher.username }}</strong></p>
+
+          {% if error_message %}
+          <div class="alert alert-danger text-start">{{ error_message }}</div>
+          {% endif %}
+
+          <img
+            src="{{ teacher.avatar_url if teacher.avatar_url else '/static/images/default-avatar.png' }}"
+            class="avatar-preview mb-4"
+            id="avatarPreview"
+          >
+
+          <form method="post" action="/admin/teachers/avatar/{{ teacher.id }}" enctype="multipart/form-data">
+            <div class="mb-3 text-start">
+              <label class="form-label">Chọn ảnh mới</label>
+              <input type="file" name="file" class="form-control" id="avatarInput" accept="image/*" required>
+            </div>
+
+            <div class="d-flex justify-content-center gap-2 flex-wrap">
+              <a href="/admin/teachers/edit/{{ teacher.id }}" class="btn btn-outline-secondary px-4">Quay lại</a>
+              <button type="submit" class="btn btn-success px-4">Cập nhật</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("avatarInput")?.addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  if (file) {
+    document.getElementById("avatarPreview").src = URL.createObjectURL(file);
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+{% extends "layout_admin.html" %}
+{% block title %}➕ Tạo giảng viên{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">➕ Thêm giảng viên</h3>
+      <p class="text-muted mb-0">Tạo tài khoản giảng viên hoặc trợ giảng mới.</p>
+    </div>
+    <a href="/admin/teachers/list" class="btn btn-outline-secondary">← Quay lại</a>
+  </div>
+
+  <div class="card shadow-sm border-0">
+    <div class="card-body p-4">
+      {% if error_message %}
+      <div class="alert alert-danger">{{ error_message }}</div>
+      {% endif %}
+
+      <form method="post" action="/admin/teachers/create">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Họ và tên</label>
+            <input type="text" class="form-control" name="full_name"
+                   value="{{ form_data.full_name if form_data else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" name="email"
+                   value="{{ form_data.email if form_data else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Tên đăng nhập</label>
+            <input type="text" class="form-control" name="username"
+                   value="{{ form_data.username if form_data else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Vai trò</label>
+            <select name="role" class="form-select">
+              {% for r in roles %}
+              <option value="{{ r }}" {% if form_data and form_data.role == r %}selected{% endif %}>
+                {% if r == "teacher" %}Giảng viên{% else %}Trợ giảng{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="alert alert-info mt-4 mb-0">
+          Mật khẩu mặc định sẽ do hệ thống tạo theo logic service hiện tại.
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary px-4">Tạo giảng viên</button>
+          <a href="/admin/teachers/list" class="btn btn-secondary px-4">Hủy</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

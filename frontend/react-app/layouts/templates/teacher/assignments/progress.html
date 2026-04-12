@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>📊 Tiến độ học viên</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
     body {
       background: #f4f6fa;
@@ -49,22 +46,23 @@
 </head>
 
 <body class="p-4">
-
   <div class="container page-card">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h3 class="text-primary fw-bold mb-0">
-        <i class="bi bi-bar-chart-line"></i>
-        Tiến độ học viên – {{ course.course_name }}
-      </h3>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="text-primary fw-bold mb-0">
+          <i class="bi bi-bar-chart-line"></i>
+          Tiến độ học viên – {{ course.course_name }}
+        </h3>
+        {% if teacher_name %}
+        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+        {% endif %}
+      </div>
 
       <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left-circle"></i> Quay lại
       </a>
     </div>
 
-    <!-- Bảng tiến độ -->
     {% if progress_data %}
     <div class="table-responsive">
       <table class="table table-hover align-middle">
@@ -81,14 +79,13 @@
         <tbody>
         {% for p in progress_data %}
           <tr>
-
-            <!-- Học viên -->
             <td>
-              <div class="student-name">{{ p.student.full_name }}</div>
-              <small class="text-muted">{{ p.student.email }}</small>
+              <div class="student-name">
+                {{ p.student.full_name if p.student.full_name else (p.student.username if p.student.username else 'Không rõ') }}
+              </div>
+              <small class="text-muted">{{ p.student.email if p.student.email else '' }}</small>
             </td>
 
-            <!-- Bài học -->
             <td class="text-center">
               <span class="badge bg-info text-dark">
                 <i class="bi bi-journal-check"></i>
@@ -96,7 +93,6 @@
               </span>
             </td>
 
-            <!-- Bài tập -->
             <td class="text-center">
               <span class="badge bg-success">
                 <i class="bi bi-upload"></i>
@@ -104,7 +100,6 @@
               </span>
             </td>
 
-            <!-- Quiz -->
             <td class="text-center">
               <span class="badge bg-warning text-dark">
                 <i class="bi bi-patch-question"></i>
@@ -112,49 +107,36 @@
               </span>
             </td>
 
-            <!-- Tiến độ tổng -->
             <td style="width: 260px;">
-
               {% set progress = p.overall_progress %}
               {% set progress = 100 if progress > 100 else progress %}
+              {% set progress = 0 if progress < 0 else progress %}
 
               <div class="progress-title mb-1">
                 {{ progress|round(1) }}%
               </div>
 
               <div class="progress">
-                <div 
-                    class="progress-bar bg-primary"
-                    role="progressbar"
-                    data-width="{{ progress }}">
-                </div>
+                <div class="progress-bar bg-primary" role="progressbar" data-width="{{ progress }}"></div>
               </div>
-
             </td>
-
           </tr>
         {% endfor %}
         </tbody>
       </table>
     </div>
-
     {% else %}
     <div class="alert alert-warning text-center py-4">
       <i class="bi bi-exclamation-circle"></i>
       Chưa có dữ liệu tiến độ cho khóa học này.
     </div>
     {% endif %}
-
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-  <!-- JS apply width -->
   <script>
     document.querySelectorAll(".progress-bar").forEach(bar => {
-        bar.style.width = bar.dataset.width + "%";
+      bar.style.width = bar.dataset.width + "%";
     });
   </script>
-
 </body>
 </html>

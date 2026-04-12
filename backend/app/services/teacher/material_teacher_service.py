@@ -4,15 +4,35 @@
 Xử lý tài liệu khóa học cho giáo viên (upload, sửa, xóa)
 ==========================================================
 """
+from datetime import datetime
+import shutil
+import uuid
+
 from sqlalchemy.orm import Session
 from app.models.course_material import CourseMaterial
 from app.models.course import Course
-from datetime import datetime
-from pathlib import Path
-import uuid, shutil, os
 
-# ✅ Dùng đường dẫn chuẩn
-from app.config.paths import UPLOAD_MATERIALS
+from app.config.paths import UPLOAD_MATERIALS, build_upload_url
+
+
+def _clean_text(value: str | None) -> str | None:
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
+
+
+def _detect_material_type(file_format: str | None) -> str:
+    ext = (file_format or "").lower()
+    if ext in {"pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx"}:
+        return "document"
+    if ext in {"mp4", "avi", "mov", "mkv"}:
+        return "video"
+    if ext in {"zip", "rar", "7z"}:
+        return "archive"
+    if ext in {"jpg", "jpeg", "png", "gif", "webp"}:
+        return "image"
+    return "file"
 
 
 # ======================================================
@@ -47,34 +67,46 @@ def get_by_id(db: Session, teacher_id: str, material_id: str):
 # ➕ 3️⃣ Tạo tài liệu mới
 # ======================================================
 async def create_material(db: Session, title, description, course_id, file, created_by: str):
+    title = _clean_text(title)
+    description = _clean_text(description)
+
     if not created_by:
         return {"error": "Thiếu thông tin người tạo (created_by)."}
 
-    # Kiểm tra quyền sở hữu khóa học
+    if not title:
+        return {"error": "Tiêu đề tài liệu không được để trống."}
+
+    if not file or not getattr(file, "filename", None):
+        return {"error": "Vui lòng chọn file để tải lên."}
+
     course = db.query(Course).filter(
-        Course.id == course_id, Course.teacher_id == created_by
+        Course.id == course_id,
+        Course.teacher_id == created_by
     ).first()
 
     if not course:
-        return {"error": "❌ Bạn không có quyền thêm tài liệu cho khóa học này."}
+        return {"error": "Bạn không có quyền thêm tài liệu cho khóa học này."}
 
     try:
+        UPLOAD_MATERIALS.mkdir(parents=True, exist_ok=True)
         unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
         file_path = UPLOAD_MATERIALS / unique_name
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
+        ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
+
         new_file = CourseMaterial(
             id=str(uuid.uuid4()),
             course_id=course_id,
-            title=title.strip(),
-            description=description.strip() if description else None,
+            title=title,
+            description=description,
             file_name=unique_name,
-            file_url=f"/uploads/materials/{unique_name}",  # ✅ đúng
+            file_url=build_upload_url("materials", unique_name),
             file_size=file_path.stat().st_size,
-            file_format=file.filename.split(".")[-1].lower(),
-            material_type="slide",
+            file_format=ext,
+            material_type=_detect_material_type(ext),
             created_by=created_by,
             is_public=True,
             created_at=datetime.utcnow(),
@@ -88,7 +120,7 @@ async def create_material(db: Session, title, description, course_id, file, crea
 
     except Exception as e:
         db.rollback()
-        if 'file_path' in locals() and file_path.exists():
+        if "file_path" in locals() and file_path.exists():
             file_path.unlink()
         return {"error": f"Lỗi khi upload tài liệu: {e}"}
 
@@ -99,34 +131,52 @@ async def create_material(db: Session, title, description, course_id, file, crea
 async def update_material(db: Session, teacher_id: str, material_id, title, description, file=None):
     material = get_by_id(db, teacher_id, material_id)
     if not material:
-        return {"error": "❌ Không tìm thấy hoặc không có quyền sửa tài liệu này."}
+        return {"error": "Không tìm thấy hoặc không có quyền sửa tài liệu này."}
 
-    material.title = title.strip()
-    material.description = description.strip() if description else None
+    title = _clean_text(title)
+    description = _clean_text(description)
 
-    if file:
-        unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
-        file_path = UPLOAD_MATERIALS / unique_name
+    if not title:
+        return {"error": "Tiêu đề tài liệu không được để trống."}
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+    old_file_name = material.file_name
+    new_file_path = None
 
-        try:
-            old_path = UPLOAD_MATERIALS / material.file_name
+    try:
+        material.title = title
+        material.description = description
+
+        if file and getattr(file, "filename", None):
+            unique_name = f"{uuid.uuid4()}_{file.filename.replace(' ', '_')}"
+            new_file_path = UPLOAD_MATERIALS / unique_name
+
+            with open(new_file_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
+
+            ext = file.filename.split(".")[-1].lower() if "." in file.filename else ""
+
+            material.file_name = unique_name
+            material.file_url = build_upload_url("materials", unique_name)
+            material.file_size = new_file_path.stat().st_size
+            material.file_format = ext
+            material.material_type = _detect_material_type(ext)
+
+        material.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(material)
+
+        if new_file_path and old_file_name:
+            old_path = UPLOAD_MATERIALS / old_file_name
             if old_path.exists():
                 old_path.unlink()
-        except Exception as e:
-            print(f"⚠️ Không thể xóa file cũ: {e}")
 
-        material.file_name = unique_name
-        material.file_url = f"/uploads/materials/{unique_name}"
-        material.file_size = file_path.stat().st_size
-        material.file_format = file.filename.split(".")[-1].lower()
+        return {"success": True, "material": material}
 
-    material.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(material)
-    return {"success": True, "material": material}
+    except Exception as e:
+        db.rollback()
+        if new_file_path and new_file_path.exists():
+            new_file_path.unlink()
+        return {"error": f"Lỗi khi cập nhật tài liệu: {e}"}
 
 
 # ======================================================
@@ -135,15 +185,16 @@ async def update_material(db: Session, teacher_id: str, material_id, title, desc
 def delete_material(db: Session, teacher_id: str, material_id: str):
     material = get_by_id(db, teacher_id, material_id)
     if not material:
-        return {"error": "❌ Không tìm thấy hoặc không có quyền xóa tài liệu này."}
+        return {"error": "Không tìm thấy hoặc không có quyền xóa tài liệu này."}
 
     try:
         file_path = UPLOAD_MATERIALS / material.file_name
         if file_path.exists():
             file_path.unlink()
+
         db.delete(material)
         db.commit()
-        return {"success": True, "message": f"✅ Đã xóa tài liệu: {material.title}"}
+        return {"success": True, "message": f"Đã xóa tài liệu: {material.title}"}
     except Exception as e:
         db.rollback()
         return {"error": f"Lỗi khi xóa tài liệu: {e}"}
@@ -165,26 +216,18 @@ def get_courses_by_teacher(db: Session, teacher_id: str):
 # 📊 7️⃣ Thống kê nhanh
 # ======================================================
 def get_statistics(db: Session, teacher_id: str):
-    total = (
+    materials = (
         db.query(CourseMaterial)
-        .join(Course, CourseMaterial.course_id == Course.id)
-        .filter(Course.teacher_id == teacher_id)
-        .count()
-    )
-
-    total_size = sum(
-        m.file_size or 0
-        for m in db.query(CourseMaterial)
         .join(Course, CourseMaterial.course_id == Course.id)
         .filter(Course.teacher_id == teacher_id)
         .all()
     )
 
+    total = len(materials)
+    total_size = sum((m.file_size or 0) for m in materials)
+
     public_count = (
-        db.query(CourseMaterial)
-        .join(Course, CourseMaterial.course_id == Course.id)
-        .filter(Course.teacher_id == teacher_id, CourseMaterial.is_public == 1)
-        .count()
+        sum(1 for m in materials if getattr(m, "is_public", False))
         if hasattr(CourseMaterial, "is_public")
         else 0
     )

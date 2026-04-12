@@ -7,26 +7,21 @@
 </head>
 
 <body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
-
-  <div class="card shadow-lg p-4 text-center" style="max-width:500px;width:100%;">
-    
+  <div class="card shadow-lg p-4 text-center" style="max-width:500px;width:100%; border:none;">
     <h4 class="text-danger mb-3">⚠️ Xác nhận xóa lớp học</h4>
 
     <p>Bạn có chắc muốn xóa lớp <strong>{{ cls.class_name }}</strong>?</p>
 
+    <div class="alert alert-warning">
+      Nếu lớp đang có ghi danh hoặc dữ liệu liên kết, hệ thống có thể từ chối xóa.
+    </div>
+
     <form action="/admin/Class/delete/{{ cls.id }}" method="post" class="mt-4">
       <div class="d-flex justify-content-center gap-3">
-        <a href="/admin/Class/manage" class="btn btn-secondary">
-          Hủy
-        </a>
-
-        <button type="submit" class="btn btn-danger">
-          🗑️ Xóa
-        </button>
+        <a href="/admin/Class/manage" class="btn btn-secondary">Hủy</a>
+        <button type="submit" class="btn btn-danger">🗑️ Xóa</button>
       </div>
     </form>
-
   </div>
-
 </body>
 </html>

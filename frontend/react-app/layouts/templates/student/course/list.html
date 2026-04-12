@@ -2,10 +2,6 @@
 {% block title %}📚 Danh sách khóa học{% endblock %}
 
 {% block content %}
-
-<!-- ========================= -->
-<!-- 🎨 STYLE (UI đẹp - FINAL 2025) -->
-<!-- ========================= -->
 <style>
   body {
     background: #f5f8ff;
@@ -54,10 +50,10 @@
   .archived { background:#6c757d; color:#fff; }
 
   .course-title { font-weight: 600; color: #0d6efd; }
-  .price-tag { font-size: 1rem; font-weight:700; color:#dc3545; }
+  .price-tag { font-size: 1rem; font-weight:700; }
+  .price-final { color:#dc3545; }
   .price-free { font-weight:600; color:#198754; }
 
-  /* Ảnh bay */
   .flying-img {
     position: fixed;
     width: 80px; height: 55px;
@@ -68,7 +64,6 @@
     pointer-events: none;
   }
 
-  /* Toast */
   .toast-add-cart {
     position: fixed;
     top: 20px; right: 20px;
@@ -89,7 +84,6 @@
   }
 </style>
 
-<!-- =============== HEADER =============== -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
   <h4 class="fw-bold text-primary mb-3">
     <i class="bi bi-journal-bookmark"></i> Danh sách khóa học
@@ -97,7 +91,7 @@
 
   <form class="d-flex" method="get">
     <input name="q"
-           value="{{ request.query_params.get('q','') }}"
+           value="{{ search_query or request.query_params.get('q','') }}"
            class="form-control me-2"
            style="min-width:220px;"
            placeholder="🔍 Tìm khóa học...">
@@ -105,7 +99,6 @@
   </form>
 </div>
 
-<!-- =============== COURSE LIST =============== -->
 {% if courses %}
 <div class="row g-4">
 
@@ -113,10 +106,8 @@
   <div class="col-lg-4 col-md-6 col-sm-12">
     <div class="course-card h-100">
 
-      <!-- ẢNH -->
       <a href="{{ url_for('student_course_detail', course_id=c.id) }}"
          class="card-img-wrapper text-decoration-none d-block">
-
         <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png'"
              class="card-img-top">
@@ -131,36 +122,46 @@
         </span>
       </a>
 
-      <!-- BODY -->
       <div class="card-body pb-1">
         <h5 class="course-title text-truncate">{{ c.course_name }}</h5>
 
-        <p class="text-muted small">
-          <i class="bi bi-hash"></i> {{ c.course_code }} • 
-          <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 3 }} tín chỉ
+        <p class="text-muted small mb-2">
+          <i class="bi bi-hash"></i> {{ c.course_code or "—" }}
+          • <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 0 }} tín chỉ
         </p>
 
-        <p class="small text-truncate" title="{{ c.description }}">
-          {{ c.description or "Chưa có mô tả cho khóa học này." }}
+        <p class="small" style="min-height: 40px;">
+          {{ c.description[:95] ~ ('...' if c.description and c.description|length > 95 else '') if c.description else "Chưa có mô tả cho khóa học này." }}
         </p>
 
         <div class="mt-1 price-tag">
-          {% if c.price and c.price > 0 %}
-            {{ "{:,.0f}".format(c.price) }}₫
-          {% else %}
+          {% if c.final_price == 0 %}
             <span class="price-free">Miễn phí</span>
+          {% elif c.discount_percent and c.discount_percent > 0 %}
+            <div class="price-final">{{ "{:,.0f}".format(c.final_price) }}₫</div>
+            <div class="text-muted small text-decoration-line-through">
+              {{ "{:,.0f}".format(c.price or 0) }}₫
+            </div>
+          {% else %}
+            <div class="price-final">{{ "{:,.0f}".format(c.final_price) }}₫</div>
           {% endif %}
         </div>
       </div>
 
-      <!-- FOOTER -->
       <div class="card-footer bg-white border-0 pb-3 px-3">
 
-        {% if c.id in enrolled_course_ids %}
+        {% if c.id in enrolled_course_ids or c.id in purchased_ids %}
         <a href="{{ url_for('student_course_progress', course_id=c.id) }}"
            class="btn btn-outline-primary btn-sm shadow-sm w-100 rounded-pill">
           <i class="bi bi-play-circle"></i> Tiếp tục học
         </a>
+
+        {% elif c.final_price == 0 %}
+        <form method="post" action="/student/course/enroll/{{ c.id }}">
+          <button type="submit" class="btn btn-primary btn-sm shadow-sm w-100 rounded-pill">
+            <i class="bi bi-plus-circle"></i> Đăng ký miễn phí
+          </button>
+        </form>
 
         {% else %}
         <button
@@ -186,11 +187,10 @@
 </div>
 {% endif %}
 
-<!-- =============== SCRIPT: ANIMATION GIỎ HÀNG (FIXED) =============== -->
 <script>
 function flyToCart(imgUrl, originElement) {
   const cartIcon = document.getElementById("cartIcon");
-  if (!cartIcon) return;
+  if (!cartIcon || !originElement) return;
 
   const flyingImg = document.createElement("img");
   flyingImg.src = imgUrl;
@@ -214,22 +214,6 @@ function flyToCart(imgUrl, originElement) {
   setTimeout(() => flyingImg.remove(), 700);
 }
 
-document.addEventListener("click", async function(e) {
-  const btn = e.target.closest(".add-to-cart-btn");
-  if (!btn) return;
-
-  const courseId = btn.dataset.id;
-  const imgUrl = btn.dataset.img;
-
-  const imgElement = btn.closest(".course-card").querySelector("img");
-  flyToCart(imgUrl, imgElement);
-
-  /* 🔧 SỬA ĐÚNG ROUTE GIỎ HÀNG */
-  await fetch(`/student/cart/add/${courseId}`);
-
-  showToast("Đã thêm khóa học vào giỏ hàng!");
-});
-
 function showToast(msg) {
   const t = document.createElement("div");
   t.className = "toast-add-cart";
@@ -240,6 +224,30 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove("show"), 1800);
   setTimeout(() => t.remove(), 2600);
 }
-</script>
 
+document.addEventListener("click", async function(e) {
+  const btn = e.target.closest(".add-to-cart-btn");
+  if (!btn) return;
+
+  e.preventDefault();
+
+  const courseId = btn.dataset.id;
+  const imgUrl = btn.dataset.img;
+  const imgElement = btn.closest(".course-card")?.querySelector("img");
+
+  btn.disabled = true;
+  flyToCart(imgUrl, imgElement);
+
+  try {
+    await fetch(`/student/cart/add/${courseId}`, { method: "GET", credentials: "same-origin" });
+    btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã thêm vào giỏ';
+    btn.classList.remove("btn-success");
+    btn.classList.add("btn-outline-primary");
+    showToast("Đã thêm khóa học vào giỏ hàng!");
+  } catch (err) {
+    btn.disabled = false;
+    showToast("Không thể thêm vào giỏ hàng.");
+  }
+});
+</script>
 {% endblock %}

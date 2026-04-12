@@ -3,11 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>📂 Danh sách bài nộp</title>
-
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
     body {
       background-color: #f4f6f9;
@@ -29,15 +26,17 @@
 </head>
 
 <body class="p-4">
-
   <div class="container bg-white p-4 rounded shadow-sm">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4 class="text-primary mb-0">
-        <i class="bi bi-folder2-open"></i>
-        Bài nộp cho: <span class="text-success">{{ assignment.title }}</span>
-      </h4>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h4 class="text-primary mb-0">
+          <i class="bi bi-folder2-open"></i>
+          Bài nộp cho: <span class="text-success">{{ assignment.title }}</span>
+        </h4>
+        {% if teacher_name %}
+        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+        {% endif %}
+      </div>
 
       <div>
         <a href="/teacher/assignments/export/{{ assignment.id }}" class="btn btn-success me-2">
@@ -50,7 +49,6 @@
       </div>
     </div>
 
-    <!-- Danh sách bài nộp -->
     {% if submissions %}
     <div class="table-responsive">
       <table class="table table-hover align-middle">
@@ -68,18 +66,20 @@
 
         <tbody>
         {% for s in submissions %}
-
-          {% set is_late = s.submission_time and s.assignment.due_date and (s.submission_time > s.assignment.due_date) %}
+          {% set is_late = s.submission_time and assignment.due_date and (s.submission_time > assignment.due_date) %}
           {% set files = s.files if s.files else [] %}
 
           <tr>
-
-            <!-- Học viên -->
             <td>
-              <strong>{{ s.student.full_name if s.student else 'Không rõ' }}</strong>
+              <strong>
+                {% if s.student %}
+                  {{ s.student.full_name if s.student.full_name else (s.student.username if s.student.username else 'Không rõ') }}
+                {% else %}
+                  Không rõ
+                {% endif %}
+              </strong>
             </td>
 
-            <!-- Thời gian nộp -->
             <td>
               {% if s.submission_time %}
                 {{ s.submission_time.strftime('%d/%m/%Y %H:%M') }}
@@ -91,7 +91,6 @@
               {% endif %}
             </td>
 
-            <!-- File -->
             <td class="text-center">
               {% if files %}
                 <button class="btn btn-sm btn-outline-primary file-btn"
@@ -104,7 +103,6 @@
               {% endif %}
             </td>
 
-            <!-- Trạng thái -->
             <td class="text-center">
               {% if s.status == 'graded' %}
                 <span class="badge bg-success">
@@ -125,12 +123,10 @@
               {% endif %}
             </td>
 
-            <!-- Điểm -->
             <td class="text-center">
               {{ s.grade if s.grade is not none else '-' }}
             </td>
 
-            <!-- Feedback -->
             <td>
               {% if s.feedback %}
                 {{ s.feedback }}
@@ -139,25 +135,26 @@
               {% endif %}
             </td>
 
-            <!-- Thao tác -->
             <td class="text-center">
               <a href="/teacher/assignments/grade/{{ s.id }}"
                  class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-pencil-square"></i> Chấm điểm
               </a>
             </td>
-
           </tr>
 
-          <!-- Modal xem file -->
           {% if files %}
           <div class="modal fade" id="files_{{ s.id }}" tabindex="-1">
             <div class="modal-dialog modal-lg">
               <div class="modal-content">
-
                 <div class="modal-header">
                   <h5 class="modal-title">
-                    📎 File của {{ s.student.full_name }}
+                    📎 File của
+                    {% if s.student %}
+                      {{ s.student.full_name if s.student.full_name else (s.student.username if s.student.username else 'Không rõ') }}
+                    {% else %}
+                      Không rõ
+                    {% endif %}
                   </h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
@@ -182,24 +179,18 @@
             </div>
           </div>
           {% endif %}
-
         {% endfor %}
         </tbody>
-
       </table>
     </div>
-
     {% else %}
       <div class="alert alert-warning text-center py-4">
         <i class="bi bi-exclamation-circle"></i>
         Chưa có bài nộp nào.
       </div>
     {% endif %}
-
   </div>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>

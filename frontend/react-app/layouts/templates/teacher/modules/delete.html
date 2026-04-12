@@ -2,16 +2,13 @@
 {% block title %}🗑️ Xóa Module{% endblock %}
 
 {% block content %}
-<div class="container mt-5 fade-in">
-
+<div class="container mt-5">
   <div class="card border-danger shadow-sm">
     <div class="card-header bg-danger text-white fw-bold d-flex align-items-center">
       <i class="bi bi-exclamation-triangle-fill me-2"></i> Xác nhận xóa Module
     </div>
 
     <div class="card-body">
-
-      {# ⚠️ THÔNG BÁO LỖI (nếu có) #}
       {% if error_msg %}
       <div class="alert alert-danger d-flex align-items-center" role="alert">
         <i class="bi bi-x-circle-fill me-2"></i>
@@ -20,18 +17,17 @@
       {% endif %}
 
       <p class="mb-4">
-        Bạn có chắc chắn muốn 
+        Bạn có chắc chắn muốn
         <strong class="text-danger">xóa module "{{ module.title }}"</strong>
-        khỏi khóa học 
+        khỏi khóa học
         <strong>{{ course.course_name }}</strong> không?
       </p>
 
-      {# ⚠️ Thông báo nếu module này đã đăng #}
       {% if module.is_published %}
-        <div class="alert alert-warning d-flex align-items-center">
-          <i class="bi bi-lock-fill me-2"></i>
-          <span>Module này đã <b>xuất bản</b>. Bạn không thể xóa.</span>
-        </div>
+      <div class="alert alert-warning d-flex align-items-center">
+        <i class="bi bi-lock-fill me-2"></i>
+        <span>Module này đã <b>xuất bản</b>. Bạn không thể xóa.</span>
+      </div>
       {% endif %}
 
       <form method="post" action="/teacher/modules/delete/{{ module.id }}">
@@ -40,7 +36,6 @@
             <i class="bi bi-arrow-left"></i> Hủy
           </a>
 
-          {# Ẩn nút XÓA nếu module đã đăng #}
           {% if not module.is_published %}
           <button type="submit" class="btn btn-danger">
             <i class="bi bi-trash"></i> Xóa
@@ -48,9 +43,7 @@
           {% endif %}
         </div>
       </form>
-
     </div>
   </div>
-
 </div>
 {% endblock %}

@@ -9,15 +9,21 @@
     </div>
     <div class="card-body">
       <p><strong>Nội dung:</strong> {{ discussion.content }}</p>
-      <p><strong>Người đăng:</strong> {{ user.full_name if user else 'Không rõ' }}</p>
-      <p><strong>Khóa học:</strong> {{ course.name if course else 'Không rõ' }}</p>
+      <p><strong>Người đăng:</strong> {{ user_name }}</p>
+      <p><strong>Khóa học:</strong> {{ course_name }}</p>
+
+      {% if discussion.parent_id %}
+        <p class="text-muted">
+          <i class="bi bi-reply"></i> Đây là một phản hồi của thảo luận khác.
+        </p>
+      {% endif %}
 
       <p class="text-danger mt-3">
         <i class="bi bi-exclamation-circle"></i>
         Hành động này không thể hoàn tác.
       </p>
 
-      <form method="post">
+      <form method="post" action="/admin/discussion/delete/{{ discussion.id }}">
         <div class="d-flex justify-content-end mt-4">
           <a href="/admin/discussion/list" class="btn btn-secondary me-2">
             <i class="bi bi-arrow-left-circle"></i> Hủy

@@ -91,7 +91,7 @@ async def forgot_password(
         # ------------------------------------------------------
         # ✉️ Gửi email (kèm link)
         # ------------------------------------------------------
-        send_reset_email(email, reset_link)
+        await send_reset_email(email, reset_link)
 
         print(f"📧 Reset link gửi tới {email}: {reset_link}")
 

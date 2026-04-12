@@ -4,8 +4,7 @@
 {% block content %}
 <div class="container mt-4 fade-in">
 
-  <!-- 🧭 HEADER -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
     </h4>
@@ -17,58 +16,70 @@
   <div id="calendar" class="shadow-sm border rounded-3 p-2"></div>
 </div>
 
-<!-- 📅 FullCalendar -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 
+<!-- Đưa dữ liệu Jinja ra ngoài JS để tránh lỗi parser của VS Code -->
+<script id="schedule-data" type="application/json">
+  {{ events | tojson | safe }}
+</script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const calendarEl = document.getElementById('calendar');
+document.addEventListener("DOMContentLoaded", function () {
+  const calendarEl = document.getElementById("calendar");
+  const rawDataEl = document.getElementById("schedule-data");
 
-  // 🟦 Router trả về biến "events" → phải lấy đúng tên
-  const scheduleData = JSON.parse(`{{ events | tojson | safe }}`);
+  let scheduleData = [];
+  try {
+    scheduleData = JSON.parse(rawDataEl.textContent || "[]");
+  } catch (err) {
+    console.error("Không parse được dữ liệu lịch:", err);
+    scheduleData = [];
+  }
 
-  // ✨ Chuẩn hóa dữ liệu sự kiện
-  const events = scheduleData.map(s => ({
-    id: s.lesson_id || null, // class_schedule không có lesson_id
-    title: `${s.course_name} - ${s.lesson_title}`,
-    start: s.start,
-    end: s.end,
-    color: s.color || "#0d6efd",
-    extendedProps: {
-      module_name: s.module_name || "Không có module",
-      location: s.location || "Trực tuyến",
-      type: s.type || "lesson"
-    }
-  }));
+  const events = scheduleData.map(function (s) {
+    return {
+      id: s.lesson_id || null,
+      title: s.lesson_title ? `${s.course_name} - ${s.lesson_title}` : (s.course_name || "Sự kiện"),
+      start: s.start,
+      end: s.end,
+      color: s.color || "#0d6efd",
+      extendedProps: {
+        module_name: s.module_name || "Không có module",
+        location: s.location || "Trực tuyến",
+        type: s.type || "lesson"
+      }
+    };
+  });
 
-  // 🗓️ Tạo lịch FullCalendar
   const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    locale: 'vi',
+    initialView: "dayGridMonth",
+    locale: "vi",
     height: "auto",
-    themeSystem: 'bootstrap5',
+    themeSystem: "bootstrap5",
 
     headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      left: "prev,next today",
+      center: "title",
+      right: "dayGridMonth,timeGridWeek,timeGridDay"
     },
 
-    buttonText: { 
-      today: 'Hôm nay', month: 'Tháng', week: 'Tuần', day: 'Ngày' 
+    buttonText: {
+      today: "Hôm nay",
+      month: "Tháng",
+      week: "Tuần",
+      day: "Ngày"
     },
 
     events: events,
 
-    // 📌 Click vào sự kiện
-    eventClick: function(info) {
-      const p = info.event.extendedProps;
-      const message = 
+    eventClick: function (info) {
+      const p = info.event.extendedProps || {};
+      const message =
 `📚 ${info.event.title}
-📦 Module: ${p.module_name}
-📍 Địa điểm: ${p.location}
-🔖 Loại: ${p.type}`;
+📦 Module: ${p.module_name || "Không có module"}
+📍 Địa điểm: ${p.location || "Trực tuyến"}
+🔖 Loại: ${p.type || "lesson"}`;
 
       alert(message);
     }
@@ -79,25 +90,24 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
-  /* 🌈 Calendar style */
   #calendar {
     background: #fff;
     border-radius: 15px;
     padding: 15px;
   }
 
-  .fc { 
-    font-family: 'Inter', sans-serif; 
-    font-size: 0.95rem; 
+  .fc {
+    font-family: "Inter", sans-serif;
+    font-size: 0.95rem;
   }
 
-  .fc-toolbar-title { 
-    font-weight: 600; 
-    color: #0d6efd; 
+  .fc-toolbar-title {
+    font-weight: 600;
+    color: #0d6efd;
   }
 
-  .fc-button { 
-    border-radius: 6px !important; 
+  .fc-button {
+    border-radius: 6px !important;
   }
 
   .fc-event {

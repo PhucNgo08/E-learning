@@ -1,27 +1,31 @@
-# app/database/connection.py
+from collections.abc import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
 
-# ✅ Địa chỉ kết nối MySQL (sửa đúng)
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:111004%40@localhost:3309/e_learning"
-# Nếu mật khẩu MySQL KHÔNG có ký tự đặc biệt, ví dụ 111004123 thì dùng:
-# SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:111004123@localhost:3309/e_learning"
+from app.core.config import Settings
 
-# ✅ Khởi tạo engine (sử dụng đúng biến)
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    pool_pre_ping=True,  # giúp tránh lỗi "MySQL server has gone away"
-)
+settings = Settings()
 
-# ✅ Tạo đối tượng base cho ORM models
 Base = declarative_base()
 
-# ✅ Khởi tạo session
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(
+    settings.DATABASE_URL,
+    echo=getattr(settings, "DEBUG", False),
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    future=True,
+)
 
-# ✅ Hàm tạo phiên DB cho route FastAPI
-def get_db():
+SessionLocal = sessionmaker(
+    bind=engine,
+    autocommit=False,
+    autoflush=False,
+    future=True,
+)
+
+
+def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
         yield db

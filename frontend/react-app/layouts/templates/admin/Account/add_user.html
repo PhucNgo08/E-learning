@@ -4,7 +4,6 @@
 {% block content %}
 <div class="container py-4">
 
-  <!-- 🧭 Header -->
   <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
     <div>
       <h3 class="fw-bold mb-1">
@@ -22,11 +21,16 @@
     </div>
   </div>
 
-  <!-- 🧾 Form -->
   <div class="form-card bg-white p-4 rounded shadow-sm mt-4">
 
-    {% if error %}
-    <div class="alert alert-danger text-center">{{ error }}</div>
+    {% if error_message %}
+    <div class="alert alert-danger border-0 shadow-sm rounded-4 d-flex align-items-start gap-3 mb-4">
+      <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+      <div>
+        <div class="fw-bold">{{ error_title or "Không thể thêm người dùng" }}</div>
+        <div class="small">{{ error_message }}</div>
+      </div>
+    </div>
     {% endif %}
 
     <form method="post" action="/admin/Account/add-user">
@@ -34,41 +38,76 @@
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Tên đăng nhập</label>
-          <input type="text" name="username" class="form-control" required />
+          <input
+            type="text"
+            name="username"
+            class="form-control"
+            value="{{ form_data.username if form_data else '' }}"
+            required
+          />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Email</label>
-          <input type="email" name="email" class="form-control" required />
+          <input
+            type="email"
+            name="email"
+            class="form-control"
+            value="{{ form_data.email if form_data else '' }}"
+            required
+          />
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Mật khẩu</label>
-          <input type="password" name="password" class="form-control" required />
+          <input
+            type="password"
+            name="password"
+            class="form-control"
+            minlength="8"
+            pattern="(?=.*[A-Z])(?=.*@).{8,}"
+            title="Mật khẩu phải có ít nhất 8 ký tự, chứa ít nhất 1 chữ in hoa và ký tự @"
+            autocomplete="new-password"
+            required
+          />
+          <div class="form-text">
+            Mật khẩu phải có ít nhất 8 ký tự, chứa ít nhất 1 chữ in hoa và ký tự @.
+          </div>
         </div>
 
         <div class="col-md-6">
           <label class="form-label fw-semibold">Họ và tên</label>
-          <input type="text" name="full_name" class="form-control" required />
+          <input
+            type="text"
+            name="full_name"
+            class="form-control"
+            value="{{ form_data.full_name if form_data else '' }}"
+            required
+          />
         </div>
 
-        <!-- Role -->
         <div class="col-md-6">
           <label class="form-label fw-semibold">Vai trò</label>
           <select name="role" id="role" class="form-select" required>
-            <option value="student">🎓 Sinh viên</option>
-            <option value="teacher">👩‍🏫 Giáo viên</option>
+            <option value="student"
+              {% if not form_data or form_data.role == 'student' %}selected{% endif %}>
+              🎓 Sinh viên
+            </option>
+            <option value="teacher"
+              {% if form_data and form_data.role == 'teacher' %}selected{% endif %}>
+              👩‍🏫 Giáo viên
+            </option>
           </select>
         </div>
 
-        <!-- MSSV -->
         <div class="col-md-6" id="mssv-container" style="display:none;">
           <label class="form-label fw-semibold">Mã số sinh viên (MSSV)</label>
-          <input 
+          <input
             type="text"
             name="mssv"
             id="mssv"
             class="form-control"
+            value="{{ form_data.mssv if form_data else '' }}"
             placeholder="VD: 2380600001"
           />
         </div>
@@ -78,7 +117,10 @@
           <select name="academic_year_id" class="form-select">
             <option value="">-- Chọn khóa học --</option>
             {% for year in academic_years %}
-            <option value="{{ year.id }}">{{ year.year_name }}</option>
+            <option value="{{ year.id }}"
+              {% if form_data and form_data.academic_year_id == year.id|string %}selected{% endif %}>
+              {{ year.year_name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -88,7 +130,10 @@
           <select name="major_id" class="form-select">
             <option value="">-- Chọn ngành học --</option>
             {% for major in majors %}
-            <option value="{{ major.id }}">{{ major.major_name }}</option>
+            <option value="{{ major.id }}"
+              {% if form_data and form_data.major_id == major.id|string %}selected{% endif %}>
+              {{ major.major_name }}
+            </option>
             {% endfor %}
           </select>
         </div>
@@ -113,7 +158,6 @@
   </footer>
 </div>
 
-<!-- Script xử lý MSSV -->
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const roleSelect = document.getElementById("role");
@@ -127,7 +171,7 @@
       } else {
         mssvContainer.style.display = "none";
         mssvInput.value = "";
-        mssvInput.disabled = true;   // không submit mssv khi không phải sinh viên
+        mssvInput.disabled = true;
       }
     }
 
@@ -135,5 +179,4 @@
     toggleMSSV();
   });
 </script>
-
 {% endblock %}

@@ -2,15 +2,12 @@
 {% block title %}📘 Quản lý khóa học{% endblock %}
 
 {% block content %}
-
 <style>
   body {
     background: linear-gradient(135deg,#dbe8ff,#f6faff);
     font-family: "Inter", sans-serif;
     padding-bottom: 80px;
   }
-
-  /* Glass Navbar */
   .navbar-glass {
     backdrop-filter: blur(16px);
     background: rgba(255,255,255,0.22);
@@ -20,8 +17,6 @@
     font-weight: 700;
     color: #003087 !important;
   }
-
-  /* Course Card */
   .course-card {
     backdrop-filter: blur(18px);
     background: rgba(255,255,255,0.28);
@@ -30,24 +25,20 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     overflow: hidden;
     transition: all .25s ease;
-    cursor: pointer;
     height: 100%;
     display: flex;
     flex-direction: column;
   }
-
   .course-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 14px 32px rgba(0,0,0,0.12);
   }
-
   .thumb {
     height: 160px;
     width: 100%;
     object-fit: cover;
     border-radius: 18px 18px 0 0;
   }
-
   .status-badge {
     position: absolute;
     top: 12px;
@@ -59,7 +50,6 @@
     border-radius: 10px;
     font-weight: 600;
   }
-
   .published { color: #0a7f32; }
   .draft { color: #c59e00; }
   .archived { color: #444; }
@@ -81,17 +71,8 @@
     bottom: 0;
     width: 100%;
   }
-
-  /* Responsive */
-  @media(max-width:576px){
-    .thumb{height:140px;}
-    .course-card{border-radius:14px;}
-    .status-badge{font-size:0.65rem;}
-  }
 </style>
 
-
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-glass py-3 shadow-sm">
   <div class="container">
     <a class="navbar-brand" href="/teacher/dashboard">
@@ -104,29 +85,21 @@
   </div>
 </nav>
 
-
-<!-- MAIN CONTENT -->
 <div class="container py-4">
-
   <h3 class="fw-bold text-primary mb-4">
     <i class="bi bi-journal-bookmark"></i> Quản lý khóa học
   </h3>
 
   {% if courses %}
   <div class="row g-4">
-
     {% for c in courses %}
     <div class="col-lg-4 col-md-6 col-sm-12">
-
       <div class="course-card position-relative">
-
-        <!-- Thumbnail -->
         <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.src='/uploads/course_thumbnails/default-course.png'"
              class="thumb"
              onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
 
-        <!-- Status (Nghiệp vụ: trạng thái do Admin quyết định) -->
         <span class="status-badge {{ c.status }}">
           {% if c.status == 'published' %}
             Đã xuất bản
@@ -138,8 +111,6 @@
         </span>
 
         <div class="p-3 d-flex flex-column flex-grow-1">
-
-          <!-- Title -->
           <h5 class="fw-bold text-primary text-truncate"
               onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
             {{ c.course_name }}
@@ -149,7 +120,6 @@
             {{ c.description or "Chưa có mô tả..." }}
           </p>
 
-          <!-- Difficulty & Credit -->
           <div class="d-flex justify-content-between small text-muted mt-2">
             <span><i class="bi bi-bar-chart"></i>
               {% if c.difficulty_level == 'beginner' %} Dễ
@@ -161,7 +131,6 @@
             <span><i class="bi bi-clock-history"></i> {{ c.credit_hours }} TC</span>
           </div>
 
-          <!-- Visibility + Status info -->
           <div class="meta-badges mt-2 d-flex flex-wrap gap-1">
             {% if c.status == 'draft' %}
               <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
@@ -190,18 +159,14 @@
 
           <hr class="my-2">
 
-          <!-- Action Buttons -->
           <div class="d-flex justify-content-between mt-auto">
-
-            <a href="/teacher/modules/list/{{ c.id }}" 
-               class="btn btn-outline-primary btn-sm"
-               title="Quản lý Modules">
+            <a href="/teacher/modules/list/{{ c.id }}"
+               class="btn btn-outline-primary btn-sm">
               <i class="bi bi-layers"></i>
             </a>
 
-            <a href="/teacher/courses/edit/{{ c.id }}" 
-               class="btn btn-outline-success btn-sm"
-               title="Chỉnh sửa khóa học">
+            <a href="/teacher/courses/edit/{{ c.id }}"
+               class="btn btn-outline-success btn-sm">
               <i class="bi bi-pencil"></i>
             </a>
 
@@ -212,27 +177,20 @@
                 <i class="bi bi-trash"></i>
               </button>
             </form>
-
           </div>
         </div>
-
       </div>
     </div>
     {% endfor %}
-
   </div>
-
   {% else %}
     <div class="alert alert-info text-center shadow-sm mt-5">
       <i class="bi bi-info-circle"></i> Bạn chưa tạo khóa học nào.
     </div>
   {% endif %}
-
 </div>
-
 
 <footer>
   © {{ now.year }} E-Learning | Giáo viên: {{ teacher.full_name }}
 </footer>
-
 {% endblock %}

@@ -1,0 +1,32 @@
+{% extends "layout_teacher.html" %}
+{% block title %}⚠️ Lỗi hệ thống{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-5 text-center">
+          <div class="display-4 mb-3">⚠️</div>
+          <h3 class="fw-bold text-danger">Đã xảy ra lỗi</h3>
+          <p class="text-muted mb-4">
+            Hệ thống hiện không thể xử lý yêu cầu này.
+          </p>
+
+          {% if error_message %}
+          <div class="alert alert-warning text-start">
+            <strong>Chi tiết:</strong><br>
+            {{ error_message }}
+          </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-center gap-2 flex-wrap">
+            <a href="/teacher/dashboard" class="btn btn-primary px-4">Về Dashboard</a>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary px-4">Quay lại</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

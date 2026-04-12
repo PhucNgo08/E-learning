@@ -1,0 +1,68 @@
+{% extends "layout_teacher.html" %}
+{% block title %}🗑️ Xóa tài liệu{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="bg-white p-4 rounded shadow-sm mx-auto" style="max-width: 720px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3 class="fw-bold text-danger mb-0">
+        <i class="bi bi-trash"></i> Xác nhận xóa tài liệu
+      </h3>
+      <a href="/teacher/materials/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+      </a>
+    </div>
+
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      Bạn sắp xóa một tài liệu. Thao tác này không thể hoàn tác.
+    </div>
+
+    <div class="border rounded p-3 bg-light mb-4">
+      <div class="mb-2">
+        <strong>📝 Tiêu đề:</strong> {{ material.title }}
+      </div>
+
+      <div class="mb-2">
+        <strong>📘 Khóa học:</strong>
+        {{ material.course.course_name if material.course else '—' }}
+      </div>
+
+      <div class="mb-2">
+        <strong>📎 Tệp:</strong>
+        {% if material.file_name %}
+          {{ material.file_name }}
+        {% else %}
+          <span class="text-muted">Không có tệp</span>
+        {% endif %}
+      </div>
+
+      <div class="mb-2">
+        <strong>📂 Định dạng:</strong> {{ material.file_format or 'N/A' }}
+      </div>
+
+      <div class="mb-2">
+        <strong>📦 Kích thước:</strong>
+        {{ ((material.file_size or 0) / 1024 / 1024) | round(2) }} MB
+      </div>
+
+      <div class="mb-0">
+        <strong>🕒 Ngày tải lên:</strong>
+        {{ material.created_at.strftime('%d/%m/%Y %H:%M') if material.created_at else '' }}
+      </div>
+    </div>
+
+    <form method="post" action="/teacher/materials/delete/{{ material.id }}">
+      <div class="d-flex justify-content-end gap-2">
+        <a href="/teacher/materials/list" class="btn btn-outline-secondary">
+          <i class="bi bi-x-circle"></i> Hủy
+        </a>
+
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-trash"></i> Xóa tài liệu
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

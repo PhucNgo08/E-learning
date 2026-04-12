@@ -1,11 +1,15 @@
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey
-from sqlalchemy.orm import relationship
 from datetime import datetime
-from app.database.connection import Base
 import uuid
 
-def uuid_str():
+from sqlalchemy import Column, DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import relationship
+
+from app.database.connection import Base
+
+
+def uuid_str() -> str:
     return str(uuid.uuid4())
+
 
 class Discussion(Base):
     __tablename__ = "discussions"
@@ -13,21 +17,32 @@ class Discussion(Base):
     id = Column(String(36), primary_key=True, default=uuid_str)
     course_id = Column(String(36), ForeignKey("courses.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
     content = Column(Text, nullable=False)
-
-    # ❗ PHẢI CÓ – KHỚP DATABASE & SERVICE
     parent_id = Column(String(36), ForeignKey("discussions.id", ondelete="CASCADE"), nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True)
 
-    # ========== Relationships ==========
     user = relationship("User", back_populates="discussions")
-
     course = relationship("Course", back_populates="discussions")
 
-    # Self-referential (reply)
-    parent = relationship("Discussion", remote_side=[id], backref="children")
+    parent = relationship(
+        "Discussion",
+        remote_side=[id],
+        back_populates="children",
+    )
+    children = relationship(
+        "Discussion",
+        back_populates="parent",
+        cascade="all, delete-orphan",
+    )
 
-    def __repr__(self):
-        return f"<Discussion id={self.id} parent_id={self.parent_id}>"
+    discussion_likes = relationship(
+        "DiscussionLike",
+        back_populates="discussion",
+        cascade="all, delete-orphan",
+    )
+
+    def __repr__(self) -> str:
+        return f"<Discussion(id='{self.id}', user_id='{self.user_id}')>"

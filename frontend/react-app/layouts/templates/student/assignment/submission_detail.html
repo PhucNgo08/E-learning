@@ -4,47 +4,82 @@
 {% block content %}
 <div class="container py-4 fade-in">
 
-  <h3 class="fw-bold mb-3">
-    <i class="bi bi-file-earmark-text"></i> Chi tiết bài nộp
-  </h3>
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h3 class="fw-bold mb-0">
+      <i class="bi bi-file-earmark-text me-2"></i>Chi tiết bài nộp
+    </h3>
+
+    <a href="/student/assignment/result/{{ submission.assignment_id }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại kết quả
+    </a>
+  </div>
 
   <div class="card shadow-sm border-0">
     <div class="card-body">
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <p class="mb-2"><strong>📄 Bài tập:</strong> {{ submission.assignment.title if submission.assignment else '—' }}</p>
+          <p class="mb-2"><strong>📚 Khóa học:</strong> {{ submission.assignment.course.course_name if submission.assignment and submission.assignment.course else '—' }}</p>
+          {% if submission.group_id %}
+            <p class="mb-2"><strong>👥 Nhóm:</strong> {{ submission.group.group_name if submission.group else 'Bài nộp nhóm' }}</p>
+          {% endif %}
+        </div>
 
-      <p><strong>📄 Bài tập:</strong> {{ submission.assignment.title }}</p>
-
-      <p><strong>⏰ Thời gian nộp:</strong>
-        {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") }}
-      </p>
-
-      <p><strong>📌 Trạng thái:</strong>
-        {% if submission.status == 'graded' %}
-          <span class="badge bg-success">Đã chấm</span>
-        {% elif submission.status == 'submitted' %}
-          <span class="badge bg-info text-dark">Đã nộp</span>
-        {% elif submission.status == 'late' %}
-          <span class="badge bg-warning text-dark">Nộp trễ</span>
-        {% else %}
-          <span class="badge bg-secondary">Chưa nộp</span>
-        {% endif %}
-      </p>
+        <div class="col-md-6">
+          <p class="mb-2"><strong>⏰ Thời gian nộp:</strong>
+            {% if submission.submission_time %}
+              {{ submission.submission_time.strftime("%d/%m/%Y %H:%M") }}
+            {% else %}
+              —
+            {% endif %}
+          </p>
+          <p class="mb-2"><strong>📌 Trạng thái:</strong>
+            {% if submission.status == 'graded' %}
+              <span class="badge bg-success">Đã chấm</span>
+            {% elif submission.status == 'submitted' %}
+              <span class="badge bg-info text-dark">Đã nộp</span>
+            {% elif submission.status == 'late' %}
+              <span class="badge bg-warning text-dark">Nộp trễ</span>
+            {% elif submission.status == 'resubmitted' %}
+              <span class="badge bg-primary">Nộp lại</span>
+            {% else %}
+              <span class="badge bg-secondary">Chưa nộp</span>
+            {% endif %}
+          </p>
+          <p class="mb-0"><strong>💯 Điểm:</strong>
+            {% if submission.grade is not none %}
+              <span class="text-success fw-bold">{{ submission.grade }}</span>
+            {% else %}
+              —
+            {% endif %}
+          </p>
+        </div>
+      </div>
 
       <hr>
 
-      <!-- Nội dung -->
-      <p><strong>📝 Nội dung bài nộp:</strong></p>
-      <p class="text-muted">{{ submission.submission_text or "—" }}</p>
+      <p class="mb-2"><strong>📝 Nội dung bài nộp:</strong></p>
+      <div class="text-muted" style="white-space: pre-line;">
+        {{ submission.submission_text or "—" }}
+      </div>
 
       <hr>
 
-      <!-- FILE -->
-      <p><strong>📎 File đã nộp:</strong></p>
-
+      <p class="mb-2"><strong>📎 File đã nộp:</strong></p>
       {% if submission.files %}
         <ul class="list-group">
           {% for f in submission.files %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              {{ f.file_name }}
+            <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+              <div>
+                <div class="fw-semibold">{{ f.file_name }}</div>
+                <small class="text-muted">
+                  {% if f.file_size %}
+                    {{ '%.2f'|format((f.file_size / 1024 / 1024)) }} MB
+                  {% else %}
+                    Không rõ dung lượng
+                  {% endif %}
+                </small>
+              </div>
               <a href="/student/assignment/download/{{ f.id }}" class="btn btn-sm btn-primary">
                 <i class="bi bi-download"></i> Tải về
               </a>
@@ -52,31 +87,15 @@
           {% endfor %}
         </ul>
       {% else %}
-        <p class="text-muted">Không có file đính kèm.</p>
+        <p class="text-muted mb-0">Không có file đính kèm.</p>
       {% endif %}
 
       <hr>
 
-      <!-- Điểm -->
-      <p><strong>💯 Điểm:</strong>
-        {% if submission.grade is not none %}
-          <span class="text-success fw-bold">{{ submission.grade }}</span>
-        {% else %}
-          —
-        {% endif %}
-      </p>
-
-      <!-- Feedback -->
-      <p><strong>📝 Nhận xét của giáo viên:</strong></p>
-      <p class="text-muted">{{ submission.feedback or "Chưa có nhận xét." }}</p>
-
-      <div class="mt-3">
-        <a href="/student/assignment/result/{{ submission.assignment_id }}" 
-           class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Quay lại kết quả
-        </a>
+      <p class="mb-2"><strong>📝 Nhận xét của giáo viên:</strong></p>
+      <div class="text-muted" style="white-space: pre-line;">
+        {{ submission.feedback or "Chưa có nhận xét." }}
       </div>
-
     </div>
   </div>
 

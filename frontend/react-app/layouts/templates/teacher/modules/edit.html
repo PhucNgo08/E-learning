@@ -2,36 +2,68 @@
 {% block title %}✏️ Chỉnh sửa Module{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-  <h4 class="fw-bold text-primary mb-4">
-    ✏️ Chỉnh sửa chương: {{ module.title }}
-  </h4>
+<div class="container mt-4">
+  <div class="bg-white p-4 rounded shadow-sm">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h4 class="fw-bold text-primary mb-1">
+          ✏️ Chỉnh sửa chương: {{ module.title }}
+        </h4>
+        {% if teacher %}
+        <small class="text-muted">
+          Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+        </small>
+        {% endif %}
+      </div>
 
-  <form method="post" action="/teacher/modules/edit/{{ module.id }}">
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Số thứ tự chương</label>
-      <input type="number" name="module_number" class="form-control" value="{{ module.module_number }}" required>
-    </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Tên chương</label>
-      <input type="text" name="title" class="form-control" value="{{ module.title }}" required>
-    </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Mô tả</label>
-      <textarea name="description" class="form-control" rows="3">{{ module.description }}</textarea>
-    </div>
-    <div class="mb-3">
-      <label class="form-label fw-semibold">Mục tiêu học tập</label>
-      <textarea name="learning_objectives" class="form-control" rows="3">{{ module.learning_objectives }}</textarea>
-    </div>
-    <div class="text-end">
       <a href="/teacher/modules/list/{{ course.id }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Quay lại
       </a>
-      <button type="submit" class="btn btn-primary">
-        <i class="bi bi-save"></i> Cập nhật
-      </button>
     </div>
-  </form>
+
+    <form method="post" action="/teacher/modules/edit/{{ module.id }}">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Số thứ tự chương</label>
+        <input
+          type="number"
+          name="module_number"
+          class="form-control"
+          min="1"
+          value="{{ module.module_number }}"
+          required
+        >
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Tên chương</label>
+        <input
+          type="text"
+          name="title"
+          class="form-control"
+          value="{{ module.title }}"
+          required
+        >
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Mô tả</label>
+        <textarea name="description" class="form-control" rows="3">{{ module.description or '' }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Mục tiêu học tập</label>
+        <textarea name="learning_objectives" class="form-control" rows="3">{{ module.learning_objectives or '' }}</textarea>
+      </div>
+
+      <div class="text-end">
+        <a href="/teacher/modules/list/{{ course.id }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save"></i> Cập nhật
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}

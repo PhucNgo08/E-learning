@@ -4,36 +4,46 @@ from sqlalchemy.orm import Session
 from datetime import datetime
 
 from app.database.connection import get_db
-from app.services.admin.report_management_service import get_dashboard_stats, generate_report
+from app.services.admin.report_management_service import (
+    get_dashboard_stats,
+    generate_report,
+)
 from app.config.template_config import get_template_by_path
+# from app.dependencies.auth import get_current_admin   # nên thêm nếu có auth admin
 
 
-# ============================================================
-# 🚀 Router
-# ============================================================
 report_router = APIRouter(
     prefix="/admin/reports",
     tags=["Admin - Reports"]
 )
 
 
-# ============================================================
-# 📊 1️⃣ Tổng quan thống kê
-# ============================================================
-@report_router.get("/manage", response_class=HTMLResponse)
-def manage_reports(request: Request, db: Session = Depends(get_db)):
-    """Trang thống kê tổng quan hệ thống"""
+def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
     tpl = get_template_by_path(request.url.path)
+    base_context = {
+        "request": request,
+        "current_year": datetime.now().year,
+    }
+    base_context.update(context)
+    return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
 
+
+@report_router.get("/manage", response_class=HTMLResponse)
+def manage_reports(
+    request: Request,
+    db: Session = Depends(get_db),
+    # current_admin=Depends(get_current_admin),   # bật nếu có auth
+):
+    """Trang thống kê tổng quan hệ thống"""
     try:
         summary = get_dashboard_stats(db)
 
-        return tpl.TemplateResponse(
+        return render_template(
+            request,
             "reports/manage_reports.html",
             {
-                "request": request,
                 "summary": summary,
-                "page_title": "📊 Báo cáo thống kê hệ thống"
+                "page_title": "📊 Báo cáo thống kê hệ thống",
             }
         )
 
@@ -41,40 +51,52 @@ def manage_reports(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Lỗi thống kê: {str(e)}")
 
 
-# ============================================================
-# 📈 2️⃣ Sinh báo cáo chi tiết (Course / Enrollment / Students / Teachers / Quiz)
-# ============================================================
 @report_router.post("/generate", response_class=HTMLResponse)
 def report_generate(
     request: Request,
     report_type: str = Form(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    # current_admin=Depends(get_current_admin),   # bật nếu có auth
 ):
     """Sinh báo cáo chi tiết theo loại"""
-    tpl = get_template_by_path(request.url.path)
-
     try:
-        data = generate_report(report_type, db)
+        report = generate_report(db, report_type)
+        data = report.get("data")
 
-        return tpl.TemplateResponse(
+        rows = data if isinstance(data, list) else []
+        summary_data = data if isinstance(data, dict) else None
+
+        if isinstance(data, list):
+            total = len(data)
+        elif isinstance(data, dict):
+            total = len(data)
+        elif data is None:
+            total = 0
+        else:
+            total = 1
+
+        return render_template(
+            request,
             "reports/report_result.html",
             {
-                "request": request,
-                "data": data,
-                "report_type": report_type,
-                "total": len(data),
-                "generated_at": datetime.now()
+                "report": report,
+                "report_type": report.get("report_type"),
+                "rows": rows,
+                "summary_data": summary_data,
+                "total": total,
+                "generated_at": report.get("generated_at"),
+                "page_title": "📈 Kết quả báo cáo",
             }
         )
 
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi tạo báo cáo: {str(e)}")
 
 
-# ============================================================
-# 🗑️ 3️⃣ Xóa báo cáo (Mock)
-# ============================================================
-@report_router.delete("/delete/{report_id}")
+# Nếu gọi từ form HTML thường thì nên dùng POST thay vì DELETE
+@report_router.post("/delete/{report_id}")
 def delete_report(report_id: str):
     """Xóa báo cáo (mô phỏng)"""
     return {"message": f"✅ Đã xóa báo cáo {report_id} (mô phỏng)"}

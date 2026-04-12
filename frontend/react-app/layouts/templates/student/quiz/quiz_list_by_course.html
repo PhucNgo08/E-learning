@@ -1,0 +1,54 @@
+{% extends "layout_student.html" %}
+{% block title %}📘 Quiz theo khóa học{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">📘 Danh sách Quiz theo khóa học</h3>
+      <p class="text-muted mb-0">
+        Khóa học: <strong>{{ course.course_name if course else "Không xác định" }}</strong>
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/student/quiz" class="btn btn-outline-secondary">← Tất cả Quiz</a>
+      <a href="/student/dashboard" class="btn btn-outline-primary">Trang chính</a>
+    </div>
+  </div>
+
+  {% if quizzes %}
+  <div class="row g-3">
+    {% for quiz in quizzes %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <h5 class="fw-bold text-primary">{{ quiz.title }}</h5>
+          <p class="text-muted small mb-2">{{ quiz.description or "Không có mô tả." }}</p>
+
+          <div class="small mb-3">
+            <div><strong>Loại:</strong> {{ quiz.quiz_type or "—" }}</div>
+            <div><strong>Độ khó:</strong> {{ quiz.difficulty_level or "—" }}</div>
+            <div><strong>Thời gian:</strong> {{ quiz.time_limit_minutes or 0 }} phút</div>
+            <div><strong>Số câu:</strong> {{ quiz.total_questions or 0 }}</div>
+          </div>
+
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="/student/quiz/detail/{{ quiz.id }}" class="btn btn-outline-primary btn-sm">
+              Xem chi tiết
+            </a>
+            <a href="/student/quiz/start/{{ quiz.id }}" class="btn btn-primary btn-sm">
+              Làm bài
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    Khóa học này hiện chưa có quiz nào.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

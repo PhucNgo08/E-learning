@@ -14,17 +14,11 @@ router = APIRouter(
 )
 
 
-# ============================================================
-# 🏠 0️⃣ Redirect mặc định
-# ============================================================
 @router.get("/", response_class=HTMLResponse)
 async def schedule_redirect():
-    return RedirectResponse(url="/student/schedule/calendar")
+    return RedirectResponse(url="/student/schedule/calendar", status_code=302)
 
 
-# ============================================================
-# 🗓️ 1️⃣ Calendar View
-# ============================================================
 @router.get("/calendar", response_class=HTMLResponse)
 async def view_calendar(
     request: Request,
@@ -32,14 +26,13 @@ async def view_calendar(
     current_user=Depends(get_current_student)
 ):
     tpl = get_template_by_path(request.url.path)
-
-    schedule = schedule_service.get_student_schedule(db, current_user.id)
+    events = schedule_service.get_student_schedule(db, current_user.id)
 
     return tpl.TemplateResponse(
         "schedule/calendar.html",
         {
             "request": request,
-            "events": schedule,          # đổi 'schedule' → 'events' để chuẩn FullCalendar
+            "events": events,
             "student": current_user,
             "page_title": "🗓️ Lịch học & Kiểm tra",
             "active_page": "schedule",
@@ -47,9 +40,6 @@ async def view_calendar(
     )
 
 
-# ============================================================
-# 📋 2️⃣ List View
-# ============================================================
 @router.get("/list", response_class=HTMLResponse)
 async def view_list(
     request: Request,
@@ -57,7 +47,6 @@ async def view_list(
     current_user=Depends(get_current_student)
 ):
     tpl = get_template_by_path(request.url.path)
-
     schedules = schedule_service.get_schedule_list(db, current_user.id)
 
     return tpl.TemplateResponse(

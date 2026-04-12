@@ -1,188 +1,191 @@
-"""
-===================================================================
-💰 STUDENT WALLET ROUTER — Glass Neo 2025 (v6.0 PRO MAX)
-QR Tĩnh • Không phụ thuộc API ngoài • Auto-balance • Auto-check
-===================================================================
-"""
-
 import uuid
-from fastapi import (
-    APIRouter, Depends, Request, HTTPException, Form
-)
+
+from fastapi import APIRouter, Depends, Request, HTTPException, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.dependencies.auth import get_current_student
-
 from app.services.wallet_service import (
     get_balance,
-    student_pay,
-    student_deposit,
     student_withdraw,
     student_transfer,
-    get_student_transactions
+    get_student_transactions,
+    find_transaction_by_code,
 )
-
 from app.config.template_config import templates
 
 
 router = APIRouter(
     prefix="/student/wallet",
-    tags=["Student Wallet"]
+    tags=["Student Wallet"],
 )
 
 
-# ============================================================
-# ⭐ DEPENDENCY DÙNG CHUNG
-# ============================================================
 def wallet_common(
+    request: Request,
     db: Session = Depends(get_db),
-    student=Depends(get_current_student)
+    student=Depends(get_current_student),
 ):
-    """Trả về student + balance dùng cho mọi trang."""
     balance = get_balance(db, student.id)
-    return {"db": db, "student": student, "balance": balance}
+
+    # Đẩy dữ liệu sang request.state để layout/student_globals dùng lại
+    request.state.wallet_balance = balance
+    request.state.user_avatar = (
+        request.session.get("user_avatar")
+        or "/uploads/avatars/default-avatar.png"
+    )
+
+    return {
+        "db": db,
+        "student": student,
+        "balance": balance,
+    }
 
 
-# ============================================================
-# 🧾 PAGE: Wallet Home
-# ============================================================
+def render_wallet_template(
+    request: Request,
+    template_name: str,
+    context: dict,
+    status_code: int = 200,
+):
+    return templates["student"].TemplateResponse(
+        template_name,
+        {
+            "request": request,
+            "active_page": "wallet",
+            **context,
+        },
+        status_code=status_code,
+    )
+
+
 @router.get("/page", response_class=HTMLResponse)
 def wallet_page(
     request: Request,
     common=Depends(wallet_common),
-    success: str = None,
-    error: str = None,
+    success: str | None = None,
+    error: str | None = None,
 ):
-    tx = get_student_transactions(common["db"], common["student"].id, limit=50)
+    transactions = get_student_transactions(
+        common["db"],
+        common["student"].id,
+        limit=50,
+    )
 
-    return templates["student"].TemplateResponse(
+    return render_wallet_template(
+        request,
         "wallet/index.html",
         {
-            "request": request,
             **common,
-            "transactions": tx,
+            "transactions": transactions,
             "success": success,
             "error": error,
-            "active_page": "wallet",
-        }
+        },
     )
 
 
-# ============================================================
-# PAGE: Deposit Form
-# ============================================================
 @router.get("/deposit", response_class=HTMLResponse)
 def deposit_page(
     request: Request,
     common=Depends(wallet_common),
-    success: str = None,
-    error: str = None,
+    success: str | None = None,
+    error: str | None = None,
 ):
-    return templates["student"].TemplateResponse(
+    return render_wallet_template(
+        request,
         "wallet/deposit.html",
         {
-            "request": request,
             **common,
             "success": success,
             "error": error,
-            "active_page": "wallet",
-        }
+        },
     )
 
 
-# ============================================================
-# 🟦 PAGE: Deposit QR — Static QR Image
-# ============================================================
 @router.get("/deposit/qr", response_class=HTMLResponse)
 def deposit_qr(
     request: Request,
     amount: float,
-    common=Depends(wallet_common)
+    common=Depends(wallet_common),
 ):
     if amount <= 0:
-        raise HTTPException(400, "Số tiền không hợp lệ")
+        raise HTTPException(status_code=400, detail="Số tiền không hợp lệ")
 
     student = common["student"]
-
-    # 🔐 Tạo mã giao dịch duy nhất
     trans_code = f"ELEARN_{student.id[:6]}_{uuid.uuid4().hex[:6]}"
 
-    # 💳 Thông tin hiển thị
-    BANK_NAME = "Sacombank"
-    ACCOUNT_NO = "040109231950"
-    ACCOUNT_NAME = "LUONG HONG TIEN"
-
-    # 🔥 Không có qr_url – dùng hình tĩnh trong static/QR/
-    return templates["student"].TemplateResponse(
+    return render_wallet_template(
+        request,
         "wallet/deposit_qr.html",
         {
-            "request": request,
             **common,
             "amount": amount,
             "trans_code": trans_code,
-            "bank": BANK_NAME,
-            "account": ACCOUNT_NO,
-            "account_name": ACCOUNT_NAME,
-            "active_page": "wallet",
-        }
+            "bank": "Sacombank",
+            "account": "040109231950",
+            "account_name": "LUONG HONG TIEN",
+        },
     )
 
 
-# ============================================================
-# 🟧 API: Check if transaction completed (Auto-check)
-# ============================================================
 @router.get("/check_transaction/{trans_code}")
-def check_transaction(trans_code: str, db: Session = Depends(get_db)):
-    from app.models.wallet import WalletTransaction
-
-    tx = db.query(WalletTransaction).filter_by(transaction_code=trans_code).first()
-
+def check_transaction(
+    trans_code: str,
+    db: Session = Depends(get_db),
+):
+    tx = find_transaction_by_code(db, trans_code)
     return {"exists": bool(tx)}
 
 
-# ============================================================
-# 🟢 API: Deposit Manual
-# ============================================================
 @router.post("/deposit")
 def deposit_submit(
     amount: float = Form(...),
     description: str = Form("Nạp tiền thủ công"),
+    trans_code: str | None = Form(None),
     common=Depends(wallet_common),
 ):
-    try:
-        tx = student_deposit(common["db"], common["student"].id, amount, description)
-        return {"success": True, "balance": tx.balance_after}
-    except Exception as e:
-        raise HTTPException(400, str(e))
+    """
+    Lưu ý:
+    - Student KHÔNG được tự cộng ví trực tiếp.
+    - Route này chỉ tiếp nhận yêu cầu nạp tiền / mã tham chiếu để chờ đối soát.
+    - Khi admin xác nhận giao dịch, hệ thống mới cộng tiền vào ví.
+    """
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Số tiền nạp phải > 0")
+
+    final_description = (description or "Nạp tiền thủ công").strip()
+    if trans_code:
+        final_description = f"{final_description} | Mã GD: {trans_code.strip()}"
+
+    return {
+        "success": True,
+        "status": "pending_confirmation",
+        "message": "Đã ghi nhận yêu cầu nạp tiền. Vui lòng chờ xác nhận giao dịch.",
+        "amount": amount,
+        "trans_code": (trans_code or "").strip(),
+        "description": final_description,
+    }
 
 
-# ============================================================
-# 💸 PAGE: Withdraw
-# ============================================================
 @router.get("/withdraw", response_class=HTMLResponse)
 def withdraw_page(
     request: Request,
     common=Depends(wallet_common),
-    success: str = None,
-    error: str = None,
+    success: str | None = None,
+    error: str | None = None,
 ):
-    return templates["student"].TemplateResponse(
+    return render_wallet_template(
+        request,
         "wallet/withdraw.html",
         {
-            "request": request,
             **common,
             "success": success,
             "error": error,
-            "active_page": "wallet",
-        }
+        },
     )
 
 
-# ============================================================
-# 💸 API: Withdraw Submit
-# ============================================================
 @router.post("/withdraw", response_class=HTMLResponse)
 def withdraw_submit(
     request: Request,
@@ -192,46 +195,38 @@ def withdraw_submit(
 ):
     try:
         student_withdraw(common["db"], common["student"].id, amount, description)
-        return RedirectResponse("/student/wallet/page?success=withdraw", 303)
-
+        return RedirectResponse("/student/wallet/page?success=withdraw", status_code=303)
     except Exception as e:
-        return templates["student"].TemplateResponse(
+        return render_wallet_template(
+            request,
             "wallet/withdraw.html",
             {
-                "request": request,
                 **common,
                 "error": str(e),
                 "amount": amount,
-                "active_page": "wallet",
-            }
+            },
+            status_code=400,
         )
 
 
-# ============================================================
-# 🔁 PAGE: Transfer
-# ============================================================
 @router.get("/transfer", response_class=HTMLResponse)
 def transfer_page(
     request: Request,
     common=Depends(wallet_common),
-    success: str = None,
-    error: str = None,
+    success: str | None = None,
+    error: str | None = None,
 ):
-    return templates["student"].TemplateResponse(
+    return render_wallet_template(
+        request,
         "wallet/transfer.html",
         {
-            "request": request,
             **common,
             "success": success,
             "error": error,
-            "active_page": "wallet",
-        }
+        },
     )
 
 
-# ============================================================
-# 🔁 API: Transfer Submit
-# ============================================================
 @router.post("/transfer", response_class=HTMLResponse)
 def transfer_submit(
     request: Request,
@@ -240,29 +235,22 @@ def transfer_submit(
     common=Depends(wallet_common),
 ):
     try:
-        student_transfer(
-            common["db"], common["student"].id,
-            recipient_email, amount
-        )
-        return RedirectResponse("/student/wallet/page?success=transfer", 303)
-
+        student_transfer(common["db"], common["student"].id, recipient_email, amount)
+        return RedirectResponse("/student/wallet/page?success=transfer", status_code=303)
     except Exception as e:
-        return templates["student"].TemplateResponse(
+        return render_wallet_template(
+            request,
             "wallet/transfer.html",
             {
-                "request": request,
                 **common,
                 "error": str(e),
                 "recipient_email": recipient_email,
                 "amount": amount,
-                "active_page": "wallet",
-            }
+            },
+            status_code=400,
         )
 
 
-# ============================================================
-# 🟦 API: Get current balance (Auto refresh every 3s)
-# ============================================================
 @router.get("/balance")
 def get_wallet_balance(common=Depends(wallet_common)):
     return {"balance": common["balance"]}

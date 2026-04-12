@@ -1,18 +1,20 @@
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from datetime import datetime, timedelta
+from starlette.requests import Request
 import os
+
+from app.database.connection import get_db
 
 
 # ==========================================================
-# 📌 1) ĐỊNH NGHĨA BASE_DIR CHÍNH XÁC 100%
+# 📌 1) ĐỊNH NGHĨA BASE_DIR CHÍNH XÁC
 # ==========================================================
 # File này nằm tại:
 # backend/app/config/template_config.py
-# Project root cần là:
-# KHoaHocOnline/ (nằm trên backend)
-
-BASE_DIR = Path(__file__).resolve().parents[3]   # LÊN 3 CẤP: config → app → backend → KHoaHocOnline
+# Project root:
+# KHoaHocOnline/
+BASE_DIR = Path(__file__).resolve().parents[3]
 
 
 # ==========================================================
@@ -28,8 +30,10 @@ def log_template_config():
     print("=" * 80)
     print("📁 [TEMPLATE CONFIG] Root template dir:", ROOT_TEMPLATE_DIR)
     print("📂 Exists:", ROOT_TEMPLATE_DIR.exists())
-    print("📂 Test student/discussion/reply_block.html:",
-          (ROOT_TEMPLATE_DIR / "student" / "discussion" / "reply_block.html").exists())
+    print(
+        "📂 Test student/discussion/reply_block.html:",
+        (ROOT_TEMPLATE_DIR / "student" / "discussion" / "reply_block.html").exists()
+    )
     print("=" * 80)
 
 
@@ -39,7 +43,7 @@ if not os.environ.get("TEMPLATE_LOGGED"):
 
 
 # ==========================================================
-# 📌 4) KHỞI TẠO TEMPLATE ENGINE (Admin / Teacher / Student / Auth / Root)
+# 📌 4) KHỞI TẠO TEMPLATE ENGINE
 # ==========================================================
 templates = {
     "admin": Jinja2Templates(directory=str(ROOT_TEMPLATE_DIR / "admin")),
@@ -65,7 +69,7 @@ for name, tpl in templates.items():
 
 
 # ==========================================================
-# 📌 6) FILTER CHUNG: filesize, datetime, date_short
+# 📌 6) FILTER CHUNG
 # ==========================================================
 def filesize_fmt(value: int):
     if not value:
@@ -89,31 +93,27 @@ def date_short(value: datetime):
     return (value + timedelta(hours=7)).strftime("%d/%m/%Y")
 
 
-# Đăng ký filter
-for tpl in templates.values():
-    tpl.env.filters["filesize"] = filesize_fmt
-    tpl.env.filters["datetime"] = datetime_fmt
-    tpl.env.filters["date_short"] = date_short
-
-
-# ==========================================================
-# 📌 7) FILTER todatetime (parse ISO string → datetime)
-# ==========================================================
 def todatetime(value):
     if not value:
         return None
     try:
-        return datetime.fromisoformat(value.replace("Z", ""))
+        return datetime.fromisoformat(str(value).replace("Z", ""))
     except Exception:
-        return value
+        try:
+            return datetime.strptime(str(value), "%Y-%m-%dT%H:%M:%S")
+        except Exception:
+            return value
 
 
 for tpl in templates.values():
+    tpl.env.filters["filesize"] = filesize_fmt
+    tpl.env.filters["datetime"] = datetime_fmt
+    tpl.env.filters["date_short"] = date_short
     tpl.env.filters["todatetime"] = todatetime
 
 
 # ==========================================================
-# 📌 8) HÀM TIỆN LỢI CHỌN TEMPLATE THEO PREFIX
+# 📌 7) HÀM CHỌN TEMPLATE THEO PREFIX
 # ==========================================================
 def get_template_by_path(path: str) -> Jinja2Templates:
     if path.startswith("/admin"):
@@ -126,84 +126,60 @@ def get_template_by_path(path: str) -> Jinja2Templates:
         return templates["auth"]
     return templates["root"]
 
-# ==========================================================
-# 🕓 FILTER BỔ SUNG: todatetime — chuyển chuỗi ISO thành datetime
-# ==========================================================
-from datetime import datetime
 
-def todatetime(value):
-    """Chuyển chuỗi ISO 8601 (yyyy-MM-ddTHH:mm:ss) thành datetime object."""
-    if not value:
-        return None
-    try:
-        # Nếu có ký tự 'Z' (ISO format UTC), loại bỏ trước khi parse
-        return datetime.fromisoformat(value.replace("Z", ""))
-    except Exception:
-        try:
-            return datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
-        except Exception:
-            return value
-
-# 🔗 Đăng ký filter cho tất cả template
-for tpl in templates.values():
-    tpl.env.filters["todatetime"] = todatetime
 # ==========================================================
-# 📌 9) GLOBAL CONTEXT CHO STUDENT — LẤY SỐ DƯ VÍ
+# 📌 8) GLOBAL CONTEXT CHO STUDENT — CACHE THEO REQUEST
 # ==========================================================
-from starlette.requests import Request
-from app.services.wallet_service import get_balance
-from app.database.connection import get_db
-
 def student_globals(request: Request):
-    """
-    Hàm global cho toàn bộ layout_student.html
-    → Tự động lấy avatar + số dư ví + thông tin realtime.
-    """
+    cached = getattr(request.state, "_student_globals_cache", None)
+    if cached is not None:
+        return cached
+
+    result = {
+        "wallet_balance": 0,
+        "avatar_url": "/uploads/avatars/default-avatar.png",
+    }
+
+    db = None
     try:
         user_id = request.session.get("user_id")
         role = request.session.get("role")
 
-        if role == "student" and user_id:
+        if role != "student" or not user_id:
+            request.state._student_globals_cache = result
+            return result
+
+        avatar = (
+            getattr(request.state, "user_avatar", None)
+            or request.session.get("user_avatar")
+            or "/uploads/avatars/default-avatar.png"
+        )
+
+        if hasattr(request.state, "wallet_balance"):
+            balance = request.state.wallet_balance
+        else:
             db = next(get_db())
-
-            # import ở đây để tránh lỗi vòng import
-            from app.models.user import User
             from app.services.wallet_service import get_balance
-
-            user = db.query(User).filter(User.id == user_id).first()
-
-            # Ưu tiên avatar theo thứ tự:
-            # 1. session (sau khi upload hình)
-            # 2. avatar_url trong DB
-            # 3. avatar mặc định
-            avatar = (
-                request.session.get("user_avatar")
-                or (user.avatar_url if user and user.avatar_url else None)
-                or "/uploads/avatars/default-avatar.png"
-            )
-
             balance = get_balance(db, user_id)
 
-            return {
-                "wallet_balance": balance,
-                "avatar_url": avatar
-            }
-
-        # Nếu không phải student
-        return {
-            "wallet_balance": 0,
-            "avatar_url": "/uploads/avatars/default-avatar.png"
+        result = {
+            "wallet_balance": balance or 0,
+            "avatar_url": avatar,
         }
 
-    except:
-        return {
+    except Exception:
+        result = {
             "wallet_balance": 0,
-            "avatar_url": "/uploads/avatars/default-avatar.png"
+            "avatar_url": "/uploads/avatars/default-avatar.png",
         }
+    finally:
+        if db is not None:
+            db.close()
+
+    request.state._student_globals_cache = result
+    return result
 
 
-
-# Gắn vào ENV của template student
 templates["student"].env.globals.update({
     "student_globals": student_globals
 })

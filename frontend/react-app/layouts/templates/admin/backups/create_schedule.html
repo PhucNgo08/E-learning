@@ -1,96 +1,88 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>⏱️ Lập lịch sao lưu</title>
+{% extends "layout_admin.html" %}
+{% block title %}⏱️ Lập lịch sao lưu{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #e7eeff, #d9e6ff);
+    font-family: "Inter", sans-serif;
+  }
+  .box {
+    max-width: 600px;
+    width: 100%;
+    background: #fff;
+    padding: 35px;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    animation: fadeIn .3s ease-in-out;
+    margin: 30px auto;
+  }
+  @keyframes fadeIn {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+</style>
 
-  <style>
-    body {
-      background: linear-gradient(135deg, #e7eeff, #d9e6ff);
-      font-family: "Inter", sans-serif;
-    }
-    .box {
-      max-width: 600px;
-      width: 100%;
-      background: #fff;
-      padding: 35px;
-      border-radius: 16px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-      animation: fadeIn .3s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity:0; transform: translateY(20px); }
-      to   { opacity:1; transform: translateY(0); }
-    }
-  </style>
-</head>
-
-<body class="d-flex justify-content-center align-items-center min-vh-100">
-
+<div class="container py-4">
   <div class="box">
-
     <h3 class="fw-bold text-primary text-center mb-4">
       <i class="bi bi-clock-history"></i> Lập lịch sao lưu hệ thống
     </h3>
 
-    <form method="post" action="/admin/backups/schedule/create">
+    {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
 
-      <!-- Schedule Name -->
+    <form method="post" action="/admin/backups/schedule/create">
       <div class="mb-3">
         <label class="form-label fw-semibold">Tên lịch backup</label>
-        <input type="text" class="form-control" name="schedule_name" required placeholder="VD: Backup hàng ngày server">
+        <input type="text" class="form-control" name="schedule_name" required
+               placeholder="VD: Backup hàng ngày server"
+               value="{{ form_data.schedule_name if form_data else '' }}">
       </div>
 
-      <!-- Backup type -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Loại backup</label>
         <select class="form-select" name="backup_type">
-          <option value="full">🔵 Full Backup</option>
-          <option value="incremental">🟡 Incremental Backup</option>
+          <option value="full" {% if not form_data or form_data.backup_type == 'full' %}selected{% endif %}>🔵 Full Backup</option>
+          <option value="incremental" {% if form_data and form_data.backup_type == 'incremental' %}selected{% endif %}>🟡 Incremental Backup</option>
         </select>
       </div>
 
-      <!-- Frequency -->
       <div class="mb-3">
         <label class="form-label fw-semibold">Tần suất chạy</label>
         <select class="form-select" name="frequency">
-          <option value="daily">📅 Hàng ngày</option>
-          <option value="weekly">📆 Hàng tuần</option>
-          <option value="monthly">🗓️ Hàng tháng</option>
+          <option value="daily" {% if not form_data or form_data.frequency == 'daily' %}selected{% endif %}>📅 Hàng ngày</option>
+          <option value="weekly" {% if form_data and form_data.frequency == 'weekly' %}selected{% endif %}>📆 Hàng tuần</option>
+          <option value="monthly" {% if form_data and form_data.frequency == 'monthly' %}selected{% endif %}>🗓️ Hàng tháng</option>
         </select>
       </div>
 
-      <!-- Retention -->
       <div class="mb-3">
         <label class="form-label fw-semibold">
           Giữ lại bản backup trong (ngày)
           <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip"
              title="Sau số ngày này backup cũ sẽ được xóa tự động."></i>
         </label>
-        <input type="number" name="retention_days" class="form-control" min="1" max="365" value="30">
+        <input type="number" name="retention_days" class="form-control" min="1" max="365"
+               value="{{ form_data.retention_days if form_data else 30 }}">
       </div>
 
       <div class="text-end mt-4">
-        <a href="/admin/backups/manage" class="btn btn-outline-secondary me-2">
+        <a href="/admin/backups/schedule/manage" class="btn btn-outline-secondary me-2">
           <i class="bi bi-arrow-left-circle"></i> Hủy
         </a>
         <button type="submit" class="btn btn-warning text-dark fw-semibold">
           <i class="bi bi-save"></i> Tạo lịch sao lưu
         </button>
       </div>
-
     </form>
-
   </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    const tooltipTriggerList=document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    tooltipTriggerList.forEach(el=>new bootstrap.Tooltip(el))
-  </script>
-
-</body>
-</html>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+  tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+</script>
+{% endblock %}

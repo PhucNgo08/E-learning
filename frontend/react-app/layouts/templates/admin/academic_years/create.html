@@ -29,7 +29,7 @@
   }
 
   .form-label {
-    font-weight: 500;
+    font-weight: 600;
   }
 
   .btn {
@@ -48,7 +48,8 @@
     transform: translateY(-2px);
   }
 
-  .btn-secondary:hover {
+  .btn-secondary:hover,
+  .btn-outline-secondary:hover {
     transform: translateY(-2px);
   }
 
@@ -66,7 +67,6 @@
 </style>
 
 <div class="container py-4">
-  <!-- 🧭 Header -->
   <div class="page-header">
     <h3 class="fw-bold mb-1">
       <i class="bi bi-calendar2-plus"></i> Thêm năm học mới
@@ -74,7 +74,6 @@
     <p class="mb-0">Tạo mới thông tin năm học cho hệ thống E-Learning.</p>
   </div>
 
-  <!-- 🧩 Form -->
   <div class="form-card">
     {% if error %}
       <div class="alert alert-danger text-center shadow-sm mb-4">
@@ -85,28 +84,68 @@
     <form method="post" action="/admin/academic_years/create">
       <div class="mb-3">
         <label class="form-label">Mã năm học</label>
-        <input type="text" name="year_code" class="form-control" placeholder="VD: 2025" required />
+        <input
+          type="text"
+          name="year_code"
+          class="form-control"
+          placeholder="VD: K25 hoặc 2025"
+          value="{{ form_data.year_code if form_data else '' }}"
+          required
+        />
       </div>
 
       <div class="mb-3">
         <label class="form-label">Tên năm học</label>
-        <input type="text" name="year_name" class="form-control" placeholder="VD: Năm học 2025 - 2026" required />
+        <input
+          type="text"
+          name="year_name"
+          class="form-control"
+          placeholder="VD: Năm học 2025 - 2026"
+          value="{{ form_data.year_name if form_data else '' }}"
+          required
+        />
       </div>
 
       <div class="row mb-3">
         <div class="col-md-6">
           <label class="form-label">Bắt đầu</label>
-          <input type="number" name="start_year" class="form-control" placeholder="2025" required />
+          <input
+            type="number"
+            name="start_year"
+            class="form-control"
+            placeholder="2025"
+            min="2000"
+            max="2100"
+            value="{{ form_data.start_year if form_data else '' }}"
+            required
+          />
         </div>
         <div class="col-md-6">
           <label class="form-label">Kết thúc</label>
-          <input type="number" name="end_year" class="form-control" placeholder="2026" required />
+          <input
+            type="number"
+            name="end_year"
+            class="form-control"
+            placeholder="2026"
+            min="2000"
+            max="2100"
+            value="{{ form_data.end_year if form_data else '' }}"
+            required
+          />
         </div>
       </div>
 
       <div class="form-check mb-4">
-        <input type="checkbox" name="is_active" class="form-check-input" id="isActive" />
-        <label class="form-check-label" for="isActive">Kích hoạt (Hoạt động)</label>
+        <input
+          type="checkbox"
+          name="is_active"
+          class="form-check-input"
+          id="isActive"
+          {% if not form_data or form_data.is_active %}checked{% endif %}
+        />
+        <label class="form-check-label" for="isActive">
+          Kích hoạt (Hoạt động)
+        </label>
       </div>
 
       <div class="d-flex justify-content-between align-items-center">

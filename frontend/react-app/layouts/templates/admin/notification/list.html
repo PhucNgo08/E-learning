@@ -12,6 +12,7 @@
     background: #fff;
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease;
+    overflow: hidden;
   }
   .notify-card:hover {
     transform: translateY(-3px);
@@ -21,6 +22,7 @@
     color: #4051b5;
     text-transform: uppercase;
     font-size: 0.85rem;
+    white-space: nowrap;
   }
   .badge-recipient {
     background: #e9f5ff;
@@ -33,15 +35,24 @@
 </style>
 
 <div class="container mt-4 fade-in">
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div>
       <h3 class="fw-bold text-primary mb-1">
         <i class="bi bi-bell-fill me-2"></i> Quản lý Thông báo
       </h3>
-      <p class="text-muted mb-0">Theo dõi và quản lý các thông báo gửi đến người dùng.</p>
+      <p class="text-muted mb-0">
+        Theo dõi và quản lý các thông báo gửi đến người dùng.
+        <span class="badge bg-light text-dark border ms-2">Tổng: {{ total }}</span>
+      </p>
     </div>
+
     <div class="d-flex align-items-center gap-2">
-      <input type="text" class="form-control form-control-sm search-box" placeholder="🔍 Tìm tiêu đề hoặc người nhận...">
+      <input
+        type="text"
+        id="searchInput"
+        class="form-control form-control-sm search-box"
+        placeholder="🔍 Tìm tiêu đề hoặc người nhận..."
+      >
       <a href="/admin/notification/create" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Tạo mới
       </a>
@@ -52,51 +63,81 @@
     <table class="table table-hover align-middle mb-0">
       <thead>
         <tr>
-          <th>#</th>
+          <th style="width: 70px;">#</th>
           <th>Tiêu đề</th>
           <th>Nội dung</th>
           <th>Người nhận</th>
           <th>Ngày tạo</th>
-          <th class="text-center">Thao tác</th>
+          <th class="text-center" style="width: 130px;">Thao tác</th>
         </tr>
       </thead>
-      <tbody>
-        {% for n in notifications %}
-        <tr>
-          <td class="text-muted">{{ loop.index }}</td>
-          <td class="fw-semibold text-dark">{{ n.title }}</td>
-          <td>{{ n.message[:80] }}{% if n.message|length > 80 %}...{% endif %}</td>
-          <td><span class="badge badge-recipient">{{ user_map.get(n.user_id, 'Không rõ') }}</span></td>
-          <td><small class="text-muted">{{ n.created_at.strftime('%d/%m/%Y %H:%M') }}</small></td>
-          <td class="text-center">
-            <a href="/admin/notification/delete/{{ n.id }}" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-               onclick="return confirm('Xóa thông báo này?');">
-              <i class="bi bi-trash"></i> Xóa
-            </a>
-          </td>
-        </tr>
+      <tbody id="notificationTableBody">
+        {% if notifications %}
+          {% for n in notifications %}
+          <tr>
+            <td class="text-muted">{{ loop.index }}</td>
+            <td class="fw-semibold text-dark">{{ n.title }}</td>
+            <td>
+              {{ n.message[:80] }}{% if n.message and n.message|length > 80 %}...{% endif %}
+            </td>
+            <td>
+              <span class="badge badge-recipient">
+                {{ user_map.get(n.user_id, 'Không rõ') }}
+              </span>
+            </td>
+            <td>
+              <small class="text-muted">
+                {{ n.created_at.strftime('%d/%m/%Y %H:%M') if n.created_at else '—' }}
+              </small>
+            </td>
+            <td class="text-center">
+              <a
+                href="/admin/notification/delete/{{ n.id }}"
+                class="btn btn-sm btn-outline-danger rounded-pill px-3"
+              >
+                <i class="bi bi-trash"></i> Xóa
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
         {% else %}
-        <tr>
-          <td colspan="6" class="text-center text-muted py-4">
-            <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
-            <small>Chưa có thông báo nào.</small>
-          </td>
-        </tr>
-        {% endfor %}
+          <tr id="emptyRow">
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
+              <small>Chưa có thông báo nào.</small>
+            </td>
+          </tr>
+        {% endif %}
       </tbody>
     </table>
+  </div>
+
+  <div id="noSearchResult" class="alert alert-light border mt-3 d-none text-center text-muted">
+    Không tìm thấy thông báo phù hợp.
   </div>
 </div>
 
 <script>
-  // 🔍 Tìm kiếm nhanh
-  const searchInput = document.querySelector('.search-box');
-  searchInput?.addEventListener('input', function () {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll('tbody tr').forEach(row => {
-      const text = row.textContent.toLowerCase();
-      row.style.display = text.includes(filter) ? '' : 'none';
-    });
+const searchInput = document.getElementById('searchInput');
+const tbody = document.getElementById('notificationTableBody');
+const noSearchResult = document.getElementById('noSearchResult');
+
+searchInput?.addEventListener('input', function () {
+  const filter = this.value.toLowerCase().trim();
+  const rows = Array.from(tbody.querySelectorAll('tr')).filter(row => row.id !== 'emptyRow');
+
+  let visibleCount = 0;
+
+  rows.forEach(row => {
+    const text = row.textContent.toLowerCase();
+    const matched = text.includes(filter);
+    row.style.display = matched ? '' : 'none';
+    if (matched) visibleCount++;
   });
+
+  if (rows.length > 0) {
+    noSearchResult.classList.toggle('d-none', visibleCount > 0 || !filter);
+  }
+});
 </script>
 {% endblock %}
