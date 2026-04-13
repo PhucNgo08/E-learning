@@ -1,0 +1,84 @@
+{% extends "layout_admin.html" %}
+{% block title %}Yêu cầu nạp tiền{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h3 class="fw-bold mb-1">Yêu cầu nạp tiền</h3>
+            <div class="text-muted">Đang chờ duyệt: <strong>{{ pending_topup_count }}</strong></div>
+        </div>
+        <a href="/admin/wallets/manage" class="btn btn-secondary rounded-3">Quay lại quản lý ví</a>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+            <div class="d-flex flex-wrap gap-2 mb-4">
+                <a href="/admin/wallets/topup-requests?status=pending" class="btn {% if status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} rounded-3">Pending</a>
+                <a href="/admin/wallets/topup-requests?status=approved" class="btn {% if status == 'approved' %}btn-success{% else %}btn-outline-success{% endif %} rounded-3">Approved</a>
+                <a href="/admin/wallets/topup-requests?status=rejected" class="btn {% if status == 'rejected' %}btn-danger{% else %}btn-outline-danger{% endif %} rounded-3">Rejected</a>
+                <a href="/admin/wallets/topup-requests?status=all" class="btn {% if status == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %} rounded-3">Tất cả</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Mã YC</th>
+                            <th>Người dùng</th>
+                            <th>Số tiền</th>
+                            <th>Nội dung CK</th>
+                            <th>Trạng thái</th>
+                            <th>Thời gian</th>
+                            <th style="min-width: 280px;">Xử lý</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if requests %}
+                            {% for item in requests %}
+                            <tr>
+                                <td class="fw-semibold">{{ item.request_code }}</td>
+                                <td>
+                                    <div class="fw-semibold">{{ item.user.full_name if item.user and item.user.full_name else (item.user.username if item.user else '-') }}</div>
+                                    <div class="small text-muted">{{ item.user.email if item.user else '' }}</div>
+                                </td>
+                                <td class="fw-bold text-success">{{ "{:,.0f}".format(item.amount) }} đ</td>
+                                <td><code>{{ item.transfer_note }}</code></td>
+                                <td>
+                                    <span class="badge {% if item.status == 'approved' %}bg-success{% elif item.status == 'pending' %}bg-warning text-dark{% elif item.status == 'rejected' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                        {{ item.status }}
+                                    </span>
+                                </td>
+                                <td class="small text-muted">{{ item.requested_at.strftime("%d/%m/%Y %H:%M") if item.requested_at else "" }}</td>
+                                <td>
+                                    {% if item.status == 'pending' %}
+                                    <div class="d-grid gap-2">
+                                        <form method="post" action="/admin/wallets/topup-requests/{{ item.id }}/approve" class="d-flex gap-2">
+                                            <input type="text" name="reviewed_note" class="form-control form-control-sm" placeholder="Ghi chú duyệt (tuỳ chọn)">
+                                            <button class="btn btn-sm btn-success">Duyệt</button>
+                                        </form>
+                                        <form method="post" action="/admin/wallets/topup-requests/{{ item.id }}/reject" class="d-flex gap-2">
+                                            <input type="text" name="reviewed_note" class="form-control form-control-sm" placeholder="Lý do từ chối" required>
+                                            <button class="btn btn-sm btn-danger">Từ chối</button>
+                                        </form>
+                                    </div>
+                                    {% else %}
+                                        <div class="small text-muted">
+                                            {{ item.reviewed_note or '-' }}
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">Không có yêu cầu phù hợp.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

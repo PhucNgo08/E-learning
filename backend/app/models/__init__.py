@@ -10,6 +10,7 @@ from .course_material_version import CourseMaterialVersion
 
 from .wallet_accounts import WalletAccount
 from .wallet_transactions import WalletTransaction
+from .wallet_topup_request import WalletTopupRequest
 
 # === Core & Academic ===
 from .academic_year import AcademicYear

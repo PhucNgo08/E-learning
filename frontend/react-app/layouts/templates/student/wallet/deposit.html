@@ -1,117 +1,208 @@
 {% extends "layout_student.html" %}
-{% block title %}🔋 Nạp tiền vào ví{% endblock %}
+{% block title %}Nạp tiền vào ví{% endblock %}
 
 {% block content %}
-
-<div class="container fade show" style="max-width: 650px; margin-top: 40px;">
-
-    <div class="glass-card shadow-lg p-4" style="border-radius: 22px;">
-
-        <div class="text-center mb-4">
-            <div class="mx-auto mb-3"
-                style="width: 85px; height: 85px; border-radius: 50%;
-                       background: linear-gradient(135deg, #3b82f6, #2563eb);
-                       display:flex; justify-content:center; align-items:center;
-                       box-shadow:0 8px 18px rgba(37,99,235,0.35);">
-                <i class="bi bi-credit-card-fill text-white" style="font-size: 2.4rem;"></i>
-            </div>
-
-            <h2 class="fw-bold mb-1">🔋 Nạp tiền vào ví</h2>
-            <p class="text-muted mb-0">Vui lòng nhập số tiền muốn nạp vào ví E-Learning.</p>
-        </div>
-
-        {% if error %}
-        <div class="alert alert-danger d-flex align-items-center mb-3">
-            <i class="bi bi-x-circle-fill me-2"></i>
-            <strong>{{ error }}</strong>
-        </div>
-        {% endif %}
-
-        <form action="/student/wallet/deposit/qr" method="get" id="depositForm">
-
-            <label class="form-label fw-semibold">Số tiền cần nạp</label>
-
-            <div class="input-group mb-3">
-                <span class="input-group-text fw-bold text-primary"
-                    style="background: rgba(37,99,235,0.12); border-radius: 12px 0 0 12px;">
-                    <i class="bi bi-cash-coin"></i>
-                </span>
-
-                <input type="text" id="amountInput" name="amount"
-                    class="form-control form-control-lg"
-                    style="border-radius: 0 12px 12px 0;"
-                    placeholder="VD: 50.000"
-                    required>
-            </div>
-
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                {% set quick_values = [20000, 50000, 100000, 200000, 500000] %}
-                {% for v in quick_values %}
-                <button type="button"
-                    class="btn btn-outline-primary quick-btn fw-semibold"
-                    data-amount="{{ v }}">
-                    {{ "{:,.0f}".format(v) }} đ
-                </button>
-                {% endfor %}
-            </div>
-
-            <button id="submitBtn" class="btn btn-primary w-100 fw-semibold py-3 mt-2"
-                style="border-radius: 12px; font-size: 1.05rem;
-                       background: linear-gradient(135deg, #2563eb, #1e40af);
-                       box-shadow:0 6px 16px rgba(37,99,235,0.35);">
-                Tiếp tục →
-            </button>
-
-        </form>
-
-        <div class="text-center mt-4">
-            <a href="/student/wallet/page"
-                class="fw-semibold"
-                style="text-decoration:none; color:#2563eb;">
-                ← Quay về ví
-            </a>
-        </div>
-
+<div class="container py-4">
+  <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="mb-1 fw-bold">
+        <i class="bi bi-wallet2 me-2 text-primary"></i>Nạp tiền vào ví
+      </h2>
+      <div class="text-muted">
+        Tạo yêu cầu nạp tiền, sau đó quét QR để chuyển khoản đúng nội dung.
+      </div>
     </div>
 
+    <a href="/student/wallet/page" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Quay lại ví
+    </a>
+  </div>
+
+  {% if success %}
+  <div class="alert alert-success shadow-sm border-0">
+    <i class="bi bi-check-circle me-2"></i>{{ success }}
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="alert alert-danger shadow-sm border-0">
+    <i class="bi bi-exclamation-octagon me-2"></i>{{ error }}
+  </div>
+  {% endif %}
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-lg-5">
+          <h4 class="fw-bold mb-3">Tạo yêu cầu nạp tiền</h4>
+          <p class="text-muted mb-4">
+            Nhập số tiền bạn muốn nạp. Hệ thống sẽ tạo mã chuyển khoản riêng để bạn quét QR và chuyển đúng nội dung.
+          </p>
+
+          <form method="post" action="/student/wallet/deposit" id="depositForm">
+            <div class="mb-4">
+              <label for="amount" class="form-label fw-semibold">Số tiền nạp (VNĐ)</label>
+              <input
+                type="number"
+                class="form-control form-control-lg rounded-3"
+                id="amount"
+                name="amount"
+                min="10000"
+                step="1000"
+                placeholder="Ví dụ: 50000"
+                value="{{ form_amount if form_amount is defined and form_amount else '' }}"
+                required
+              >
+              <div class="form-text">
+                Nên nhập số nguyên VNĐ. Tối thiểu 10.000 VNĐ.
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label for="note" class="form-label fw-semibold">Ghi chú</label>
+              <textarea
+                class="form-control rounded-3"
+                id="note"
+                name="note"
+                rows="4"
+                placeholder="Ví dụ: Nạp tiền để mua khóa học WEB101"
+              >{{ form_note if form_note is defined and form_note else '' }}</textarea>
+              <div class="form-text">
+                Ghi chú này chỉ lưu trong yêu cầu nạp tiền của bạn.
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <div class="fw-semibold mb-2">Chọn nhanh số tiền</div>
+              <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="10000">10.000</button>
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="20000">20.000</button>
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="50000">50.000</button>
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="100000">100.000</button>
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="200000">200.000</button>
+                <button type="button" class="btn btn-light border rounded-pill quick-amount" data-amount="500000">500.000</button>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+              <button type="submit" class="btn btn-primary btn-lg rounded-pill px-4">
+                <i class="bi bi-qr-code-scan me-2"></i>Tạo QR thanh toán
+              </button>
+
+              <a href="/student/wallet/page" class="btn btn-outline-secondary btn-lg rounded-pill px-4">
+                Hủy
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-info-circle me-2 text-primary"></i>Quy trình nạp tiền
+          </h5>
+
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div>
+              <div class="fw-semibold">Tạo yêu cầu nạp</div>
+              <div class="text-muted small">Nhập số tiền và tạo mã QR.</div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div>
+              <div class="fw-semibold">Quét QR và chuyển khoản</div>
+              <div class="text-muted small">Chuyển đúng số tiền và đúng nội dung.</div>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div>
+              <div class="fw-semibold">Chờ xác nhận</div>
+              <div class="text-muted small">Admin hoặc hệ thống sẽ đối soát giao dịch.</div>
+            </div>
+          </div>
+
+          <div class="step-item mb-0">
+            <div class="step-number">4</div>
+            <div>
+              <div class="fw-semibold">Cộng tiền vào ví</div>
+              <div class="text-muted small">Sau khi duyệt, số dư ví sẽ được cập nhật.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-shield-check me-2 text-success"></i>Lưu ý
+          </h5>
+          <ul class="mb-0 ps-3 text-muted">
+            <li class="mb-2">Không chuyển sai nội dung thanh toán.</li>
+            <li class="mb-2">Không chuyển thiếu hoặc thừa số tiền so với yêu cầu.</li>
+            <li class="mb-2">Mỗi yêu cầu nạp tiền có một mã chuyển khoản riêng.</li>
+            <li class="mb-0">Tiền chỉ được cộng vào ví sau khi yêu cầu được duyệt.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-{% endblock %}
+<style>
+  .step-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
 
-{% block scripts %}
+  .step-number {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #0d6efd;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+</style>
+
 <script>
-(() => {
-    const input = document.getElementById("amountInput");
-    const submitBtn = document.getElementById("submitBtn");
-    const form = document.getElementById("depositForm");
+  document.querySelectorAll(".quick-amount").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const amount = this.getAttribute("data-amount");
+      document.getElementById("amount").value = amount;
+    });
+  });
 
-    function formatCurrency(num) {
-        return num.toLocaleString("vi-VN");
+  document.getElementById("depositForm").addEventListener("submit", function (e) {
+    const amountInput = document.getElementById("amount");
+    const amount = parseInt(amountInput.value || "0", 10);
+
+    if (!amount || amount <= 0) {
+      e.preventDefault();
+      alert("Vui lòng nhập số tiền hợp lệ.");
+      amountInput.focus();
+      return;
     }
 
-    function extractNumber(str) {
-        return parseInt(String(str).replace(/\D/g, "")) || 0;
+    if (amount < 10000) {
+      e.preventDefault();
+      alert("Số tiền nạp tối thiểu là 10.000 VNĐ.");
+      amountInput.focus();
+      return;
     }
-
-    submitBtn.disabled = true;
-
-    input.addEventListener("input", () => {
-        const num = extractNumber(input.value);
-        input.value = num ? formatCurrency(num) : "";
-        submitBtn.disabled = (num < 1000);
-    });
-
-    document.querySelectorAll(".quick-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const v = parseInt(btn.dataset.amount || "0", 10);
-            input.value = formatCurrency(v);
-            submitBtn.disabled = (v < 1000);
-        });
-    });
-
-    form.addEventListener("submit", () => {
-        input.value = extractNumber(input.value);
-    });
-})();
+  });
 </script>
 {% endblock %}

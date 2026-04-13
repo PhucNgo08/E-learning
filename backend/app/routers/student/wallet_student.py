@@ -1,25 +1,80 @@
-import uuid
+import os
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Request, HTTPException, Form
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.config.template_config import templates
 from app.database.connection import get_db
 from app.dependencies.auth import get_current_student
 from app.services.wallet_service import (
+    cancel_topup_request,
+    create_topup_request,
+    create_wallet,
     get_balance,
-    student_withdraw,
-    student_transfer,
     get_student_transactions,
-    find_transaction_by_code,
+    get_topup_request_by_id,
+    get_wallet,
+    student_transfer,
+    student_withdraw,
 )
-from app.config.template_config import templates
-
 
 router = APIRouter(
     prefix="/student/wallet",
     tags=["Student Wallet"],
 )
+
+VIETQR_BANK_ID = os.getenv("VIETQR_BANK_ID", "sacombank")
+VIETQR_BANK_NAME = os.getenv("VIETQR_BANK_NAME", "Sacombank")
+VIETQR_ACCOUNT_NO = os.getenv("VIETQR_ACCOUNT_NO", "040109231950")
+VIETQR_ACCOUNT_NAME = os.getenv("VIETQR_ACCOUNT_NAME", "LUONG HONG TIEN")
+VIETQR_TEMPLATE = os.getenv("VIETQR_TEMPLATE", "compact2")
+
+MIN_TOPUP_AMOUNT = int(os.getenv("MIN_TOPUP_AMOUNT", "10000"))
+MAX_TOPUP_AMOUNT = int(os.getenv("MAX_TOPUP_AMOUNT", "50000000"))
+
+
+def _normalize_amount(amount: float) -> int:
+    try:
+        amount_value = float(amount)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Số tiền không hợp lệ")
+
+    if amount_value <= 0:
+        raise HTTPException(status_code=400, detail="Số tiền phải lớn hơn 0")
+
+    if not amount_value.is_integer():
+        raise HTTPException(status_code=400, detail="Số tiền phải là số nguyên VNĐ")
+
+    amount_int = int(amount_value)
+
+    if amount_int < MIN_TOPUP_AMOUNT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Số tiền nạp tối thiểu là {MIN_TOPUP_AMOUNT:,} VNĐ".replace(",", "."),
+        )
+
+    if amount_int > MAX_TOPUP_AMOUNT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Số tiền nạp tối đa là {MAX_TOPUP_AMOUNT:,} VNĐ".replace(",", "."),
+        )
+
+    return amount_int
+
+
+def _build_vietqr_url(amount: int, transfer_code: str) -> str:
+    add_info = quote(transfer_code.strip())
+    account_name = quote(VIETQR_ACCOUNT_NAME.strip())
+
+    return (
+        f"https://img.vietqr.io/image/"
+        f"{VIETQR_BANK_ID}-{VIETQR_ACCOUNT_NO}-{VIETQR_TEMPLATE}.png"
+        f"?amount={amount}"
+        f"&addInfo={add_info}"
+        f"&accountName={account_name}"
+    )
 
 
 def wallet_common(
@@ -29,7 +84,6 @@ def wallet_common(
 ):
     balance = get_balance(db, student.id)
 
-    # Đẩy dữ liệu sang request.state để layout/student_globals dùng lại
     request.state.wallet_balance = balance
     request.state.user_avatar = (
         request.session.get("user_avatar")
@@ -103,69 +157,164 @@ def deposit_page(
     )
 
 
-@router.get("/deposit/qr", response_class=HTMLResponse)
-def deposit_qr(
+@router.post("/deposit")
+def deposit_submit(
     request: Request,
-    amount: float,
+    amount: float = Form(...),
+    note: str = Form(""),
     common=Depends(wallet_common),
 ):
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail="Số tiền không hợp lệ")
+    try:
+        amount_int = _normalize_amount(amount)
+        db: Session = common["db"]
+        student = common["student"]
 
-    student = common["student"]
-    trans_code = f"ELEARN_{student.id[:6]}_{uuid.uuid4().hex[:6]}"
+        wallet = get_wallet(db, student.id)
+        if not wallet:
+            create_wallet(db, student.id)
+
+        topup_request = create_topup_request(
+            db=db,
+            user_id=student.id,
+            amount=amount_int,
+            note=(note or "").strip() or None,
+        )
+
+        return RedirectResponse(
+            f"/student/wallet/deposit/qr/{topup_request.id}",
+            status_code=303,
+        )
+
+    except HTTPException as e:
+        return render_wallet_template(
+            request,
+            "wallet/deposit.html",
+            {
+                **common,
+                "error": e.detail,
+                "form_amount": amount,
+                "form_note": note,
+            },
+            status_code=e.status_code,
+        )
+    except Exception as e:
+        return render_wallet_template(
+            request,
+            "wallet/deposit.html",
+            {
+                **common,
+                "error": str(e),
+                "form_amount": amount,
+                "form_note": note,
+            },
+            status_code=400,
+        )
+
+
+@router.get("/deposit/qr/{request_id}", response_class=HTMLResponse)
+def deposit_qr_page(
+    request: Request,
+    request_id: str,
+    common=Depends(wallet_common),
+):
+    topup_request = get_topup_request_by_id(
+        common["db"],
+        request_id=request_id,
+        user_id=common["student"].id,
+    )
+
+    if not topup_request:
+        raise HTTPException(status_code=404, detail="Không tìm thấy yêu cầu nạp tiền")
+
+    transfer_code = (
+        getattr(topup_request, "transfer_code", None)
+        or getattr(topup_request, "transfer_note", None)
+        or getattr(topup_request, "request_code", None)
+    )
+
+    if not transfer_code:
+        raise HTTPException(status_code=500, detail="Yêu cầu nạp tiền thiếu mã chuyển khoản")
+
+    qr_url = _build_vietqr_url(
+        amount=int(topup_request.amount),
+        transfer_code=transfer_code,
+    )
 
     return render_wallet_template(
         request,
         "wallet/deposit_qr.html",
         {
             **common,
-            "amount": amount,
-            "trans_code": trans_code,
-            "bank": "Sacombank",
-            "account": "040109231950",
-            "account_name": "LUONG HONG TIEN",
+            "topup_request": topup_request,
+            "amount": int(topup_request.amount),
+            "trans_code": transfer_code,
+            "bank": VIETQR_BANK_NAME,
+            "bank_id": VIETQR_BANK_ID,
+            "account": VIETQR_ACCOUNT_NO,
+            "account_name": VIETQR_ACCOUNT_NAME,
+            "qr_url": qr_url,
         },
     )
 
 
-@router.get("/check_transaction/{trans_code}")
-def check_transaction(
-    trans_code: str,
-    db: Session = Depends(get_db),
-):
-    tx = find_transaction_by_code(db, trans_code)
-    return {"exists": bool(tx)}
-
-
-@router.post("/deposit")
-def deposit_submit(
-    amount: float = Form(...),
-    description: str = Form("Nạp tiền thủ công"),
-    trans_code: str | None = Form(None),
+@router.get("/deposit/status/{request_id}")
+def deposit_status(
+    request_id: str,
     common=Depends(wallet_common),
 ):
-    """
-    Lưu ý:
-    - Student KHÔNG được tự cộng ví trực tiếp.
-    - Route này chỉ tiếp nhận yêu cầu nạp tiền / mã tham chiếu để chờ đối soát.
-    - Khi admin xác nhận giao dịch, hệ thống mới cộng tiền vào ví.
-    """
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail="Số tiền nạp phải > 0")
+    topup_request = get_topup_request_by_id(
+        common["db"],
+        request_id=request_id,
+        user_id=common["student"].id,
+    )
 
-    final_description = (description or "Nạp tiền thủ công").strip()
-    if trans_code:
-        final_description = f"{final_description} | Mã GD: {trans_code.strip()}"
+    if not topup_request:
+        raise HTTPException(status_code=404, detail="Không tìm thấy yêu cầu nạp tiền")
+
+    transfer_code = (
+        getattr(topup_request, "transfer_code", None)
+        or getattr(topup_request, "transfer_note", None)
+        or getattr(topup_request, "request_code", None)
+    )
+
+    admin_note = (
+        getattr(topup_request, "admin_note", None)
+        or getattr(topup_request, "reviewed_note", None)
+    )
+
+    reviewed_at = getattr(topup_request, "reviewed_at", None)
 
     return {
-        "success": True,
-        "status": "pending_confirmation",
-        "message": "Đã ghi nhận yêu cầu nạp tiền. Vui lòng chờ xác nhận giao dịch.",
-        "amount": amount,
-        "trans_code": (trans_code or "").strip(),
-        "description": final_description,
+        "id": topup_request.id,
+        "status": getattr(topup_request, "status", "pending"),
+        "amount": float(getattr(topup_request, "amount", 0)),
+        "transfer_code": transfer_code,
+        "note": getattr(topup_request, "note", None),
+        "admin_note": admin_note,
+        "reviewed_at": reviewed_at.isoformat() if reviewed_at else None,
     }
+
+
+@router.post("/deposit/cancel/{request_id}")
+def deposit_cancel(
+    request_id: str,
+    common=Depends(wallet_common),
+):
+    try:
+        cancel_topup_request(
+            db=common["db"],
+            request_id=request_id,
+            user_id=common["student"].id,
+        )
+        return RedirectResponse(
+            "/student/wallet/page?success=topup_cancelled",
+            status_code=303,
+        )
+    except Exception as e:
+        return RedirectResponse(
+            f"/student/wallet/page?error={quote(str(e))}",
+            status_code=303,
+        )
 
 
 @router.get("/withdraw", response_class=HTMLResponse)
@@ -195,7 +344,10 @@ def withdraw_submit(
 ):
     try:
         student_withdraw(common["db"], common["student"].id, amount, description)
-        return RedirectResponse("/student/wallet/page?success=withdraw", status_code=303)
+        return RedirectResponse(
+            "/student/wallet/page?success=withdraw",
+            status_code=303,
+        )
     except Exception as e:
         return render_wallet_template(
             request,
@@ -236,7 +388,10 @@ def transfer_submit(
 ):
     try:
         student_transfer(common["db"], common["student"].id, recipient_email, amount)
-        return RedirectResponse("/student/wallet/page?success=transfer", status_code=303)
+        return RedirectResponse(
+            "/student/wallet/page?success=transfer",
+            status_code=303,
+        )
     except Exception as e:
         return render_wallet_template(
             request,

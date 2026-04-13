@@ -1,122 +1,344 @@
 {% extends "layout_student.html" %}
-{% block title %}🔋 Nạp tiền VietQR / MoMo{% endblock %}
+{% block title %}Nạp tiền vào ví{% endblock %}
 
 {% block content %}
+{% set current_status = (topup_request.status or 'pending')|lower %}
 
-<div class="container mt-4 fade show">
+<div class="container py-4">
+  <div
+    id="topupMeta"
+    data-request-id="{{ topup_request.id }}"
+    data-status="{{ current_status }}"
+  ></div>
 
-    <div class="glass-card shadow-sm p-4">
+  <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="mb-1 fw-bold">
+        <i class="bi bi-qr-code-scan me-2 text-primary"></i>Nạp tiền vào ví
+      </h2>
+      <div class="text-muted">
+        Quét QR và chuyển khoản đúng nội dung để admin xác nhận nạp tiền.
+      </div>
+    </div>
+    <a href="/student/wallet/page" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Quay lại ví
+    </a>
+  </div>
 
-        <h2 class="fw-bold mb-3 text-center">🔋 Nạp tiền vào ví</h2>
-
-        <p class="text-muted text-center mb-4">
-            Chọn phương thức và quét mã để nạp tiền.
-        </p>
-
-        <div class="d-flex justify-content-center mb-4">
-            <button type="button" class="btn btn-primary me-2" id="bankTabBtn">🏦 Ngân hàng (VietQR)</button>
-            <button type="button" class="btn btn-outline-primary" id="momoTabBtn">💗 Ví MoMo</button>
+  <div class="alert alert-warning border-0 shadow-sm mb-4" role="alert">
+    <div class="d-flex align-items-start gap-2">
+      <i class="bi bi-exclamation-triangle-fill fs-5 mt-1"></i>
+      <div>
+        <div class="fw-semibold">Lưu ý quan trọng</div>
+        <div>
+          Bạn phải chuyển đúng <strong>số tiền</strong> và đúng <strong>nội dung chuyển khoản</strong>.
+          Sau khi hệ thống hoặc admin đối soát thành công, tiền mới được cộng vào ví.
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div id="bank-section" class="tab-section">
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm rounded-4 h-100">
+        <div class="card-body p-4 text-center">
+          <div class="mb-3">
+            {% if current_status == 'pending' %}
+              <span class="badge text-bg-warning px-3 py-2 fs-6">Chờ xác nhận</span>
+            {% elif current_status == 'approved' %}
+              <span class="badge text-bg-success px-3 py-2 fs-6">Đã duyệt</span>
+            {% elif current_status == 'rejected' %}
+              <span class="badge text-bg-danger px-3 py-2 fs-6">Bị từ chối</span>
+            {% elif current_status == 'cancelled' %}
+              <span class="badge text-bg-secondary px-3 py-2 fs-6">Đã hủy</span>
+            {% else %}
+              <span class="badge text-bg-dark px-3 py-2 fs-6">{{ topup_request.status }}</span>
+            {% endif %}
+          </div>
 
-            <div class="text-center mb-3">
-                <img src="{{ request.url_for('static', path='QR/bank-sacombank.png') }}"
-                     alt="Sacombank QR"
-                     class="shadow rounded"
-                     style="max-width: 280px;">
-            </div>
+          <div class="qr-box mx-auto mb-3">
+            <img src="{{ qr_url }}" alt="VietQR nạp tiền" class="img-fluid rounded-4">
+          </div>
 
-            <p class="text-center text-muted">
-                Quét mã VietQR bằng ứng dụng ngân hàng hoặc ví điện tử hỗ trợ Napas 247.
-            </p>
+          <div class="fs-3 fw-bold text-primary mb-2">
+            {{ "{:,.0f}".format(amount).replace(",", ".") }} VNĐ
+          </div>
 
-            <div class="glass-card p-3 mt-3">
+          <div class="text-muted small mb-3">
+            Mã yêu cầu:
+            <span class="fw-semibold text-dark">{{ topup_request.id }}</span>
+          </div>
 
-                <div class="d-flex justify-content-between py-1">
-                    <span class="fw-semibold">Mã giao dịch:</span>
-                    <span class="fw-bold text-primary">{{ trans_code }}</span>
-                </div>
-
-                <div class="d-flex justify-content-between py-1">
-                    <span class="fw-semibold">Số tiền:</span>
-                    <span class="fw-bold text-success">
-                        {{ "{:,.0f}".format(amount) }} đ
-                    </span>
-                </div>
-
-            </div>
-
+          {% if current_status == 'pending' %}
+          <form method="post" action="/student/wallet/deposit/cancel/{{ topup_request.id }}">
+            <button
+              type="submit"
+              class="btn btn-outline-danger rounded-pill px-4"
+              onclick="return confirm('Bạn chắc chắn muốn hủy yêu cầu nạp tiền này?')"
+            >
+              <i class="bi bi-x-circle me-1"></i>Hủy yêu cầu
+            </button>
+          </form>
+          {% endif %}
         </div>
-
-        <div id="momo-section" class="tab-section" style="display:none;">
-
-            <div class="text-center mb-3">
-                <img src="{{ request.url_for('static', path='QR/ma-qr.jpg') }}"
-                     alt="MoMo QR"
-                     class="shadow rounded"
-                     style="max-width: 260px;">
-            </div>
-
-            <p class="text-center text-muted">
-                Quét mã MoMo để nạp tiền nhanh.
-            </p>
-
-            <div class="glass-card p-3 mt-3">
-
-                <div class="d-flex justify-content-between py-1">
-                    <span class="fw-semibold">Mã giao dịch:</span>
-                    <span class="fw-bold text-primary">{{ trans_code }}</span>
-                </div>
-
-                <div class="d-flex justify-content-between py-1">
-                    <span class="fw-semibold">Số tiền:</span>
-                    <span class="fw-bold text-success">
-                        {{ "{:,.0f}".format(amount) }} đ
-                    </span>
-                </div>
-
-            </div>
-
-        </div>
-
-        <a href="/student/wallet/page" class="btn btn-outline-secondary w-100 py-2 fw-semibold mt-4">
-            ← Quay về ví
-        </a>
-
+      </div>
     </div>
 
+    <div class="col-lg-7">
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-bank2 me-2 text-primary"></i>Thông tin chuyển khoản
+          </h5>
+
+          <div class="info-row">
+            <div class="label">Ngân hàng</div>
+            <div class="value">{{ bank }}</div>
+          </div>
+
+          <div class="info-row">
+            <div class="label">Số tài khoản</div>
+            <div class="value d-flex flex-wrap align-items-center gap-2">
+              <span id="accountNo">{{ account }}</span>
+              <button type="button" class="btn btn-sm btn-light border" onclick="copyText('accountNo')">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="label">Chủ tài khoản</div>
+            <div class="value d-flex flex-wrap align-items-center gap-2">
+              <span id="accountName">{{ account_name }}</span>
+              <button type="button" class="btn btn-sm btn-light border" onclick="copyText('accountName')">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="info-row">
+            <div class="label">Số tiền</div>
+            <div class="value d-flex flex-wrap align-items-center gap-2">
+              <span id="topupAmount">{{ "{:,.0f}".format(amount).replace(",", ".") }} VNĐ</span>
+              <button type="button" class="btn btn-sm btn-light border" onclick="copyText('topupAmount')">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="info-row border-bottom-0 pb-0">
+            <div class="label">Nội dung CK</div>
+            <div class="value d-flex flex-wrap align-items-center gap-2">
+              <span id="transferCode" class="fw-bold text-danger">{{ trans_code }}</span>
+              <button type="button" class="btn btn-sm btn-light border" onclick="copyText('transferCode')">
+                <i class="bi bi-copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-list-check me-2 text-success"></i>Hướng dẫn thực hiện
+          </h5>
+
+          <ol class="mb-0 ps-3">
+            <li class="mb-2">Mở app ngân hàng hoặc ví điện tử có hỗ trợ quét QR.</li>
+            <li class="mb-2">Quét mã QR hoặc nhập tay đúng thông tin chuyển khoản.</li>
+            <li class="mb-2">
+              Chuyển đúng số tiền:
+              <strong>{{ "{:,.0f}".format(amount).replace(",", ".") }} VNĐ</strong>.
+            </li>
+            <li class="mb-2">
+              Ghi đúng nội dung:
+              <strong class="text-danger">{{ trans_code }}</strong>.
+            </li>
+            <li class="mb-0">Chờ admin hoặc hệ thống đối soát, sau đó tiền sẽ được cộng vào ví.</li>
+          </ol>
+        </div>
+      </div>
+
+      {% if topup_request.note %}
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-2">
+            <i class="bi bi-chat-left-text me-2 text-info"></i>Ghi chú của bạn
+          </h5>
+          <div class="text-muted">{{ topup_request.note }}</div>
+        </div>
+      </div>
+      {% endif %}
+
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4">
+          <h5 class="fw-bold mb-3">
+            <i class="bi bi-clock-history me-2 text-warning"></i>Trạng thái yêu cầu
+          </h5>
+
+          <div id="statusBox">
+            {% if current_status == 'pending' %}
+              <div class="alert alert-warning mb-0">
+                Yêu cầu nạp tiền đang chờ xác nhận. Trang sẽ tự kiểm tra trạng thái định kỳ.
+              </div>
+            {% elif current_status == 'approved' %}
+              <div class="alert alert-success mb-0">
+                Yêu cầu đã được duyệt. Tiền đã được cộng vào ví của bạn.
+              </div>
+            {% elif current_status == 'rejected' %}
+              <div class="alert alert-danger mb-0">
+                Yêu cầu đã bị từ chối.
+                {% if topup_request.admin_note %}
+                  <div class="mt-2"><strong>Lý do:</strong> {{ topup_request.admin_note }}</div>
+                {% endif %}
+              </div>
+            {% elif current_status == 'cancelled' %}
+              <div class="alert alert-secondary mb-0">
+                Yêu cầu này đã được hủy.
+              </div>
+            {% else %}
+              <div class="alert alert-secondary mb-0">
+                Trạng thái hiện tại: {{ topup_request.status }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-{% endblock %}
+<style>
+  .qr-box {
+    max-width: 340px;
+    background: #fff;
+    padding: 12px;
+    border-radius: 24px;
+    border: 1px solid #eef1f4;
+  }
 
-{% block scripts %}
+  .info-row {
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px dashed #e9ecef;
+  }
+
+  .info-row .label {
+    min-width: 130px;
+    color: #6c757d;
+    font-weight: 600;
+  }
+
+  .info-row .value {
+    flex: 1;
+    text-align: right;
+    font-weight: 600;
+    color: #212529;
+    word-break: break-word;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 768px) {
+    .info-row {
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .info-row .value {
+      text-align: left;
+      justify-content: flex-start;
+    }
+  }
+</style>
+
 <script>
-(() => {
-    const bankBtn = document.getElementById("bankTabBtn");
-    const momoBtn = document.getElementById("momoTabBtn");
-    const bankSection = document.getElementById("bank-section");
-    const momoSection = document.getElementById("momo-section");
+  function copyText(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
 
-    bankBtn.addEventListener("click", () => {
-        bankSection.style.display = "block";
-        momoSection.style.display = "none";
-
-        bankBtn.classList.add("btn-primary");
-        bankBtn.classList.remove("btn-outline-primary");
-        momoBtn.classList.add("btn-outline-primary");
-        momoBtn.classList.remove("btn-primary");
+    const text = (el.innerText || "").trim();
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("Đã sao chép: " + text);
+    }).catch(() => {
+      alert("Không thể sao chép. Vui lòng thử lại.");
     });
+  }
 
-    momoBtn.addEventListener("click", () => {
-        bankSection.style.display = "none";
-        momoSection.style.display = "block";
+  function showToast(message) {
+    const toast = document.createElement("div");
+    toast.className = "position-fixed bottom-0 end-0 m-3 alert alert-success shadow";
+    toast.style.zIndex = "9999";
+    toast.innerText = message;
+    document.body.appendChild(toast);
 
-        momoBtn.classList.add("btn-primary");
-        momoBtn.classList.remove("btn-outline-primary");
-        bankBtn.classList.add("btn-outline-primary");
-        bankBtn.classList.remove("btn-primary");
-    });
-})();
+    setTimeout(() => {
+      toast.remove();
+    }, 1800);
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  const topupMeta = document.getElementById("topupMeta");
+  const requestId = topupMeta ? topupMeta.dataset.requestId : "";
+  const initialStatus = topupMeta ? String(topupMeta.dataset.status || "").toLowerCase() : "";
+
+  async function pollTopupStatus() {
+    if (!requestId) return;
+
+    try {
+      const res = await fetch(`/student/wallet/deposit/status/${requestId}`);
+      if (!res.ok) return;
+
+      const data = await res.json();
+      const status = String(data.status || "").toLowerCase();
+      const statusBox = document.getElementById("statusBox");
+
+      if (!statusBox) return;
+
+      if (status === "approved") {
+        statusBox.innerHTML = `
+          <div class="alert alert-success mb-0">
+            Yêu cầu đã được duyệt. Tiền đã được cộng vào ví của bạn. Đang chuyển về trang ví...
+          </div>
+        `;
+        setTimeout(() => {
+          window.location.href = "/student/wallet/page?success=topup_approved";
+        }, 1800);
+      } else if (status === "rejected") {
+        const adminNoteHtml = data.admin_note
+          ? `<div class="mt-2"><strong>Lý do:</strong> ${escapeHtml(data.admin_note)}</div>`
+          : "";
+
+        statusBox.innerHTML = `
+          <div class="alert alert-danger mb-0">
+            Yêu cầu đã bị từ chối.
+            ${adminNoteHtml}
+          </div>
+        `;
+      } else if (status === "cancelled") {
+        statusBox.innerHTML = `
+          <div class="alert alert-secondary mb-0">
+            Yêu cầu này đã được hủy.
+          </div>
+        `;
+      }
+    } catch (err) {
+      console.error("Poll topup status error:", err);
+    }
+  }
+
+  if (initialStatus === "pending" && requestId) {
+    setInterval(pollTopupStatus, 10000);
+  }
 </script>
 {% endblock %}
