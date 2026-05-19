@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from app.database.connection import get_db
+from app.dependencies.auth import get_current_admin
 from app.services.admin import system_setting_service
 import traceback
 
@@ -13,7 +14,8 @@ from app.config.template_config import get_template_by_path
 # ============================================================
 router = APIRouter(
     prefix="/admin/settings",
-    tags=["Admin - System Settings"]
+    tags=["Admin - System Settings"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 # ============================================================

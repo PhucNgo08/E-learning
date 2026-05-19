@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
+from app.dependencies.auth import get_current_admin
 from app.services.admin import academic_year_service
 from app.models.academic_year import AcademicYear
 from app.config.template_config import get_template_by_path
@@ -16,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/admin/academic_years",
-    tags=["Admin - Academic Years Management"]
+    tags=["Admin - Academic Years Management"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 

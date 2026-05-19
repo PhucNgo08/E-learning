@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.config.template_config import get_template_by_path
 from app.database.connection import get_db
+from app.dependencies.auth import get_current_admin
 from app.services.admin.course_category_service import (
     create_course_category,
     update_course_category,
@@ -17,7 +18,8 @@ from app.services.admin.course_category_service import (
 
 category_router = APIRouter(
     prefix="/admin/CourseCategory",
-    tags=["Admin - Course Category"]
+    tags=["Admin - Course Category"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 

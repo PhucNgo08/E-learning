@@ -198,20 +198,30 @@ body.dark-mode .form-check-label {
           {{ q.question_text }}
         </h6>
 
-        {% for opt in q.options %}
-        <div class="form-check ms-3 mb-2">
-          <input class="form-check-input quiz-option"
-                 type="radio"
-                 name="question_{{ q.id }}"
-                 value="{{ opt.id }}"
-                 id="opt_{{ opt.id }}"
-                 data-question="{{ q.id }}"
-                 data-qindex="{{ qindex }}">
-          <label class="form-check-label" for="opt_{{ opt.id }}">
-            {{ opt.option_text }}
-          </label>
-        </div>
-        {% endfor %}
+        {% if q.question_type == 'essay' %}
+        <textarea class="form-control quiz-essay"
+                  name="question_{{ q.id }}"
+                  rows="5"
+                  data-question="{{ q.id }}"
+                  data-qindex="{{ qindex }}"
+                  placeholder="Nhập câu trả lời tự luận của bạn..."></textarea>
+        <div class="form-text">Câu tự luận sẽ được giáo viên chấm/nhận xét sau.</div>
+        {% else %}
+          {% for opt in q.options %}
+          <div class="form-check ms-3 mb-2">
+            <input class="form-check-input quiz-option"
+                   type="radio"
+                   name="question_{{ q.id }}"
+                   value="{{ opt.id }}"
+                   id="opt_{{ opt.id }}"
+                   data-question="{{ q.id }}"
+                   data-qindex="{{ qindex }}">
+            <label class="form-check-label" for="opt_{{ opt.id }}">
+              {{ opt.option_text }}
+            </label>
+          </div>
+          {% endfor %}
+        {% endif %}
 
       </div>
       {% endfor %}
@@ -278,9 +288,12 @@ if (!isGraded) {
   document.addEventListener("DOMContentLoaded", () => {
     const saved = JSON.parse(localStorage.getItem(LS_ANS) || "{}");
 
-    Object.entries(saved).forEach(([qid, optId]) => {
-      const opt = document.querySelector(`input[value="${optId}"]`);
+    Object.entries(saved).forEach(([qid, value]) => {
+      const opt = document.querySelector(`input[name="question_${qid}"][value="${value}"]`);
       if (opt) opt.checked = true;
+
+      const essay = document.querySelector(`textarea[name="question_${qid}"]`);
+      if (essay) essay.value = value;
     });
 
     updateSidebar();
@@ -296,8 +309,10 @@ function updateSidebar() {
   document.querySelectorAll(".qnav-item").forEach(btn => {
     const qid = btn.dataset.qid;
     const selected = document.querySelector(`input[name="question_${qid}"]:checked`);
+    const essay = document.querySelector(`textarea[name="question_${qid}"]`);
+    const hasEssayText = essay && essay.value.trim().length > 0;
 
-    if (selected) {
+    if (selected || hasEssayText) {
       btn.classList.add("answered");
       btn.classList.remove("unanswered");
       done++;
@@ -331,6 +346,26 @@ document.querySelectorAll(".quiz-option").forEach(opt => {
       localStorage.setItem(LS_ANS, JSON.stringify(saved));
     }
 
+    updateSidebar();
+  });
+});
+
+
+/* ======================================================
+   ESSAY INPUT
+====================================================== */
+document.querySelectorAll(".quiz-essay").forEach(el => {
+  el.addEventListener("input", e => {
+    const index = e.target.dataset.qindex;
+    document.querySelectorAll(".qnav-item").forEach(btn => btn.classList.remove("active"));
+    const nav = document.querySelector(`.qnav-item[data-qindex="${index}"]`);
+    if (nav) nav.classList.add("active");
+
+    if (!isGraded) {
+      let saved = JSON.parse(localStorage.getItem(LS_ANS) || "{}");
+      saved[e.target.dataset.question] = e.target.value;
+      localStorage.setItem(LS_ANS, JSON.stringify(saved));
+    }
     updateSidebar();
   });
 });

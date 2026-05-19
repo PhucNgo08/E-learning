@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 
 from app.config.template_config import get_template_by_path
 from app.database.connection import get_db
+from app.dependencies.auth import get_current_admin
 from app.models.assignment_submission import AssignmentSubmission
-from app.models.assignment_file import AssignmentFile
 from app.models.course import Course
 from app.models.module import Module
 from app.models.user import User
@@ -30,40 +30,9 @@ from app.utils.user_query import filter_users_by_role
 
 router = APIRouter(
     prefix="/admin/assignment",
-    tags=["Admin - Assignment Management"]
+    tags=["Admin - Assignment Management"],
+    dependencies=[Depends(get_current_admin)],
 )
-
-BACKEND_DIR = Path(__file__).resolve().parents[3]
-
-
-def _is_remote_url(value: str) -> bool:
-    lower = (value or "").lower()
-    return lower.startswith("http://") or lower.startswith("https://")
-
-
-def _resolve_admin_download_path(file_url: str) -> Path | None:
-    raw = str(file_url or "").strip()
-    if not raw:
-        return None
-
-    candidate = Path(raw)
-    candidates: list[Path] = []
-
-    if candidate.is_absolute():
-        candidates.append(candidate)
-    else:
-        clean = raw.lstrip("/\\")
-        candidates.extend([
-            (BACKEND_DIR / clean),
-            (BACKEND_DIR / "app" / clean),
-        ])
-
-    for path in candidates:
-        resolved = path.resolve()
-        if resolved.exists() and resolved.is_file():
-            return resolved
-
-    return None
 
 
 def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
@@ -200,32 +169,6 @@ def grade_submit(
         )
     except HTTPException:
         raise
-
-
-
-
-# =========================================================
-# 1.4) Admin tải file bài nộp
-# =========================================================
-@router.get("/download/{file_id}")
-def download_assignment_file(file_id: str, db: Session = Depends(get_db)):
-    file_info = db.query(AssignmentFile).filter(AssignmentFile.id == file_id).first()
-    if not file_info:
-        raise HTTPException(status_code=404, detail="Không tìm thấy file.")
-
-    file_url = str(file_info.file_url or "").strip()
-    if _is_remote_url(file_url):
-        return RedirectResponse(file_url, status_code=302)
-
-    file_path = _resolve_admin_download_path(file_url)
-    if not file_path:
-        raise HTTPException(status_code=404, detail="File không tồn tại trên hệ thống.")
-
-    return FileResponse(
-        path=str(file_path),
-        filename=file_info.file_name or file_path.name,
-        media_type=file_info.file_type or "application/octet-stream",
-    )
 
 
 # =========================================================

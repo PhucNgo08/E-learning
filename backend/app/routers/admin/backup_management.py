@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.config.template_config import get_template_by_path
 from app.database.connection import get_db
+from app.dependencies.auth import get_current_admin
 from app.services.admin.backup_management_service import (
     cleanup_old_backups,
     create_backup,
@@ -22,7 +23,8 @@ from app.services.admin.backup_management_service import (
 
 backup_router = APIRouter(
     prefix="/admin/backups",
-    tags=["Admin - Backup Management"]
+    tags=["Admin - Backup Management"],
+    dependencies=[Depends(get_current_admin)],
 )
 
 

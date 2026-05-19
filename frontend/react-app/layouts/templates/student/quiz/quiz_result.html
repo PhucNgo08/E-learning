@@ -175,33 +175,56 @@ body.dark-mode .alert-info {
           {% endif %}
         </h6>
 
-        <!-- Đáp án -->
-        {% for op in q.options %}
-          {% set is_selected = (op.id == selected) %}
-          {% set is_correct = op.is_correct %}
+        {% set show_answers = result.quiz.show_correct_answers if result.quiz else true %}
 
-          <div class="p-2 rounded mb-2
-            {% if is_correct %} bg-success bg-opacity-10 border border-success {% endif %}
-            {% if is_selected and not is_correct %} bg-danger bg-opacity-10 border border-danger {% endif %}
-          ">
-            <i class="bi 
-              {% if is_selected %}
-                {% if is_correct %} bi-check-circle-fill text-success
-                {% else %} bi-x-circle-fill text-danger
-                {% endif %}
-              {% else %} bi-circle {% endif %}
-            "></i>
-
-            <span class="ms-2">{{ op.option_text }}</span>
-
-            {% if is_correct %}
-              <span class="badge bg-success rounded-pill ms-2">Đáp án đúng</span>
-            {% endif %}
-            {% if is_selected and not is_correct %}
-              <span class="badge bg-danger rounded-pill ms-2">Bạn đã chọn</span>
-            {% endif %}
+        {% if q.question_type == 'essay' %}
+          <div class="p-2 rounded mb-2 bg-light border">
+            <strong>Câu trả lời của bạn:</strong><br>
+            <span class="text-pre-wrap">{{ ans.answer_text or 'Chưa trả lời' }}</span>
           </div>
-        {% endfor %}
+          <div class="alert alert-info mt-3 mb-0">
+            Câu tự luận đang chờ giáo viên chấm/nhận xét.
+          </div>
+        {% else %}
+          {% for op in q.options %}
+            {% set is_selected = (op.id == selected) %}
+            {% set is_correct = op.is_correct %}
+
+            {% if show_answers or is_selected %}
+            <div class="p-2 rounded mb-2
+              {% if show_answers and is_correct %} bg-success bg-opacity-10 border border-success {% endif %}
+              {% if is_selected and show_answers and not is_correct %} bg-danger bg-opacity-10 border border-danger {% endif %}
+              {% if is_selected and not show_answers %} bg-primary bg-opacity-10 border border-primary {% endif %}
+            ">
+              <i class="bi
+                {% if is_selected %}
+                  {% if show_answers and is_correct %} bi-check-circle-fill text-success
+                  {% elif show_answers and not is_correct %} bi-x-circle-fill text-danger
+                  {% else %} bi-check-circle text-primary
+                  {% endif %}
+                {% else %} bi-circle {% endif %}
+              "></i>
+
+              <span class="ms-2">{{ op.option_text }}</span>
+
+              {% if show_answers and is_correct %}
+                <span class="badge bg-success rounded-pill ms-2">Đáp án đúng</span>
+              {% endif %}
+              {% if is_selected and show_answers and not is_correct %}
+                <span class="badge bg-danger rounded-pill ms-2">Bạn đã chọn</span>
+              {% elif is_selected and not show_answers %}
+                <span class="badge bg-primary rounded-pill ms-2">Bạn đã chọn</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% endfor %}
+
+          {% if not show_answers %}
+            <div class="alert alert-info mt-2 mb-0">
+              Giáo viên chưa bật hiển thị đáp án đúng cho bài này.
+            </div>
+          {% endif %}
+        {% endif %}
 
         {% if q.explanation %}
         <div class="alert alert-info mt-3 mb-0">

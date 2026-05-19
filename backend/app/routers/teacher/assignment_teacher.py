@@ -159,6 +159,14 @@ async def create_assignment(
     title: str = Form(...),
     description: str = Form(""),
     due_date: str = Form(...),
+    submission_type: str = Form("individual"),
+    allowed_file_types: str = Form("pdf,docx,zip"),
+    max_files: int = Form(5),
+    max_file_size_mb: int = Form(50),
+    allow_late_submission: str | None = Form(None),
+    late_penalty_percent: float = Form(0),
+    total_points: float = Form(10),
+    grading_criteria: str = Form(""),
     assignment_text_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher),
@@ -174,7 +182,7 @@ async def create_assignment(
                 else file_description
             )
 
-        assignment_service.create_assignment(
+        assignment = assignment_service.create_assignment(
             db=db,
             course_id=course_id,
             module_id=module_id or None,
@@ -182,7 +190,19 @@ async def create_assignment(
             title=title,
             description=final_description,
             due_date=datetime.fromisoformat(due_date),
+            allowed_file_types=(allowed_file_types or "pdf,docx,zip").strip(),
+            max_files=max(1, int(max_files or 1)),
+            max_file_size_mb=max(1, int(max_file_size_mb or 1)),
         )
+
+        # Các cột này đã có trong schema assignments, không cần đổi database.
+        assignment.submission_type = "group" if submission_type == "group" else "individual"
+        assignment.allow_late_submission = 1 if allow_late_submission else 0
+        assignment.late_penalty_percent = max(0, float(late_penalty_percent or 0))
+        assignment.total_points = max(0, float(total_points or 10))
+        assignment.grading_criteria = (grading_criteria or "").strip() or None
+        assignment.updated_at = datetime.utcnow()
+        db.commit()
         return RedirectResponse("/teacher/assignments/list", status_code=303)
 
     except HTTPException:

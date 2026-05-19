@@ -66,6 +66,11 @@ def create_assignment(
     allowed_file_types: str = "pdf,docx,zip",
     max_files: int = 3,
     max_file_size_mb: int = 50,
+    submission_type: str = "individual",
+    allow_late_submission: bool = False,
+    late_penalty_percent: float = 0,
+    total_points: float = 10,
+    grading_criteria: str | None = None,
 ):
     title = _clean_text(title)
     description = _clean_text(description)
@@ -76,6 +81,14 @@ def create_assignment(
         raise ValueError("Khóa học không hợp lệ.")
     if due_date is None:
         raise ValueError("Hạn nộp không được để trống.")
+
+    submission_type = submission_type if submission_type in ("individual", "group") else "individual"
+    allowed_file_types = _clean_text(allowed_file_types) or "pdf,docx,zip"
+    max_files = max(1, int(max_files or 1))
+    max_file_size_mb = max(1, int(max_file_size_mb or 1))
+    late_penalty_percent = max(0, min(float(late_penalty_percent or 0), 100))
+    total_points = max(0.01, float(total_points or 10))
+    grading_criteria = _clean_text(grading_criteria)
 
     course = (
         db.query(Course)
@@ -105,6 +118,11 @@ def create_assignment(
         allowed_file_types=allowed_file_types,
         max_files=max_files,
         max_file_size_mb=max_file_size_mb,
+        submission_type=submission_type,
+        allow_late_submission=bool(allow_late_submission),
+        late_penalty_percent=late_penalty_percent,
+        total_points=total_points,
+        grading_criteria=grading_criteria,
         start_date=now,
         created_at=now,
         updated_at=now,
@@ -193,19 +211,13 @@ def delete_assignment_by_teacher(db: Session, assignment_id: str, teacher_id: st
 # 📄 Danh sách bài nộp theo bài tập
 # ====================================================
 def get_submissions_by_assignment(db: Session, assignment_id: str):
-    submissions = (
+    return (
         db.query(AssignmentSubmission)
         .options(joinedload(AssignmentSubmission.student))
         .filter(AssignmentSubmission.assignment_id == assignment_id)
         .order_by(AssignmentSubmission.submission_time.desc())
         .all()
     )
-
-    # Đảm bảo template giáo viên luôn có s.files để hiển thị/tải file bài nộp.
-    for submission in submissions:
-        submission.files = get_submission_files(db, submission.id)
-
-    return submissions
 
 
 # ====================================================
@@ -376,7 +388,7 @@ def get_student_progress_by_course(db: Session, course_id: str):
             .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
             .filter(
                 QuizAttempt.user_id == stu.id,
-                QuizAttempt.status.in_(["submitted", "graded"]),
+                QuizAttempt.status == "submitted",
                 Quiz.course_id == course_id,
             )
             .count()

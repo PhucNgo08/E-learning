@@ -1,5 +1,9 @@
-import traceback
-from sqlalchemy import or_
+"""
+=================================================================
+QUIZ SERVICE v12 - FIXED CLEAN VERSION
+Teacher + Admin + Student
+=================================================================
+"""
 
 from datetime import datetime
 import random
@@ -315,7 +319,7 @@ def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
             func.sum(case((QuizAttempt.score >= quiz.passing_score, 1), else_=0)).label("passed"),
             func.sum(case((QuizAttempt.score < quiz.passing_score, 1), else_=0)).label("failed"),
         )
-        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.status == "submitted")
+        .filter(QuizAttempt.quiz_id == quiz_id, QuizAttempt.status.in_(["submitted", "graded"]))
         .first()
     )
 
@@ -330,7 +334,7 @@ def get_quiz_statistics(db: Session, teacher_id: str, quiz_id: str):
         .outerjoin(UserProfile, UserProfile.user_id == User.id)
         .filter(
             QuizAttempt.quiz_id == quiz_id,
-            QuizAttempt.status == "submitted",
+            QuizAttempt.status.in_(["submitted", "graded"]),
         )
         .order_by(QuizAttempt.score.desc(), QuizAttempt.submitted_at.asc())
         .limit(5)
@@ -563,81 +567,122 @@ def get_student_attempt_count(db: Session, user_id: str, exam_id: str):
 # ===================================================================
 # STUDENT SERVICE
 # ===================================================================
+def _quiz_is_open_filter(now: datetime):
+    return (
+        Quiz.status == "published",
+        or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
+        or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
+        or_(Quiz.quiz_type == "practice", Quiz.is_approved == True),
+    )
+
+
+def _quiz_is_open_now(quiz: Quiz, now: datetime | None = None) -> tuple[bool, str]:
+    now = now or datetime.utcnow()
+
+    if not quiz:
+        return False, "Quiz không tồn tại."
+
+    if quiz.status != "published":
+        return False, "Quiz chưa được mở."
+
+    if quiz.quiz_type == "graded" and not bool(quiz.is_approved):
+        return False, "Bài thi chưa được quản trị viên duyệt."
+
+    if quiz.available_from and now < quiz.available_from:
+        return False, "Quiz chưa đến thời gian mở."
+
+    if quiz.available_to and now > quiz.available_to:
+        return False, "Quiz đã hết thời gian làm."
+
+    return True, ""
+
+
+def _student_can_access_quiz(db: Session, user_id: str, quiz: Quiz) -> tuple[bool, str]:
+    ok, message = _quiz_is_open_now(quiz)
+    if not ok:
+        return False, message
+
+    # Quiz không gắn khóa học thì không cho học viên tự truy cập trực tiếp.
+    if not quiz.course_id:
+        return False, "Quiz chưa gắn với khóa học hợp lệ."
+
+    enrolled = (
+        db.query(CourseEnrollment)
+        .filter(
+            CourseEnrollment.user_id == user_id,
+            CourseEnrollment.course_id == quiz.course_id,
+            CourseEnrollment.enrollment_status.in_(VALID_ENROLLMENT_STATUSES),
+        )
+        .first()
+    )
+    if not enrolled:
+        return False, "Bạn không thuộc khóa học của quiz này."
+
+    return True, ""
+
+
+def _parse_started_at(value: str | None) -> datetime:
+    if not value:
+        return datetime.utcnow()
+
+    try:
+        cleaned = str(value).strip().replace("Z", "+00:00")
+        dt = datetime.fromisoformat(cleaned)
+        if dt.tzinfo is not None:
+            dt = dt.astimezone().replace(tzinfo=None)
+        return dt
+    except Exception:
+        return datetime.utcnow()
+
+
 def get_all_quizzes_for_student(db: Session):
     now = datetime.utcnow()
     return (
         db.query(Quiz)
-        .filter(
-            Quiz.quiz_type == "practice",
-            Quiz.status == "published",
-            or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
-            or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
-        )
+        .filter(Quiz.quiz_type == "practice", *_quiz_is_open_filter(now))
         .order_by(Quiz.created_at.desc())
         .all()
     )
 
 
 def get_quizzes_by_course(db: Session, course_id: str):
-    try:
-        now = datetime.utcnow()
-
-        return (
-            db.query(Quiz)
-            .filter(
-                Quiz.course_id == course_id,
-                Quiz.quiz_type.in_(["practice", "graded"]),
-                Quiz.status == "published",
-                or_(Quiz.quiz_type != "graded", Quiz.is_approved == True),
-                or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
-                or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
-            )
-            .order_by(Quiz.created_at.desc())
-            .all()
+    now = datetime.utcnow()
+    return (
+        db.query(Quiz)
+        .filter(
+            Quiz.course_id == course_id,
+            *_quiz_is_open_filter(now),
         )
-
-    except Exception:
-        traceback.print_exc()
-        return []
-    
+        .order_by(Quiz.quiz_type.asc(), Quiz.created_at.desc())
+        .all()
+    )
 
 
 def get_quiz_with_questions(db: Session, quiz_id: str):
-    try:
-        now = datetime.utcnow()
-
-        quiz = (
-            db.query(Quiz)
-            .options(joinedload(Quiz.questions).joinedload(Question.options))
-            .filter(
-                Quiz.id == quiz_id,
-                Quiz.quiz_type.in_(["practice", "graded"]),
-                Quiz.status == "published",
-                or_(Quiz.quiz_type != "graded", Quiz.is_approved == True),
-                or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
-                or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
-            )
-            .first()
-        )
-
-        if not quiz:
-            return None
-
-        quiz.questions = list(quiz.questions or [])
-
-        if quiz.randomize_questions:
-            random.shuffle(quiz.questions)
-
-        if quiz.randomize_options:
-            for q in quiz.questions:
-                q.options = list(q.options or [])
-                random.shuffle(q.options)
-
-        return quiz
-
-    except Exception:
-        traceback.print_exc()
+    quiz = (
+        db.query(Quiz)
+        .options(joinedload(Quiz.questions).joinedload(Question.options))
+        .filter(Quiz.id == quiz_id, Quiz.quiz_type == "practice")
+        .first()
+    )
+    if not quiz:
         return None
+
+    ok, _ = _quiz_is_open_now(quiz)
+    if not ok:
+        return None
+
+    quiz.questions = list(quiz.questions or [])
+    if quiz.randomize_questions:
+        random.shuffle(quiz.questions)
+
+    if quiz.randomize_options:
+        for q in quiz.questions:
+            q.options = list(q.options or [])
+            random.shuffle(q.options)
+
+    return quiz
+
 
 def has_recent_attempt(db: Session, user_id: str, quiz_id: str):
     latest = (
@@ -660,33 +705,11 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
         .first()
     )
     if not quiz:
-        return {"error": "Quiz không tồn tại"}
+        return {"error": "Quiz không tồn tại."}
 
-    now = datetime.utcnow()
-    if quiz.status != "published":
-        return {"error": "Quiz chưa được mở."}
-
-    if quiz.quiz_type == "graded" and not bool(quiz.is_approved):
-        return {"error": "Bài thi chưa được admin duyệt."}
-
-    if quiz.available_from and now < quiz.available_from:
-        return {"error": "Quiz chưa tới thời gian mở."}
-
-    if quiz.available_to and now > quiz.available_to:
-        return {"error": "Quiz đã hết thời gian làm."}
-
-    if quiz.course_id:
-        enrolled = (
-            db.query(CourseEnrollment)
-            .filter(
-                CourseEnrollment.user_id == user_id,
-                CourseEnrollment.course_id == quiz.course_id,
-                CourseEnrollment.enrollment_status.in_(VALID_ENROLLMENT_STATUSES),
-            )
-            .first()
-        )
-        if not enrolled:
-            return {"error": "Bạn chưa đăng ký khóa học của quiz này."}
+    can_access, access_message = _student_can_access_quiz(db, user_id, quiz)
+    if not can_access:
+        return {"error": access_message}
 
     if has_recent_attempt(db, user_id, quiz_id):
         return {"error": "Vui lòng đợi 1-2 giây trước khi nộp lại."}
@@ -699,14 +722,17 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
     if quiz.max_attempts and prev >= quiz.max_attempts:
         return {"error": "Bạn đã hết lượt làm bài."}
 
-    try:
-        started_raw = form_data.get("started_at")
-        try:
-            started_at = datetime.fromisoformat(started_raw) if started_raw else now
-        except Exception:
-            started_at = now
-        submitted_at = datetime.utcnow()
+    started_at = _parse_started_at(form_data.get("started_at"))
+    submitted_at = datetime.utcnow()
+    time_spent = max(0, int((submitted_at - started_at).total_seconds()))
 
+    if quiz.time_limit_minutes:
+        # Cho lệch 10 giây để tránh lỗi mạng/đồng hồ client.
+        max_seconds = int(quiz.time_limit_minutes) * 60 + 10
+        if time_spent > max_seconds:
+            return {"error": "Bạn đã quá thời gian làm bài."}
+
+    try:
         attempt_id = generate_uuid()
         attempt = QuizAttempt(
             id=attempt_id,
@@ -723,19 +749,37 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
         total_points = 0.0
         earned = 0.0
         correct = 0
-        questions = list(quiz.questions or [])
+        essay_count = 0
 
+        questions = list(quiz.questions or [])
         for question in questions:
             qid = str(question.id)
-            selected = form_data.get(f"question_{qid}")
-            total_points += float(question.points or 1)
+            raw_answer = form_data.get(f"question_{qid}")
+            qtype = str(question.question_type or "multiple_choice")
+            points = float(question.points or 1)
+            total_points += points
+
+            if qtype == "essay":
+                essay_count += 1
+                db.add(
+                    AttemptAnswer(
+                        id=generate_uuid(),
+                        attempt_id=attempt_id,
+                        question_id=qid,
+                        selected_option_id=None,
+                        answer_text=str(raw_answer or "").strip() or None,
+                        is_correct=None,
+                        points_earned=0,
+                    )
+                )
+                continue
 
             option = None
-            if selected:
+            if raw_answer:
                 option = (
                     db.query(QuestionOption)
                     .filter(
-                        QuestionOption.id == selected,
+                        QuestionOption.id == raw_answer,
                         QuestionOption.question_id == qid,
                     )
                     .first()
@@ -743,7 +787,7 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
 
             is_correct = bool(option and option.is_correct)
             if is_correct:
-                earned += float(question.points or 1)
+                earned += points
                 correct += 1
 
             db.add(
@@ -751,24 +795,30 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
                     id=generate_uuid(),
                     attempt_id=attempt_id,
                     question_id=qid,
-                    selected_option_id=selected if option else None,
+                    selected_option_id=raw_answer if option else None,
+                    answer_text=None,
                     is_correct=is_correct,
-                    points_earned=float(question.points or 1) if is_correct else 0,
+                    points_earned=points if is_correct else 0,
                 )
             )
 
         score = round((earned / max(total_points, 1)) * 100, 2)
+
         attempt.score = score
         attempt.correct_answers = correct
         attempt.total_questions = len(questions)
-        attempt.time_spent_seconds = max(0, int((submitted_at - started_at).total_seconds()))
+        attempt.time_spent_seconds = time_spent
+        # Có tự luận thì giáo viên/admin có thể chấm thủ công sau; bài vẫn lưu được.
+        attempt.status = "submitted" if essay_count else "graded"
 
         db.commit()
         db.refresh(attempt)
+
         return {"attempt_id": attempt_id, "score": score}
-    except Exception as e:
+    except Exception:
         db.rollback()
-        return {"error": f"Lỗi khi nộp bài: {e}"}
+        raise
+
 
 def get_quiz_result(db: Session, attempt_id: str):
     return (
@@ -833,14 +883,10 @@ def get_all_quizzes_for_student_enrolled(db: Session, student_id: str):
         .filter(
             CourseEnrollment.user_id == student_id,
             CourseEnrollment.enrollment_status.in_(VALID_ENROLLMENT_STATUSES),
-            Quiz.quiz_type.in_(["practice", "graded"]),
-            Quiz.status == "published",
-            or_(Quiz.quiz_type != "graded", Quiz.is_approved == True),
-            or_(Quiz.available_from.is_(None), Quiz.available_from <= now),
-            or_(Quiz.available_to.is_(None), Quiz.available_to >= now),
+            *_quiz_is_open_filter(now),
         )
         .options(joinedload(Quiz.course))
         .distinct()
-        .order_by(Quiz.created_at.desc())
+        .order_by(Quiz.quiz_type.asc(), Quiz.created_at.desc())
         .all()
     )

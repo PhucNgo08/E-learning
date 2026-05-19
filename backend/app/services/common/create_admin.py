@@ -1,4 +1,14 @@
 from uuid import uuid4
+from pathlib import Path
+import sys
+
+# Cho phép chạy bằng 2 cách:
+# 1) cd backend && py -m app.services.common.create_admin
+# 2) py backend/app/services/common/create_admin.py
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
+
 
 import bcrypt
 import pymysql
