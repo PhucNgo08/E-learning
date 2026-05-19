@@ -2,51 +2,207 @@
 {% block title %}✏️ Sửa tài liệu{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="bg-white p-4 rounded shadow-sm">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="fw-bold text-primary">
-        <i class="bi bi-pencil-square"></i> Chỉnh sửa tài liệu
-      </h3>
-      <a href="/teacher/materials/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
-      </a>
+<style>
+  :root {
+    --material-page-bg: #f5f8ff;
+    --material-card-bg: #ffffff;
+    --material-card-border: #e5e7eb;
+    --material-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --material-text-main: #1e293b;
+    --material-text-muted: #64748b;
+    --material-heading: #0d6efd;
+    --material-label: #003087;
+
+    --material-input-bg: #ffffff;
+    --material-input-text: #1e293b;
+    --material-input-border: #cbd5e1;
+    --material-input-placeholder: #94a3b8;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --material-page-bg: #071226;
+    --material-card-bg: #0f1b33;
+    --material-card-border: rgba(255, 255, 255, 0.1);
+    --material-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --material-text-main: #e5edf8;
+    --material-text-muted: #9caec8;
+    --material-heading: #8ea6ff;
+    --material-label: #dbeafe;
+
+    --material-input-bg: #101d36;
+    --material-input-text: #e5edf8;
+    --material-input-border: rgba(255, 255, 255, 0.16);
+    --material-input-placeholder: #8ea0bb;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .material-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--material-page-bg);
+    color: var(--material-text-main);
+  }
+
+  .material-card {
+    background: var(--material-card-bg);
+    color: var(--material-text-main);
+    border: 1px solid var(--material-card-border);
+    border-radius: 18px;
+    box-shadow: var(--material-card-shadow);
+    padding: 28px;
+  }
+
+  .material-card h3,
+  .material-card .text-primary {
+    color: var(--material-heading) !important;
+  }
+
+  .material-card .text-muted,
+  .material-card .form-text {
+    color: var(--material-text-muted) !important;
+  }
+
+  .material-card .form-label {
+    color: var(--material-label);
+    font-weight: 600;
+  }
+
+  .material-card .form-control,
+  .material-card textarea {
+    background-color: var(--material-input-bg) !important;
+    color: var(--material-input-text) !important;
+    border-color: var(--material-input-border) !important;
+    border-radius: 12px;
+    box-shadow: none !important;
+  }
+
+  .material-card .form-control:focus,
+  .material-card textarea:focus {
+    background-color: var(--material-input-bg) !important;
+    color: var(--material-input-text) !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.18) !important;
+  }
+
+  .material-card .form-control::placeholder,
+  .material-card textarea::placeholder {
+    color: var(--material-input-placeholder);
+  }
+
+  .material-card input[type="file"]::file-selector-button {
+    background: rgba(96, 165, 250, 0.12);
+    color: var(--material-label);
+    border: 0;
+    border-right: 1px solid var(--material-input-border);
+    padding: 0.45rem 0.9rem;
+    margin-right: 12px;
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary,
+  body.theme-dark .material-card .btn-outline-secondary,
+  html[data-theme="dark"] .material-card .btn-outline-secondary,
+  body[data-theme="dark"] .material-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary:hover,
+  body.theme-dark .material-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding: 16px 8px 32px;
+    }
+
+    .material-card {
+      padding: 20px;
+    }
+  }
+</style>
+
+<div class="material-page">
+  <div class="container">
+    <div class="material-card">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="fw-bold text-primary mb-0">
+          <i class="bi bi-pencil-square"></i> Chỉnh sửa tài liệu
+        </h3>
+        <a href="/teacher/materials/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+        </a>
+      </div>
+
+      <form method="post" action="/teacher/materials/edit/{{ material.id }}" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label class="form-label">📝 Tiêu đề</label>
+          <input type="text" name="title" class="form-control" value="{{ material.title }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">📄 Mô tả</label>
+          <textarea name="description" class="form-control" rows="3">{{ material.description or '' }}</textarea>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">📎 Tệp hiện tại</label><br>
+          {% if material.file_url %}
+            <a href="{{ material.file_url }}" target="_blank" class="text-decoration-none">
+              <i class="bi bi-file-earmark-text"></i> {{ material.file_name }}
+            </a>
+          {% else %}
+            <span class="text-muted">Chưa có tệp đính kèm</span>
+          {% endif %}
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">📂 Thay tệp mới (tuỳ chọn)</label>
+          <input type="file" name="file" class="form-control">
+          <div class="form-text">Để trống nếu không muốn thay đổi file.</div>
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-success">
+            <i class="bi bi-save"></i> Lưu thay đổi
+          </button>
+        </div>
+      </form>
     </div>
-
-    <form method="post" action="/teacher/materials/edit/{{ material.id }}" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label class="form-label">📝 Tiêu đề</label>
-        <input type="text" name="title" class="form-control" value="{{ material.title }}" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">📄 Mô tả</label>
-        <textarea name="description" class="form-control" rows="3">{{ material.description or '' }}</textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">📎 Tệp hiện tại</label><br>
-        {% if material.file_url %}
-          <a href="{{ material.file_url }}" target="_blank" class="text-decoration-none">
-            <i class="bi bi-file-earmark-text"></i> {{ material.file_name }}
-          </a>
-        {% else %}
-          <span class="text-muted">Chưa có tệp đính kèm</span>
-        {% endif %}
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">📂 Thay tệp mới (tuỳ chọn)</label>
-        <input type="file" name="file" class="form-control">
-        <div class="form-text text-muted">Để trống nếu không muốn thay đổi file.</div>
-      </div>
-
-      <div class="text-end">
-        <button type="submit" class="btn btn-success">
-          <i class="bi bi-save"></i> Lưu thay đổi
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 {% endblock %}

@@ -1,197 +1,559 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>➕ Tạo Khóa Học</title>
+{% extends "layout_teacher.html" %}
+{% block title %}➕ Tạo khóa học mới{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block content %}
+<style>
+  :root {
+    --course-page-bg: #f5f8ff;
+    --course-card-bg: #ffffff;
+    --course-card-border: #e5e7eb;
+    --course-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 
-  <style>
-    body { background: #eef3ff; font-family: "Inter", sans-serif; }
-    .page-wrapper {
-      max-width: 1000px; margin: auto; background: #fff;
-      padding: 2rem 2.5rem; margin-top: 35px;
-      border-radius: 18px; box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+    --course-text-main: #1e293b;
+    --course-text-muted: #64748b;
+    --course-heading: #2563eb;
+    --course-section: #1d4ed8;
+
+    --course-input-bg: #ffffff;
+    --course-input-text: #1e293b;
+    --course-input-border: #cbd5e1;
+    --course-input-placeholder: #94a3b8;
+
+    --course-soft-bg: #f8fbff;
+    --course-soft-border: #dbeafe;
+
+    --course-preview-border: #cbd5e1;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --course-page-bg: #071226;
+    --course-card-bg: #0f1b33;
+    --course-card-border: rgba(255, 255, 255, 0.1);
+    --course-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --course-text-main: #e5edf8;
+    --course-text-muted: #9caec8;
+    --course-heading: #8ea6ff;
+    --course-section: #8ea6ff;
+
+    --course-input-bg: #101d36;
+    --course-input-text: #e5edf8;
+    --course-input-border: rgba(255, 255, 255, 0.16);
+    --course-input-placeholder: #8ea0bb;
+
+    --course-soft-bg: #111f3a;
+    --course-soft-border: rgba(255, 255, 255, 0.12);
+
+    --course-preview-border: rgba(255, 255, 255, 0.18);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .course-create-page {
+    min-height: calc(100vh - 110px);
+    padding: 32px 18px 48px;
+    background: var(--course-page-bg) !important;
+    color: var(--course-text-main);
+  }
+
+  .course-card {
+    max-width: 1050px;
+    margin: 0 auto;
+    border-radius: 22px;
+    padding: 30px;
+    background: var(--course-card-bg) !important;
+    color: var(--course-text-main);
+    border: 1px solid var(--course-card-border);
+    box-shadow: var(--course-card-shadow);
+  }
+
+  .course-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+
+  .course-card h3,
+  .course-card .text-primary {
+    color: var(--course-heading) !important;
+  }
+
+  .course-card .text-muted {
+    color: var(--course-text-muted) !important;
+  }
+
+  .course-card .form-label {
+    font-weight: 600;
+    color: var(--course-text-main);
+  }
+
+  .course-card .form-control,
+  .course-card .form-select,
+  .course-card textarea {
+    background-color: var(--course-input-bg) !important;
+    color: var(--course-input-text) !important;
+    border-color: var(--course-input-border) !important;
+    border-radius: 14px;
+  }
+
+  .course-card .form-control:focus,
+  .course-card .form-select:focus,
+  .course-card textarea:focus {
+    background-color: var(--course-input-bg) !important;
+    color: var(--course-input-text) !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.18);
+  }
+
+  .course-card .form-control::placeholder,
+  .course-card textarea::placeholder {
+    color: var(--course-input-placeholder);
+  }
+
+  .course-card .form-control:disabled,
+  .course-card .form-control[readonly] {
+    background-color: var(--course-soft-bg) !important;
+    color: var(--course-input-text) !important;
+    border-color: var(--course-soft-border) !important;
+    opacity: 1;
+  }
+
+  .section-box {
+    background: var(--course-soft-bg);
+    border: 1px solid var(--course-soft-border);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+  }
+
+  .section-title {
+    font-size: 1.08rem;
+    font-weight: 800;
+    color: var(--course-section);
+    border-left: 4px solid #3b82f6;
+    padding-left: 12px;
+    margin-bottom: 16px;
+  }
+
+  .course-preview {
+    max-height: 190px;
+    max-width: 100%;
+    border-radius: 16px;
+    margin-top: 12px;
+    border: 1px solid var(--course-preview-border);
+    object-fit: cover;
+  }
+
+  .teacher-note {
+    border-radius: 16px;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 14px 16px;
+    margin-bottom: 22px;
+  }
+
+  body.dark-mode .teacher-note,
+  body.theme-dark .teacher-note,
+  html[data-theme="dark"] .teacher-note,
+  body[data-theme="dark"] .teacher-note,
+  [data-bs-theme="dark"] .teacher-note {
+    background: rgba(37, 99, 235, 0.18);
+    border-color: rgba(147, 197, 253, 0.3);
+    color: #dbeafe;
+  }
+
+  .course-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+
+  body.dark-mode .course-card .btn-outline-secondary,
+  body.theme-dark .course-card .btn-outline-secondary,
+  html[data-theme="dark"] .course-card .btn-outline-secondary,
+  body[data-theme="dark"] .course-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .course-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .course-card .btn-outline-secondary:hover,
+  body.theme-dark .course-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .course-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .course-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .course-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .course-create-page {
+      padding: 18px 10px 34px;
     }
-    .nav-tabs .nav-link.active {
-      background: #0d6efd; color: #fff !important;
+
+    .course-card {
+      padding: 20px;
+      border-radius: 18px;
     }
-    label { font-weight: 600; }
-  </style>
-</head>
+  }
+</style>
 
-<body>
-<div class="page-wrapper">
+<div class="course-create-page">
+  <div class="course-card">
+    <div class="course-topbar">
+      <div>
+        <h3 class="fw-bold mb-1">
+          <i class="bi bi-plus-circle"></i> Tạo khóa học mới
+        </h3>
+        <p class="text-muted mb-0">
+          Giảng viên tạo khóa học mới. Khóa học sẽ được lưu ở trạng thái bản nháp để quản trị viên duyệt.
+        </p>
+      </div>
 
-  <h3 class="text-primary fw-bold mb-3">
-    <i class="bi bi-plus-circle"></i> Tạo Khóa Học Mới (Giảng viên)
-  </h3>
-
-  <div class="alert alert-info d-flex align-items-start mb-4">
-    <i class="bi bi-shield-check me-2 fs-4"></i>
-    <div>
-      <div class="fw-semibold">Quy trình duyệt khóa học</div>
-      <small>
-        Sau khi tạo, khóa học sẽ ở trạng thái <strong>“Bản nháp / chờ duyệt”</strong>.
-        Admin sẽ kiểm duyệt và xuất bản khóa học. Giảng viên không thể tự công khai hay xuất bản khóa học.
-      </small>
+      <a href="/teacher/courses/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+      </a>
     </div>
-  </div>
 
-  <ul class="nav nav-tabs mb-4">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">Thông tin chính</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time">Lịch - Học vụ</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings">Cài đặt khóa học</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-limit">Giới hạn</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-thumb">Ảnh đại diện</button></li>
-  </ul>
+    <div class="teacher-note">
+      <div class="fw-bold mb-1">
+        <i class="bi bi-shield-check"></i> Lưu ý dành cho giảng viên
+      </div>
+      <div>
+        Sau khi tạo, khóa học chưa hiển thị công khai ngay. Quản trị viên sẽ kiểm tra nội dung và duyệt xuất bản.
+      </div>
+    </div>
 
-  <form method="post" action="/teacher/courses/create" enctype="multipart/form-data">
-    <div class="tab-content">
+    <form method="post" action="/teacher/courses/create" enctype="multipart/form-data" onsubmit="return kiemTraFormKhoaHoc()">
+      <input type="hidden" name="is_public" value="0">
 
-      <div class="tab-pane fade show active" id="tab-basic">
+      <div class="section-box">
+        <div class="section-title">
+          <i class="bi bi-info-circle"></i> Thông tin khóa học
+        </div>
+
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Tên khóa học *</label>
-            <input type="text" class="form-control" name="course_name" required>
+          <div class="col-md-7">
+            <label class="form-label">Tên khóa học <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              name="course_name"
+              class="form-control"
+              required
+              maxlength="200"
+              placeholder="Ví dụ: Nhập môn Lập trình Web"
+            >
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Môn học *</label>
-            <input type="text" class="form-control" name="subject" placeholder="VD: Lập trình Python" required>
+          <div class="col-md-5">
+            <label class="form-label">Tên môn học <span class="text-danger">*</span></label>
+            <input
+              type="text"
+              name="subject"
+              class="form-control"
+              required
+              maxlength="100"
+              placeholder="Ví dụ: Phát triển Web"
+            >
           </div>
 
           <div class="col-md-4">
-            <label class="form-label">Số tín chỉ *</label>
-            <input type="number" class="form-control" name="credit_hours" value="3" min="1" required>
+            <label class="form-label">Số tín chỉ <span class="text-danger">*</span></label>
+            <input
+              type="number"
+              name="credit_hours"
+              class="form-control"
+              value="3"
+              min="1"
+              max="20"
+              required
+            >
           </div>
 
           <div class="col-md-4">
-            <label class="form-label">Độ khó</label>
-            <select class="form-select" name="difficulty_level">
-              <option value="beginner">Dễ</option>
+            <label class="form-label">Mức độ khóa học</label>
+            <select name="difficulty_level" class="form-select">
+              <option value="beginner" selected>Cơ bản</option>
               <option value="intermediate">Trung bình</option>
-              <option value="advanced">Khó</option>
+              <option value="advanced">Nâng cao</option>
             </select>
           </div>
 
           <div class="col-md-4">
-            <label class="form-label">Cấp độ lớp</label>
-            <input type="number" class="form-control" name="grade_level" min="1">
+            <label class="form-label">Cấp lớp</label>
+            <input
+              type="number"
+              name="grade_level"
+              class="form-control"
+              min="1"
+              max="12"
+              placeholder="Ví dụ: 1"
+            >
           </div>
 
           <div class="col-12">
-            <label class="form-label">Mô tả</label>
-            <textarea class="form-control" name="description" rows="3"></textarea>
+            <label class="form-label">Mô tả khóa học</label>
+            <textarea
+              name="description"
+              class="form-control"
+              rows="4"
+              placeholder="Nhập mô tả ngắn về nội dung, mục tiêu và đối tượng học..."
+            ></textarea>
           </div>
         </div>
       </div>
 
-      <div class="tab-pane fade" id="tab-time">
+      <div class="section-box">
+        <div class="section-title">
+          <i class="bi bi-calendar3"></i> Thông tin học vụ
+        </div>
+
         <div class="row g-3">
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label class="form-label">Năm học</label>
-            <select class="form-select" name="academic_year_id">
+            <select name="academic_year_id" class="form-select">
               <option value="">-- Chọn năm học --</option>
-              {% for y in years %}
+              {% if years %}
+                {% for y in years %}
                 <option value="{{ y.id }}">{{ y.year_name }}</option>
-              {% endfor %}
+                {% endfor %}
+              {% endif %}
             </select>
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Ngành học</label>
-            <input type="text" readonly class="form-control bg-light"
-                   value="{{ teacher.major.major_name if teacher.major else 'Không xác định' }}">
+          <div class="col-md-4">
+            <label class="form-label">Học kỳ</label>
+            <input
+              type="number"
+              name="semester"
+              class="form-control"
+              min="1"
+              max="10"
+              placeholder="Ví dụ: 1"
+            >
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Học kỳ</label>
-            <input type="number" class="form-control" name="semester" min="1" max="10">
+          <div class="col-md-4">
+            <label class="form-label">Chuyên ngành giảng viên</label>
+            <input
+              type="text"
+              class="form-control"
+              readonly
+              value="{% if major %}Đã được hệ thống gán{% else %}Chưa được gán chuyên ngành{% endif %}"
+            >
           </div>
         </div>
       </div>
 
-      <div class="tab-pane fade" id="tab-settings">
+      <div class="section-box">
+        <div class="section-title">
+          <i class="bi bi-gear"></i> Cài đặt khóa học
+        </div>
+
         <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Cho phép bài tập</label>
-            <select class="form-select" name="allow_assignments">
-              <option value="1">Có</option>
+          <div class="col-md-4">
+            <label class="form-label">Cho phép tạo bài tập</label>
+            <select name="allow_assignments" class="form-select">
+              <option value="1" selected>Có</option>
               <option value="0">Không</option>
             </select>
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Hình thức nộp bài</label>
-            <select class="form-select" name="default_submission_type">
-              <option value="individual">Cá nhân</option>
-              <option value="group">Nhóm</option>
+          <div class="col-md-4">
+            <label class="form-label">Hình thức nộp bài mặc định</label>
+            <select name="default_submission_type" class="form-select">
+              <option value="individual" selected>Cá nhân</option>
+              <option value="group">Theo nhóm</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Hình thức đăng ký học</label>
+            <select name="enrollment_mode" class="form-select">
+              <option value="auto" selected>Tự động ghi danh</option>
+              <option value="approval">Cần giảng viên duyệt</option>
             </select>
           </div>
 
           <div class="col-12">
-            <label class="form-label">Tiên quyết</label>
-            <textarea class="form-control" name="prerequisites"></textarea>
+            <label class="form-label">Điều kiện tiên quyết</label>
+            <textarea
+              name="prerequisites"
+              class="form-control"
+              rows="3"
+              placeholder="Ví dụ: Sinh viên đã học HTML/CSS cơ bản hoặc có kiến thức nền về lập trình..."
+            ></textarea>
           </div>
         </div>
       </div>
 
-      <div class="tab-pane fade" id="tab-limit">
+      <div class="section-box">
+        <div class="section-title">
+          <i class="bi bi-cash-coin"></i> Học phí và số lượng học viên
+        </div>
+
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label">Giá khóa học (VNĐ)</label>
-            <input type="number" class="form-control" name="price" min="0" step="1000">
+            <label class="form-label">Học phí khóa học</label>
+            <input
+              type="number"
+              name="price"
+              class="form-control"
+              value="0"
+              min="0"
+              step="1000"
+              placeholder="Nhập học phí, ví dụ: 499000"
+            >
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">Số lượng tối đa</label>
-            <input type="number" class="form-control" name="max_students" min="1" value="100">
+            <label class="form-label">Số học viên tối đa</label>
+            <input
+              type="number"
+              name="max_students"
+              class="form-control"
+              value="100"
+              min="1"
+              max="1000"
+            >
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Chế độ đăng ký</label>
-            <select class="form-select" name="enrollment_mode">
-              <option value="auto">Tự động</option>
-              <option value="approval">Chờ duyệt</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
+          <div class="col-12">
             <label class="form-label">Trạng thái sau khi tạo</label>
-            <input type="text" class="form-control bg-light" value="Bản nháp (Chờ admin duyệt)" readonly>
-            <div class="form-text">
-              Admin sẽ duyệt và xuất bản khóa học, sau đó mới hiển thị cho sinh viên.
+            <input
+              type="text"
+              class="form-control"
+              value="Bản nháp - chờ quản trị viên duyệt"
+              readonly
+            >
+            <div class="form-text text-muted">
+              Hệ thống sẽ tự tạo mã khóa học. Giảng viên không cần nhập mã thủ công.
             </div>
           </div>
         </div>
       </div>
 
-      <div class="tab-pane fade" id="tab-thumb">
-        <div class="col-md-6">
-          <label class="form-label">Ảnh đại diện</label>
-          <input type="file" class="form-control" name="thumbnail">
+      <div class="section-box">
+        <div class="section-title">
+          <i class="bi bi-image"></i> Ảnh đại diện khóa học
         </div>
-        <p class="text-muted mt-2">Hỗ trợ: JPG, PNG, GIF, WEBP (khuyến nghị 1280x720)</p>
+
+        <div class="row g-3">
+          <div class="col-md-7">
+            <label class="form-label">Ảnh đại diện</label>
+            <input
+              type="file"
+              name="thumbnail"
+              id="thumbnail"
+              class="form-control"
+              accept="image/*"
+              onchange="xemTruocAnh(event)"
+            >
+            <div class="form-text text-muted">
+              Nên dùng ảnh ngang, rõ nét. Ví dụ kích thước 1280x720.
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <img id="thumbnail_preview" class="course-preview d-none" alt="Ảnh xem trước">
+          </div>
+        </div>
       </div>
 
-    </div>
+      <div class="course-actions">
+        <a href="/teacher/courses/list" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-x-circle"></i> Hủy
+        </a>
 
-    <div class="d-flex justify-content-between mt-4">
-      <a href="/teacher/courses/manage" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-
-      <button class="btn btn-success px-4" type="submit">
-        <i class="bi bi-check-lg"></i> Tạo khóa học
-      </button>
-    </div>
-  </form>
-
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-check-circle"></i> Tạo khóa học
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<script>
+  function xemTruocAnh(event) {
+    const tepAnh = event.target.files[0];
+    const khungXemTruoc = document.getElementById("thumbnail_preview");
+
+    if (!khungXemTruoc) return;
+
+    if (tepAnh) {
+      khungXemTruoc.src = URL.createObjectURL(tepAnh);
+      khungXemTruoc.classList.remove("d-none");
+    } else {
+      khungXemTruoc.src = "";
+      khungXemTruoc.classList.add("d-none");
+    }
+  }
+
+  function kiemTraFormKhoaHoc() {
+    const tenKhoaHoc = document.querySelector("[name='course_name']").value.trim();
+    const tenMonHoc = document.querySelector("[name='subject']").value.trim();
+    const soTinChi = parseInt(document.querySelector("[name='credit_hours']").value || "0");
+    const hocPhi = parseFloat(document.querySelector("[name='price']").value || "0");
+    const soHocVienToiDa = parseInt(document.querySelector("[name='max_students']").value || "0");
+
+    if (!tenKhoaHoc) {
+      alert("❌ Vui lòng nhập tên khóa học!");
+      return false;
+    }
+
+    if (!tenMonHoc) {
+      alert("❌ Vui lòng nhập tên môn học!");
+      return false;
+    }
+
+    if (!soTinChi || soTinChi <= 0) {
+      alert("❌ Số tín chỉ phải lớn hơn 0!");
+      return false;
+    }
+
+    if (hocPhi < 0) {
+      alert("❌ Học phí không được âm!");
+      return false;
+    }
+
+    if (!soHocVienToiDa || soHocVienToiDa <= 0) {
+      alert("❌ Số học viên tối đa phải lớn hơn 0!");
+      return false;
+    }
+
+    return true;
+  }
+</script>
+{% endblock %}

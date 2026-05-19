@@ -1,7 +1,8 @@
 """
 ==========================================================
 🎓 ROUTER: Student - Profile
-Bản chốt cuối, khớp template profile/edit/change-password
+Bản đã sửa lỗi upload ảnh đại diện 422
+Khớp template profile/edit/change-password
 ==========================================================
 """
 
@@ -15,7 +16,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy.orm import Session
 
 from app.config.paths import UPLOAD_AVATARS
@@ -47,17 +48,24 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 def get_current_student_id(request: Request) -> str | None:
     user_id = request.session.get("user_id")
     role = request.session.get("user_role") or request.session.get("role")
+
     if not user_id or role != "student":
         return None
+
     return user_id
 
 
 def resize_image(image_bytes: bytes, size=(512, 512)) -> bytes:
     image = Image.open(BytesIO(image_bytes)).convert("RGB")
-    image = image.resize(size, Image.LANCZOS)
+    image.thumbnail(size, Image.LANCZOS)
+
+    canvas = Image.new("RGB", size, (255, 255, 255))
+    x = (size[0] - image.width) // 2
+    y = (size[1] - image.height) // 2
+    canvas.paste(image, (x, y))
 
     output = BytesIO()
-    image.save(output, format="JPEG", quality=92)
+    canvas.save(output, format="JPEG", quality=92)
     return output.getvalue()
 
 
@@ -68,6 +76,7 @@ def delete_old_avatar(old_url: str | None):
 
         old_name = Path(old_url).name
         old_path = Path(UPLOAD_AVATARS) / old_name
+
         if old_path.exists():
             old_path.unlink()
     except Exception:
@@ -88,22 +97,26 @@ def ensure_student_related_rows(user: User):
 def get_student_major(user: User):
     if getattr(user, "student_profile", None) and getattr(user.student_profile, "major", None):
         return user.student_profile.major
+
     return getattr(user, "major", None)
 
 
 def get_student_academic_year(user: User):
     if getattr(user, "student_profile", None) and getattr(user.student_profile, "academic_year", None):
         return user.student_profile.academic_year
+
     return getattr(user, "academic_year", None)
 
 
 @router.get("/", response_class=HTMLResponse)
 def profile_page(request: Request, db: Session = Depends(get_db)):
     user_id = get_current_student_id(request)
+
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
     user = db.query(User).filter(User.id == user_id).first()
+
     if not user:
         return RedirectResponse("/auth/login", status_code=303)
 
@@ -116,6 +129,7 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
         or getattr(user, "avatar_url", None)
         or DEFAULT_AVATAR_URL
     )
+
     if request.session.get("user_avatar") != avatar:
         request.session["user_avatar"] = avatar
 
@@ -123,14 +137,19 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
     academic_year = get_student_academic_year(user)
 
     total_lessons = db.query(LessonProgress).filter_by(user_id=user_id).count()
+
     completed_lessons = (
         db.query(LessonProgress)
         .filter_by(user_id=user_id, progress_status="completed")
         .count()
     )
+
     total_quizzes = db.query(QuizAttempt).filter_by(user_id=user_id).count()
+
     total_assignments = (
-        db.query(AssignmentSubmission).filter_by(student_id=user_id).count()
+        db.query(AssignmentSubmission)
+        .filter_by(student_id=user_id)
+        .count()
     )
 
     progress_percent = int((completed_lessons / total_lessons * 100) if total_lessons else 0)
@@ -155,53 +174,50 @@ def profile_page(request: Request, db: Session = Depends(get_db)):
 @router.post("/upload-avatar")
 async def upload_avatar(
     request: Request,
-    files: Optional[list[UploadFile]] = File(None),
+    avatar: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
     user_id = get_current_student_id(request)
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
-    if not files:
+    if not avatar or not avatar.filename:
         return RedirectResponse("/student/profile?error=no_file", status_code=303)
-
-    os.makedirs(UPLOAD_AVATARS, exist_ok=True)
 
     user = db.query(User).filter_by(id=user_id).first()
     if not user:
         return RedirectResponse("/auth/login", status_code=303)
 
     ensure_student_related_rows(user)
+    os.makedirs(UPLOAD_AVATARS, exist_ok=True)
 
-    new_avatar_url = None
+    try:
+        ext = os.path.splitext(avatar.filename)[1].lower()
 
-    for file in files:
-        if not file or not file.filename:
-            continue
+        if ext not in ALLOWED_EXT:
+            return RedirectResponse("/student/profile?error=avatar_invalid_type", status_code=303)
 
-        ext = os.path.splitext(file.filename)[1].lower()
+        if avatar.content_type not in ALLOWED_TYPES:
+            return RedirectResponse("/student/profile?error=avatar_invalid_type", status_code=303)
 
-        if ext not in ALLOWED_EXT or file.content_type not in ALLOWED_TYPES:
-            continue
+        contents = await avatar.read()
+        if not contents:
+            return RedirectResponse("/student/profile?error=no_file", status_code=303)
 
-        contents = await file.read()
         size_mb = len(contents) / (1024 * 1024)
-
         if size_mb > MAX_AVATAR_SIZE_MB:
             return RedirectResponse("/student/profile?error=avatar_too_large", status_code=303)
 
         resized = resize_image(contents)
 
-        filename = f"{uuid.uuid4()}.jpg"
+        filename = f"{uuid.uuid4().hex}.jpg"
         filepath = os.path.join(UPLOAD_AVATARS, filename)
 
         with open(filepath, "wb") as f:
             f.write(resized)
 
         new_avatar_url = f"/uploads/avatars/{filename}"
-        break
 
-    if new_avatar_url:
         old_avatar = (
             getattr(user.profile, "avatar_url", None)
             or getattr(user, "avatar_url", None)
@@ -210,19 +226,30 @@ async def upload_avatar(
 
         user.profile.avatar_url = new_avatar_url
         user.updated_at = datetime.utcnow()
+
         db.commit()
         request.session["user_avatar"] = new_avatar_url
 
-    return RedirectResponse("/student/profile?success=avatar_updated", status_code=303)
+        return RedirectResponse("/student/profile?success=avatar_updated", status_code=303)
 
+    except UnidentifiedImageError:
+        db.rollback()
+        return RedirectResponse("/student/profile?error=avatar_invalid_type", status_code=303)
+
+    except Exception:
+        traceback.print_exc()
+        db.rollback()
+        return RedirectResponse("/student/profile?error=avatar_upload_failed", status_code=303)
 
 @router.get("/edit", response_class=HTMLResponse)
 def edit_profile_page(request: Request, db: Session = Depends(get_db)):
     user_id = get_current_student_id(request)
+
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
     user = db.query(User).filter_by(id=user_id).first()
+
     if not user:
         return RedirectResponse("/auth/login", status_code=303)
 
@@ -257,11 +284,13 @@ def update_profile(
     academic_year_id: Optional[str] = Form(None),
 ):
     user_id = get_current_student_id(request)
+
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
     try:
         user = db.query(User).filter_by(id=user_id).first()
+
         if not user:
             return RedirectResponse("/auth/login", status_code=303)
 
@@ -270,6 +299,7 @@ def update_profile(
         user.profile.full_name = full_name.strip()
         user.profile.phone = phone.strip() if phone else None
         user.profile.gender = gender or None
+
         user.profile.date_of_birth = (
             datetime.strptime(date_of_birth, "%Y-%m-%d").date()
             if date_of_birth else None
@@ -280,6 +310,7 @@ def update_profile(
         user.updated_at = datetime.utcnow()
 
         db.commit()
+
         return RedirectResponse("/student/profile?success=updated", status_code=303)
 
     except Exception:
@@ -291,6 +322,7 @@ def update_profile(
 @router.get("/change-password", response_class=HTMLResponse)
 def change_password_page(request: Request):
     user_id = get_current_student_id(request)
+
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
@@ -312,6 +344,7 @@ def change_password(
     confirm_password: str = Form(...),
 ):
     user_id = get_current_student_id(request)
+
     if not user_id:
         return RedirectResponse("/auth/login", status_code=303)
 
@@ -335,9 +368,11 @@ def change_password(
         )
 
     security = db.query(SecuritySettings).filter_by(user_id=user_id).first()
+
     if security:
         security.last_password_change = datetime.utcnow()
         db.commit()
 
     request.session.clear()
+
     return RedirectResponse("/auth/login?msg=password_changed", status_code=303)

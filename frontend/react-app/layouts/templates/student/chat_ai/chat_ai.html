@@ -1,10 +1,13 @@
 {% extends "layout_student.html" %}
-{% block title %}🤖 Gemini – Trợ lý học tập AI{% endblock %}
+{% block title %}🤖 Trợ lý học tập AI{% endblock %}
 
 {% block content %}
+{% set user_avatar = user.profile.avatar_url if user is defined and user and user.profile and user.profile.avatar_url else '/uploads/avatars/default-avatar.png' %}
+{% set chat_messages = messages if messages is defined and messages else history %}
+{% set current_chat_user_id = current_user_id if current_user_id is defined else (user.id if user is defined and user else '') %}
+{% set quick_suggestions = major_suggestions if major_suggestions is defined and major_suggestions else suggestions %}
 
 <style>
-/* (giữ nguyên CSS của bạn) */
 .chat-container {
   max-width: 900px;
   margin: 0 auto;
@@ -14,146 +17,239 @@
   padding: 1.8rem 2rem;
   transition: .3s ease;
 }
+
 body.dark-mode .chat-container {
   background: linear-gradient(145deg, #1b1e22, #23272f);
   box-shadow: 0 0 30px rgba(0,0,0,.45);
 }
-.chat-container:hover { transform: translateY(-3px); }
 
 .chat-header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
+
 .chat-header h4 {
   font-weight: 700;
   background: linear-gradient(90deg, #007bff, #6f42c1);
-  -webkit-background-clip:text;
+  -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
+.chat-subtitle {
+  font-size: .9rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+body.dark-mode .chat-subtitle {
+  color: #94a3b8;
+}
+
 .chat-box {
   height: 520px;
-  overflow-y:auto;
-  padding:1rem;
-  border-radius:16px;
-  background:#f8fafc;
-  scroll-behavior:smooth;
+  overflow-y: auto;
+  padding: 1rem;
+  border-radius: 16px;
+  background: #f8fafc;
+  scroll-behavior: smooth;
 }
-body.dark-mode .chat-box { background:#2a2d32; }
+
+body.dark-mode .chat-box {
+  background: #2a2d32;
+}
 
 .message {
-  display:flex;
-  gap:10px;
-  margin-bottom:14px;
-  animation:fadeIn .35s ease;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  animation: fadeIn .35s ease;
+}
+
+.message.user {
+  justify-content: flex-end;
+}
+
+.message.user .avatar {
+  order: 2;
 }
 
 .avatar {
-  width:38px; height:38px;
-  border-radius:50%;
-  object-fit:cover;
-  box-shadow:0 2px 5px rgba(0,0,0,0.2);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  flex-shrink: 0;
 }
 
 .bubble {
-  max-width:75%;
-  padding:0.9rem 1.1rem;
-  border-radius:14px;
-  font-size:.95rem;
-  white-space:pre-wrap;
+  max-width: 75%;
+  padding: .9rem 1.1rem;
+  border-radius: 14px;
+  font-size: .95rem;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
-.message.user { justify-content:flex-end; }
 .message.user .bubble {
-  background:linear-gradient(135deg, #007bff, #0056d8);
-  color:white;
-  border-bottom-right-radius:5px;
-}
-.message.assistant .bubble {
-  background:white;
-  color:#222;
-  border-bottom-left-radius:5px;
-  box-shadow:0 0 8px rgba(0,0,0,0.1);
-}
-body.dark-mode .message.assistant .bubble {
-  background:#2e3136;
-  color:#eee;
+  background: linear-gradient(135deg, #007bff, #0056d8);
+  color: white;
+  border-bottom-right-radius: 5px;
 }
 
-/* ✅ Markdown styling trong bubble */
-.bubble p { margin: 0 0 .6rem; }
-.bubble p:last-child { margin-bottom: 0; }
-.bubble ul, .bubble ol { margin: .4rem 0 .6rem 1.2rem; }
-.bubble li { margin: .2rem 0; }
-.bubble code { padding: .12rem .35rem; border-radius: 6px; background: rgba(0,0,0,.06); }
-body.dark-mode .bubble code { background: rgba(255,255,255,.08); }
+.message.assistant .bubble {
+  background: white;
+  color: #222;
+  border-bottom-left-radius: 5px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+
+body.dark-mode .message.assistant .bubble {
+  background: #2e3136;
+  color: #eee;
+}
+
+.bubble p {
+  margin: 0 0 .6rem;
+}
+
+.bubble p:last-child {
+  margin-bottom: 0;
+}
+
+.bubble ul,
+.bubble ol {
+  margin: .4rem 0 .6rem 1.2rem;
+}
+
+.bubble li {
+  margin: .2rem 0;
+}
+
+.bubble code {
+  padding: .12rem .35rem;
+  border-radius: 6px;
+  background: rgba(0,0,0,.06);
+}
+
+body.dark-mode .bubble code {
+  background: rgba(255,255,255,.08);
+}
+
 .bubble pre {
   padding: .75rem 1rem;
   border-radius: 12px;
   overflow: auto;
   background: rgba(0,0,0,.06);
 }
-body.dark-mode .bubble pre { background: rgba(255,255,255,.08); }
-.bubble pre code { background: transparent; padding: 0; }
-.bubble a { text-decoration: underline; }
+
+body.dark-mode .bubble pre {
+  background: rgba(255,255,255,.08);
+}
+
+.bubble pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.bubble a {
+  text-decoration: underline;
+}
 
 .typing {
-  color:#6c757d;
-  font-size:.9rem;
-  font-style:italic;
+  color: #6c757d;
+  font-size: .9rem;
+  font-style: italic;
 }
-.typing span { animation:blink 1.4s infinite; }
-.typing span:nth-child(2){ animation-delay:.2s; }
-.typing span:nth-child(3){ animation-delay:.4s; }
 
-@keyframes blink {
-  0%,80%,100%{opacity:0;}
-  40%{opacity:1;}
+.typing span {
+  animation: blink 1.4s infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: .2s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: .4s;
 }
 
 .chat-input {
-  display:flex;
-  gap:10px;
-  margin-top:12px;
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
 }
+
 .chat-input input {
-  flex-grow:1;
-  padding:.75rem 1.1rem;
-  border-radius:30px;
-  border:1px solid #ccc;
+  flex-grow: 1;
+  padding: .75rem 1.1rem;
+  border-radius: 30px;
+  border: 1px solid #ccc;
 }
+
 .chat-input input:focus {
-  border-color:#007bff;
-  outline:none;
-  box-shadow:0 0 8px rgba(0,123,255,.35);
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 8px rgba(0,123,255,.35);
 }
 
 .suggestions {
-  margin-bottom:1rem;
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
+
 .suggestions button {
-  padding:.45rem .9rem;
-  border-radius:20px;
-  font-size:.9rem;
-  background:linear-gradient(90deg,#e8f0ff,#f6f9ff);
-  border:none;
-  color:#0056d8;
-  transition:.2s;
+  padding: .45rem .9rem;
+  border-radius: 20px;
+  font-size: .9rem;
+  background: linear-gradient(90deg,#e8f0ff,#f6f9ff);
+  border: none;
+  color: #0056d8;
+  transition: .2s;
 }
+
 .suggestions button:hover {
-  background:linear-gradient(90deg,#007bff,#6f42c1);
-  color:white;
+  background: linear-gradient(90deg,#007bff,#6f42c1);
+  color: white;
+}
+
+.empty-chat {
+  text-align: center;
+  color: #64748b;
+  padding: 40px 16px;
+}
+
+.empty-chat i {
+  font-size: 2.8rem;
+  color: #0d6efd;
+}
+
+body.dark-mode .empty-chat {
+  color: #94a3b8;
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
 }
 
 @keyframes fadeIn {
-  from { opacity:0; transform:translateY(10px); }
-  to   { opacity:1; transform:translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
 
@@ -161,66 +257,96 @@ body.dark-mode .bubble pre { background: rgba(255,255,255,.08); }
   <div class="chat-container">
 
     <div class="chat-header">
-      <h4><i class="bi bi-stars"></i> Gemini AI Trợ lý học tập</h4>
       <div>
-        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm" type="button">
+        <h4 class="mb-0">
+          <i class="bi bi-stars"></i> Trợ lý học tập AI
+        </h4>
+        <div class="chat-subtitle">
+          AI chỉ dùng dữ liệu của tài khoản học viên đang đăng nhập để hỗ trợ học tập.
+        </div>
+      </div>
+
+      <div>
+        <button id="downloadBtn" class="btn btn-outline-secondary btn-sm" type="button" title="Tải lịch sử chat">
           <i class="bi bi-download"></i>
         </button>
-        <button id="clearBtn" class="btn btn-outline-danger btn-sm" type="button">
+
+        <button id="clearBtn" class="btn btn-outline-danger btn-sm" type="button" title="Xóa lịch sử chat">
           <i class="bi bi-trash3"></i>
         </button>
       </div>
     </div>
 
-    {% if suggestions %}
+    {% if quick_suggestions %}
     <div class="suggestions">
-      {% for s in suggestions %}
-      <button type="button" class="suggestion-btn" data-text="{{ s|e }}">{{ s }}</button>
+      {% for s in quick_suggestions %}
+      <button type="button" class="suggestion-btn" data-text="{{ s|e }}">
+        {{ s }}
+      </button>
       {% endfor %}
     </div>
     {% endif %}
 
     <div id="chatBox" class="chat-box">
-      {% for chat in history|reverse %}
-        {% if chat.role == 'user' %}
-        <div class="message user">
-          <!-- ✅ dùng student_globals để lấy avatar hồ sơ -->
-          <img src="{{ student_globals(request).avatar_url }}"
-               class="avatar" alt="User"
-               onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
-          <div class="bubble">{{ chat.message }}</div>
+      {% if chat_messages %}
+        {% for chat in chat_messages %}
+          {% set chat_user_id = chat.user_id if chat.user_id is defined and chat.user_id else current_chat_user_id %}
+          {% if chat_user_id == current_chat_user_id %}
+            {% set role = chat.role if chat.role is defined else 'assistant' %}
+            {% set text = chat.text if chat.text is defined else (chat.response if role == 'assistant' else chat.message) %}
+
+            {% if text %}
+              {% if role == 'user' %}
+              <div class="message user">
+                <img src="{{ user_avatar }}"
+                     class="avatar"
+                     alt="User"
+                     onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
+                <div class="bubble">{{ text }}</div>
+              </div>
+              {% else %}
+              <div class="message assistant">
+                <img src="/static/assets/ai_avatar.png"
+                     class="avatar"
+                     alt="AI"
+                     onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
+                <div class="bubble md-bubble">{{ text }}</div>
+              </div>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <div class="empty-chat">
+          <i class="bi bi-robot"></i>
+          <p class="fw-semibold mb-1 mt-2">Chưa có lịch sử trò chuyện</p>
+          <p class="mb-0">Hãy nhập câu hỏi để AI hỗ trợ theo dữ liệu học tập của bạn.</p>
         </div>
-        {% else %}
-        <div class="message assistant">
-          <!-- ✅ đúng static -->
-          <img src="{{ request.url_for('static', path='assets/ai_avatar.png') }}"
-               class="avatar" alt="AI"
-               onerror="this.onerror=null;this.src='/uploads/avatars/default-avatar.png';">
-          <div class="bubble md-bubble">{{ chat.response }}</div>
-        </div>
-        {% endif %}
-      {% endfor %}
+      {% endif %}
     </div>
 
     <form id="chatForm" class="chat-input">
-      <input id="messageInput" type="text" name="message"
-             placeholder="Nhập câu hỏi..." autocomplete="off" required>
+      <input id="messageInput"
+             type="text"
+             name="message"
+             placeholder="Nhập câu hỏi..."
+             autocomplete="off"
+             required>
       <button type="submit" class="btn btn-primary">
         <i class="bi bi-send"></i>
       </button>
     </form>
 
     <div id="typingIndicator" class="typing mt-1" style="display:none;">
-      🤖 Gemini đang gõ<span>.</span><span>.</span><span>.</span>
+      🤖 AI đang trả lời<span>.</span><span>.</span><span>.</span>
     </div>
 
   </div>
 </div>
 
-<!-- ✅ VSCode-safe: đưa biến Jinja ra data-* -->
 <div id="chatConfig"
-     data-user-avatar="{{ student_globals(request).avatar_url|e }}"
-     data-ai-avatar="{{ request.url_for('static', path='assets/ai_avatar.png')|e }}"
+     data-user-avatar="{{ user_avatar|e }}"
+     data-ai-avatar="/static/assets/ai_avatar.png"
      style="display:none;"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -236,7 +362,7 @@ const typing = document.getElementById("typingIndicator");
 
 const cfg = document.getElementById("chatConfig");
 const USER_AVATAR = (cfg && cfg.dataset.userAvatar) ? cfg.dataset.userAvatar : "/uploads/avatars/default-avatar.png";
-const AI_AVATAR   = (cfg && cfg.dataset.aiAvatar) ? cfg.dataset.aiAvatar : "/static/assets/ai_avatar.png";
+const AI_AVATAR = (cfg && cfg.dataset.aiAvatar) ? cfg.dataset.aiAvatar : "/static/assets/ai_avatar.png";
 
 function avatarImgHtml(src, alt) {
   const fallback = "/uploads/avatars/default-avatar.png";
@@ -245,7 +371,11 @@ function avatarImgHtml(src, alt) {
 }
 
 function renderMarkdown(mdText) {
-  const html = marked.parse(mdText || "", { gfm: true, breaks: true });
+  const html = marked.parse(mdText || "", {
+    gfm: true,
+    breaks: true
+  });
+
   return DOMPurify.sanitize(html);
 }
 
@@ -256,7 +386,14 @@ function renderAllAssistantBubbles() {
   });
 }
 
+function clearEmptyBox() {
+  const empty = chatBox.querySelector(".empty-chat");
+  if (empty) empty.remove();
+}
+
 function addMessage(role, content, avatar, isMarkdown = false) {
+  clearEmptyBox();
+
   const wrapper = document.createElement("div");
   wrapper.className = "message " + role;
 
@@ -270,6 +407,7 @@ function addMessage(role, content, avatar, isMarkdown = false) {
 
   chatBox.appendChild(wrapper);
   chatBox.scrollTop = chatBox.scrollHeight;
+
   return bubble;
 }
 
@@ -289,11 +427,14 @@ function typeEffectThenRenderMarkdown(el, text, speed = 16) {
     if (i < t.length) {
       el.textContent += t.charAt(i);
       i++;
+      chatBox.scrollTop = chatBox.scrollHeight;
       setTimeout(loop, speed);
     } else {
       el.innerHTML = renderMarkdown(t);
+      chatBox.scrollTop = chatBox.scrollHeight;
     }
   }
+
   loop();
 }
 
@@ -310,26 +451,36 @@ form.addEventListener("submit", async (e) => {
   try {
     const res = await fetch("/student/chat-ai/ask", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ message: msg })
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: new URLSearchParams({
+        message: msg
+      })
     });
 
     let data;
+
     try {
       data = await res.json();
     } catch (e2) {
       const raw = await res.text();
-      data = { error: raw || "⚠️ API không trả JSON." };
+      data = {
+        ok: false,
+        reply: raw || "⚠️ API không trả JSON."
+      };
     }
 
-    const reply = data.reply || data.error || "⚠️ Không có phản hồi.";
+    const reply = data.reply || data.answer || data.error || "⚠️ Không có phản hồi.";
 
     typing.style.display = "none";
+
     const bubble = addMessage("assistant", "", AI_AVATAR, true);
     typeEffectThenRenderMarkdown(bubble, reply, 16);
 
   } catch (err) {
     typing.style.display = "none";
+
     const bubble = addMessage("assistant", "", AI_AVATAR, true);
     bubble.innerHTML = "<span class='text-danger'>❌ Lỗi mạng. Hãy thử lại!</span>";
   }
@@ -342,24 +493,29 @@ function sendQuick(text) {
 
 document.addEventListener("click", (e) => {
   const btn = e.target.closest(".suggestion-btn");
+
   if (!btn) return;
+
   const text = btn.getAttribute("data-text") || "";
   sendQuick(text);
 });
 
 document.getElementById("clearBtn").onclick = async () => {
-  if (!confirm("Bạn có chắc muốn xoá toàn bộ lịch sử?")) return;
+  if (!confirm("Bạn có chắc muốn xoá toàn bộ lịch sử chat của bạn không?")) return;
 
   try {
-    await fetch("/student/chat-ai/clear", { method: "POST" });
+    await fetch("/student/chat-ai/clear", {
+      method: "POST"
+    });
   } catch (e) {}
 
   chatBox.innerHTML = `
     <div class="message assistant">
       ${avatarImgHtml(AI_AVATAR, "AI")}
-      <div class="bubble md-bubble">🧹 Lịch sử đã được xoá.</div>
+      <div class="bubble md-bubble">🧹 Lịch sử chat của bạn đã được xoá.</div>
     </div>
   `;
+
   renderAllAssistantBubbles();
   chatBox.scrollTop = chatBox.scrollHeight;
 };
@@ -369,20 +525,26 @@ document.getElementById("downloadBtn").onclick = () => {
     .map(m => {
       const isUser = m.classList.contains("user");
       const bubble = m.querySelector(".bubble");
-      const role = isUser ? "USER" : "AI";
+      const role = isUser ? "SINH VIÊN" : "AI";
+
       return `${role}: ${bubble ? bubble.innerText : ""}`;
     })
     .join("\n\n-----------------------------\n\n");
 
-  const blob = new Blob([text], { type: "text/plain" });
-  const url  = URL.createObjectURL(blob);
+  const blob = new Blob([text], {
+    type: "text/plain"
+  });
+
+  const url = URL.createObjectURL(blob);
 
   const a = document.createElement("a");
   a.href = url;
-  a.download = "Gemini_Chat_History.txt";
+  a.download = "Lich_su_Chat_AI.txt";
+
   document.body.appendChild(a);
   a.click();
   a.remove();
+
   URL.revokeObjectURL(url);
 };
 

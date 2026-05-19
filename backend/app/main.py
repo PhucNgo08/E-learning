@@ -417,6 +417,7 @@ from app.routers.admin.quiz import router as quiz_router  # noqa: E402
 from app.routers.admin.quiz_template import router as quiz_template_router  # noqa: E402
 from app.routers.admin.report_management import report_router  # noqa: E402
 from app.routers.admin.settings import router as settings_router  # noqa: E402
+from app.routers.admin.statistics import statistics_router as admin_statistics_router  # noqa: E402
 from app.routers.admin.teacher_management import router as teacher_router  # noqa: E402
 from app.routers.admin.user_management import user_router  # noqa: E402
 from app.routers.admin.wallet_admin import router as admin_wallet_router  # noqa: E402
@@ -472,6 +473,7 @@ for group in [
         majors_router,
         academic_year_router,
         settings_router,
+        admin_statistics_router,
         teacher_router,
         assignment_router,
         course_material_router,

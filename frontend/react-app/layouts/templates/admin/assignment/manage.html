@@ -1,71 +1,360 @@
 {% extends "layout_admin.html" %}
-{% block title %}📊 Thống kê bài tập theo khóa học{% endblock %}
-
+{% block title %}📊 Quản lý tiến độ{% endblock %}
 {% block content %}
+
 <style>
-  body { background: #f5f7fa; }
+  :root {
+    --asg-primary: #2563eb;
+    --asg-primary-2: #7c3aed;
+    --asg-success: #16a34a;
+    --asg-warning: #f59e0b;
+    --asg-danger: #dc2626;
+    --asg-text: #0f172a;
+    --asg-muted: #64748b;
+    --asg-line: #e5e7eb;
+    --asg-soft: #f8fafc;
+    --asg-card: rgba(255, 255, 255, 0.96);
+    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+  }
+
+  .assignment-page {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .a-hero,
+  .a-card,
+  .table-card,
+  .stat-card,
+  .empty-state {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: var(--asg-card);
+    box-shadow: var(--asg-shadow);
+  }
+
+  .a-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+
+  .a-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
+    pointer-events: none;
+  }
+
+  .a-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .a-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    color: var(--asg-primary);
+    margin: 0;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .a-subtitle {
+    color: var(--asg-muted);
+    margin: 8px 0 0;
+    line-height: 1.55;
+  }
+
+  .a-actions,
+  .action-buttons,
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .a-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
   .stat-card {
-    border-radius: 12px;
-    padding: 20px;
-    background: white;
-    transition: transform 0.15s, box-shadow 0.15s;
-    border: none;
+    border-radius: 22px;
+    padding: 17px 18px;
+    transition: .18s ease;
   }
+
   .stat-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
   }
-  .stat-icon {
-    font-size: 30px;
-    margin-bottom: 10px;
+
+  .stat-label {
+    color: var(--asg-muted);
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+    font-size: 1.65rem;
+    font-weight: 850;
+    color: #1d4ed8;
+    line-height: 1.15;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .tool-row .form-control,
+  .tool-row .form-select {
+    max-width: 310px;
+    border-radius: 14px;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 14px;
+    border-color: #dbe3ef;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .table-card {
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff);
+    color: #1e40af;
+    font-weight: 850;
+    white-space: nowrap;
+    border-bottom: 1px solid #bfdbfe;
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .info-box,
+  .file-box {
+    border-radius: 18px;
+    background: var(--asg-soft);
+    border: 1px solid var(--asg-line);
+    padding: 14px 16px;
+  }
+
+  .file-box {
+    line-height: 1.65;
+  }
+
+  .status-badge,
+  .badge {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 750;
+  }
+
+  .text-pre-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    border-radius: 24px;
+    padding: 34px 20px;
+    text-align: center;
+  }
+
+  .mini-muted {
+    color: var(--asg-muted);
+    font-size: .9rem;
+  }
+
+  .progress-thin {
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .a-hero,
+  body.dark-mode .a-card,
+  body.dark-mode .table-card,
+  body.dark-mode .stat-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, .90);
+    border-color: rgba(148, 163, 184, .22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .a-title,
+  body.dark-mode .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .a-subtitle,
+  body.dark-mode .stat-label,
+  body.dark-mode .mini-muted {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-box,
+  body.dark-mode .file-box {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .25);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  @media (max-width: 992px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 768px) {
+    .assignment-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .a-hero,
+    .a-card {
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .a-title {
+      font-size: 1.25rem;
+    }
+
+    .a-actions,
+    .action-buttons,
+    .page-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .a-actions .btn,
+    .action-buttons .btn,
+    .page-actions .btn {
+      width: 100%;
+    }
+
+    .stat-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-row .form-control,
+    .tool-row .form-select {
+      max-width: none;
+      width: 100%;
+    }
+
+    .responsive-table thead {
+      display: none;
+    }
+
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .responsive-table tr {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    .a-hero,
+    .a-card {
+      padding: 14px;
+    }
+
+    .assignment-page {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
   }
 </style>
 
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div>
-      <h3 class="text-primary fw-bold mb-1">📊 Thống kê bài tập theo khóa học</h3>
-      <div class="text-muted">{{ course.course_name if course else "Không rõ khóa học" }}</div>
-    </div>
-    <a href="/admin/assignment/list" class="btn btn-secondary px-4">⬅ Quay lại</a>
-  </div>
-
-  <div class="row g-4">
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm text-center">
-        <div class="stat-icon text-primary"><i class="bi bi-file-earmark-text"></i></div>
-        <h6 class="text-muted">Tổng bài tập</h6>
-        <h3 class="fw-bold text-primary">{{ stats.total_assignments }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm text-center">
-        <div class="stat-icon text-success"><i class="bi bi-send-check"></i></div>
-        <h6 class="text-muted">Đã nộp</h6>
-        <h3 class="fw-bold text-success">{{ stats.submitted }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm text-center">
-        <div class="stat-icon text-info"><i class="bi bi-check2-circle"></i></div>
-        <h6 class="text-muted">Đã chấm</h6>
-        <h3 class="fw-bold text-info">{{ stats.graded }}</h3>
-      </div>
-    </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm text-center">
-        <div class="stat-icon text-danger"><i class="bi bi-clock-history"></i></div>
-        <h6 class="text-muted">Nộp trễ</h6>
-        <h3 class="fw-bold text-danger">{{ stats.late }}</h3>
-      </div>
-    </div>
-  </div>
-
-  <div class="text-center text-muted mt-4 small">
-    © {{ current_year if current_year else "" }} E-Learning Analytics
-  </div>
-</div>
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4"><div class="a-hero"><h3 class="a-title">Thống kê khóa học</h3><p class="a-subtitle">{{ course.course_name if course else '' }}</p></div><div class="stat-grid"><div class="stat-card"><div class="stat-label">Tổng bài tập</div><div class="stat-value">{{ total_assignments or 0 }}</div></div><div class="stat-card"><div class="stat-label">Đã nộp</div><div class="stat-value">{{ total_submitted or 0 }}</div></div><div class="stat-card"><div class="stat-label">Đã chấm</div><div class="stat-value">{{ total_graded or 0 }}</div></div><div class="stat-card"><div class="stat-label">Nộp trễ</div><div class="stat-value">{{ total_late or 0 }}</div></div></div></div>
 {% endblock %}

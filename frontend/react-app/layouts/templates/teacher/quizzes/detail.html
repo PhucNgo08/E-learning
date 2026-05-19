@@ -1,225 +1,605 @@
 {% extends "layout_teacher.html" %}
-{% block title %}📊 Chi tiết Quiz{% endblock %}
+
+{% block title %}Chi tiết Quiz - {{ quiz.title }}{% endblock %}
 
 {% block content %}
 
 <style>
-/* ==========================================================
-   📊 CHI TIẾT QUIZ – GLASS NEO VIỆT HÓA 2025
-=========================================================== */
+  .quiz-detail-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 24px 12px 40px;
+  }
 
-.detail-wrapper {
-  max-width: 980px;
-  margin: auto;
-}
+  .quiz-hero,
+  .quiz-info-card,
+  .question-paper-card,
+  .empty-state {
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
+  }
 
-.detail-card-pro {
-  padding: 1.9rem 2rem;
-  border-radius: 22px;
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.45);
-  box-shadow:
-    0 10px 26px rgba(0,0,0,0.1),
-    0 0 40px rgba(13,110,253,0.06);
-  animation: fadeInUp .55s ease;
-}
+  .quiz-hero {
+    padding: 28px 30px;
+    margin-bottom: 24px;
+  }
 
-.quiz-title-pro {
-  font-weight: 700;
-  background: linear-gradient(135deg, #0d6efd, #6610f2);
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-  font-size: 1.55rem;
-}
+  .quiz-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 6px;
+    word-break: break-word;
+  }
 
-.table-pro {
-  border-radius: 14px !important;
-  overflow: hidden;
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(11px);
-  box-shadow: 0 4px 22px rgba(0,0,0,0.08);
-}
+  .quiz-subtitle {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1rem;
+  }
 
-.q-row:hover {
-  background: rgba(13,110,253,0.07) !important;
-  cursor: pointer;
-}
+  .quiz-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+  }
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(22px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+  .quiz-info-card {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
 
-/* Dark Mode */
-body.dark-mode .detail-card-pro,
-body.dark-mode .table-pro {
-  background: rgba(30,41,59,0.55);
-  border-color: rgba(255,255,255,0.08);
-}
+  .info-title {
+    font-weight: 800;
+    color: #4f46e5;
+    margin-bottom: 16px;
+  }
 
-body.dark-mode .quiz-title-pro {
-  color: #93c5fd !important;
-}
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 24px;
+  }
 
-body.dark-mode td,
-body.dark-mode th,
-body.dark-mode p {
-  color: #e2e8f0 !important;
-}
+  .info-item {
+    color: #1f2937;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+
+  .info-item strong {
+    color: #111827;
+  }
+
+  .question-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .question-section-header h5 {
+    color: #4f46e5;
+    font-weight: 800;
+    margin-bottom: 0;
+  }
+
+  .question-paper-card {
+    padding: 22px;
+    margin-bottom: 18px;
+  }
+
+  .question-top {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    margin-bottom: 16px;
+  }
+
+  .question-number {
+    min-width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+  }
+
+  .question-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .question-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .question-text {
+    font-size: 1.08rem;
+    font-weight: 750;
+    color: #111827;
+    margin-bottom: 4px;
+    line-height: 1.6;
+    word-break: break-word;
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .question-btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .question-meta {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+
+  .option-list {
+    display: grid;
+    gap: 12px;
+    margin-top: 14px;
+  }
+
+  .option-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    padding: 14px 16px;
+    transition: 0.18s ease;
+  }
+
+  .option-item:hover {
+    background: #f1f5f9;
+    transform: translateY(-1px);
+  }
+
+  .option-item.correct {
+    background: #ecfdf5;
+    border-color: #22c55e;
+    box-shadow: 0 10px 24px rgba(34, 197, 94, 0.12);
+  }
+
+  .option-letter {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    background: white;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .option-item.correct .option-letter {
+    background: #16a34a;
+    color: white;
+    border-color: #16a34a;
+  }
+
+  .option-text {
+    flex: 1;
+    color: #1f2937;
+    line-height: 1.55;
+    word-break: break-word;
+  }
+
+  .correct-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border-radius: 999px;
+    padding: 5px 10px;
+    background: #16a34a;
+    color: white;
+    font-size: 0.82rem;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .answer-box {
+    margin-top: 16px;
+    border-radius: 16px;
+    background: #f0fdf4;
+    border: 1px dashed #22c55e;
+    padding: 12px 14px;
+    color: #166534;
+    font-weight: 700;
+  }
+
+  .explain-box {
+    margin-top: 12px;
+    border-radius: 16px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 12px 14px;
+    color: #1e40af;
+  }
+
+  .empty-state {
+    padding: 36px 20px;
+    text-align: center;
+  }
+
+  body.dark-mode .quiz-hero,
+  body.dark-mode .quiz-info-card,
+  body.dark-mode .question-paper-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, 0.88);
+    border-color: rgba(148, 163, 184, 0.22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .quiz-title,
+  body.dark-mode .info-title,
+  body.dark-mode .question-section-header h5 {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .quiz-subtitle,
+  body.dark-mode .question-meta {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-item,
+  body.dark-mode .info-item strong,
+  body.dark-mode .question-text,
+  body.dark-mode .option-text {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .option-item {
+    background: rgba(30, 41, 59, 0.9);
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .option-item.correct {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: rgba(34, 197, 94, 0.7);
+  }
+
+  body.dark-mode .option-letter {
+    background: #0f172a;
+    color: #dbeafe;
+    border-color: rgba(148, 163, 184, 0.45);
+  }
+
+  @media (max-width: 768px) {
+    .quiz-detail-page {
+      padding: 16px 10px 32px;
+    }
+
+    .quiz-hero,
+    .quiz-info-card,
+    .question-paper-card {
+      padding: 18px;
+    }
+
+    .quiz-title {
+      font-size: 1.35rem;
+    }
+
+    .quiz-actions {
+      justify-content: flex-start;
+      width: 100%;
+      margin-top: 14px;
+    }
+
+    .quiz-actions .btn,
+    .question-btns .btn,
+    .question-section-header .btn {
+      width: 100%;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .question-top {
+      flex-direction: column;
+    }
+
+    .question-number {
+      width: 42px;
+    }
+
+    .option-item {
+      padding: 12px;
+      flex-wrap: wrap;
+    }
+
+    .correct-badge {
+      margin-top: 4px;
+    }
+  }
 </style>
 
+<div class="quiz-detail-page">
 
+  <div class="quiz-hero">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h2 class="quiz-title">
+          <i class="bi bi-journal-check"></i> {{ quiz.title }}
+        </h2>
 
-<div class="container py-4 fade-in detail-wrapper">
+        <p class="quiz-subtitle">
+          Xem quiz theo dạng học viên làm bài và hiển thị đáp án đúng cho giáo viên.
+        </p>
+      </div>
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="quiz-title-pro mb-0">
-      <i class="bi bi-bar-chart-line"></i> {{ quiz.title }}
-    </h4>
+      <div class="quiz-actions">
+        <a href="/teacher/quizzes/preview/{{ quiz.id }}" class="btn btn-dark">
+          <i class="bi bi-eye"></i> Preview
+        </a>
 
-    <div class="action-buttons d-flex gap-2">
+        <a href="/teacher/quizzes/attempts/{{ quiz.id }}" class="btn btn-info text-white">
+          <i class="bi bi-people"></i> Bài làm
+        </a>
 
-      {% if quiz.quiz_type == "graded" %}
-      <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-warning btn-sm">
-        <i class="bi bi-graph-up"></i> Xem thống kê
-      </a>
-      {% endif %}
+        <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-warning text-dark">
+          <i class="bi bi-bar-chart"></i> Thống kê
+        </a>
 
-      <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-primary btn-sm">
-        <i class="bi bi-pencil-square"></i> Chỉnh sửa
-      </a>
+        <a href="/teacher/quizzes/export/{{ quiz.id }}" class="btn btn-outline-success">
+          <i class="bi bi-file-earmark-excel"></i> Excel
+        </a>
 
-      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left"></i> Trở lại
-      </a>
+        <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-success">
+          <i class="bi bi-upload"></i> Import câu hỏi
+        </a>
+
+        <a href="/teacher/quizzes/edit/{{ quiz.id }}" class="btn btn-primary">
+          <i class="bi bi-pencil-square"></i> Sửa quiz
+        </a>
+
+        <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Danh sách
+        </a>
+      </div>
     </div>
   </div>
 
-  <!-- QUIZ INFO CARD -->
-  <div class="detail-card-pro mb-4">
+  <div class="quiz-info-card">
+    <h5 class="info-title">
+      <i class="bi bi-info-circle"></i> Thông tin chung
+    </h5>
 
-    <div class="row mb-2">
-      <div class="col-md-6">
-        <p><strong>Khóa học:</strong> {{ quiz.course.course_name if quiz.course else "—" }}</p>
-        <p><strong>Mô tả:</strong> {{ quiz.description or "—" }}</p>
-
-        <p><strong>Loại Quiz:</strong>
-          {% if quiz.quiz_type == "graded" %}
-            Chấm điểm
-          {% else %}
-            Luyện tập
-          {% endif %}
-        </p>
+    <div class="info-grid">
+      <div class="info-item">
+        <strong>Khóa học:</strong>
+        {{ quiz.course.course_name if quiz.course else "—" }}
       </div>
 
-      <div class="col-md-6">
-        <p><strong>Thời lượng:</strong> {{ quiz.time_limit_minutes or 0 }} phút</p>
-        <p><strong>Số câu hỏi:</strong> {{ quiz.total_questions or 0 }}</p>
-        <p><strong>Ngày tạo:</strong> {{ quiz.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      <div class="info-item">
+        <strong>Loại:</strong>
+        {% if quiz.quiz_type == "graded" %}
+          <span class="badge bg-warning text-dark">Bài kiểm tra</span>
+        {% elif quiz.quiz_type == "practice" %}
+          <span class="badge bg-info text-dark">Practice Quiz</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ quiz.quiz_type or "—" }}</span>
+        {% endif %}
       </div>
-    </div>
 
-    <hr>
+      <div class="info-item">
+        <strong>Thời lượng:</strong>
+        {{ quiz.time_limit_minutes or 0 }} phút
+      </div>
 
-    <div class="row mb-2">
-      <div class="col-md-6">
-        <p><strong>Độ khó:</strong>
-          {% if quiz.difficulty_level == "easy" %}
-            Dễ
-          {% elif quiz.difficulty_level == "medium" %}
-            Trung bình
-          {% else %}
-            Khó
-          {% endif %}
-        </p>
+      <div class="info-item">
+        <strong>Số lần làm tối đa:</strong>
+        {{ quiz.max_attempts or 1 }}
+      </div>
 
-        <p><strong>Số lần làm tối đa:</strong> {{ quiz.max_attempts or 1 }}</p>
-        <p><strong>Điểm đạt tối thiểu:</strong> {{ quiz.passing_score or 0 }}%</p>
+      <div class="info-item">
+        <strong>Số câu khai báo:</strong>
+        {{ quiz.total_questions or 0 }}
+      </div>
+
+      <div class="info-item">
+        <strong>Điểm đạt:</strong>
+        {{ quiz.passing_score or 0 }}%
+      </div>
+
+      <div class="info-item">
+        <strong>Độ khó:</strong>
+        {% if quiz.difficulty_level == "easy" %}
+          Dễ
+        {% elif quiz.difficulty_level == "medium" %}
+          Trung bình
+        {% elif quiz.difficulty_level == "hard" %}
+          Khó
+        {% else %}
+          {{ quiz.difficulty_level or "—" }}
+        {% endif %}
+      </div>
+
+      <div class="info-item">
+        <strong>Trạng thái:</strong>
+        {% if quiz.status == "published" %}
+          <span class="badge bg-success">Đã xuất bản</span>
+        {% elif quiz.status == "draft" %}
+          <span class="badge bg-secondary">Bản nháp</span>
+        {% elif quiz.status == "pending" %}
+          <span class="badge bg-warning text-dark">Chờ duyệt</span>
+        {% elif quiz.status == "rejected" %}
+          <span class="badge bg-danger">Từ chối</span>
+        {% else %}
+          <span class="badge bg-secondary">{{ quiz.status or "—" }}</span>
+        {% endif %}
+      </div>
+
+      <div class="info-item">
+        <strong>Ngày tạo:</strong>
+        {{ quiz.created_at.strftime('%d/%m/%Y %H:%M') if quiz.created_at else "—" }}
       </div>
 
       {% if quiz.quiz_type == "graded" %}
-      <div class="col-md-6">
-        <p><strong>Mở từ:</strong> 
-          {{ quiz.available_from.strftime("%d/%m/%Y %H:%M") if quiz.available_from else "—" }}
-        </p>
+      <div class="info-item">
+        <strong>Mở từ:</strong>
+        {{ quiz.available_from.strftime('%d/%m/%Y %H:%M') if quiz.available_from else "—" }}
+      </div>
 
-        <p><strong>Đóng lúc:</strong>
-          {{ quiz.available_to.strftime("%d/%m/%Y %H:%M") if quiz.available_to else "—" }}
-        </p>
-
-        <p><strong>Trạng thái:</strong>
-          {% if quiz.status == 'pending' %}
-            <span class="badge bg-warning text-dark">⏳ Chờ duyệt</span>
-          {% elif quiz.status == 'published' %}
-            <span class="badge bg-success">✔ Đã duyệt</span>
-          {% else %}
-            <span class="badge bg-danger">❌ Từ chối</span>
-          {% endif %}
-        </p>
+      <div class="info-item">
+        <strong>Đóng lúc:</strong>
+        {{ quiz.available_to.strftime('%d/%m/%Y %H:%M') if quiz.available_to else "—" }}
       </div>
       {% endif %}
-    </div>
 
+      <div class="info-item" style="grid-column: 1 / -1;">
+        <strong>Mô tả:</strong>
+        {{ quiz.description or "—" }}
+      </div>
+    </div>
   </div>
 
+  {% set question_list = questions if questions is defined else quiz.questions %}
 
-  <!-- QUESTION LIST -->
-  {% if quiz.questions %}
-  <h5 class="fw-bold text-primary mb-3 d-flex justify-content-between align-items-center">
-    <span>🧩 Danh sách câu hỏi</span>
+  <div class="question-section-header">
+    <h5>
+      <i class="bi bi-ui-checks-grid"></i> Danh sách câu hỏi
+    </h5>
 
-    <!-- ⭐ NÚT THÊM CÂU HỎI -->
-    <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success btn-sm">
-      ➕ Thêm câu hỏi
+    <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Thêm câu hỏi
     </a>
-  </h5>
+  </div>
 
-  <div class="table-responsive">
-    <table class="table table-hover align-middle table-pro">
-      <thead class="table-primary text-center">
-        <tr>
-          <th>#</th>
-          <th style="width:55%">Nội dung câu hỏi</th>
-          <th>Số đáp án</th>
-          <th>Đáp án đúng</th>
-        </tr>
-      </thead>
+  {% if question_list %}
+    {% for q in question_list %}
+      {% set letters = ["A", "B", "C", "D", "E", "F"] %}
+      {% set correct = namespace(label="", text="") %}
 
-      <tbody>
-        {% for q in quiz.questions %}
-        <tr class="q-row text-center">
+      {% for op in q.options %}
+        {% set label = letters[loop.index0] if loop.index0 < letters|length else loop.index %}
+        {% if op.is_correct %}
+          {% set correct.label = label %}
+          {% set correct.text = op.option_text %}
+        {% endif %}
+      {% endfor %}
 
-          <td class="fw-bold">{{ loop.index }}</td>
+      <div class="question-paper-card">
+        <div class="question-top">
+          <div class="question-number">
+            {{ loop.index }}
+          </div>
 
-          <td class="text-start fw-semibold">{{ q.question_text }}</td>
+          <div class="question-content">
+            <div class="question-main-row">
+              <div class="question-text">
+                {{ q.question_text }}
+              </div>
 
-          <td>{{ q.options|length }}</td>
+              <div class="question-btns">
+                <a href="/teacher/quizzes/{{ quiz.id }}/question/edit/{{ q.id }}"
+                   class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-pencil-square"></i> Sửa
+                </a>
 
-          <td>
-            {% for o in q.options if o.is_correct %}
-              <span class="badge bg-success">{{ o.option_text }}</span>
+                <a href="/teacher/quizzes/{{ quiz.id }}/question/delete/{{ q.id }}"
+                   class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash"></i> Xóa
+                </a>
+              </div>
+            </div>
+
+            <div class="question-meta">
+              {{ q.points or 1 }} điểm
+
+              {% if q.difficulty_level %}
+                · Độ khó:
+                {% if q.difficulty_level == "easy" %}
+                  Dễ
+                {% elif q.difficulty_level == "medium" %}
+                  Trung bình
+                {% elif q.difficulty_level == "hard" %}
+                  Khó
+                {% else %}
+                  {{ q.difficulty_level }}
+                {% endif %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if q.options %}
+          <div class="option-list">
+            {% for op in q.options %}
+              {% set label = letters[loop.index0] if loop.index0 < letters|length else loop.index %}
+
+              <div class="option-item {% if op.is_correct %}correct{% endif %}">
+                <span class="option-letter">{{ label }}</span>
+
+                <div class="option-text">
+                  {{ op.option_text }}
+                </div>
+
+                {% if op.is_correct %}
+                  <span class="correct-badge">
+                    <i class="bi bi-check-circle-fill"></i> Đáp án đúng
+                  </span>
+                {% endif %}
+              </div>
             {% endfor %}
-          </td>
+          </div>
 
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+          <div class="answer-box">
+            <i class="bi bi-patch-check-fill"></i>
+            Đáp án đúng:
+            {% if correct.label %}
+              {{ correct.label }}. {{ correct.text }}
+            {% else %}
+              Chưa thiết lập đáp án đúng
+            {% endif %}
+          </div>
+        {% else %}
+          <div class="alert alert-warning mb-0">
+            Câu hỏi này chưa có đáp án lựa chọn.
+          </div>
+        {% endif %}
 
+        {% if q.explanation %}
+          <div class="explain-box">
+            <strong>Giải thích:</strong> {{ q.explanation }}
+          </div>
+        {% endif %}
+      </div>
+    {% endfor %}
   {% else %}
+    <div class="empty-state">
+      <h5 class="fw-bold text-primary">Quiz này chưa có câu hỏi nào</h5>
+      <p class="text-muted mb-3">Bạn có thể thêm thủ công hoặc import bằng file.</p>
 
-  <div class="alert alert-info shadow-sm text-center">
-    <i class="bi bi-info-circle"></i> Quiz này chưa có câu hỏi nào.
-    <br>
-    <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success btn-sm mt-3">
-      ➕ Thêm câu hỏi đầu tiên
-    </a>
-  </div>
+      <a href="/teacher/quizzes/{{ quiz.id }}/question/create" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Thêm câu hỏi đầu tiên
+      </a>
 
+      <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-outline-primary ms-2">
+        <i class="bi bi-upload"></i> Import câu hỏi
+      </a>
+    </div>
   {% endif %}
 
 </div>

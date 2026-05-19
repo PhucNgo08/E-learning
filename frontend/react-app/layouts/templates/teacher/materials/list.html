@@ -2,81 +2,233 @@
 {% block title %}📚 Danh sách tài liệu{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h3 class="fw-bold text-primary mb-1">
-        <i class="bi bi-folder2-open"></i> Danh sách tài liệu khóa học
-      </h3>
-      {% if teacher %}
-      <small class="text-muted">
-        Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
-      </small>
-      {% endif %}
+<style>
+  :root {
+    --material-page-bg: #f5f8ff;
+    --material-card-bg: #ffffff;
+    --material-card-border: #e5e7eb;
+    --material-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --material-text-main: #1e293b;
+    --material-text-muted: #64748b;
+    --material-heading: #0d6efd;
+
+    --material-table-head-bg: #f8fbff;
+    --material-table-head-text: #1e40af;
+    --material-table-border: #e5e7eb;
+    --material-table-row-bg: #ffffff;
+    --material-table-row-hover: #f1f7ff;
+
+    --material-alert-info-bg: rgba(13, 110, 253, 0.08);
+    --material-alert-info-border: rgba(13, 110, 253, 0.22);
+    --material-alert-warning-bg: rgba(255, 193, 7, 0.14);
+    --material-alert-warning-border: rgba(255, 193, 7, 0.35);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --material-page-bg: #071226;
+    --material-card-bg: #0f1b33;
+    --material-card-border: rgba(255, 255, 255, 0.1);
+    --material-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --material-text-main: #e5edf8;
+    --material-text-muted: #9caec8;
+    --material-heading: #8ea6ff;
+
+    --material-table-head-bg: #172846;
+    --material-table-head-text: #dbeafe;
+    --material-table-border: rgba(255, 255, 255, 0.1);
+    --material-table-row-bg: #0f1b33;
+    --material-table-row-hover: #132445;
+
+    --material-alert-info-bg: rgba(37, 99, 235, 0.16);
+    --material-alert-info-border: rgba(96, 165, 250, 0.28);
+    --material-alert-warning-bg: rgba(250, 204, 21, 0.16);
+    --material-alert-warning-border: rgba(250, 204, 21, 0.28);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .material-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--material-page-bg);
+    color: var(--material-text-main);
+  }
+
+  .material-page h3,
+  .material-page .text-primary {
+    color: var(--material-heading) !important;
+  }
+
+  .material-page .text-muted {
+    color: var(--material-text-muted) !important;
+  }
+
+  .material-table-card {
+    background: var(--material-card-bg);
+    color: var(--material-text-main);
+    border: 1px solid var(--material-card-border);
+    border-radius: 16px;
+    box-shadow: var(--material-card-shadow);
+    overflow: hidden;
+  }
+
+  .material-table-card .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--material-text-main);
+    --bs-table-border-color: var(--material-table-border);
+    color: var(--material-text-main);
+  }
+
+  .material-table-card thead th {
+    background: var(--material-table-head-bg) !important;
+    color: var(--material-table-head-text) !important;
+    border-color: var(--material-table-border) !important;
+    vertical-align: middle;
+  }
+
+  .material-table-card tbody td {
+    background: var(--material-table-row-bg) !important;
+    color: var(--material-text-main) !important;
+    border-color: var(--material-table-border) !important;
+    vertical-align: middle;
+  }
+
+  .material-table-card tbody tr:hover td {
+    background: var(--material-table-row-hover) !important;
+  }
+
+  .material-page .alert-info {
+    background: var(--material-alert-info-bg);
+    border-color: var(--material-alert-info-border);
+    color: var(--material-text-main);
+  }
+
+  .material-page .alert-warning {
+    background: var(--material-alert-warning-bg);
+    border-color: var(--material-alert-warning-border);
+    color: var(--material-text-main);
+  }
+
+  body.dark-mode .material-page .bi-file-earmark-text.text-secondary,
+  body.theme-dark .material-page .bi-file-earmark-text.text-secondary,
+  html[data-theme="dark"] .material-page .bi-file-earmark-text.text-secondary,
+  body[data-theme="dark"] .material-page .bi-file-earmark-text.text-secondary,
+  [data-bs-theme="dark"] .material-page .bi-file-earmark-text.text-secondary {
+    color: #9caec8 !important;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding: 16px 8px 32px;
+    }
+  }
+</style>
+
+<div class="material-page">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h3 class="fw-bold text-primary mb-1">
+          <i class="bi bi-folder2-open"></i> Danh sách tài liệu khóa học
+        </h3>
+        {% if teacher %}
+        <small class="text-muted">
+          Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+        </small>
+        {% endif %}
+      </div>
+
+      <a href="/teacher/materials/upload" class="btn btn-primary">
+        <i class="bi bi-cloud-upload"></i> Tải lên mới
+      </a>
     </div>
 
-    <a href="/teacher/materials/upload" class="btn btn-primary">
-      <i class="bi bi-cloud-upload"></i> Tải lên mới
-    </a>
-  </div>
+    {% if stats %}
+    <div class="alert alert-info small mb-4">
+      <i class="bi bi-bar-chart"></i> Tổng cộng:
+      <strong>{{ stats.total_materials }}</strong> tài liệu —
+      Dung lượng: <strong>{{ stats.total_size_mb }} MB</strong> —
+      Công khai: <strong>{{ stats.public_count }}</strong>
+    </div>
+    {% endif %}
 
-  {% if stats %}
-  <div class="alert alert-info small mb-4">
-    <i class="bi bi-bar-chart"></i> Tổng cộng:
-    <strong>{{ stats.total_materials }}</strong> tài liệu —
-    Dung lượng: <strong>{{ stats.total_size_mb }} MB</strong> —
-    Công khai: <strong>{{ stats.public_count }}</strong>
-  </div>
-  {% endif %}
+    {% if materials and materials|length > 0 %}
+    <div class="table-responsive material-table-card">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tên tài liệu</th>
+            <th>Khóa học</th>
+            <th>Định dạng</th>
+            <th>Kích thước</th>
+            <th>Ngày tải lên</th>
+            <th class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in materials %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td>
+              <i class="bi bi-file-earmark-text text-secondary"></i>
+              {{ m.title }}
+            </td>
+            <td>{{ m.course.course_name if m.course else '—' }}</td>
+            <td>{{ m.file_format or 'N/A' }}</td>
+            <td>{{ ((m.file_size or 0) / 1024 / 1024) | round(2) }} MB</td>
+            <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</td>
+            <td class="text-center">
+              <a href="{{ m.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download"></i>
+              </a>
 
-  {% if materials and materials|length > 0 %}
-  <div class="table-responsive">
-    <table class="table table-hover align-middle">
-      <thead class="table-light">
-        <tr>
-          <th>#</th>
-          <th>Tên tài liệu</th>
-          <th>Khóa học</th>
-          <th>Định dạng</th>
-          <th>Kích thước</th>
-          <th>Ngày tải lên</th>
-          <th class="text-center">Thao tác</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for m in materials %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td>
-            <i class="bi bi-file-earmark-text text-secondary"></i>
-            {{ m.title }}
-          </td>
-          <td>{{ m.course.course_name if m.course else '—' }}</td>
-          <td>{{ m.file_format or 'N/A' }}</td>
-          <td>{{ ((m.file_size or 0) / 1024 / 1024) | round(2) }} MB</td>
-          <td>{{ m.created_at.strftime('%d/%m/%Y %H:%M') if m.created_at else '' }}</td>
-          <td class="text-center">
-            <a href="{{ m.file_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-download"></i>
-            </a>
+              <a href="/teacher/materials/edit/{{ m.id }}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-pencil-square"></i>
+              </a>
 
-            <a href="/teacher/materials/edit/{{ m.id }}" class="btn btn-sm btn-outline-success">
-              <i class="bi bi-pencil-square"></i>
-            </a>
-
-            <a href="/teacher/materials/delete/{{ m.id }}" class="btn btn-sm btn-outline-danger">
-              <i class="bi bi-trash"></i>
-            </a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+              <a href="/teacher/materials/delete/{{ m.id }}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-warning text-center">
+      <i class="bi bi-inbox"></i> Chưa có tài liệu nào được tải lên.
+    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="alert alert-warning text-center">
-    <i class="bi bi-inbox"></i> Chưa có tài liệu nào được tải lên.
-  </div>
-  {% endif %}
 </div>
 {% endblock %}

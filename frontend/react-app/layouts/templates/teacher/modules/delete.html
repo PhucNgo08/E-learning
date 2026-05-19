@@ -2,9 +2,126 @@
 {% block title %}🗑️ Xóa Module{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-  <div class="card border-danger shadow-sm">
-    <div class="card-header bg-danger text-white fw-bold d-flex align-items-center">
+<style>
+  :root {
+    --module-page-bg: #f5f8ff;
+    --module-card-bg: #ffffff;
+    --module-card-border: #e5e7eb;
+    --module-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --module-text-main: #1e293b;
+    --module-text-muted: #64748b;
+    --module-danger-bg: #dc3545;
+    --module-danger-text: #ffffff;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --module-page-bg: #071226;
+    --module-card-bg: #0f1b33;
+    --module-card-border: rgba(255,255,255,0.1);
+    --module-card-shadow: 0 16px 40px rgba(0,0,0,0.42);
+
+    --module-text-main: #e5edf8;
+    --module-text-muted: #9caec8;
+    --module-danger-bg: #991b1b;
+    --module-danger-text: #ffffff;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .module-page {
+    min-height: calc(100vh - 110px);
+    padding: 40px 16px;
+    background: var(--module-page-bg);
+    color: var(--module-text-main);
+  }
+
+  .module-delete-card {
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--module-card-bg);
+    color: var(--module-text-main);
+    border: 1px solid var(--module-card-border);
+    border-radius: 18px;
+    box-shadow: var(--module-card-shadow);
+    overflow: hidden;
+  }
+
+  .module-delete-card .card-header {
+    background: var(--module-danger-bg);
+    color: var(--module-danger-text);
+    border-bottom: 1px solid var(--module-card-border);
+    padding: 1rem 1.25rem;
+  }
+
+  .module-delete-card .card-body {
+    background: var(--module-card-bg);
+    color: var(--module-text-main);
+    padding: 1.5rem;
+  }
+
+  body.dark-mode .module-delete-card .btn-outline-secondary,
+  body.theme-dark .module-delete-card .btn-outline-secondary,
+  html[data-theme="dark"] .module-delete-card .btn-outline-secondary,
+  body[data-theme="dark"] .module-delete-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .module-delete-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  body.dark-mode .module-delete-card .btn-outline-secondary:hover,
+  body.theme-dark .module-delete-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .module-delete-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .module-delete-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .module-delete-card .btn-outline-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .module-page {
+      padding: 24px 12px;
+    }
+
+    .module-delete-card .text-end {
+      flex-direction: column;
+    }
+
+    .module-delete-card .text-end .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="module-page">
+  <div class="module-delete-card">
+    <div class="card-header fw-bold d-flex align-items-center">
       <i class="bi bi-exclamation-triangle-fill me-2"></i> Xác nhận xóa Module
     </div>
 

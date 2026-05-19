@@ -1,62 +1,410 @@
 {% extends "base.html" %}
+
 {% block title %}Trang chủ - E-Learning Academy{% endblock %}
 
-{% block content %}
-<section class="hero-section text-center" style="background: linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%); padding:5rem 1rem 4rem;">
-  <div class="container">
-    <h1 data-aos="fade-down" class="fw-bold" style="font-size:2.7rem; color:#1e3a8a;">
-      Học tập mọi lúc, mọi nơi 🌍
-    </h1>
-    <p data-aos="fade-down" data-aos-delay="200" class="text-muted mt-3" style="max-width:650px; margin:0 auto;">
-      Khám phá hàng trăm khóa học chất lượng cao từ các giảng viên hàng đầu — phát triển kỹ năng và nghề nghiệp của bạn.
-    </p>
+{% block extra_css %}
+<style>
+  .home-hero {
+    position: relative;
+    padding: 6.5rem 1rem 5rem;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.16), transparent 28%),
+      radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.16), transparent 30%),
+      linear-gradient(180deg, #dbeafe 0%, #eff6ff 100%);
+  }
 
-    <div data-aos="zoom-in" data-aos-delay="300" class="mt-5">
-      <img src="{{ url_for('static', path='images/e-learning-banner.png') }}"
-           alt="E-Learning Banner"
-           class="img-fluid rounded-4 shadow-lg"
-           style="max-width:880px;">
+  html[data-bs-theme="dark"] .home-hero {
+    background:
+      radial-gradient(circle at 20% 20%, rgba(37, 99, 235, 0.28), transparent 30%),
+      radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.22), transparent 30%),
+      linear-gradient(180deg, #020617 0%, #0f172a 100%);
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 0.55rem 0.85rem;
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    font-weight: 800;
+    margin-bottom: 18px;
+  }
+
+  html[data-bs-theme="dark"] .hero-badge {
+    background: rgba(59, 130, 246, 0.16);
+    color: #93c5fd;
+    border-color: rgba(147, 197, 253, 0.18);
+  }
+
+  .hero-title {
+    max-width: 860px;
+    margin: 0 auto;
+    font-size: clamp(2.35rem, 6vw, 4.8rem);
+    font-weight: 900;
+    letter-spacing: -0.06em;
+    line-height: 1.04;
+    color: #1e3a8a;
+  }
+
+  html[data-bs-theme="dark"] .hero-title {
+    color: #dbeafe;
+  }
+
+  .hero-title span {
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero-subtitle {
+    max-width: 720px;
+    margin: 1.35rem auto 0;
+    color: #475569;
+    font-size: 1.12rem;
+    line-height: 1.75;
+  }
+
+  html[data-bs-theme="dark"] .hero-subtitle {
+    color: #cbd5e1;
+  }
+
+  .hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+  }
+
+  .btn-hero-main,
+  .btn-hero-soft {
+    border-radius: 999px;
+    padding: 0.9rem 1.4rem;
+    font-weight: 900;
+    transition: 0.22s ease;
+  }
+
+  .btn-hero-main {
+    border: 0;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+  }
+
+  .btn-hero-main:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(14, 165, 233, 0.28);
+  }
+
+  .btn-hero-soft {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(37, 99, 235, 0.16);
+    color: #1d4ed8;
+  }
+
+  .btn-hero-soft:hover {
+    background: #fff;
+    color: #1e40af;
+    transform: translateY(-2px);
+  }
+
+  html[data-bs-theme="dark"] .btn-hero-soft {
+    background: rgba(15, 23, 42, 0.72);
+    border-color: rgba(148, 163, 184, 0.24);
+    color: #93c5fd;
+  }
+
+  html[data-bs-theme="dark"] .btn-hero-soft:hover {
+    background: rgba(30, 41, 59, 0.94);
+    color: #dbeafe;
+  }
+
+  .hero-image-card {
+    max-width: 930px;
+    margin: 3rem auto 0;
+    padding: 12px;
+    border-radius: 30px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(18px);
+  }
+
+  html[data-bs-theme="dark"] .hero-image-card {
+    background: rgba(15, 23, 42, 0.76);
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+  }
+
+  .hero-image-card img {
+    width: 100%;
+    border-radius: 22px;
+    display: block;
+  }
+
+  .home-section {
+    padding: 5rem 1rem;
+  }
+
+  .section-title {
+    color: #1e3a8a;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+  }
+
+  html[data-bs-theme="dark"] .section-title {
+    color: #dbeafe;
+  }
+
+  .section-subtitle {
+    max-width: 680px;
+    margin: 0.75rem auto 0;
+    color: #64748b;
+    line-height: 1.7;
+  }
+
+  html[data-bs-theme="dark"] .section-subtitle {
+    color: #cbd5e1;
+  }
+
+  .feature-card {
+    height: 100%;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 24px;
+    padding: 28px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    transition: 0.22s ease;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.14);
+  }
+
+  html[data-bs-theme="dark"] .feature-card {
+    background: rgba(15, 23, 42, 0.82);
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+  }
+
+  .feature-icon {
+    width: 66px;
+    height: 66px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.14), rgba(14, 165, 233, 0.16));
+    color: #2563eb;
+    font-size: 2rem;
+    margin-bottom: 18px;
+  }
+
+  html[data-bs-theme="dark"] .feature-icon {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.16);
+  }
+
+  .feature-card h5 {
+    color: #0f172a;
+    font-weight: 900;
+  }
+
+  html[data-bs-theme="dark"] .feature-card h5 {
+    color: #fff;
+  }
+
+  .feature-card p {
+    color: #64748b;
+    line-height: 1.65;
+  }
+
+  html[data-bs-theme="dark"] .feature-card p {
+    color: #cbd5e1;
+  }
+
+  .stats-band {
+    border-radius: 30px;
+    padding: 30px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    box-shadow: 0 20px 50px rgba(37, 99, 235, 0.22);
+  }
+
+  .stat-item {
+    text-align: center;
+  }
+
+  .stat-item strong {
+    display: block;
+    font-size: 2rem;
+    font-weight: 900;
+  }
+
+  .stat-item span {
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 700;
+  }
+
+  .cta-card {
+    border-radius: 30px;
+    padding: 44px 28px;
+    background:
+      radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 30%),
+      rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    box-shadow: 0 18px 46px rgba(15, 23, 42, 0.10);
+  }
+
+  html[data-bs-theme="dark"] .cta-card {
+    background:
+      radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 30%),
+      rgba(15, 23, 42, 0.82);
+  }
+
+  @media (max-width: 576px) {
+    .home-hero {
+      padding-top: 4.5rem;
+    }
+
+    .hero-actions .btn {
+      width: 100%;
+    }
+
+    .stats-band {
+      padding: 24px 16px;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="home-hero text-center">
+  <div class="container">
+    <div class="hero-badge" data-aos="fade-down">
+      <i class="bi bi-lightning-charge-fill"></i>
+      Nền tảng học trực tuyến hiện đại
     </div>
 
-    <div class="mt-4" data-aos="fade-up" data-aos-delay="400">
-      <a href="/auth/login" class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm">🚀 Bắt đầu ngay</a>
+    <h1 class="hero-title" data-aos="fade-down" data-aos-delay="100">
+      Học tập mọi lúc, mọi nơi cùng <span>E-Learning Academy</span>
+    </h1>
+
+    <p class="hero-subtitle" data-aos="fade-down" data-aos-delay="200">
+      Khám phá các khóa học chất lượng cao, học cùng giảng viên, làm bài tập,
+      kiểm tra tiến độ và phát triển kỹ năng của bạn mỗi ngày.
+    </p>
+
+    <div class="hero-actions" data-aos="fade-up" data-aos-delay="300">
+      <a href="/auth/login" class="btn btn-hero-main">
+        <i class="bi bi-rocket-takeoff me-1"></i>Bắt đầu ngay
+      </a>
+
+      <a href="#features" class="btn btn-hero-soft">
+        <i class="bi bi-stars me-1"></i>Xem tính năng
+      </a>
+    </div>
+
+    <div class="hero-image-card" data-aos="zoom-in" data-aos-delay="400">
+      <img src="{{ url_for('static', path='images/e-learning-banner.png') }}"
+           alt="E-Learning Banner"
+           onerror="this.style.display='none';">
     </div>
   </div>
 </section>
 
-<section class="features py-5" style="background:#fff; border-radius:2rem 2rem 0 0; box-shadow:0 -4px 15px rgba(0,0,0,0.05); margin-top:5rem;">
+<section class="home-section" id="features">
   <div class="container">
-    <h2 class="text-center fw-bold mb-5" style="color:#1e3a8a;">Vì sao chọn E-Learning?</h2>
+    <div class="text-center mb-5">
+      <h2 class="section-title">Vì sao chọn E-Learning?</h2>
+      <p class="section-subtitle">
+        Một nền tảng học tập dễ dùng, đẹp, rõ ràng và phù hợp cho học viên,
+        giảng viên cũng như quản trị viên.
+      </p>
+    </div>
+
     <div class="row g-4 justify-content-center">
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
-          <div style="font-size:2.5rem; color:#2563eb;">📚</div>
-          <h5 class="fw-semibold mt-3">Kho khóa học phong phú</h5>
-          <p class="text-muted small">
-            Từ lập trình, thiết kế, marketing đến kỹ năng mềm – bạn sẽ tìm thấy mọi thứ ở đây.
+        <div class="feature-card text-center">
+          <div class="feature-icon">
+            <i class="bi bi-journal-bookmark-fill"></i>
+          </div>
+          <h5>Kho khóa học phong phú</h5>
+          <p class="mb-0">
+            Quản lý nhiều khóa học, bài học, quiz, bài tập và tài liệu trong cùng một hệ thống.
           </p>
         </div>
       </div>
 
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
-          <div style="font-size:2.5rem; color:#2563eb;">💬</div>
-          <h5 class="fw-semibold mt-3">Tương tác trực tiếp</h5>
-          <p class="text-muted small">
-            Thảo luận cùng giảng viên và học viên qua lớp học ảo, bài tập và phản hồi chi tiết.
+        <div class="feature-card text-center">
+          <div class="feature-icon">
+            <i class="bi bi-chat-dots-fill"></i>
+          </div>
+          <h5>Tương tác trực tiếp</h5>
+          <p class="mb-0">
+            Học viên có thể trao đổi, nộp bài, nhận phản hồi và theo dõi tiến độ học tập.
           </p>
         </div>
       </div>
 
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-        <div class="p-4 text-center bg-light rounded-4 shadow-sm h-100">
-          <div style="font-size:2.5rem; color:#2563eb;">🏅</div>
-          <h5 class="fw-semibold mt-3">Chứng nhận chất lượng</h5>
-          <p class="text-muted small">
-            Hoàn thành khóa học để nhận chứng chỉ xác nhận năng lực và chuyên môn của bạn.
+        <div class="feature-card text-center">
+          <div class="feature-icon">
+            <i class="bi bi-award-fill"></i>
+          </div>
+          <h5>Đánh giá rõ ràng</h5>
+          <p class="mb-0">
+            Theo dõi điểm số, kết quả kiểm tra và hoàn thành khóa học một cách minh bạch.
           </p>
         </div>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section pt-0" id="courses">
+  <div class="container">
+    <div class="stats-band">
+      <div class="row g-4">
+        <div class="col-6 col-md-3 stat-item">
+          <strong>24/7</strong>
+          <span>Học mọi lúc</span>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <strong>100+</strong>
+          <span>Khóa học</span>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <strong>AI</strong>
+          <span>Hỗ trợ học</span>
+        </div>
+        <div class="col-6 col-md-3 stat-item">
+          <strong>3 vai trò</strong>
+          <span>Admin - Teacher - Student</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="home-section pt-0">
+  <div class="container">
+    <div class="cta-card text-center" data-aos="fade-up">
+      <h2 class="section-title mb-3">Sẵn sàng bắt đầu học tập?</h2>
+      <p class="section-subtitle mb-4">
+        Đăng nhập vào hệ thống để tiếp tục khóa học, quản lý lớp học hoặc theo dõi tiến độ.
+      </p>
+      <a href="/auth/login" class="btn btn-hero-main">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập ngay
+      </a>
     </div>
   </div>
 </section>

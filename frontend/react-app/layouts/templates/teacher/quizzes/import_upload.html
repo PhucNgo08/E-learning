@@ -1,35 +1,174 @@
 {% extends "layout_teacher.html" %}
-{% block title %}📥 Import câu hỏi{% endblock %}
+
+{% block title %}Import câu hỏi{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="bg-white rounded shadow-sm p-4 mx-auto" style="max-width: 780px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <div>
-        <h3 class="fw-bold text-primary mb-1">📥 Import câu hỏi</h3>
-        <p class="text-muted mb-0">Quiz: {{ quiz.title }}</p>
+
+<style>
+  .quiz-page {
+    padding: 24px 12px 42px;
+  }
+  .quiz-card {
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+  }
+  .quiz-title {
+    font-weight: 800;
+    color: #2563eb;
+  }
+  .quiz-muted {
+    color: #64748b;
+  }
+  .quiz-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .quiz-actions .btn {
+    border-radius: 12px;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+  }
+  .info-item {
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+  .question-card {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .question-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 15px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .option-item.correct {
+    background: #ecfdf5;
+    border-color: #22c55e;
+  }
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    background: #fff;
+    color: #334155;
+    flex-shrink: 0;
+  }
+  .option-item.correct .option-letter {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .quiz-table {
+    min-width: 880px;
+  }
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 16px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .quiz-actions { width: 100%; }
+    .quiz-actions .btn { width: 100%; }
+    .question-card { padding: 14px; }
+  }
+</style>
+
+<div class="quiz-page">
+  <div class="container" style="max-width: 900px;">
+    <div class="quiz-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="quiz-title mb-1">
+            <i class="bi bi-upload"></i> Import câu hỏi
+          </h3>
+          <p class="quiz-muted mb-0">
+            Quiz: <strong>{{ quiz.title }}</strong>
+          </p>
+        </div>
+
+        <div class="quiz-actions">
+          <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Chi tiết quiz
+          </a>
+        </div>
       </div>
-      <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">← Quay lại</a>
     </div>
 
-    <div class="alert alert-info">
-      Hỗ trợ file <strong>.txt</strong>, <strong>.csv</strong>, <strong>.xlsx</strong>.
-      Dữ liệu cần có các cột: <code>question_text</code>, <code>option_a</code>, <code>option_b</code>, <code>option_c</code>, <code>option_d</code>, <code>correct</code>.
+    <div class="quiz-card p-4">
+      <form method="post"
+            action="/teacher/quizzes/{{ quiz.id }}/import/preview"
+            enctype="multipart/form-data">
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Chọn file câu hỏi</label>
+          <input type="file"
+                 name="file"
+                 class="form-control"
+                 accept=".txt,.md,.csv,.xlsx"
+                 required>
+          <div class="form-text">
+            Hỗ trợ file .txt, .md, .csv, .xlsx. Có thể dùng dạng ngang hoặc dạng dọc.
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <div class="fw-bold mb-2">Mẫu dạng ngang:</div>
+          <pre class="mb-0" style="white-space: pre-wrap;">What is AI?|Machine Learning|Making machines intelligent|Programming|None|B</pre>
+        </div>
+
+        <div class="alert alert-light border">
+          <div class="fw-bold mb-2">Mẫu dạng dọc:</div>
+          <pre class="mb-0" style="white-space: pre-wrap;">What is AI?
+A. Machine Learning
+B. Making machines intelligent
+C. Programming
+D. None
+Đáp án đúng: B</pre>
+        </div>
+
+        <div class="text-end">
+          <button type="submit" class="btn btn-success px-4">
+            <i class="bi bi-search"></i> Xem trước import
+          </button>
+        </div>
+      </form>
     </div>
-
-    <form method="post" action="/teacher/quizzes/{{ quiz.id }}/import/preview" enctype="multipart/form-data">
-      <div class="mb-3">
-        <label class="form-label fw-semibold">Chọn file import</label>
-        <input type="file" name="file" class="form-control" accept=".txt,.csv,.xlsx" required>
-      </div>
-
-      <div class="d-flex justify-content-end gap-2">
-        <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">Hủy</a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-upload"></i> Xem trước dữ liệu
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 {% endblock %}

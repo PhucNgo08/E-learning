@@ -1,0 +1,329 @@
+/* =========================================================
+   TEACHER ROLE THEME - Professional Teaching UI
+   Load SAU teacher.css va teacher_dashboard.css.
+========================================================= */
+
+:root {
+  --teacher-primary: #4f46e5;
+  --teacher-primary-rgb: 79, 70, 229;
+  --teacher-secondary: #14b8a6;
+  --teacher-secondary-rgb: 20, 184, 166;
+  --teacher-accent: #f59e0b;
+  --primary: var(--teacher-primary);
+  --primary-rgb: var(--teacher-primary-rgb);
+  --primary-strong: #4338ca;
+  --secondary: var(--teacher-secondary);
+  --secondary-rgb: var(--teacher-secondary-rgb);
+  --accent: var(--teacher-accent);
+  --sidebar-width: 270px;
+  --header-height: 72px;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(79,70,229,.12), transparent 31rem),
+    radial-gradient(circle at bottom right, rgba(20,184,166,.10), transparent 26rem),
+    linear-gradient(180deg, #f8f7ff, #eef7f6) !important;
+}
+
+body.dark-mode {
+  --primary: #818cf8;
+  --primary-rgb: 129, 140, 248;
+  --primary-strong: #6366f1;
+  --secondary: #2dd4bf;
+  --secondary-rgb: 45, 212, 191;
+  background:
+    radial-gradient(circle at top left, rgba(129,140,248,.14), transparent 31rem),
+    radial-gradient(circle at bottom right, rgba(45,212,191,.09), transparent 26rem),
+    #07111f !important;
+}
+
+/* SIDEBAR - fixed desktop, offcanvas mobile */
+#sidebar.teacher-sidebar {
+  width: var(--sidebar-width) !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255,255,255,.18), transparent 28%),
+    linear-gradient(180deg, #312e81 0%, #4338ca 52%, #0f766e 100%) !important;
+  border-right: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow: 18px 0 44px rgba(49,46,129,.22) !important;
+  z-index: 1045 !important;
+}
+
+body.dark-mode #sidebar.teacher-sidebar {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(129,140,248,.18), transparent 28%),
+    linear-gradient(180deg, #020617 0%, #1e1b4b 52%, #134e4a 100%) !important;
+}
+
+.sidebar-header {
+  background: rgba(255,255,255,.075) !important;
+  border-bottom-color: rgba(255,255,255,.12) !important;
+}
+
+.sidebar-avatar,
+.avatar-wrapper img {
+  border: 3px solid rgba(255,255,255,.85) !important;
+  box-shadow: 0 14px 28px rgba(0,0,0,.22) !important;
+}
+
+.camera-icon {
+  background: var(--teacher-secondary) !important;
+  color: #fff !important;
+}
+
+.sidebar-inner {
+  padding: .9rem .75rem 1rem !important;
+}
+
+.sidebar-inner a {
+  margin: .14rem 0;
+  padding: .78rem .95rem !important;
+  border-radius: 15px !important;
+  border-left: 0 !important;
+  color: rgba(255,255,255,.90) !important;
+  font-weight: 700;
+}
+
+.sidebar-inner a:hover,
+.sidebar-inner a.active {
+  background: rgba(255,255,255,.16) !important;
+  color: #fff !important;
+  border-left: 0 !important;
+  transform: translateX(3px) !important;
+}
+
+.sidebar-inner a.active {
+  box-shadow: inset 4px 0 0 #fbbf24;
+}
+
+.logout-link {
+  background: rgba(239,68,68,.13) !important;
+  color: #fecaca !important;
+}
+
+#sidebar-overlay {
+  background: rgba(2, 6, 23, .54) !important;
+  backdrop-filter: blur(6px) !important;
+}
+
+/* HEADER */
+.teacher-header {
+  height: var(--header-height) !important;
+  background: rgba(255,255,255,.84) !important;
+  border-bottom: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-xs) !important;
+  backdrop-filter: blur(18px);
+}
+
+body.dark-mode .teacher-header {
+  background: rgba(15,23,42,.84) !important;
+}
+
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+}
+
+.nav-icons a,
+.nav-icons i {
+  margin-left: 0 !important;
+  color: var(--text-main) !important;
+}
+
+.nav-icons > a,
+.profile-dropdown > button,
+.mode-toggle,
+.toggle-btn {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 15px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: var(--surface) !important;
+  color: var(--text-main) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.nav-icons > a:hover,
+.profile-dropdown > button:hover,
+.mode-toggle:hover,
+.toggle-btn:hover {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  transform: translateY(-2px) !important;
+}
+
+.toggle-btn {
+  top: 14px !important;
+  left: 14px !important;
+  z-index: 1060 !important;
+}
+
+.mode-toggle {
+  top: 14px !important;
+  right: 18px !important;
+  z-index: 1060 !important;
+  color: var(--warning) !important;
+}
+
+/* CONTENT */
+#content {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: var(--page-gutter) !important;
+  color: var(--text-main) !important;
+}
+
+#content > .container,
+#content > .container-fluid,
+#content > div:not(.modal):not(.dropdown-menu) {
+  max-width: var(--content-max-width);
+}
+
+footer {
+  color: var(--text-muted) !important;
+}
+
+/* TEACHER DASHBOARD / COMMON PAGE */
+.teacher-dashboard-header,
+.dashboard-header,
+.hero-card,
+.page-hero {
+  background:
+    linear-gradient(135deg, rgba(79,70,229,.96), rgba(99,102,241,.90) 56%, rgba(20,184,166,.86)) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.dashboard-header h1,
+.dashboard-header h2,
+.dashboard-header h3,
+.dashboard-header p,
+.dashboard-header .text-muted,
+.teacher-dashboard-header * {
+  color: #fff !important;
+}
+
+.stat-card,
+.card,
+.course-card,
+.assignment-card,
+.quiz-card,
+.material-card {
+  overflow: hidden;
+}
+
+.stat-card::before,
+.card.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+}
+
+/* Reduce strong animations from old dashboard css */
+.card:hover,
+.stat-card:hover,
+.quick-action-card:hover {
+  transform: translateY(-4px) !important;
+}
+
+.icon-box,
+.stat-icon,
+.dashboard-icon {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  border-radius: 18px !important;
+}
+
+@media (min-width: 992px) {
+  #sidebar.teacher-sidebar {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+  }
+
+  .teacher-header {
+    left: var(--sidebar-width) !important;
+    right: 0 !important;
+  }
+
+  #content {
+    margin: var(--header-height) 0 0 var(--sidebar-width) !important;
+    min-height: calc(100vh - var(--header-height));
+  }
+
+  footer {
+    margin-left: var(--sidebar-width) !important;
+  }
+
+  #sidebar-overlay {
+    display: none !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  #sidebar.teacher-sidebar {
+    transform: translateX(-100%) !important;
+    opacity: 0 !important;
+  }
+
+  #sidebar.teacher-sidebar.show {
+    transform: translateX(0) !important;
+    opacity: 1 !important;
+  }
+
+  #sidebar.teacher-sidebar.show ~ #sidebar-overlay {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .teacher-header {
+    left: 0 !important;
+    right: 0 !important;
+    padding-left: 4.7rem !important;
+    padding-right: 4.7rem !important;
+  }
+
+  #content {
+    margin: var(--header-height) 0 0 0 !important;
+    padding: 1rem !important;
+  }
+
+  footer { margin-left: 0 !important; }
+}
+
+@media (max-width: 575px) {
+  .teacher-header { padding-inline: 4.2rem !important; }
+  .nav-icons { gap: .35rem; }
+  .nav-icons > a,
+  .profile-dropdown > button,
+  .mode-toggle,
+  .toggle-btn {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 13px !important;
+  }
+}
+
+@media (min-width: 992px) {
+  body.teacher-sidebar-collapsed #sidebar.teacher-sidebar {
+    transform: translateX(calc(var(--sidebar-width) * -1)) !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+
+  body.teacher-sidebar-collapsed .teacher-header {
+    left: 0 !important;
+  }
+
+  body.teacher-sidebar-collapsed #content,
+  body.teacher-sidebar-collapsed footer {
+    margin-left: 0 !important;
+  }
+}

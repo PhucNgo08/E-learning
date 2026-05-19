@@ -1,0 +1,78 @@
+{% extends "layout_admin.html" %}
+{% block title %}✏️ Sửa Quiz{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-primary mb-0">✏️ Sửa Quiz</h3>
+    <a href="/admin/quiz/detail/{{ quiz.id }}" class="btn btn-outline-secondary">← Chi tiết</a>
+  </div>
+
+  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body p-4">
+      <form method="post" action="/admin/quiz/edit/{{ quiz.id }}">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label fw-semibold">Tiêu đề</label>
+            <input name="title" class="form-control" value="{{ quiz.title }}" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Khóa học</label>
+            <select name="course_id" class="form-select" required>
+              {% for c in courses %}
+                <option value="{{ c.id }}" {% if quiz.course_id == c.id %}selected{% endif %}>{{ c.course_code }} - {{ c.course_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Mô tả</label>
+            <textarea name="description" rows="3" class="form-control">{{ quiz.description or '' }}</textarea>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Loại</label>
+            <select name="quiz_type" class="form-select">
+              {% for t in ['practice','graded','survey'] %}<option value="{{ t }}" {% if quiz.quiz_type == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Độ khó</label>
+            <select name="difficulty_level" class="form-select">
+              {% for d in ['easy','medium','hard'] %}<option value="{{ d }}" {% if quiz.difficulty_level == d %}selected{% endif %}>{{ d }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Trạng thái</label>
+            <select name="status" class="form-select">
+              {% for st in ['draft','pending','published','rejected','archived'] %}<option value="{{ st }}" {% if quiz.status == st %}selected{% endif %}>{{ st }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Điểm đạt (%)</label>
+            <input type="number" name="passing_score" min="0" max="100" step="0.1" value="{{ quiz.passing_score or 60 }}" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Thời lượng phút</label>
+            <input type="number" name="time_limit_minutes" min="0" value="{{ quiz.time_limit_minutes or 0 }}" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Số lần làm tối đa</label>
+            <input type="number" name="max_attempts" min="1" value="{{ quiz.max_attempts or 1 }}" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Mở từ</label>
+            <input type="datetime-local" name="available_from" value="{{ quiz.available_from.strftime('%Y-%m-%dT%H:%M') if quiz.available_from else '' }}" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label fw-semibold">Đóng lúc</label>
+            <input type="datetime-local" name="available_to" value="{{ quiz.available_to.strftime('%Y-%m-%dT%H:%M') if quiz.available_to else '' }}" class="form-control">
+          </div>
+        </div>
+        <div class="text-end mt-4">
+          <button class="btn btn-warning px-4">Lưu thay đổi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

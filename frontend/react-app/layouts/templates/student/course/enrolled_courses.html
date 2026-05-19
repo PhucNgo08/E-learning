@@ -2,27 +2,194 @@
 {% block title %}🎓 Khóa học của tôi{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
+<style>
+  .my-course-page .filter-card {
+    background: rgba(255,255,255,.82);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(13,110,253,.08);
+    border-radius: 18px;
+  }
 
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+  .my-course-page .table-card {
+    border-radius: 18px;
+    overflow: hidden;
+  }
+
+  .my-course-page .course-row {
+    transition: background .25s, transform .2s;
+  }
+
+  .my-course-page .course-row:hover {
+    background: rgba(13,110,253,.05);
+  }
+
+  .my-course-page .progress-custom {
+    height: 9px;
+    background: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .my-course-page .progress-bar {
+    width: 0;
+    transition: width .7s ease;
+    background: linear-gradient(90deg, #0d6efd, #4fb0ff);
+  }
+
+  .my-course-page .major-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 3px 8px;
+    background: #eef6ff;
+    color: #0d6efd;
+    font-size: .76rem;
+    font-weight: 600;
+  }
+
+  body.dark-mode .my-course-page .filter-card,
+  body.dark-mode .my-course-page .table {
+    background: rgba(15, 23, 42, .82) !important;
+    color: #e2e8f0;
+  }
+
+  body.dark-mode .my-course-page .text-muted {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .my-course-page .major-chip {
+    background: rgba(37, 99, 235, .18);
+    color: #bfdbfe;
+  }
+
+  @media (max-width: 768px) {
+    .my-course-page .table thead {
+      display: none;
+    }
+
+    .my-course-page .table tbody tr {
+      display: block;
+      margin-bottom: 1rem;
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    }
+
+    body.dark-mode .my-course-page .table tbody tr {
+      background: rgba(15, 23, 42, .82);
+    }
+
+    .my-course-page .table tbody td {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border: none !important;
+      padding: 6px 0;
+    }
+
+    .my-course-page .table tbody td::before {
+      content: attr(data-label);
+      font-weight: 600;
+      color: #6c757d;
+      margin-right: 12px;
+    }
+  }
+</style>
+
+<div class="container-fluid py-3 my-course-page">
+
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
       <h3 class="fw-bold text-primary mb-0">
         <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
       </h3>
-      <small class="text-muted">Xem và tiếp tục các khóa học bạn đã đăng ký hoặc mua</small>
+      <small class="text-muted">
+        Xem và tiếp tục các khóa học bạn đã đăng ký hoặc mua.
+      </small>
     </div>
 
-    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm rounded-pill mt-2 mt-md-0">
+    <a href="/student/course" class="btn btn-outline-secondary btn-sm shadow-sm rounded-pill">
       <i class="bi bi-arrow-left-circle"></i> Danh sách khóa học
     </a>
   </div>
 
-  <div class="table-responsive shadow-sm rounded-4 overflow-hidden">
-    <table class="table table-hover align-middle bg-white mb-0">
+  <form method="get" action="/student/course/enrolled" class="filter-card shadow-sm p-3 mb-4">
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label fw-semibold">Tìm kiếm</label>
+        <input type="text"
+               name="q"
+               value="{{ search_query or '' }}"
+               class="form-control rounded-pill"
+               placeholder="Tên khóa học, mã, ngành...">
+      </div>
 
+      <div class="col-lg-3 col-md-6">
+        <label class="form-label fw-semibold">Ngành học</label>
+        <select name="major_id" class="form-select rounded-pill">
+          <option value="">Tất cả ngành học</option>
+          {% for major in majors %}
+          <option value="{{ major.id }}" {% if selected_major_id == major.id %}selected{% endif %}>
+            {{ major.major_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label fw-semibold">Mức độ</label>
+        <select name="difficulty_level" class="form-select rounded-pill">
+          <option value="">Tất cả</option>
+          <option value="beginner" {% if selected_difficulty == 'beginner' %}selected{% endif %}>Cơ bản</option>
+          <option value="intermediate" {% if selected_difficulty == 'intermediate' %}selected{% endif %}>Trung bình</option>
+          <option value="advanced" {% if selected_difficulty == 'advanced' %}selected{% endif %}>Nâng cao</option>
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label fw-semibold">Tiến độ</label>
+        <select name="progress_filter" class="form-select rounded-pill">
+          <option value="">Tất cả</option>
+          <option value="not_started" {% if selected_progress_filter == 'not_started' %}selected{% endif %}>Chưa học</option>
+          <option value="learning" {% if selected_progress_filter == 'learning' %}selected{% endif %}>Đang học</option>
+          <option value="completed" {% if selected_progress_filter == 'completed' %}selected{% endif %}>Hoàn thành</option>
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label fw-semibold">Sắp xếp</label>
+        <select name="sort" class="form-select rounded-pill">
+          <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+          <option value="progress_desc" {% if selected_sort == 'progress_desc' %}selected{% endif %}>Tiến độ cao nhất</option>
+          <option value="progress_asc" {% if selected_sort == 'progress_asc' %}selected{% endif %}>Tiến độ thấp nhất</option>
+        </select>
+      </div>
+
+      <div class="col-12 d-flex gap-2 flex-wrap">
+        <button class="btn btn-primary rounded-pill px-4">
+          <i class="bi bi-funnel"></i> Lọc khóa học
+        </button>
+
+        <a href="/student/course/enrolled" class="btn btn-outline-secondary rounded-pill px-4">
+          <i class="bi bi-arrow-counterclockwise"></i> Xóa lọc
+        </a>
+      </div>
+    </div>
+  </form>
+
+  <div class="mb-3 text-muted">
+    Đang hiển thị <strong>{{ courses|length }}</strong> khóa học.
+  </div>
+
+  <div class="table-responsive shadow-sm table-card">
+    <table class="table table-hover align-middle bg-white mb-0">
       <thead class="table-light">
         <tr>
           <th>Khóa học</th>
+          <th>Ngành</th>
           <th>Giảng viên</th>
           <th>Tiến độ</th>
           <th class="text-end">Hành động</th>
@@ -35,7 +202,6 @@
         {% set p = item.progress_percent or 0 %}
 
         <tr class="course-row">
-
           <td data-label="Khóa học">
             <div class="fw-semibold course-title text-truncate" title="{{ item.course.course_name }}">
               <a href="/student/course/detail/{{ item.course.id }}" class="text-primary text-decoration-none">
@@ -44,12 +210,14 @@
               </a>
             </div>
 
-            <span class="badge 
+            <span class="badge
               {% if level == 'beginner' %}bg-success
               {% elif level == 'intermediate' %}bg-warning text-dark
               {% else %}bg-danger
               {% endif %} small mt-1">
-              {{ item.course.difficulty_level | capitalize }}
+              {% if level == 'beginner' %}Cơ bản
+              {% elif level == 'intermediate' %}Trung bình
+              {% else %}Nâng cao{% endif %}
             </span>
 
             <div class="small text-muted mt-1">
@@ -57,17 +225,25 @@
             </div>
           </td>
 
-          <td data-label="Giảng viên">
-            <i class="bi bi-person-badge"></i>
-            {{ item.course.teacher.full_name if item.course.teacher else "—" }}
+          <td data-label="Ngành">
+            <span class="major-chip">
+              <i class="bi bi-diagram-3"></i>
+              {{ item.course.major.major_name if item.course.major else "Chưa phân ngành" }}
+            </span>
           </td>
 
-          <td data-label="Tiến độ" style="min-width:160px;">
+          <td data-label="Giảng viên">
+            <i class="bi bi-person-badge"></i>
+            {{ item.course.teacher.full_name if item.course.teacher and item.course.teacher.full_name else (item.course.teacher.username if item.course.teacher else "—") }}
+          </td>
+
+          <td data-label="Tiến độ" style="min-width: 180px;">
             <div class="progress progress-custom">
               <div class="progress-bar" data-width="{{ p }}"></div>
             </div>
             <div class="small text-muted mt-1 fw-semibold">
-              <i class="bi bi-flag"></i> {{ item.completed_lessons }}/{{ item.total_lessons }}
+              <i class="bi bi-flag"></i>
+              {{ item.completed_lessons }}/{{ item.total_lessons }}
               <span class="text-primary">({{ p }}%)</span>
             </div>
           </td>
@@ -79,20 +255,23 @@
                 <i class="bi bi-play-circle"></i> Học tiếp
               </a>
             {% else %}
-              <span class="badge bg-success">Hoàn thành</span>
+              <a class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"
+                 href="/student/course/progress/{{ item.course.id }}">
+                <i class="bi bi-check-circle"></i> Xem lại
+              </a>
             {% endif %}
           </td>
-
         </tr>
+
         {% else %}
         <tr>
-          <td colspan="4" class="text-center text-muted py-4">
-            <i class="bi bi-info-circle"></i> Bạn chưa đăng ký khóa học nào.
+          <td colspan="5" class="text-center text-muted py-4">
+            <i class="bi bi-info-circle"></i>
+            Không có khóa học nào phù hợp với bộ lọc hiện tại.
           </td>
         </tr>
         {% endfor %}
       </tbody>
-
     </table>
   </div>
 </div>
@@ -103,36 +282,4 @@
     setTimeout(() => el.style.width = percent + '%', 200);
   });
 </script>
-
-<style>
-  .course-row { transition: background 0.25s, transform 0.2s; }
-  .course-row:hover { background: rgba(13,110,253,0.05); }
-
-  .progress-custom { height: 9px; background: #e9ecef; border-radius: 10px; overflow: hidden; }
-  .progress-bar { transition: width .7s ease; background: linear-gradient(90deg, #0d6efd, #4fb0ff); }
-
-  @media (max-width: 768px) {
-    .table thead { display: none; }
-    .table tbody tr {
-      display: block;
-      margin-bottom: 1rem;
-      border-radius: 14px;
-      background: #fff;
-      padding: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .table tbody td {
-      display: flex;
-      justify-content: space-between;
-      border: none !important;
-      padding: 6px 0;
-    }
-    .table tbody td::before {
-      content: attr(data-label);
-      font-weight: 600;
-      color: #6c757d;
-      margin-right: 12px;
-    }
-  }
-</style>
 {% endblock %}

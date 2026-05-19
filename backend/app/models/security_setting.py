@@ -2,6 +2,7 @@ from sqlalchemy import Column, String, Boolean, DateTime, Integer, ForeignKey, U
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
 import uuid
+from sqlalchemy.sql import func
 
 
 class SecuritySettings(Base):
@@ -15,6 +16,9 @@ class SecuritySettings(Base):
     last_password_change = Column(DateTime)
     failed_login_attempts = Column(Integer, default=0)
     account_locked_until = Column(DateTime)
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now(), nullable=False)
 
     # 🔗 Liên kết ngược lại với User
     user = relationship("User", back_populates="security_setting")

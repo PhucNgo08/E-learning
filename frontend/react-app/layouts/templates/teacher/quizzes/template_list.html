@@ -2,40 +2,145 @@
 {% block title %}🧩 Danh sách mẫu Quiz{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div>
-      <h3 class="fw-bold text-primary mb-1">🧩 Danh sách mẫu Quiz</h3>
-      <p class="text-muted mb-0">Quản lý và tái sử dụng các mẫu quiz đã tạo.</p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">← Danh sách Quiz</a>
-      <a href="/teacher/quizzes/create" class="btn btn-primary">+ Tạo Quiz mới</a>
-    </div>
-  </div>
 
-  <div class="card shadow-sm border-0">
-    <div class="card-body">
+<style>
+  :root {
+    --quiz-bg: #f5f7fb;
+    --quiz-card: #ffffff;
+    --quiz-border: #e5e7eb;
+    --quiz-text: #1f2937;
+    --quiz-muted: #6b7280;
+    --quiz-primary: #2563eb;
+    --quiz-soft: #eff6ff;
+    --quiz-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --quiz-bg: #071226;
+    --quiz-card: #0f1b33;
+    --quiz-border: rgba(255,255,255,.12);
+    --quiz-text: #e5edf8;
+    --quiz-muted: #9caec8;
+    --quiz-primary: #8ea6ff;
+    --quiz-soft: rgba(96, 165, 250, .12);
+    --quiz-shadow: 0 18px 44px rgba(0,0,0,.35);
+  }
+
+  .quiz-page {
+    min-height: calc(100vh - 90px);
+    padding: 24px 12px 42px;
+    background: var(--quiz-bg);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card {
+    background: var(--quiz-card);
+    border: 1px solid var(--quiz-border);
+    border-radius: 18px;
+    box-shadow: var(--quiz-shadow);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card .text-muted { color: var(--quiz-muted) !important; }
+  .quiz-title { color: var(--quiz-primary); font-weight: 800; }
+
+  .quiz-card .form-label { font-weight: 700; color: var(--quiz-text); }
+  .quiz-card .form-control,
+  .quiz-card .form-select,
+  .quiz-card textarea {
+    border-radius: 12px;
+    border-color: var(--quiz-border);
+    background-color: var(--quiz-card);
+    color: var(--quiz-text);
+  }
+  .quiz-card .form-control:focus,
+  .quiz-card .form-select:focus,
+  .quiz-card textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+  .quiz-card .form-select option { background: var(--quiz-card); color: var(--quiz-text); }
+
+  .quiz-table { margin-bottom: 0; }
+  .quiz-table thead th {
+    background: var(--quiz-soft) !important;
+    color: var(--quiz-primary) !important;
+    border-color: var(--quiz-border) !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .quiz-table td { border-color: var(--quiz-border); vertical-align: middle; color: var(--quiz-text); }
+
+  .quiz-empty {
+    border: 1px dashed var(--quiz-border);
+    border-radius: 16px;
+    padding: 34px 18px;
+    background: var(--quiz-soft);
+    text-align: center;
+  }
+
+  .quiz-stat {
+    border: 1px solid var(--quiz-border);
+    border-radius: 16px;
+    background: var(--quiz-card);
+    padding: 18px;
+    height: 100%;
+  }
+
+  .quiz-action-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hidden-block { display: none !important; }
+
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 14px; }
+    .quiz-action-group { justify-content: flex-start; }
+  }
+</style>
+
+
+
+<div class="quiz-page">
+  <div class="container-fluid">
+    <div class="quiz-card p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+          <h3 class="quiz-title mb-1"><i class="bi bi-grid-3x3-gap"></i> Danh sách mẫu Quiz</h3>
+          <p class="text-muted mb-0">Quản lý và tham khảo các mẫu quiz có sẵn.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Danh sách Quiz
+          </a>
+          <a href="/teacher/quizzes/create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tạo Quiz mới
+          </a>
+        </div>
+      </div>
+
       {% if templates %}
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
-          <thead class="table-primary text-center">
+        <table class="table table-hover align-middle quiz-table">
+          <thead class="text-center">
             <tr>
               <th>#</th>
               <th class="text-start">Tên mẫu</th>
-              <th>Mô tả</th>
+              <th class="text-start">Mô tả</th>
               <th>Ngày tạo</th>
-              <th>Công khai</th>
+              <th>Hiển thị</th>
             </tr>
           </thead>
           <tbody>
-            {% for item in templates %}
-            <tr class="text-center">
-              <td>{{ loop.index }}</td>
+          {% for item in templates %}
+            <tr>
+              <td class="text-center fw-bold">{{ loop.index }}</td>
               <td class="text-start fw-semibold">{{ item.name }}</td>
-              <td>{{ item.description or "—" }}</td>
-              <td>{{ item.created_at.strftime('%d/%m/%Y') if item.created_at else "—" }}</td>
-              <td>
+              <td class="text-start">{{ item.description or "—" }}</td>
+              <td class="text-center">{{ item.created_at.strftime('%d/%m/%Y') if item.created_at else "—" }}</td>
+              <td class="text-center">
                 {% if item.is_public %}
                   <span class="badge bg-success">Công khai</span>
                 {% else %}
@@ -43,14 +148,18 @@
                 {% endif %}
               </td>
             </tr>
-            {% endfor %}
+          {% endfor %}
           </tbody>
         </table>
       </div>
       {% else %}
-      <div class="alert alert-info mb-0">Chưa có mẫu quiz nào.</div>
+      <div class="quiz-empty">
+        <h6 class="fw-bold mb-2">Chưa có mẫu quiz</h6>
+        <p class="text-muted mb-0">Khi có mẫu quiz, danh sách sẽ hiển thị tại đây.</p>
+      </div>
       {% endif %}
     </div>
   </div>
 </div>
+
 {% endblock %}

@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
-from app.models.rbac import Role
-from app.utils.user_query import filter_users_by_role
-from fastapi import (
-    APIRouter, Request, Depends, Form, UploadFile, File, Query
-)
+
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.exc import DataError, IntegrityError
 from sqlalchemy.orm import Session
 
@@ -24,13 +22,15 @@ from app.utils.db_error_helper import (
     humanize_db_error,
     parse_money_vn,
 )
+from app.utils.user_query import filter_users_by_role
+
 
 logger = logging.getLogger(__name__)
 PRICE_MAX = get_decimal_max_from_column(Course, "price", Decimal("99999999.99"))
 
 course_router = APIRouter(
     prefix="/admin/Course",
-    tags=["Admin - Course Management"]
+    tags=["Admin - Course Management"],
 )
 
 
@@ -81,12 +81,47 @@ def _parse_date(value: str | None, label: str, errors: list[str]):
         return None
 
 
-def _validate_choice(value: str | None, label: str, allowed: set[str], errors: list[str], default: str):
+def _validate_choice(
+    value: str | None,
+    label: str,
+    allowed: set[str],
+    errors: list[str],
+    default: str,
+):
     v = (value or "").strip() or default
     if v not in allowed:
         errors.append(f"{label} không hợp lệ.")
         return default
     return v
+
+
+def _validate_publish_requirements(
+    *,
+    status_str: str,
+    teacher_id: str | None,
+    academic_year_id: str | None,
+    major_id: str | None,
+    start_date_obj,
+    end_date_obj,
+    errors: list[str],
+):
+    if status_str != "published":
+        return
+
+    if not teacher_id:
+        errors.append("Muốn xuất bản khóa học phải chọn giảng viên.")
+
+    if not academic_year_id:
+        errors.append("Muốn xuất bản khóa học phải chọn năm học.")
+
+    if not major_id:
+        errors.append("Muốn xuất bản khóa học phải chọn chuyên ngành.")
+
+    if not start_date_obj:
+        errors.append("Muốn xuất bản khóa học phải có ngày bắt đầu.")
+
+    if not end_date_obj:
+        errors.append("Muốn xuất bản khóa học phải có ngày kết thúc.")
 
 
 def _base_form_context(request: Request, db: Session) -> dict:
@@ -117,6 +152,7 @@ def _render_form(
         context["form"] = form
     if errors is not None:
         context["errors"] = errors
+
     return tpl.TemplateResponse(template_name, context, status_code=status_code)
 
 
@@ -170,7 +206,7 @@ def _build_form_data(
 
 
 # =====================================================================================
-# 📋 1) Danh sách khóa học
+# 1) Danh sách khóa học
 # =====================================================================================
 @course_router.get("/manage", response_class=HTMLResponse)
 async def manage_courses(
@@ -190,23 +226,32 @@ async def manage_courses(
 
     tpl = get_template_by_path(request.url.path)
 
-    query = db.query(Course).join(User, Course.teacher_id == User.id, isouter=True)
+    query = (
+        db.query(Course)
+        .join(User, Course.teacher_id == User.id, isouter=True)
+        .filter(Course.deleted_at.is_(None))
+    )
 
     if q:
+        s = f"%{q.strip()}%"
         query = query.filter(
-            Course.course_name.ilike(f"%{q}%") |
-            Course.course_code.ilike(f"%{q}%")
+            Course.course_name.ilike(s) |
+            Course.course_code.ilike(s)
         )
+
     if status:
         query = query.filter(Course.status == status)
+
     if teacher_id:
         query = query.filter(Course.teacher_id == teacher_id)
+
     if major_id:
         query = query.filter(Course.major_id == major_id)
+
     if year_id:
         query = query.filter(Course.academic_year_id == year_id)
 
-    total = query.count()
+    total = query.with_entities(func.count(Course.id)).scalar() or 0
     total_pages = max(1, (total + per_page - 1) // per_page)
 
     if page > total_pages:
@@ -236,12 +281,12 @@ async def manage_courses(
             "major_id": major_id,
             "year_id": year_id,
             **_consume_flash(request),
-        }
+        },
     )
 
 
 # =====================================================================================
-# ➕ 2) GET: Trang tạo khóa học
+# 2) GET: Trang tạo khóa học
 # =====================================================================================
 @course_router.get("/create", response_class=HTMLResponse)
 async def create_page(request: Request, db: Session = Depends(get_db)):
@@ -254,7 +299,7 @@ async def create_page(request: Request, db: Session = Depends(get_db)):
 
 
 # =====================================================================================
-# 💾 3) POST: Tạo khóa học
+# 3) POST: Tạo khóa học
 # =====================================================================================
 @course_router.post("/create", response_class=HTMLResponse)
 async def create_course(
@@ -288,7 +333,6 @@ async def create_course(
     end_date: str | None = Form(None),
 
     status_str: str = Form("draft"),
-
     thumbnail: UploadFile | None = File(None),
 ):
     auth_redirect = _require_admin(request)
@@ -339,29 +383,43 @@ async def create_course(
     allow_assignments_i = _parse_int(allow_assignments, "Cho phép bài tập", errors, 1)
 
     course_type = _validate_choice(
-        course_type, "Loại khóa học",
+        course_type,
+        "Loại khóa học",
         {"mandatory", "elective", "workshop", "online", "hybrid"},
-        errors, "online"
+        errors,
+        "online",
     )
+
     difficulty_level = _validate_choice(
-        difficulty_level, "Độ khó",
+        difficulty_level,
+        "Độ khó",
         {"beginner", "intermediate", "advanced"},
-        errors, "beginner"
+        errors,
+        "beginner",
     )
+
     enrollment_mode = _validate_choice(
-        enrollment_mode, "Chế độ đăng ký",
+        enrollment_mode,
+        "Chế độ đăng ký",
         {"auto", "approval", "invite_only"},
-        errors, "auto"
+        errors,
+        "auto",
     )
+
     default_submission_type = _validate_choice(
-        default_submission_type, "Hình thức nộp bài",
+        default_submission_type,
+        "Hình thức nộp bài",
         {"individual", "group"},
-        errors, "individual"
+        errors,
+        "individual",
     )
+
     status_str = _validate_choice(
-        status_str, "Trạng thái",
+        status_str,
+        "Trạng thái",
         {"draft", "published", "archived"},
-        errors, "draft"
+        errors,
+        "draft",
     )
 
     try:
@@ -372,6 +430,7 @@ async def create_course(
 
     if price_d < 0:
         errors.append("Giá khóa học không được âm.")
+
     if price_d > PRICE_MAX:
         errors.append(f"Giá khóa học tối đa {PRICE_MAX:,.2f} VNĐ.")
 
@@ -389,6 +448,16 @@ async def create_course(
 
     if max_students_i is not None and max_students_i <= 0:
         errors.append("Số lượng tối đa phải lớn hơn 0.")
+
+    _validate_publish_requirements(
+        status_str=status_str,
+        teacher_id=teacher_id,
+        academic_year_id=academic_year_id,
+        major_id=major_id,
+        start_date_obj=start_date_obj,
+        end_date_obj=end_date_obj,
+        errors=errors,
+    )
 
     if errors:
         return _render_form(
@@ -424,24 +493,13 @@ async def create_course(
             prerequisites=prerequisites,
             allow_assignments=allow_assignments_i,
             default_submission_type=default_submission_type,
+            status=status_str,
         )
-
-        if isinstance(new_course, dict) and "error" in new_course:
-            return _render_form(
-                tpl,
-                "Course/create.html",
-                request,
-                db,
-                form=form_data,
-                errors=[new_course["error"]],
-                status_code=400,
-            )
 
         new_course.course_type = course_type
         new_course.start_date = start_date_obj
         new_course.end_date = end_date_obj
         new_course.status = status_str
-
         db.commit()
 
     except (DataError, IntegrityError) as e:
@@ -456,6 +514,7 @@ async def create_course(
             errors=[humanize_db_error(e, price_max=PRICE_MAX)],
             status_code=400,
         )
+
     except Exception:
         db.rollback()
         logger.exception("Unexpected error when creating course")
@@ -474,7 +533,7 @@ async def create_course(
 
 
 # =====================================================================================
-# ✏️ 4) GET: Trang edit khóa học
+# 4) GET: Trang edit khóa học
 # =====================================================================================
 @course_router.get("/edit/{course_id}", response_class=HTMLResponse)
 async def page_edit(course_id: str, request: Request, db: Session = Depends(get_db)):
@@ -483,11 +542,15 @@ async def page_edit(course_id: str, request: Request, db: Session = Depends(get_
         return auth_redirect
 
     tpl = get_template_by_path(request.url.path)
+
     course = course_service.get_course_owned(
-        db, request.session.get("user_id"), course_id, role="admin"
+        db,
+        request.session.get("user_id"),
+        course_id,
+        role="admin",
     )
 
-    if not course:
+    if not course or course.deleted_at is not None:
         request.session["flash_error"] = "Không tìm thấy khóa học."
         return RedirectResponse("/admin/Course/manage", status_code=303)
 
@@ -501,7 +564,7 @@ async def page_edit(course_id: str, request: Request, db: Session = Depends(get_
 
 
 # =====================================================================================
-# 💾 5) POST: Cập nhật khóa học
+# 5) POST: Cập nhật khóa học
 # =====================================================================================
 @course_router.post("/edit/{course_id}", response_class=HTMLResponse)
 async def update_course_action(
@@ -546,9 +609,13 @@ async def update_course_action(
     tpl = get_template_by_path(request.url.path)
 
     course = course_service.get_course_owned(
-        db, request.session.get("user_id"), course_id, role="admin"
+        db,
+        request.session.get("user_id"),
+        course_id,
+        role="admin",
     )
-    if not course:
+
+    if not course or course.deleted_at is not None:
         request.session["flash_error"] = "Không tìm thấy khóa học."
         return RedirectResponse("/admin/Course/manage", status_code=303)
 
@@ -594,29 +661,43 @@ async def update_course_action(
     allow_assignments_i = _parse_int(allow_assignments, "Cho phép bài tập", errors, 1)
 
     course_type = _validate_choice(
-        course_type, "Loại khóa học",
+        course_type,
+        "Loại khóa học",
         {"mandatory", "elective", "workshop", "online", "hybrid"},
-        errors, "online"
+        errors,
+        "online",
     )
+
     difficulty_level = _validate_choice(
-        difficulty_level, "Độ khó",
+        difficulty_level,
+        "Độ khó",
         {"beginner", "intermediate", "advanced"},
-        errors, "beginner"
+        errors,
+        "beginner",
     )
+
     enrollment_mode = _validate_choice(
-        enrollment_mode, "Chế độ đăng ký",
+        enrollment_mode,
+        "Chế độ đăng ký",
         {"auto", "approval", "invite_only"},
-        errors, "auto"
+        errors,
+        "auto",
     )
+
     default_submission_type = _validate_choice(
-        default_submission_type, "Hình thức nộp bài",
+        default_submission_type,
+        "Hình thức nộp bài",
         {"individual", "group"},
-        errors, "individual"
+        errors,
+        "individual",
     )
+
     status_str = _validate_choice(
-        status_str, "Trạng thái",
+        status_str,
+        "Trạng thái",
         {"draft", "published", "archived"},
-        errors, "draft"
+        errors,
+        "draft",
     )
 
     try:
@@ -627,6 +708,7 @@ async def update_course_action(
 
     if price_d < 0:
         errors.append("Giá khóa học không được âm.")
+
     if price_d > PRICE_MAX:
         errors.append(f"Giá khóa học tối đa {PRICE_MAX:,.2f} VNĐ.")
 
@@ -644,6 +726,16 @@ async def update_course_action(
 
     if max_students_i is not None and max_students_i <= 0:
         errors.append("Số lượng tối đa phải lớn hơn 0.")
+
+    _validate_publish_requirements(
+        status_str=status_str,
+        teacher_id=teacher_id,
+        academic_year_id=academic_year_id,
+        major_id=major_id,
+        start_date_obj=start_date_obj,
+        end_date_obj=end_date_obj,
+        errors=errors,
+    )
 
     if errors:
         return _render_form(
@@ -684,24 +776,11 @@ async def update_course_action(
             default_submission_type=default_submission_type,
         )
 
-        if isinstance(updated, dict) and "error" in updated:
-            return _render_form(
-                tpl,
-                "Course/edit.html",
-                request,
-                db,
-                course=course,
-                form=form_data,
-                errors=[updated["error"]],
-                status_code=400,
-            )
-
         target_course = updated if hasattr(updated, "id") else course
         target_course.course_type = course_type
         target_course.start_date = start_date_obj
         target_course.end_date = end_date_obj
         target_course.status = status_str
-
         db.commit()
 
     except (DataError, IntegrityError) as e:
@@ -717,6 +796,7 @@ async def update_course_action(
             errors=[humanize_db_error(e, price_max=PRICE_MAX)],
             status_code=400,
         )
+
     except Exception:
         db.rollback()
         logger.exception("Unexpected error when updating course")
@@ -736,7 +816,7 @@ async def update_course_action(
 
 
 # =====================================================================================
-# ❌ 6) Xóa khóa học
+# 6) Xóa khóa học
 # =====================================================================================
 @course_router.post("/delete/{course_id}")
 async def delete_course(course_id: str, request: Request, db: Session = Depends(get_db)):
@@ -746,7 +826,10 @@ async def delete_course(course_id: str, request: Request, db: Session = Depends(
 
     try:
         ok = course_service.delete_course(
-            db, request.session.get("user_id"), course_id, role="admin"
+            db,
+            request.session.get("user_id"),
+            course_id,
+            role="admin",
         )
 
         if not ok:
@@ -763,13 +846,22 @@ async def delete_course(course_id: str, request: Request, db: Session = Depends(
 
 
 @course_router.get("/delete/{course_id}", response_class=HTMLResponse)
-async def delete_course_confirm(course_id: str, request: Request, db: Session = Depends(get_db)):
+async def delete_course_confirm(
+    course_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     auth_redirect = _require_admin(request)
     if auth_redirect:
         return auth_redirect
 
     tpl = get_template_by_path(request.url.path)
-    course = db.query(Course).filter(Course.id == course_id).first()
+
+    course = (
+        db.query(Course)
+        .filter(Course.id == course_id, Course.deleted_at.is_(None))
+        .first()
+    )
 
     if not course:
         request.session["flash_error"] = "Không tìm thấy khóa học."
@@ -781,27 +873,38 @@ async def delete_course_confirm(course_id: str, request: Request, db: Session = 
             "request": request,
             "course": course,
             **_consume_flash(request),
-        }
+        },
     )
 
 
 # =====================================================================================
-# 📘 7) Chi tiết khóa học
+# 7) Chi tiết khóa học
 # =====================================================================================
 @course_router.get("/detail/{course_id}", response_class=HTMLResponse)
-async def course_detail(course_id: str, request: Request, db: Session = Depends(get_db)):
+async def course_detail(
+    course_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
     auth_redirect = _require_admin(request)
     if auth_redirect:
         return auth_redirect
 
     tpl = get_template_by_path(request.url.path)
-    course = db.query(Course).filter(Course.id == course_id).first()
+
+    course = (
+        db.query(Course)
+        .filter(Course.id == course_id, Course.deleted_at.is_(None))
+        .first()
+    )
 
     if not course:
         request.session["flash_error"] = "Không tìm thấy khóa học."
         return RedirectResponse("/admin/Course/manage", status_code=303)
 
-    teacher = db.query(User).filter(User.id == course.teacher_id).first()
+    teacher = None
+    if course.teacher_id:
+        teacher = db.query(User).filter(User.id == course.teacher_id).first()
 
     return tpl.TemplateResponse(
         "Course/detail.html",
@@ -816,7 +919,7 @@ async def course_detail(course_id: str, request: Request, db: Session = Depends(
 
 
 # =====================================================================================
-# 📊 8) Tổng quan khóa học
+# 8) Tổng quan khóa học
 # =====================================================================================
 @course_router.get("/overview", response_class=HTMLResponse)
 async def course_overview(request: Request, db: Session = Depends(get_db)):
@@ -826,14 +929,26 @@ async def course_overview(request: Request, db: Session = Depends(get_db)):
 
     tpl = get_template_by_path(request.url.path)
 
+    latest_course = (
+        db.query(Course)
+        .filter(Course.deleted_at.is_(None))
+        .order_by(Course.created_at.desc())
+        .first()
+    )
+
     return tpl.TemplateResponse(
         "Course/overview.html",
         {
             "request": request,
-            "total_courses": db.query(Course).count(),
+            "total_courses": (
+                db.query(func.count(Course.id))
+                .filter(Course.deleted_at.is_(None))
+                .scalar()
+                or 0
+            ),
             "total_teachers": filter_users_by_role(db.query(User), "teacher").count(),
             "total_students": filter_users_by_role(db.query(User), "student").count(),
-            "course": db.query(Course).order_by(Course.created_at.desc()).first(),
+            "course": latest_course,
             **_consume_flash(request),
         },
     )

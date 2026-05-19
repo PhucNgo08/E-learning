@@ -37,7 +37,7 @@ def log_template_config():
     print("=" * 80)
 
 
-if not os.environ.get("TEMPLATE_LOGGED"):
+if os.environ.get("TEMPLATE_DEBUG") == "1" and not os.environ.get("TEMPLATE_LOGGED"):
     os.environ["TEMPLATE_LOGGED"] = "1"
     log_template_config()
 

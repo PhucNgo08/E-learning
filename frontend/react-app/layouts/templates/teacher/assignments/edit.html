@@ -1,80 +1,373 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>✏️ Chỉnh sửa bài tập</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body { background-color: #f6f9ff; }
-    .card-custom {
-      border-radius: 14px;
-      border: 1px solid #e5e7eb;
-      background: #ffffff;
+{% extends "layout_teacher.html" %}
+{% block title %}✏️ Sửa bài tập{% endblock %}
+{% block content %}
+
+<style>
+  :root {
+    --asg-primary: #2563eb;
+    --asg-primary-2: #7c3aed;
+    --asg-success: #16a34a;
+    --asg-warning: #f59e0b;
+    --asg-danger: #dc2626;
+    --asg-text: #0f172a;
+    --asg-muted: #64748b;
+    --asg-line: #e5e7eb;
+    --asg-soft: #f8fafc;
+    --asg-card: rgba(255, 255, 255, 0.96);
+    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+  }
+
+  .assignment-page {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .a-hero,
+  .a-card,
+  .table-card,
+  .stat-card,
+  .empty-state {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: var(--asg-card);
+    box-shadow: var(--asg-shadow);
+  }
+
+  .a-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+
+  .a-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
+    pointer-events: none;
+  }
+
+  .a-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .a-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    color: var(--asg-primary);
+    margin: 0;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .a-subtitle {
+    color: var(--asg-muted);
+    margin: 8px 0 0;
+    line-height: 1.55;
+  }
+
+  .a-actions,
+  .action-buttons,
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .a-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    border-radius: 22px;
+    padding: 17px 18px;
+    transition: .18s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
+  }
+
+  .stat-label {
+    color: var(--asg-muted);
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+    font-size: 1.65rem;
+    font-weight: 850;
+    color: #1d4ed8;
+    line-height: 1.15;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .tool-row .form-control,
+  .tool-row .form-select {
+    max-width: 310px;
+    border-radius: 14px;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 14px;
+    border-color: #dbe3ef;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .table-card {
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff);
+    color: #1e40af;
+    font-weight: 850;
+    white-space: nowrap;
+    border-bottom: 1px solid #bfdbfe;
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .info-box,
+  .file-box {
+    border-radius: 18px;
+    background: var(--asg-soft);
+    border: 1px solid var(--asg-line);
+    padding: 14px 16px;
+  }
+
+  .file-box {
+    line-height: 1.65;
+  }
+
+  .status-badge,
+  .badge {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 750;
+  }
+
+  .text-pre-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    border-radius: 24px;
+    padding: 34px 20px;
+    text-align: center;
+  }
+
+  .mini-muted {
+    color: var(--asg-muted);
+    font-size: .9rem;
+  }
+
+  .progress-thin {
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .a-hero,
+  body.dark-mode .a-card,
+  body.dark-mode .table-card,
+  body.dark-mode .stat-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, .90);
+    border-color: rgba(148, 163, 184, .22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .a-title,
+  body.dark-mode .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .a-subtitle,
+  body.dark-mode .stat-label,
+  body.dark-mode .mini-muted {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-box,
+  body.dark-mode .file-box {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .25);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  @media (max-width: 992px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 768px) {
+    .assignment-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
     }
-    .form-label { font-weight: 600; }
-  </style>
-</head>
 
-<body class="p-4">
-  <div class="container card-custom p-4 shadow-sm" style="max-width: 760px;">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <div>
-        <h4 class="fw-bold text-primary mb-0">
-          <i class="bi bi-pencil-square"></i> Chỉnh sửa bài tập
-        </h4>
-        {% if teacher_name %}
-        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
-        {% endif %}
-      </div>
+    .a-hero,
+    .a-card {
+      padding: 18px;
+      border-radius: 22px;
+    }
 
-      <a href="/teacher/assignments/list" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại
-      </a>
-    </div>
+    .a-title {
+      font-size: 1.25rem;
+    }
 
+    .a-actions,
+    .action-buttons,
+    .page-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .a-actions .btn,
+    .action-buttons .btn,
+    .page-actions .btn {
+      width: 100%;
+    }
+
+    .stat-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-row .form-control,
+    .tool-row .form-select {
+      max-width: none;
+      width: 100%;
+    }
+
+    .responsive-table thead {
+      display: none;
+    }
+
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .responsive-table tr {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    .a-hero,
+    .a-card {
+      padding: 14px;
+    }
+
+    .assignment-page {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+  }
+</style>
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div><h3 class="a-title"><i class="bi bi-pencil-square me-2"></i>Sửa bài tập</h3><p class="a-subtitle">Cập nhật tiêu đề, mô tả và hạn nộp.</p></div>
+    <a href="/teacher/assignments/list" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a>
+  </div>
+  <div class="a-card p-3 p-md-4">
     <form method="post" action="/teacher/assignments/edit/{{ assignment.id }}">
-      <div class="mb-3">
-        <label class="form-label">Khóa học</label>
-        <input type="text" class="form-control bg-light"
-               value="{% if assignment.course %}{{ assignment.course.course_code }} - {{ assignment.course.course_name }}{% else %}Không xác định{% endif %}"
-               disabled>
-      </div>
-
-      {% if assignment.module %}
-      <div class="mb-3">
-        <label class="form-label">Module</label>
-        <input type="text" class="form-control bg-light"
-               value="{{ assignment.module.module_number }}. {{ assignment.module.title }}"
-               disabled>
-      </div>
-      {% endif %}
-
-      <div class="mb-3">
-        <label class="form-label">Tiêu đề bài tập <span class="text-danger">*</span></label>
-        <input type="text" name="title" class="form-control" value="{{ assignment.title }}" required>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Mô tả</label>
-        <textarea name="description" class="form-control" rows="4">{{ assignment.description or '' }}</textarea>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Hạn nộp <span class="text-danger">*</span></label>
-        <input type="datetime-local" name="due_date" class="form-control"
-               value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') if assignment.due_date else '' }}" required>
-      </div>
-
-      <div class="text-end">
-        <button type="submit" class="btn btn-primary px-4">
-          <i class="bi bi-save"></i> Lưu thay đổi
-        </button>
-        <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
-          <i class="bi bi-x-circle"></i> Hủy
-        </a>
-      </div>
+      <div class="mb-3"><label class="form-label fw-semibold">Tiêu đề</label><input name="title" class="form-control" value="{{ assignment.title }}" required></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Mô tả</label><textarea name="description" rows="6" class="form-control">{{ assignment.description or '' }}</textarea></div>
+      <div class="mb-3"><label class="form-label fw-semibold">Hạn nộp</label><input type="datetime-local" name="due_date" class="form-control" value="{{ assignment.due_date.strftime('%Y-%m-%dT%H:%M') if assignment.due_date else '' }}" required></div>
+      <div class="text-end"><button class="btn btn-primary"><i class="bi bi-save"></i> Lưu thay đổi</button></div>
     </form>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

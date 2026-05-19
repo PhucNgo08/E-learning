@@ -2,126 +2,219 @@
 {% block title %}➕ Tạo Quiz{% endblock %}
 
 {% block content %}
+
 <style>
-  .quiz-form-card {
-    max-width: 920px;
-    margin: 0 auto;
-    border: 1px solid #e9ecef;
-    border-radius: 20px;
-    background: #fff;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  :root {
+    --quiz-bg: #f5f7fb;
+    --quiz-card: #ffffff;
+    --quiz-border: #e5e7eb;
+    --quiz-text: #1f2937;
+    --quiz-muted: #6b7280;
+    --quiz-primary: #2563eb;
+    --quiz-soft: #eff6ff;
+    --quiz-shadow: 0 12px 28px rgba(15, 23, 42, .08);
   }
-  .section-title {
-    font-weight: 700;
-    color: #0d6efd;
+
+  body.dark-mode,
+  body.theme-dark,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --quiz-bg: #071226;
+    --quiz-card: #0f1b33;
+    --quiz-border: rgba(255,255,255,.12);
+    --quiz-text: #e5edf8;
+    --quiz-muted: #9caec8;
+    --quiz-primary: #8ea6ff;
+    --quiz-soft: rgba(96, 165, 250, .12);
+    --quiz-shadow: 0 18px 44px rgba(0,0,0,.35);
   }
-  .hidden-block {
-    display: none;
+
+  .quiz-page {
+    min-height: calc(100vh - 90px);
+    padding: 24px 12px 42px;
+    background: var(--quiz-bg);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card {
+    background: var(--quiz-card);
+    border: 1px solid var(--quiz-border);
+    border-radius: 18px;
+    box-shadow: var(--quiz-shadow);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card .text-muted { color: var(--quiz-muted) !important; }
+  .quiz-title { color: var(--quiz-primary); font-weight: 800; }
+
+  .quiz-card .form-label { font-weight: 700; color: var(--quiz-text); }
+  .quiz-card .form-control,
+  .quiz-card .form-select,
+  .quiz-card textarea {
+    border-radius: 12px;
+    border-color: var(--quiz-border);
+    background-color: var(--quiz-card);
+    color: var(--quiz-text);
+  }
+  .quiz-card .form-control:focus,
+  .quiz-card .form-select:focus,
+  .quiz-card textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+  .quiz-card .form-select option { background: var(--quiz-card); color: var(--quiz-text); }
+
+  .quiz-table { margin-bottom: 0; }
+  .quiz-table thead th {
+    background: var(--quiz-soft) !important;
+    color: var(--quiz-primary) !important;
+    border-color: var(--quiz-border) !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .quiz-table td { border-color: var(--quiz-border); vertical-align: middle; color: var(--quiz-text); }
+
+  .quiz-empty {
+    border: 1px dashed var(--quiz-border);
+    border-radius: 16px;
+    padding: 34px 18px;
+    background: var(--quiz-soft);
+    text-align: center;
+  }
+
+  .quiz-stat {
+    border: 1px solid var(--quiz-border);
+    border-radius: 16px;
+    background: var(--quiz-card);
+    padding: 18px;
+    height: 100%;
+  }
+
+  .quiz-action-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hidden-block { display: none !important; }
+
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 14px; }
+    .quiz-action-group { justify-content: flex-start; }
   }
 </style>
 
-<div class="container py-4">
-  <div class="quiz-form-card p-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-      <div>
-        <h3 class="section-title mb-1">➕ Tạo Quiz mới</h3>
-        <p class="text-muted mb-0">Tạo practice quiz hoặc graded quiz cho khóa học.</p>
+
+
+<div class="quiz-page">
+  <div class="container">
+    <div class="quiz-card p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+          <h3 class="quiz-title mb-1"><i class="bi bi-plus-square"></i> Tạo Quiz mới</h3>
+          <p class="text-muted mb-0">Tạo practice quiz hoặc graded quiz cho khóa học.</p>
+        </div>
+        <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
       </div>
-      <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">← Quay lại</a>
+
+      <form method="post" action="/teacher/quizzes/create" class="needs-validation" novalidate>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">Khóa học <span class="text-danger">*</span></label>
+            <select name="course_id" class="form-select" required>
+              <option value="">-- Chọn khóa học --</option>
+              {% for c in courses %}
+                <option value="{{ c.id }}">{{ c.course_code ~ ' - ' if c.course_code is defined and c.course_code else '' }}{{ c.course_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Loại quiz <span class="text-danger">*</span></label>
+            <select name="quiz_type" id="quiz_type" class="form-select" required>
+              <option value="practice" selected>Practice Quiz</option>
+              <option value="graded">Graded Quiz</option>
+            </select>
+            <small class="text-muted">Practice dùng luyện tập, Graded dùng tính điểm.</small>
+          </div>
+
+          <div class="col-md-8">
+            <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+            <input type="text" name="title" class="form-control" placeholder="Ví dụ: Quiz chương 1" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Số câu <span class="text-danger">*</span></label>
+            <input type="number" name="total_questions" class="form-control" min="1" value="10" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">Mô tả</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn cho quiz..."></textarea>
+          </div>
+
+          <div class="col-md-4 practice-only">
+            <label class="form-label">Độ khó</label>
+            <select name="difficulty_level" class="form-select">
+              <option value="easy">Dễ</option>
+              <option value="medium" selected>Trung bình</option>
+              <option value="hard">Khó</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Thời gian làm bài</label>
+            <div class="input-group">
+              <input type="number" name="time_limit_minutes" class="form-control" min="1" value="30" required>
+              <span class="input-group-text">phút</span>
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Số lần làm tối đa</label>
+            <input type="number" name="max_attempts" class="form-control" min="1" value="1" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Điểm đạt</label>
+            <div class="input-group">
+              <input type="number" name="passing_score" class="form-control" min="0" max="100" step="0.1" value="60" required>
+              <span class="input-group-text">%</span>
+            </div>
+          </div>
+
+          <div class="col-md-4 graded-only hidden-block">
+            <label class="form-label">Mở từ</label>
+            <input type="datetime-local" name="available_from" class="form-control">
+          </div>
+
+          <div class="col-md-4 graded-only hidden-block">
+            <label class="form-label">Đóng lúc</label>
+            <input type="datetime-local" name="available_to" class="form-control">
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4 flex-wrap">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">Hủy</a>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check-circle"></i> Tạo Quiz
+          </button>
+        </div>
+      </form>
     </div>
-
-    <form method="post" action="/teacher/quizzes/create">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Khóa học</label>
-          <select name="course_id" class="form-select" required>
-            <option value="">-- Chọn khóa học --</option>
-            {% for c in courses %}
-            <option value="{{ c.id }}">{{ c.course_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold">Loại quiz</label>
-          <select name="quiz_type" id="quiz_type" class="form-select" required>
-            <option value="practice">Practice Quiz</option>
-            <option value="graded">Graded Quiz</option>
-          </select>
-        </div>
-
-        <div class="col-md-8">
-          <label class="form-label fw-semibold">Tiêu đề</label>
-          <input type="text" name="title" class="form-control" required>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Số câu</label>
-          <input type="number" name="total_questions" class="form-control" min="1" value="10" required>
-        </div>
-
-        <div class="col-12">
-          <label class="form-label fw-semibold">Mô tả</label>
-          <textarea name="description" class="form-control" rows="3"></textarea>
-        </div>
-
-        <div class="col-md-4 practice-only">
-          <label class="form-label fw-semibold">Độ khó</label>
-          <select name="difficulty_level" class="form-select">
-            <option value="easy">Dễ</option>
-            <option value="medium" selected>Trung bình</option>
-            <option value="hard">Khó</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Thời gian làm bài (phút)</label>
-          <input type="number" name="time_limit_minutes" class="form-control" min="1" value="30" required>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Số lần làm tối đa</label>
-          <input type="number" name="max_attempts" class="form-control" min="1" value="1" required>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label fw-semibold">Điểm đạt (%)</label>
-          <input type="number" name="passing_score" class="form-control" min="0" max="100" step="0.1" value="60" required>
-        </div>
-
-        <div class="col-md-4 graded-only hidden-block">
-          <label class="form-label fw-semibold">Mở từ</label>
-          <input type="datetime-local" name="available_from" class="form-control">
-        </div>
-
-        <div class="col-md-4 graded-only hidden-block">
-          <label class="form-label fw-semibold">Đóng lúc</label>
-          <input type="datetime-local" name="available_to" class="form-control">
-        </div>
-      </div>
-
-      <div class="d-flex justify-content-end gap-2 mt-4">
-        <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">Hủy</a>
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-circle"></i> Tạo Quiz
-        </button>
-      </div>
-    </form>
   </div>
 </div>
 
 <script>
-  function toggleQuizFields() {
-    const type = document.getElementById("quiz_type").value;
-    document.querySelectorAll(".graded-only").forEach(el => {
-      el.classList.toggle("hidden-block", type !== "graded");
-    });
-    document.querySelectorAll(".practice-only").forEach(el => {
-      el.classList.toggle("hidden-block", type === "graded");
-    });
-  }
-
-  document.getElementById("quiz_type").addEventListener("change", toggleQuizFields);
-  toggleQuizFields();
+  document.addEventListener("DOMContentLoaded", function () {
+    const typeSelect = document.getElementById("quiz_type");
+    const toggleQuizFields = () => {
+      const isGraded = typeSelect.value === "graded";
+      document.querySelectorAll(".graded-only").forEach(el => el.classList.toggle("hidden-block", !isGraded));
+      document.querySelectorAll(".practice-only").forEach(el => el.classList.toggle("hidden-block", isGraded));
+    };
+    typeSelect.addEventListener("change", toggleQuizFields);
+    toggleQuizFields();
+  });
 </script>
+
 {% endblock %}

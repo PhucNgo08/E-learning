@@ -2,66 +2,141 @@
 {% block title %}🗑️ Xóa Quiz{% endblock %}
 
 {% block content %}
+
 <style>
-.delete-wrapper {
-  max-width: 640px;
-  margin: auto;
-  padding: 40px 0;
-}
-.delete-card-pro {
-  padding: 2.2rem;
-  border-radius: 24px;
-  background: rgba(255,255,255,0.86);
-  backdrop-filter: blur(18px);
-  border: 1px solid rgba(255,255,255,0.45);
-  box-shadow:
-    0 10px 26px rgba(0,0,0,0.10),
-    0 0 42px rgba(255, 0, 0, 0.14);
-}
-.delete-icon {
-  font-size: 3.6rem;
-}
+  :root {
+    --quiz-bg: #f5f7fb;
+    --quiz-card: #ffffff;
+    --quiz-border: #e5e7eb;
+    --quiz-text: #1f2937;
+    --quiz-muted: #6b7280;
+    --quiz-primary: #2563eb;
+    --quiz-soft: #eff6ff;
+    --quiz-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --quiz-bg: #071226;
+    --quiz-card: #0f1b33;
+    --quiz-border: rgba(255,255,255,.12);
+    --quiz-text: #e5edf8;
+    --quiz-muted: #9caec8;
+    --quiz-primary: #8ea6ff;
+    --quiz-soft: rgba(96, 165, 250, .12);
+    --quiz-shadow: 0 18px 44px rgba(0,0,0,.35);
+  }
+
+  .quiz-page {
+    min-height: calc(100vh - 90px);
+    padding: 24px 12px 42px;
+    background: var(--quiz-bg);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card {
+    background: var(--quiz-card);
+    border: 1px solid var(--quiz-border);
+    border-radius: 18px;
+    box-shadow: var(--quiz-shadow);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card .text-muted { color: var(--quiz-muted) !important; }
+  .quiz-title { color: var(--quiz-primary); font-weight: 800; }
+
+  .quiz-card .form-label { font-weight: 700; color: var(--quiz-text); }
+  .quiz-card .form-control,
+  .quiz-card .form-select,
+  .quiz-card textarea {
+    border-radius: 12px;
+    border-color: var(--quiz-border);
+    background-color: var(--quiz-card);
+    color: var(--quiz-text);
+  }
+  .quiz-card .form-control:focus,
+  .quiz-card .form-select:focus,
+  .quiz-card textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+  .quiz-card .form-select option { background: var(--quiz-card); color: var(--quiz-text); }
+
+  .quiz-table { margin-bottom: 0; }
+  .quiz-table thead th {
+    background: var(--quiz-soft) !important;
+    color: var(--quiz-primary) !important;
+    border-color: var(--quiz-border) !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .quiz-table td { border-color: var(--quiz-border); vertical-align: middle; color: var(--quiz-text); }
+
+  .quiz-empty {
+    border: 1px dashed var(--quiz-border);
+    border-radius: 16px;
+    padding: 34px 18px;
+    background: var(--quiz-soft);
+    text-align: center;
+  }
+
+  .quiz-stat {
+    border: 1px solid var(--quiz-border);
+    border-radius: 16px;
+    background: var(--quiz-card);
+    padding: 18px;
+    height: 100%;
+  }
+
+  .quiz-action-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hidden-block { display: none !important; }
+
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 14px; }
+    .quiz-action-group { justify-content: flex-start; }
+  }
 </style>
 
-<div class="container delete-wrapper">
-  <div class="delete-card-pro text-center">
-    <div class="mb-3">
-      <i class="bi bi-exclamation-octagon-fill text-danger delete-icon"></i>
-    </div>
 
-    <h4 class="fw-bold text-danger mb-3">Xác nhận xóa Quiz</h4>
 
-    <p class="text-muted mb-4">
-      Bạn có chắc chắn muốn xóa quiz này?
-      <br>
-      <strong class="text-danger fs-5">{{ quiz.title }}</strong>
-      <br><br>
-
-      <small class="text-muted">
-        {% if quiz.quiz_type == "graded" %}
-          Đây là <b>bài thi (graded)</b> — hành động này sẽ xóa dữ liệu liên quan của quiz.
-        {% else %}
-          Đây là <b>practice quiz</b> — sẽ bị xóa cùng các câu hỏi.
-        {% endif %}
-      </small>
-
-      <br><br>
-      <span class="fw-bold text-danger">Hành động này không thể hoàn tác.</span>
-    </p>
-
-    <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}">
-      <div class="d-flex justify-content-center gap-3 mt-3 flex-wrap">
-        <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Hủy
-        </a>
-
-        <button type="submit"
-                onclick="return confirm('Bạn chắc chắn muốn xóa quiz này?')"
-                class="btn btn-danger shadow-sm">
-          <i class="bi bi-trash"></i> Xóa Quiz
-        </button>
+<div class="quiz-page">
+  <div class="container" style="max-width: 720px;">
+    <div class="quiz-card p-4 text-center">
+      <div class="mb-3">
+        <div class="display-5 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h3 class="fw-bold text-danger mt-2">Xác nhận xóa Quiz</h3>
+        <p class="text-muted mb-0">Thao tác này có thể ảnh hưởng tới câu hỏi và bài làm liên quan.</p>
       </div>
-    </form>
+
+      <div class="alert alert-danger text-start">
+        <div class="fw-bold mb-1">Quiz sẽ xóa:</div>
+        <div class="fs-5">{{ quiz.title }}</div>
+        <div class="mt-2">
+          {% if quiz.quiz_type == "graded" %}
+            <span class="badge bg-danger">Graded Quiz</span>
+          {% else %}
+            <span class="badge bg-info text-dark">Practice Quiz</span>
+          {% endif %}
+          <span class="badge bg-secondary">{{ quiz.total_questions or 0 }} câu hỏi</span>
+        </div>
+      </div>
+
+      <form method="post" action="/teacher/quizzes/delete/{{ quiz.id }}">
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+          <a href="/teacher/quizzes/list" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left"></i> Hủy
+          </a>
+          <button type="submit" class="btn btn-danger px-4">
+            <i class="bi bi-trash"></i> Xóa Quiz
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
+
 {% endblock %}

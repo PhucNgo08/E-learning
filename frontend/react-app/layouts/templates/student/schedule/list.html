@@ -1,22 +1,188 @@
 {% extends "layout_student.html" %}
 {% block title %}📋 Lịch học & Kiểm tra{% endblock %}
 
+{% block head_extra %}
+<style>
+  .schedule-page {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .schedule-page-title {
+    color: var(--text);
+  }
+
+  .schedule-table-wrap {
+    background: var(--surface-strong, #ffffff);
+    border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft, 0 10px 28px rgba(15, 23, 42, 0.08));
+    overflow: hidden;
+  }
+
+  .schedule-table {
+    color: var(--text, #0f172a);
+    margin-bottom: 0;
+  }
+
+  .schedule-table thead th {
+    background: var(--primary-soft, rgba(37, 99, 235, 0.12));
+    color: var(--text, #0f172a);
+    border-color: var(--border, rgba(15, 23, 42, 0.08));
+    white-space: nowrap;
+    font-weight: 800;
+  }
+
+  .schedule-table tbody tr {
+    background: var(--surface-strong, #ffffff);
+    color: var(--text, #0f172a);
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  .schedule-table tbody tr:hover {
+    background: var(--primary-soft, rgba(37, 99, 235, 0.12));
+  }
+
+  .schedule-table td {
+    border-color: var(--border, rgba(15, 23, 42, 0.08));
+    color: var(--text, #0f172a);
+    vertical-align: middle;
+  }
+
+  .schedule-course-name,
+  .schedule-time,
+  .schedule-location,
+  .schedule-index {
+    color: var(--text, #0f172a) !important;
+  }
+
+  .schedule-date {
+    color: var(--primary, #2563eb) !important;
+  }
+
+  .lesson-badge {
+    font-size: 0.8rem;
+    padding: 5px 9px;
+    border-radius: 999px;
+    color: #ffffff;
+    display: inline-block;
+    margin-top: 3px;
+    font-weight: 700;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .schedule-note,
+  .schedule-empty {
+    background: var(--surface, #ffffff);
+    color: var(--text-muted, #64748b);
+    border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+    border-radius: 14px;
+  }
+
+  .schedule-empty {
+    padding: 1rem;
+    text-align: center;
+  }
+
+  body.dark-mode .schedule-table thead th {
+    background: rgba(96, 165, 250, 0.14);
+    color: var(--text, #f8fafc);
+  }
+
+  @media (max-width: 768px) {
+    .schedule-page {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+
+    .schedule-page .btn {
+      width: 100%;
+    }
+
+    .schedule-table-wrap {
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .schedule-table.responsive-card-table thead {
+      display: none;
+    }
+
+    .schedule-table.responsive-card-table,
+    .schedule-table.responsive-card-table tbody,
+    .schedule-table.responsive-card-table tr,
+    .schedule-table.responsive-card-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .schedule-table.responsive-card-table tr {
+      background: var(--surface-strong, #ffffff);
+      border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+      border-radius: 16px;
+      box-shadow: var(--shadow-soft, 0 10px 28px rgba(15, 23, 42, 0.08));
+      margin-bottom: 0.85rem;
+      padding: 0.85rem;
+    }
+
+    .schedule-table.responsive-card-table tr:hover {
+      background: var(--surface-strong, #ffffff);
+      transform: translateY(-2px);
+    }
+
+    .schedule-table.responsive-card-table td {
+      border: 0;
+      padding: 0.55rem 0;
+      white-space: normal;
+    }
+
+    .schedule-table.responsive-card-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: var(--text-muted, #64748b);
+      margin-bottom: 0.2rem;
+    }
+
+    .schedule-index {
+      text-align: left !important;
+    }
+
+    .schedule-date,
+    .schedule-time,
+    .schedule-location {
+      text-align: left !important;
+    }
+
+    .lesson-badge {
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4 fade-in">
+<div class="container py-4 fade-in schedule-page">
 
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h4 class="fw-bold text-primary mb-0">
-      <i class="bi bi-list-task"></i> Lịch học & Kiểm tra
+    <h4 class="fw-bold schedule-page-title mb-0">
+      <i class="bi bi-list-task text-primary"></i> Lịch học & Kiểm tra
     </h4>
-    <a href="/student/schedule/calendar" class="btn btn-outline-primary btn-sm">
+    <a href="/student/schedule/calendar" class="btn btn-outline-primary btn-sm rounded-pill px-3">
       <i class="bi bi-calendar3"></i> Xem dạng lịch
     </a>
   </div>
 
   {% if schedules and schedules|length > 0 %}
-  <div class="table-responsive shadow-sm rounded-3">
-    <table class="table table-bordered align-middle mb-0">
-      <thead class="table-primary text-center align-middle">
+  <div class="table-responsive schedule-table-wrap">
+    <table class="table align-middle schedule-table responsive-card-table">
+      <thead class="text-center align-middle">
         <tr>
           <th style="width: 5%">#</th>
           <th style="width: 30%">Môn học</th>
@@ -26,34 +192,34 @@
         </tr>
       </thead>
 
-      <tbody class="bg-light">
+      <tbody>
         {% for s in schedules %}
-        <tr class="hover-row">
+        <tr>
 
-          <td class="text-center fw-semibold text-secondary">{{ loop.index }}</td>
+          <td data-label="#" class="text-center fw-semibold schedule-index">{{ loop.index }}</td>
 
-          <td>
-            <div class="fw-semibold text-dark">{{ s.course_name }}</div>
+          <td data-label="Môn học">
+            <div class="fw-semibold schedule-course-name">{{ s.course_name }}</div>
 
             {% if s.module_name %}
             <small class="text-muted">{{ s.module_name }}</small><br>
             {% endif %}
 
             <span class="badge lesson-badge"
-                  data-color="{{ s.color | default('#007bff') }}">
+                  data-color="{{ s.color | default('#2563eb') }}">
               {{ s.lesson_title }}
             </span>
           </td>
 
-          <td class="text-center text-primary fw-semibold">
+          <td data-label="Ngày" class="text-center fw-semibold schedule-date">
             {{ s.date_display or '-' }}
           </td>
 
-          <td class="text-center text-dark">
+          <td data-label="Giờ" class="text-center schedule-time">
             {{ s.time_display or '-' }}
           </td>
 
-          <td class="text-center">
+          <td data-label="Địa điểm" class="text-center schedule-location">
             {{ s.location or 'Trực tuyến' }}
           </td>
 
@@ -63,64 +229,22 @@
     </table>
   </div>
 
-  <p class="text-muted mt-2 small">
+  <p class="schedule-note mt-3 small mb-0 p-2">
     <i class="bi bi-info-circle"></i>
     Dữ liệu được đồng bộ tự động từ thời khóa biểu mới nhất.
   </p>
 
   {% else %}
-  <div class="alert alert-info text-center py-3 shadow-sm rounded-3">
+  <div class="schedule-empty shadow-sm">
     <i class="bi bi-info-circle"></i>
     Không có lịch học hoặc kiểm tra sắp tới.
   </div>
   {% endif %}
 </div>
 
-<style>
-  table th {
-    white-space: nowrap;
-  }
-
-  .hover-row:hover {
-    background: #f1f7ff;
-    transition: background 0.2s ease;
-  }
-
-  .lesson-badge {
-    font-size: 0.8rem;
-    padding: 5px 9px;
-    border-radius: 0.6rem;
-    color: #fff;
-    display: inline-block;
-    margin-top: 3px;
-  }
-
-  .alert-info {
-    background: linear-gradient(90deg, #e8f1ff, #f4f9ff);
-    color: #0d6efd;
-    border: 1px solid #bcd0ff;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 5px;
-    }
-
-    .table th,
-    .table td {
-      font-size: 0.85rem;
-      white-space: nowrap;
-    }
-
-    .lesson-badge {
-      margin-top: 4px;
-    }
-  }
-</style>
-
 <script>
-  document.querySelectorAll('.lesson-badge[data-color]').forEach(el => {
-    el.style.backgroundColor = el.dataset.color;
+  document.querySelectorAll('.lesson-badge[data-color]').forEach(function (el) {
+    el.style.backgroundColor = el.dataset.color || '#2563eb';
   });
 </script>
 {% endblock %}

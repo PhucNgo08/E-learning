@@ -1,168 +1,362 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📊 Báo cáo thống kê hệ thống</title>
+{% extends "layout_admin.html" %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block title %}Báo cáo thống kê hệ thống{% endblock %}
 
-  <style>
-    body {
-      background: #f0f4ff;
-      min-height: 100vh;
-      font-family: "Inter", sans-serif;
-    }
+{% block extra_css %}
+<style>
+  .report-manage-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    color: #e5e7eb;
+  }
 
-    .page-title {
-      font-weight: 700;
-    }
+  .report-page-header {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.96), rgba(37, 99, 235, 0.9));
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
 
-    .stat-card {
-      border-radius: 15px;
-      transition: 0.2s ease;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
-      border: none;
-      height: 100%;
-    }
+  .report-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.84);
+  }
 
-    .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-    }
+  .stat-card {
+    height: 100%;
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 18px;
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+  }
 
-    .stat-label {
-      font-size: 15px;
-      color: #6c757d;
-      margin-bottom: 6px;
-    }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.34);
+  }
 
-    .stat-value {
-      font-size: 30px;
-      font-weight: 700;
-      margin-bottom: 0;
-    }
+  .stat-card .card-body {
+    padding: 22px;
+  }
 
+  .stat-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    margin-bottom: 14px;
+  }
+
+  .stat-label {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 0;
+    line-height: 1.1;
+  }
+
+  .stat-student .stat-icon {
+    background: rgba(37, 99, 235, 0.18);
+    color: #93c5fd;
+  }
+
+  .stat-teacher .stat-icon {
+    background: rgba(14, 165, 233, 0.18);
+    color: #7dd3fc;
+  }
+
+  .stat-course .stat-icon {
+    background: rgba(34, 197, 94, 0.18);
+    color: #86efac;
+  }
+
+  .stat-module .stat-icon {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fcd34d;
+  }
+
+  .stat-lesson .stat-icon {
+    background: rgba(148, 163, 184, 0.18);
+    color: #cbd5e1;
+  }
+
+  .stat-review .stat-icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+  }
+
+  .stat-quiz .stat-icon {
+    background: rgba(99, 102, 241, 0.18);
+    color: #c7d2fe;
+  }
+
+  .stat-completed .stat-icon {
+    background: rgba(20, 184, 166, 0.18);
+    color: #5eead4;
+  }
+
+  .stat-student .stat-value {
+    color: #93c5fd;
+  }
+
+  .stat-teacher .stat-value {
+    color: #7dd3fc;
+  }
+
+  .stat-course .stat-value {
+    color: #86efac;
+  }
+
+  .stat-module .stat-value {
+    color: #fcd34d;
+  }
+
+  .stat-lesson .stat-value {
+    color: #cbd5e1;
+  }
+
+  .stat-review .stat-value {
+    color: #fca5a5;
+  }
+
+  .stat-quiz .stat-value {
+    color: #c7d2fe;
+  }
+
+  .stat-completed .stat-value {
+    color: #5eead4;
+  }
+
+  .report-form-box {
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 18px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    padding: 26px;
+  }
+
+  .report-form-box .form-label {
+    color: #e5e7eb;
+    font-weight: 800;
+  }
+
+  .report-form-box .form-select {
+    min-height: 50px;
+    background: #111827;
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.35);
+    border-radius: 14px;
+  }
+
+  .report-form-box .form-select:focus {
+    background: #0f172a;
+    color: #fff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.18);
+  }
+
+  .report-form-box .form-select option {
+    background: #111827;
+    color: #f8fafc;
+  }
+
+  .report-note {
+    color: #cbd5e1;
+    font-size: 0.95rem;
+  }
+
+  .report-actions {
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    margin-top: 24px;
+    padding-top: 18px;
+  }
+
+  @media (max-width: 768px) {
+    .report-page-header,
     .report-form-box {
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      margin-top: 36px;
+      padding: 18px;
     }
-  </style>
-</head>
-<body>
-  <div class="container py-4">
 
-    <div class="text-center mb-4">
-      <h2 class="text-primary page-title">📊 Báo cáo tổng hợp hệ thống</h2>
-      <p class="text-muted mb-0">Theo dõi nhanh tình trạng học viên, khóa học, bài học và hoạt động học tập</p>
+    .report-page-header .btn,
+    .report-actions .btn,
+    .report-form-box .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-manage-page">
+
+  <div class="report-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-bar-chart-line-fill me-2"></i>Báo cáo tổng hợp hệ thống
+      </h3>
+      <p class="header-subtitle mb-0">
+        Theo dõi nhanh tình trạng học viên, giáo viên, khóa học, bài học và hoạt động học tập.
+      </p>
     </div>
 
-    <div class="row g-4 text-center">
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">👨‍🎓 Học viên</div>
-            <p class="stat-value text-primary">{{ summary.total_students or 0 }}</p>
-          </div>
-        </div>
-      </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/dashboard" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Dashboard
+      </a>
+    </div>
+  </div>
 
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">👨‍🏫 Giáo viên</div>
-            <p class="stat-value text-info">{{ summary.total_teachers or 0 }}</p>
-          </div>
-        </div>
-      </div>
+  <div class="row g-4">
 
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">📘 Khóa học</div>
-            <p class="stat-value text-success">{{ summary.total_courses or 0 }}</p>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-student">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-mortarboard-fill"></i>
           </div>
-        </div>
-      </div>
-
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">🧩 Module</div>
-            <p class="stat-value text-warning">{{ summary.total_modules or 0 }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">📚 Bài học</div>
-            <p class="stat-value text-secondary">{{ summary.total_lessons or 0 }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">⭐ Đánh giá</div>
-            <p class="stat-value text-danger">{{ summary.total_reviews or 0 }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">🧠 Quiz</div>
-            <p class="stat-value text-primary">{{ summary.total_quizzes or 0 }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-3 col-sm-6">
-        <div class="card stat-card">
-          <div class="card-body">
-            <div class="stat-label">📈 Bài học hoàn thành</div>
-            <p class="stat-value text-dark">{{ summary.completed_lessons or 0 }}</p>
-          </div>
+          <div class="stat-label">Học viên</div>
+          <p class="stat-value">{{ summary.total_students or 0 }}</p>
         </div>
       </div>
     </div>
 
-    <div class="report-form-box">
-      <h5 class="mb-3 text-primary">📄 Tạo báo cáo chi tiết</h5>
-
-      <form method="post" action="/admin/reports/generate">
-        <div class="row g-3 align-items-end">
-          <div class="col-md-8">
-            <label for="report_type" class="form-label fw-semibold">Chọn loại báo cáo</label>
-            <select class="form-select" name="report_type" id="report_type" required>
-              <option value="">-- Chọn loại báo cáo --</option>
-              <option value="overview">📊 Tổng quan</option>
-              <option value="class_enrollments">🏫 Ghi danh lớp</option>
-              <option value="course_enrollments">📘 Ghi danh khóa học</option>
-              <option value="recent_activity">⏱ Hoạt động gần đây</option>
-            </select>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-teacher">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-person-video3"></i>
           </div>
-
-          <div class="col-md-4">
-            <button type="submit" class="btn btn-primary w-100">
-              🚀 Tạo báo cáo
-            </button>
-          </div>
+          <div class="stat-label">Giáo viên</div>
+          <p class="stat-value">{{ summary.total_teachers or 0 }}</p>
         </div>
-      </form>
+      </div>
     </div>
 
-    <div class="mt-4">
-      <a href="/admin/dashboard" class="btn btn-secondary">← Quay lại Dashboard</a>
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-course">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-journal-bookmark-fill"></i>
+          </div>
+          <div class="stat-label">Khóa học</div>
+          <p class="stat-value">{{ summary.total_courses or 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-module">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-boxes"></i>
+          </div>
+          <div class="stat-label">Module</div>
+          <p class="stat-value">{{ summary.total_modules or 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-lesson">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-book-fill"></i>
+          </div>
+          <div class="stat-label">Bài học</div>
+          <p class="stat-value">{{ summary.total_lessons or 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-review">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-star-fill"></i>
+          </div>
+          <div class="stat-label">Đánh giá</div>
+          <p class="stat-value">{{ summary.total_reviews or 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-quiz">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-ui-checks-grid"></i>
+          </div>
+          <div class="stat-label">Quiz</div>
+          <p class="stat-value">{{ summary.total_quizzes or 0 }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+      <div class="card stat-card stat-completed">
+        <div class="card-body">
+          <div class="stat-icon">
+            <i class="bi bi-check2-circle"></i>
+          </div>
+          <div class="stat-label">Bài học hoàn thành</div>
+          <p class="stat-value">{{ summary.completed_lessons or 0 }}</p>
+        </div>
+      </div>
     </div>
 
   </div>
-</body>
-</html>
+
+  <div class="report-form-box mt-4">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+      <div>
+        <h4 class="fw-bold text-white mb-1">
+          <i class="bi bi-file-earmark-bar-graph-fill me-2 text-info"></i>Tạo báo cáo chi tiết
+        </h4>
+        <p class="report-note mb-0">
+          Chọn loại báo cáo cần xuất để xem dữ liệu tổng hợp chi tiết.
+        </p>
+      </div>
+    </div>
+
+    <form method="post" action="/admin/reports/generate">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-md-8">
+          <label for="report_type" class="form-label">Chọn loại báo cáo</label>
+          <select class="form-select" name="report_type" id="report_type" required>
+            <option value="">-- Chọn loại báo cáo --</option>
+            <option value="overview">Tổng quan</option>
+            <option value="class_enrollments">Ghi danh lớp</option>
+            <option value="course_enrollments">Ghi danh khóa học</option>
+            <option value="recent_activity">Hoạt động gần đây</option>
+          </select>
+        </div>
+
+        <div class="col-12 col-md-4">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-rocket-takeoff me-1"></i>Tạo báo cáo
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <div class="report-actions d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <a href="/admin/dashboard" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại Dashboard
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

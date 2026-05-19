@@ -76,9 +76,10 @@ def render_login_error(request: Request, message: str, status_code: int = 400):
 
 @login_router.get("/login", response_class=HTMLResponse)
 async def show_login(request: Request, error: str | None = None):
-    current_role = request.session.get("user_role") or request.session.get("role")
-    if current_role:
-        return RedirectResponse(build_dashboard_redirect(current_role), status_code=303)
+    # Nếu còn session cũ thì xóa để luôn hiện trang đăng nhập
+    # Tránh lỗi chạy lại chương trình rồi bấm đăng nhập bị nhảy vào trang cũ
+    if request.session.get("user_id") or request.session.get("role") or request.session.get("user_role"):
+        request.session.clear()
 
     return templates["auth"].TemplateResponse(
         "login.html",

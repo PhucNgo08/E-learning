@@ -37,6 +37,7 @@ class Lesson(Base):
 
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    deleted_at = Column(DateTime, nullable=True)
 
     # === Quan hệ ORM ===
     module = relationship("Module", back_populates="lessons")

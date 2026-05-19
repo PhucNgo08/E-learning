@@ -2,9 +2,145 @@
 {% block title %}🗑️ Xóa tài liệu{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="bg-white p-4 rounded shadow-sm mx-auto" style="max-width: 720px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<style>
+  :root {
+    --material-page-bg: #f5f8ff;
+    --material-card-bg: #ffffff;
+    --material-card-border: #e5e7eb;
+    --material-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --material-text-main: #1e293b;
+    --material-text-muted: #64748b;
+    --material-heading: #0d6efd;
+
+    --material-soft-bg: #f8fbff;
+    --material-soft-border: #e5e7eb;
+
+    --material-alert-warning-bg: rgba(255, 193, 7, 0.14);
+    --material-alert-warning-border: rgba(255, 193, 7, 0.35);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --material-page-bg: #071226;
+    --material-card-bg: #0f1b33;
+    --material-card-border: rgba(255, 255, 255, 0.1);
+    --material-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --material-text-main: #e5edf8;
+    --material-text-muted: #9caec8;
+    --material-heading: #8ea6ff;
+
+    --material-soft-bg: #101d36;
+    --material-soft-border: rgba(255, 255, 255, 0.12);
+
+    --material-alert-warning-bg: rgba(250, 204, 21, 0.16);
+    --material-alert-warning-border: rgba(250, 204, 21, 0.28);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .material-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--material-page-bg);
+    color: var(--material-text-main);
+  }
+
+  .material-card {
+    max-width: 720px;
+    margin: 0 auto;
+    background: var(--material-card-bg);
+    color: var(--material-text-main);
+    border: 1px solid var(--material-card-border);
+    border-radius: 18px;
+    box-shadow: var(--material-card-shadow);
+    padding: 28px;
+  }
+
+  .material-card .text-muted {
+    color: var(--material-text-muted) !important;
+  }
+
+  .material-info-box {
+    background: var(--material-soft-bg);
+    border: 1px solid var(--material-soft-border);
+    color: var(--material-text-main);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .material-card .alert-warning {
+    background: var(--material-alert-warning-bg);
+    border-color: var(--material-alert-warning-border);
+    color: var(--material-text-main);
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary,
+  body.theme-dark .material-card .btn-outline-secondary,
+  html[data-theme="dark"] .material-card .btn-outline-secondary,
+  body[data-theme="dark"] .material-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary:hover,
+  body.theme-dark .material-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding: 16px 8px 32px;
+    }
+
+    .material-card {
+      padding: 20px;
+    }
+
+    .material-card .d-flex.justify-content-end {
+      flex-direction: column;
+    }
+
+    .material-card .d-flex.justify-content-end .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="material-page">
+  <div class="material-card">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <h3 class="fw-bold text-danger mb-0">
         <i class="bi bi-trash"></i> Xác nhận xóa tài liệu
       </h3>
@@ -18,7 +154,7 @@
       Bạn sắp xóa một tài liệu. Thao tác này không thể hoàn tác.
     </div>
 
-    <div class="border rounded p-3 bg-light mb-4">
+    <div class="material-info-box mb-4">
       <div class="mb-2">
         <strong>📝 Tiêu đề:</strong> {{ material.title }}
       </div>

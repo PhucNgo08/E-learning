@@ -33,7 +33,7 @@ class CourseReview(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # === Quan hệ ORM ===
-    course = relationship("Course", back_populates="reviews")
+    course = relationship("Course", back_populates="reviews", foreign_keys=[course_id])
 
     # 🔹 Người viết đánh giá
     user = relationship(

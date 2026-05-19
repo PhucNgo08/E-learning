@@ -1,435 +1,650 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Thống kê người dùng</title>
+{% extends "layout_admin.html" %}
 
-  <!-- Bootstrap & Chart.js -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block title %}Thống kê người dùng{% endblock %}
 
-  <style>
-    :root {
-      --blue-1: #0d6efd;
-      --blue-2: #00b4d8;
-      --bg-page: #f4f6fb;
-      --card-radius: 16px;
-    }
+{% block extra_css %}
+<style>
+  .user-stats-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    color: #0f172a;
+  }
 
-    body {
-      background-color: var(--bg-page);
-      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
+  .stats-page-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
 
-    /* Phần đầu trang */
-    .stats-header {
-      background: linear-gradient(120deg, var(--blue-1), var(--blue-2));
-      border-radius: 18px;
-      padding: 18px 22px;
-      color: #fff;
-      box-shadow: 0 8px 24px rgba(13, 110, 253, 0.25);
-    }
+  .stats-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.88);
+  }
 
-    .stats-header-title {
-      font-size: 1.4rem;
-      font-weight: 700;
-    }
+  .summary-card,
+  .chart-card,
+  .stats-table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+  }
 
-    .stats-header-sub {
-      font-size: 0.9rem;
-      opacity: .93;
-    }
+  .summary-card {
+    height: 100%;
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
 
-    .stats-header-actions .btn {
-      border-radius: 999px;
-      font-weight: 500;
-      padding-inline: 16px;
-    }
+  .summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
+  }
 
-    .btn-export {
-      background: linear-gradient(90deg,#007bff,#00b4d8);
-      color:#fff;
-      border:none;
-    }
+  .summary-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex: 0 0 auto;
+  }
 
-    .btn-export:hover {
-      background: linear-gradient(90deg,#0056d2,#0096c7);
-      color:#fff;
-    }
+  .summary-icon.total {
+    background: #dbeafe;
+    color: #2563eb;
+  }
 
-    /* Thẻ tổng quan */
-    .summary-card {
-      border-radius: var(--card-radius);
-      border: none;
-      background: #fff;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: .25s ease;
-    }
+  .summary-icon.active {
+    background: #dcfce7;
+    color: #16a34a;
+  }
 
-    .summary-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-    }
+  .summary-icon.locked {
+    background: #fee2e2;
+    color: #dc2626;
+  }
 
-    .summary-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
+  .summary-icon.role {
+    background: #eef2ff;
+    color: #4f46e5;
+  }
 
-    .summary-icon.total    { background: rgba(13,110,253,.08);  color: #0d6efd; }
-    .summary-icon.active   { background: rgba(25,135,84,.08);   color: #198754; }
-    .summary-icon.locked   { background: rgba(220,53,69,.08);   color: #dc3545; }
+  .summary-value {
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: #0f172a;
+    line-height: 1.1;
+    margin-bottom: 4px;
+  }
 
-    .summary-value {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 2px;
-    }
+  .summary-label {
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 0;
+  }
 
-    .summary-label {
-      margin: 0;
-      font-size: 0.9rem;
-      color: #6c757d;
-    }
+  .chart-card {
+    height: 100%;
+    padding: 24px;
+  }
 
-    /* Khu vực biểu đồ */
-    .chart-container {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
+  .chart-title {
+    color: #0f172a;
+    font-weight: 900;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
+  .chart-title i {
+    color: #2563eb;
+  }
+
+  .chart-wrap {
+    position: relative;
+    min-height: 300px;
+  }
+
+  .stats-table-card {
+    overflow: hidden;
+  }
+
+  .stats-table-card .table {
+    --bs-table-bg: #ffffff;
+    --bs-table-color: #0f172a;
+    --bs-table-border-color: #e2e8f0;
+    --bs-table-hover-bg: #f1f5ff;
+    --bs-table-hover-color: #0f172a;
+    margin-bottom: 0;
+  }
+
+  .stats-table-card .table thead th {
+    background: #eaf1ff;
+    color: #1e293b;
+    border-bottom: 1px solid #dbe3ef;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 800;
+    padding: 16px 14px;
+  }
+
+  .stats-table-card .table tbody tr {
+    background: #ffffff;
+  }
+
+  .stats-table-card .table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .stats-table-card .table tbody tr:hover {
+    background: #eef6ff;
+  }
+
+  .stats-table-card .table tbody td {
+    color: #0f172a;
+    border-color: #e2e8f0;
+    vertical-align: middle;
+    padding: 15px 14px;
+  }
+
+  .user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: #e8f0ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    margin-right: 8px;
+  }
+
+  .role-badge,
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .role-admin {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .role-teacher {
+    background: #e0f2fe;
+    color: #0369a1;
+    border: 1px solid #bae6fd;
+  }
+
+  .role-student {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .status-active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .status-locked,
+  .status-inactive {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #64748b;
+    padding: 46px 20px;
+  }
+
+  .empty-state i {
+    display: block;
+    font-size: 2.4rem;
+    color: #2563eb;
+    margin-bottom: 10px;
+  }
+
+  body.dark-mode .user-stats-page,
+  html[data-bs-theme="dark"] .user-stats-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .summary-card,
+  body.dark-mode .chart-card,
+  body.dark-mode .stats-table-card,
+  html[data-bs-theme="dark"] .summary-card,
+  html[data-bs-theme="dark"] .chart-card,
+  html[data-bs-theme="dark"] .stats-table-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .summary-value,
+  body.dark-mode .chart-title,
+  html[data-bs-theme="dark"] .summary-value,
+  html[data-bs-theme="dark"] .chart-title {
+    color: #ffffff;
+  }
+
+  body.dark-mode .summary-label,
+  html[data-bs-theme="dark"] .summary-label {
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .stats-table-card .table,
+  html[data-bs-theme="dark"] .stats-table-card .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #e5e7eb;
+    --bs-table-border-color: rgba(148, 163, 184, 0.2);
+    --bs-table-hover-bg: rgba(56, 189, 248, 0.08);
+    --bs-table-hover-color: #ffffff;
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .stats-table-card .table thead th,
+  html[data-bs-theme="dark"] .stats-table-card .table thead th {
+    background: #172033;
+    color: #f8fafc;
+    border-bottom-color: rgba(148, 163, 184, 0.28);
+  }
+
+  body.dark-mode .stats-table-card .table tbody tr,
+  html[data-bs-theme="dark"] .stats-table-card .table tbody tr {
+    background: rgba(15, 23, 42, 0.88);
+  }
+
+  body.dark-mode .stats-table-card .table tbody tr:nth-child(even),
+  html[data-bs-theme="dark"] .stats-table-card .table tbody tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.78);
+  }
+
+  body.dark-mode .stats-table-card .table tbody tr:hover,
+  html[data-bs-theme="dark"] .stats-table-card .table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.1);
+  }
+
+  body.dark-mode .stats-table-card .table tbody td,
+  html[data-bs-theme="dark"] .stats-table-card .table tbody td {
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.16);
+  }
+
+  body.dark-mode .user-avatar,
+  html[data-bs-theme="dark"] .user-avatar {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  body.dark-mode .empty-state,
+  html[data-bs-theme="dark"] .empty-state {
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 768px) {
+    .stats-page-header,
+    .summary-card,
     .chart-card {
-      flex: 1 1 48%;
-      min-width: 260px;
-      border-radius: var(--card-radius);
-      border: none;
-      background: #fff;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.07);
-      padding: 16px 18px;
+      padding: 18px;
     }
 
-    .chart-title {
-      font-weight: 600;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: #1f2937;
+    .stats-page-header .btn {
+      width: 100%;
     }
+  }
+</style>
+{% endblock %}
 
-    .chart-title i {
-      color: var(--blue-1);
-    }
+{% block content %}
+<div class="user-stats-page">
 
-    .table th {
-      background-color: #e9effd;
-      border-top: none !important;
-    }
+  {% set st = stats if stats is defined and stats else {} %}
+  {% set by_role_data = by_role if by_role is defined else (st.by_role if st.by_role is defined else {}) %}
+  {% set by_status_data = by_status if by_status is defined else (st.by_status if st.by_status is defined else {}) %}
+  {% set total_count = total_users if total_users is defined else (st.total_users if st.total_users is defined else 0) %}
+  {% set active_count = by_status_data.get('active', 0) %}
+  {% set locked_count = (total_count or 0) - (active_count or 0) %}
+  {% set table_users = users if users is defined else (recent_users if recent_users is defined else []) %}
 
-    .avatar-circle {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: rgba(13, 110, 253, 0.08);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 8px;
-    }
-
-    .badge-role {
-      font-size: 0.8rem;
-      border-radius: 999px;
-      padding: 4px 10px;
-    }
-
-    @media (max-width: 768px) {
-      .stats-header {
-        border-radius: 14px;
-      }
-      .stats-header-actions {
-        margin-top: 10px;
-        width: 100%;
-        justify-content: flex-start !important;
-        gap: 8px;
-      }
-      .chart-card {
-        flex: 1 1 100%;
-      }
-    }
-  </style>
-</head>
-
-<body class="p-4">
-<div class="container">
-
-  {# Số tài khoản đã khóa = tổng - đang hoạt động #}
-  {% set active_count = stats.by_status.get('active', 0) %}
-  {% set locked_count = stats.total_users - active_count %}
-
-  <!-- Phần đầu trang -->
-  <div class="stats-header mb-4 d-flex flex-wrap justify-content-between align-items-center">
-    <div class="d-flex align-items-start gap-3">
-      <div class="avatar-circle bg-white bg-opacity-10"
-           style="width: 48px; height: 48px;">
-        <i class="bi bi-bar-chart-line-fill fs-4"></i>
-      </div>
-      <div>
-        <div class="stats-header-title">
-          Thống kê người dùng
-        </div>
-        <div class="stats-header-sub">
-          Xem nhanh số lượng tài khoản, vai trò và trạng thái hoạt động trong hệ thống.
-        </div>
-      </div>
+  <div class="stats-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-bar-chart-line-fill me-2"></i>Thống kê người dùng
+      </h3>
+      <p class="header-subtitle mb-0">
+        Xem nhanh số lượng tài khoản, vai trò và trạng thái hoạt động trong hệ thống.
+      </p>
     </div>
 
-    <div class="d-flex stats-header-actions align-items-center gap-2">
-      <a href="/admin/Account/manage-users" class="btn btn-outline-light border-0 bg-white bg-opacity-10">
-        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại danh sách
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Account/manage-users" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Quản lý tài khoản
       </a>
-      <a href="/admin/Account/export-users" class="btn btn-export">
-        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Xuất danh sách
+
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
       </a>
     </div>
   </div>
 
-  <!-- Thông tin tổng quan -->
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="summary-card">
         <div class="summary-icon total">
           <i class="bi bi-people-fill"></i>
         </div>
         <div>
-          <div class="summary-value">{{ stats.total_users }}</div>
-          <p class="summary-label">Tổng số người dùng</p>
+          <div class="summary-value">{{ total_count }}</div>
+          <p class="summary-label">Tổng tài khoản</p>
         </div>
       </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="summary-card">
         <div class="summary-icon active">
           <i class="bi bi-check-circle-fill"></i>
         </div>
         <div>
-          <div class="summary-value text-success">{{ active_count }}</div>
-          <p class="summary-label">Tài khoản đang hoạt động</p>
+          <div class="summary-value">{{ active_count }}</div>
+          <p class="summary-label">Đang hoạt động</p>
         </div>
       </div>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="summary-card">
         <div class="summary-icon locked">
-          <i class="bi bi-slash-circle-fill"></i>
+          <i class="bi bi-lock-fill"></i>
         </div>
         <div>
-          <div class="summary-value text-danger">{{ locked_count }}</div>
-          <p class="summary-label">Tài khoản đã khóa / không hoạt động</p>
+          <div class="summary-value">{{ locked_count if locked_count > 0 else 0 }}</div>
+          <p class="summary-label">Bị khóa / không hoạt động</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-md-6 col-xl-3">
+      <div class="summary-card">
+        <div class="summary-icon role">
+          <i class="bi bi-person-badge-fill"></i>
+        </div>
+        <div>
+          <div class="summary-value">{{ by_role_data|length }}</div>
+          <p class="summary-label">Nhóm vai trò</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Biểu đồ -->
-  <div class="chart-container mb-4">
-    <div class="chart-card">
-      <div class="chart-title">
-        <i class="bi bi-diagram-3"></i> Phân bố theo vai trò
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="chart-card">
+        <h5 class="chart-title">
+          <i class="bi bi-pie-chart-fill"></i>Phân bổ theo vai trò
+        </h5>
+        <div class="chart-wrap">
+          <canvas id="roleChart"></canvas>
+        </div>
       </div>
-      <canvas id="roleChart" height="140"></canvas>
     </div>
 
-    <div class="chart-card">
-      <div class="chart-title">
-        <i class="bi bi-activity"></i> Phân bố theo trạng thái tài khoản
+    <div class="col-12 col-lg-6">
+      <div class="chart-card">
+        <h5 class="chart-title">
+          <i class="bi bi-bar-chart-fill"></i>Phân bổ theo trạng thái
+        </h5>
+        <div class="chart-wrap">
+          <canvas id="statusChart"></canvas>
+        </div>
       </div>
-      <canvas id="statusChart" height="140"></canvas>
     </div>
   </div>
 
-  <!-- Bảng vai trò -->
-  <div class="card mb-4 p-3">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5 class="mb-0">
-        <i class="bi bi-list-ul me-1 text-primary"></i> Thống kê chi tiết theo vai trò
-      </h5>
-      <span class="text-muted small">Tổng: {{ stats.total_users }} tài khoản</span>
+  <div class="stats-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th style="width: 70px;">#</th>
+            <th>Người dùng</th>
+            <th>Email</th>
+            <th style="width: 150px;">Vai trò</th>
+            <th style="width: 160px;">Trạng thái</th>
+            <th style="width: 170px;">Ngày tạo</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for user in table_users %}
+          <tr>
+            <td class="text-center fw-semibold">{{ loop.index }}</td>
+
+            <td>
+              <span class="user-avatar">
+                {{ (user.full_name or user.username or 'U')[:1]|upper }}
+              </span>
+              <strong>{{ user.full_name or user.username or 'Không rõ' }}</strong>
+            </td>
+
+            <td>{{ user.email or '—' }}</td>
+
+            <td class="text-center">
+              {% set role_value = user.resolved_role if user.resolved_role is defined and user.resolved_role else (user.role if user.role is defined else 'student') %}
+
+              {% if role_value == 'admin' %}
+              <span class="role-badge role-admin">
+                <i class="bi bi-shield-lock-fill"></i>Admin
+              </span>
+              {% elif role_value == 'teacher' %}
+              <span class="role-badge role-teacher">
+                <i class="bi bi-person-video3"></i>Teacher
+              </span>
+              {% else %}
+              <span class="role-badge role-student">
+                <i class="bi bi-mortarboard-fill"></i>Student
+              </span>
+              {% endif %}
+            </td>
+
+            <td class="text-center">
+              {% set status_value = user.status if user.status is defined and user.status else 'active' %}
+
+              {% if status_value == 'active' %}
+              <span class="status-badge status-active">
+                <i class="bi bi-check-circle"></i>Active
+              </span>
+              {% else %}
+              <span class="status-badge status-locked">
+                <i class="bi bi-lock"></i>Locked
+              </span>
+              {% endif %}
+            </td>
+
+            <td class="text-center">
+              {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '—' }}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <strong>Chưa có danh sách người dùng để hiển thị.</strong>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
-    {% if stats.by_role %}
-    <table class="table table-sm align-middle mb-0">
-      <thead>
-        <tr>
-          <th>Vai trò</th>
-          <th class="text-end">Số lượng</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for role, count in stats.by_role.items() %}
-        <tr>
-          <td>
-            {% if role == 'admin' %}
-              <span class="badge-role bg-danger text-white">Quản trị viên</span>
-            {% elif role == 'teacher' %}
-              <span class="badge-role bg-primary text-white">Giảng viên</span>
-            {% elif role == 'student' %}
-              <span class="badge-role bg-success text-white">Sinh viên</span>
-            {% elif role == 'prospective_student' %}
-              <span class="badge-role bg-info text-dark">Học viên tiềm năng</span>
-            {% elif role == 'teaching_assistant' %}
-              <span class="badge-role bg-secondary text-white">Trợ giảng</span>
-            {% else %}
-              <span class="badge-role bg-secondary text-white">{{ role }}</span>
-            {% endif %}
-          </td>
-          <td class="text-end fw-semibold">{{ count }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="text-muted small">Chưa có dữ liệu về vai trò người dùng.</div>
-    {% endif %}
   </div>
 
-  <!-- Đăng nhập gần đây -->
-  <div class="card p-3 mb-4">
-    <h5 class="fw-semibold mb-3">
-      <i class="bi bi-clock-history me-1"></i> Năm người đăng nhập gần nhất
-    </h5>
-
-    {% if stats.recent_login %}
-    <table class="table table-striped align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th>Họ và tên</th>
-          <th>Thời điểm đăng nhập</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in stats.recent_login %}
-        <tr>
-          <td>
-            <span class="avatar-circle">
-              <i class="bi bi-person-fill text-primary"></i>
-            </span>
-            {{ r.name }}
-          </td>
-          <td><i class="bi bi-clock text-secondary me-1"></i>{{ r.time }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-      <div class="text-muted">Chưa có bản ghi đăng nhập gần đây.</div>
-    {% endif %}
-  </div>
+  <script type="application/json" id="roleStatsJson">{{ by_role_data|tojson }}</script>
+  <script type="application/json" id="statusStatsJson">{{ by_status_data|tojson }}</script>
 
 </div>
+{% endblock %}
 
-<!-- Script vẽ biểu đồ -->
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-  // Biểu đồ theo vai trò
-  let roleLabels = JSON.parse('{{ stats.by_role.keys() | list | tojson | safe }}');
-  let roleValues = JSON.parse('{{ stats.by_role.values() | list | tojson | safe }}');
+  function readJsonFromElement(id, fallbackValue) {
+    const el = document.getElementById(id);
 
-  // Ẩn trợ giảng nếu không muốn hiển thị trên biểu đồ
-  const removedIndexes = [];
-  roleLabels.forEach((r, i) => {
-    if (r === "teaching_assistant") removedIndexes.push(i);
-  });
-  removedIndexes.reverse().forEach(i => {
-    roleLabels.splice(i, 1);
-    roleValues.splice(i, 1);
-  });
+    if (!el) {
+      return fallbackValue;
+    }
 
-  new Chart(document.getElementById("roleChart"), {
-    type: "bar",
-    data: {
-      labels: roleLabels,
-      datasets: [{
-        label: "Số lượng người dùng",
-        data: roleValues,
-        backgroundColor: [
-          "rgba(0, 123, 255, 0.8)",
-          "rgba(40, 167, 69, 0.8)",
-          "rgba(255, 193, 7, 0.8)",
-          "rgba(0, 123, 255, 0.5)"
-        ],
-        borderRadius: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              return " " + ctx.parsed.y + " tài khoản";
-            }
-          }
-        }
+    try {
+      return JSON.parse(el.textContent || "{}");
+    } catch (error) {
+      console.warn("Không thể đọc dữ liệu biểu đồ:", id, error);
+      return fallbackValue;
+    }
+  }
+
+  const roleData = readJsonFromElement("roleStatsJson", {});
+  const statusData = readJsonFromElement("statusStatsJson", {});
+
+  function getThemeColors() {
+    const isDark =
+      document.body.classList.contains("dark-mode") ||
+      document.documentElement.getAttribute("data-bs-theme") === "dark";
+
+    return {
+      text: isDark ? "#e5e7eb" : "#0f172a",
+      grid: isDark ? "rgba(148, 163, 184, 0.18)" : "rgba(148, 163, 184, 0.28)"
+    };
+  }
+
+  function buildRoleChart() {
+    const canvas = document.getElementById("roleChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+      return;
+    }
+
+    const labels = Object.keys(roleData || {});
+    const values = Object.values(roleData || {});
+
+    new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: labels.length ? labels : ["Chưa có dữ liệu"],
+        datasets: [{
+          data: values.length ? values : [1],
+          backgroundColor: ["#2563eb", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"],
+          borderWidth: 0
+        }]
       },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { stepSize: 1 }
-        }
-      }
-    }
-  });
-
-  // Biểu đồ trạng thái tài khoản (đang hoạt động / đã khóa)
-  const totalUsers  = parseInt('{{ stats.total_users | int }}', 10);
-  const activeCount = parseInt('{{ active_count | int }}', 10);
-  const lockedCount = totalUsers - activeCount;
-
-  const statusLabels = ["Đang hoạt động", "Đã khóa / không hoạt động"];
-  const statusValues = [activeCount, lockedCount];
-
-  new Chart(document.getElementById("statusChart"), {
-    type: "doughnut",
-    data: {
-      labels: statusLabels,
-      datasets: [{
-        data: statusValues,
-        backgroundColor: ["#28a745", "#dc3545"],
-        hoverOffset: 10
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: "bottom" },
-        tooltip: {
-          callbacks: {
-            label: function(ctx) {
-              const total = statusValues.reduce((a,b) => a + b, 0);
-              const val = ctx.parsed;
-              const percent = total ? (val / total * 100).toFixed(1) : 0;
-              return " " + val + " tài khoản (" + percent + "%)";
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "62%",
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              color: getThemeColors().text,
+              font: {
+                weight: "700"
+              }
             }
           }
         }
       }
-    }
-  });
-</script>
+    });
+  }
 
-</body>
-</html>
+  function buildStatusChart() {
+    const canvas = document.getElementById("statusChart");
+
+    if (!canvas || typeof Chart === "undefined") {
+      return;
+    }
+
+    const labels = Object.keys(statusData || {});
+    const values = Object.values(statusData || {});
+    const theme = getThemeColors();
+
+    new Chart(canvas, {
+      type: "bar",
+      data: {
+        labels: labels.length ? labels : ["Chưa có dữ liệu"],
+        datasets: [{
+          label: "Số tài khoản",
+          data: values.length ? values : [0],
+          backgroundColor: ["#22c55e", "#ef4444", "#f59e0b", "#2563eb"],
+          borderRadius: 10
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            ticks: {
+              color: theme.text,
+              font: {
+                weight: "700"
+              }
+            },
+            grid: {
+              color: theme.grid
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              color: theme.text,
+              precision: 0
+            },
+            grid: {
+              color: theme.grid
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: theme.text,
+              font: {
+                weight: "700"
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  buildRoleChart();
+  buildStatusChart();
+</script>
+{% endblock %}

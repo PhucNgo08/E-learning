@@ -3,14 +3,260 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Đăng xuất thành công</title>
+  <title>Đăng xuất thành công | E-Learning Academy</title>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --primary: #2563eb;
+      --cyan: #0ea5e9;
+      --green: #22c55e;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --card-bg: rgba(255, 255, 255, 0.86);
+      --border: rgba(148, 163, 184, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.20), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.22), transparent 34%),
+        linear-gradient(135deg, #e0f2fe 0%, #eff6ff 45%, #f8fafc 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .logout-bg-shape {
+      position: fixed;
+      width: 420px;
+      height: 420px;
+      border-radius: 999px;
+      filter: blur(70px);
+      opacity: 0.45;
+      pointer-events: none;
+      animation: floatShape 8s ease-in-out infinite alternate;
+    }
+
+    .shape-1 {
+      background: #60a5fa;
+      top: -150px;
+      left: -120px;
+    }
+
+    .shape-2 {
+      background: #38bdf8;
+      right: -140px;
+      bottom: -150px;
+      animation-delay: -2s;
+    }
+
+    @keyframes floatShape {
+      from {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      to {
+        transform: translate3d(34px, -24px, 0) scale(1.08);
+      }
+    }
+
+    .logout-card {
+      position: relative;
+      z-index: 2;
+      width: min(520px, 100%);
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 30px;
+      box-shadow:
+        0 28px 70px rgba(15, 23, 42, 0.16),
+        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+      backdrop-filter: blur(18px);
+      padding: 42px 34px;
+      text-align: center;
+      animation: fadeUp 0.45s ease-out;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logout-icon {
+      width: 96px;
+      height: 96px;
+      border-radius: 28px;
+      margin: 0 auto 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #22c55e, #0ea5e9);
+      color: #ffffff;
+      font-size: 2.8rem;
+      box-shadow: 0 16px 34px rgba(14, 165, 233, 0.28);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logout-icon::after {
+      content: "";
+      position: absolute;
+      inset: -30%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+      transform: translateX(-120%) rotate(18deg);
+      animation: shine 2.8s ease-in-out infinite;
+    }
+
+    @keyframes shine {
+      0% {
+        transform: translateX(-130%) rotate(18deg);
+      }
+      55%, 100% {
+        transform: translateX(130%) rotate(18deg);
+      }
+    }
+
+    .logout-title {
+      font-size: clamp(1.8rem, 5vw, 2.4rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: #1e3a8a;
+      margin-bottom: 10px;
+    }
+
+    .logout-desc {
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 28px;
+    }
+
+    .logout-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0.62rem 0.9rem;
+      border-radius: 999px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #15803d;
+      border: 1px solid rgba(34, 197, 94, 0.20);
+      font-weight: 800;
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-main {
+      border: 0;
+      border-radius: 999px;
+      padding: 0.85rem 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--cyan));
+      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.24);
+      transition: 0.22s ease;
+    }
+
+    .btn-main:hover {
+      color: #fff;
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(14, 165, 233, 0.28);
+    }
+
+    .btn-soft {
+      border-radius: 999px;
+      padding: 0.85rem 1.25rem;
+      font-weight: 800;
+      color: #1d4ed8;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid #bfdbfe;
+      transition: 0.22s ease;
+    }
+
+    .btn-soft:hover {
+      color: #1e40af;
+      background: #eaf1ff;
+      transform: translateY(-2px);
+    }
+
+    .small-note {
+      margin-top: 22px;
+      color: #94a3b8;
+      font-size: 0.88rem;
+    }
+
+    @media (max-width: 520px) {
+      .logout-card {
+        padding: 34px 22px;
+        border-radius: 24px;
+      }
+
+      .action-buttons .btn {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
-<body class="bg-dark text-light d-flex flex-column justify-content-center align-items-center vh-100">
-  <div class="text-center">
-    <h1 class="mb-3 text-info">👋 Bạn đã đăng xuất!</h1>
-    <p class="mb-4">Cảm ơn bạn đã sử dụng hệ thống E-Learning.</p>
-    <a href="/auth/login" class="btn btn-primary">Đăng nhập lại</a>
-  </div>
+
+<body>
+  <div class="logout-bg-shape shape-1"></div>
+  <div class="logout-bg-shape shape-2"></div>
+
+  <main class="logout-card">
+    <div class="logout-icon">
+      <i class="bi bi-check2-circle"></i>
+    </div>
+
+    <div class="logout-status">
+      <i class="bi bi-shield-check"></i>
+      Phiên đăng nhập đã được kết thúc an toàn
+    </div>
+
+    <h1 class="logout-title">Bạn đã đăng xuất!</h1>
+
+    <p class="logout-desc">
+      Cảm ơn bạn đã sử dụng hệ thống E-Learning Academy.
+      Bạn có thể quay lại trang chủ hoặc đăng nhập lại để tiếp tục học tập.
+    </p>
+
+    <div class="action-buttons">
+      <a href="/" class="btn btn-soft">
+        <i class="bi bi-house-door me-1"></i>
+        Trang chủ
+      </a>
+
+      <a href="/auth/login" class="btn btn-main">
+        <i class="bi bi-box-arrow-in-right me-1"></i>
+        Đăng nhập lại
+      </a>
+    </div>
+
+    <div class="small-note">
+      © E-Learning Academy — Học tập mọi lúc, mọi nơi.
+    </div>
+  </main>
 </body>
 </html>

@@ -1,0 +1,217 @@
+{% extends "layout_teacher.html" %}
+
+{% block title %}Sửa câu hỏi{% endblock %}
+
+{% block content %}
+
+<style>
+  .quiz-page {
+    padding: 24px 12px 42px;
+  }
+  .quiz-card {
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+  }
+  .quiz-title {
+    font-weight: 800;
+    color: #2563eb;
+  }
+  .quiz-muted {
+    color: #64748b;
+  }
+  .quiz-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .quiz-actions .btn {
+    border-radius: 12px;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+  }
+  .info-item {
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+  .question-card {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .question-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 15px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .option-item.correct {
+    background: #ecfdf5;
+    border-color: #22c55e;
+  }
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    background: #fff;
+    color: #334155;
+    flex-shrink: 0;
+  }
+  .option-item.correct .option-letter {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .quiz-table {
+    min-width: 880px;
+  }
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 16px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .quiz-actions { width: 100%; }
+    .quiz-actions .btn { width: 100%; }
+    .question-card { padding: 14px; }
+  }
+</style>
+
+{% set opts = question.options|sort(attribute="option_order") %}
+{% set letters = ["a", "b", "c", "d"] %}
+{% set correct = namespace(value="a") %}
+
+{% for op in opts %}
+  {% if op.is_correct %}
+    {% if loop.index0 == 0 %}{% set correct.value = "a" %}
+    {% elif loop.index0 == 1 %}{% set correct.value = "b" %}
+    {% elif loop.index0 == 2 %}{% set correct.value = "c" %}
+    {% elif loop.index0 == 3 %}{% set correct.value = "d" %}
+    {% endif %}
+  {% endif %}
+{% endfor %}
+
+<div class="quiz-page">
+  <div class="container" style="max-width: 900px;">
+    <div class="quiz-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="quiz-title mb-1">
+            <i class="bi bi-pencil-square"></i> Sửa câu hỏi
+          </h3>
+          <p class="quiz-muted mb-0">Quiz: <strong>{{ quiz.title }}</strong></p>
+        </div>
+
+        <div class="quiz-actions">
+          <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-card p-4">
+      <form method="post" action="/teacher/quizzes/{{ quiz.id }}/question/edit/{{ question.id }}">
+        <div class="mb-3">
+          <label class="form-label fw-bold">Nội dung câu hỏi</label>
+          <textarea name="question_text" class="form-control" rows="4" required>{{ question.question_text }}</textarea>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Đáp án A</label>
+            <input type="text" name="option_a" class="form-control" value="{{ opts[0].option_text if opts|length > 0 else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Đáp án B</label>
+            <input type="text" name="option_b" class="form-control" value="{{ opts[1].option_text if opts|length > 1 else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Đáp án C</label>
+            <input type="text" name="option_c" class="form-control" value="{{ opts[2].option_text if opts|length > 2 else '' }}" required>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-bold">Đáp án D</label>
+            <input type="text" name="option_d" class="form-control" value="{{ opts[3].option_text if opts|length > 3 else '' }}" required>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Đáp án đúng</label>
+            <select name="correct" class="form-select" required>
+              <option value="a" {% if correct.value == "a" %}selected{% endif %}>A</option>
+              <option value="b" {% if correct.value == "b" %}selected{% endif %}>B</option>
+              <option value="c" {% if correct.value == "c" %}selected{% endif %}>C</option>
+              <option value="d" {% if correct.value == "d" %}selected{% endif %}>D</option>
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Điểm</label>
+            <input type="number" name="points" class="form-control" min="0.1" step="0.1" value="{{ question.points or 1 }}" required>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-bold">Độ khó</label>
+            <select name="difficulty_level" class="form-select">
+              <option value="easy" {% if question.difficulty_level == "easy" %}selected{% endif %}>Dễ</option>
+              <option value="medium" {% if question.difficulty_level == "medium" %}selected{% endif %}>Trung bình</option>
+              <option value="hard" {% if question.difficulty_level == "hard" %}selected{% endif %}>Khó</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <label class="form-label fw-bold">Giải thích đáp án</label>
+          <textarea name="explanation" class="form-control" rows="3">{{ question.explanation or "" }}</textarea>
+        </div>
+
+        <div class="text-end mt-4">
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-save"></i> Lưu thay đổi
+          </button>
+          <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">
+            Hủy
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

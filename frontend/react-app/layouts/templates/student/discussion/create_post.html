@@ -2,38 +2,7 @@
 {% block title %}✏️ Tạo bài thảo luận{% endblock %}
 
 {% block content %}
-<style>
-  .discussion-create {
-    background: var(--card-bg, #ffffff);
-    border-radius: 18px;
-    padding: 2rem;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.06);
-    animation: fadeUp 0.4s ease;
-    max-width: 900px;
-    margin: 0 auto;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .text-gradient {
-    background: linear-gradient(90deg, #2563eb, #0ea5e9);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-  }
-
-  textarea:focus, select:focus, input:focus {
-    border-color: #3b82f6 !important;
-    box-shadow: 0 0 0 0.15rem rgba(59,130,246,0.25) !important;
-  }
-</style>
-
-<div class="discussion-create fade-in">
+<div class="discussion-create discussion-panel fade-in">
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4 class="fw-bold mb-0 text-gradient">
       <i class="bi bi-pencil-square me-2"></i>
@@ -80,20 +49,21 @@
       <textarea
         name="content"
         rows="6"
-        class="form-control rounded-3"
+        class="form-control rounded-3 discussion-textarea"
         placeholder="Viết nội dung bạn muốn trao đổi..."
-        style="resize: vertical;"
         required>{{ old_content or '' }}</textarea>
     </div>
 
-    <button type="submit" class="btn btn-primary px-4 rounded-pill">
-      <i class="bi bi-send"></i> Gửi thảo luận
-    </button>
+    <div class="discussion-actions d-flex flex-wrap gap-2">
+      <button type="submit" class="btn btn-primary px-4 rounded-pill">
+        <i class="bi bi-send"></i> Gửi thảo luận
+      </button>
 
-    <a href="{% if course %}/student/discussion/{{ course.id }}{% else %}/student/discussion/{% endif %}"
-       class="btn btn-outline-secondary rounded-pill ms-2">
-      Hủy
-    </a>
+      <a href="{% if course %}/student/discussion/{{ course.id }}{% else %}/student/discussion/{% endif %}"
+         class="btn btn-outline-secondary rounded-pill">
+        Hủy
+      </a>
+    </div>
   </form>
 </div>
 {% endblock %}

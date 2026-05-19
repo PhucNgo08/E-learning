@@ -1,13 +1,4 @@
-"""
-=============================================================
-🎓 ROUTER: Teacher – Quiz Management (v17 FIXED)
-Hoàn chỉnh:
-- CRUD Practice + Graded Quiz
-- Import TXT / CSV / XLSX using SERVER-SIDE CACHE
-- Auto-mapping headers + validate dữ liệu trước khi lưu
-- Statistics + Score Chart API
-=============================================================
-"""
+
 
 from app.models.quiz_template import QuizTemplate
 
@@ -15,15 +6,19 @@ from fastapi import (
     APIRouter, Request, Depends, Form,
     UploadFile, File, HTTPException
 )
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, StreamingResponse
+ 
+from sqlalchemy import case
 from sqlalchemy.orm import Session, joinedload
 from datetime import datetime
 import pandas as pd
+import csv
 import uuid
 import io
 import json
-
+import csv
+import re
+import traceback
 # ======================================================
 # Dependencies
 # ======================================================
@@ -39,6 +34,8 @@ from app.models.quiz import Quiz
 from app.models.question import Question
 from app.models.question_option import QuestionOption
 from app.models.quiz_attempt import QuizAttempt
+from app.models.attempt_answer import AttemptAnswer
+from app.models.user import User
 
 # ======================================================
 # Quiz Services
@@ -359,6 +356,32 @@ def detail_page(
 
 
 # ======================================================
+# 8.1) PREVIEW QUIZ — XEM THỬ NHƯ HỌC VIÊN
+# ======================================================
+@router.get("/preview/{quiz_id}", response_class=HTMLResponse)
+def preview_page(
+    quiz_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/preview.html",
+        {
+            "request": request,
+            "quiz": quiz,
+            "questions": quiz.questions,
+            "teacher": teacher,
+        },
+    )
+
+
+# ======================================================
 # 9) STATISTICS PAGE
 # ======================================================
 @router.get("/statistics/{quiz_id}", response_class=HTMLResponse)
@@ -376,6 +399,77 @@ def statistics_page(quiz_id: str, request: Request,
         "stats": data["stats"],
         "top_students": data["top_students"]
     })
+
+
+
+
+# ======================================================
+# 9.1) ATTEMPTS PAGE – GIÁO VIÊN XEM BÀI LÀM
+# ======================================================
+@router.get("/attempts/{quiz_id}", response_class=HTMLResponse)
+def attempts_page(
+    quiz_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    attempts = (
+        db.query(QuizAttempt)
+        .options(joinedload(QuizAttempt.user).joinedload(User.profile))
+        .filter(QuizAttempt.quiz_id == quiz_id)
+        .order_by(
+            case(
+                (QuizAttempt.submitted_at.is_(None), 1),
+                else_=0
+            ),
+            QuizAttempt.submitted_at.desc(),
+            QuizAttempt.started_at.desc()
+        )
+        .all()
+    )
+
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/attempts.html",
+        {"request": request, "quiz": quiz, "attempts": attempts},
+    )
+
+
+# ======================================================
+# 9.2) ATTEMPT DETAIL – GIÁO VIÊN XEM ĐÚNG/SAI TỪNG CÂU
+# ======================================================
+@router.get("/attempt/{attempt_id}", response_class=HTMLResponse)
+def attempt_detail_page(
+    attempt_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    attempt = (
+        db.query(QuizAttempt)
+        .options(
+            joinedload(QuizAttempt.quiz).joinedload(Quiz.course),
+            joinedload(QuizAttempt.user).joinedload(User.profile),
+            joinedload(QuizAttempt.answers)
+            .joinedload(AttemptAnswer.question)
+            .joinedload(Question.options),
+        )
+        .filter(QuizAttempt.id == attempt_id)
+        .first()
+    )
+
+    if not attempt or not attempt.quiz or not attempt.quiz.course or attempt.quiz.course.teacher_id != teacher.id:
+        raise HTTPException(404, "Không tìm thấy bài làm hoặc bạn không có quyền xem.")
+
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/attempt_detail.html",
+        {"request": request, "attempt": attempt},
+    )
 
 
 # ======================================================
@@ -418,6 +512,15 @@ def score_distribution_api(
 
 # ======================================================
 # 11) IMPORT — HELPERS
+# Hỗ trợ cả dạng ngang:
+#   Câu hỏi|A|B|C|D|B
+# và dạng dọc:
+#   Câu hỏi
+#   A. ...
+#   B. ...
+#   C. ...
+#   D. ...
+#   Đáp án đúng: B
 # ======================================================
 REQUIRED_COLS = ["question_text", "option_a", "option_b", "option_c", "option_d", "correct"]
 
@@ -428,53 +531,82 @@ HEADER_ALIASES = {
     "q": "question_text",
     "noi_dung": "question_text",
     "nội_dung": "question_text",
-    "câu_hỏi": "question_text",
     "cau_hoi": "question_text",
+    "câu_hỏi": "question_text",
 
-    "a": "option_a", "pa": "option_a", "option1": "option_a",
-    "b": "option_b", "pb": "option_b", "option2": "option_b",
-    "c": "option_c", "pc": "option_c", "option3": "option_c",
-    "d": "option_d", "pd": "option_d", "option4": "option_d",
+    "a": "option_a",
+    "pa": "option_a",
+    "option_a": "option_a",
+    "option1": "option_a",
+    "answer_a": "option_a",
+
+    "b": "option_b",
+    "pb": "option_b",
+    "option_b": "option_b",
+    "option2": "option_b",
+    "answer_b": "option_b",
+
+    "c": "option_c",
+    "pc": "option_c",
+    "option_c": "option_c",
+    "option3": "option_c",
+    "answer_c": "option_c",
+
+    "d": "option_d",
+    "pd": "option_d",
+    "option_d": "option_d",
+    "option4": "option_d",
+    "answer_d": "option_d",
 
     "correct": "correct",
     "answer": "correct",
     "correct_answer": "correct",
     "dap_an": "correct",
     "đáp_án": "correct",
+    "dap_an_dung": "correct",
+    "đáp_án_đúng": "correct",
 }
 
 
 def detect_delimiter(text: str):
     if "|" in text:
         return "|"
-    if ";" in text:
-        return ";"
     if "\t" in text:
         return "\t"
+    if ";" in text:
+        return ";"
     return ","
+
+
+def normalize_header(value):
+    return (
+        str(value or "")
+        .lower()
+        .strip()
+        .replace("\ufeff", "")
+        .replace(" ", "_")
+        .replace("-", "_")
+    )
 
 
 def auto_map_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     raw_cols = list(df.columns)
 
+    # File không có header: pandas sẽ đặt tên cột bằng số.
     if all(str(c).isdigit() for c in raw_cols):
-        while len(raw_cols) < 6:
+        while len(df.columns) < 6:
             df[len(df.columns)] = ""
-            raw_cols = list(df.columns)
         df = df.iloc[:, :6]
         df.columns = REQUIRED_COLS
         return df
 
-    normalized = [
-        str(c).lower().strip().replace(" ", "_").replace("-", "_")
-        for c in raw_cols
-    ]
+    normalized = [normalize_header(c) for c in raw_cols]
     mapped = [HEADER_ALIASES.get(c) for c in normalized]
 
+    # Không nhận ra header thì coi 6 cột đầu là dữ liệu.
     if all(m is None for m in mapped):
-        while len(raw_cols) < 6:
+        while len(df.columns) < 6:
             df[len(df.columns)] = ""
-            raw_cols = list(df.columns)
         df = df.iloc[:, :6]
         df.columns = REQUIRED_COLS
         return df
@@ -495,10 +627,251 @@ def auto_map_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 def normalize_import_value(v):
     if v is None:
         return ""
-    if isinstance(v, float) and pd.isna(v):
-        return ""
-    return str(v).strip()
+    try:
+        if isinstance(v, float) and pd.isna(v):
+            return ""
+    except Exception:
+        pass
+    return str(v).replace("\ufeff", "").strip()
 
+
+def normalize_correct_answer(value):
+    value = normalize_import_value(value).lower()
+
+    mapping = {
+        "a": "a", "1": "a", "option_a": "a", "đáp án a": "a", "dap an a": "a",
+        "b": "b", "2": "b", "option_b": "b", "đáp án b": "b", "dap an b": "b",
+        "c": "c", "3": "c", "option_c": "c", "đáp án c": "c", "dap an c": "c",
+        "d": "d", "4": "d", "option_d": "d", "đáp án d": "d", "dap an d": "d",
+    }
+
+    return mapping.get(value, value)
+
+
+def make_import_row(question_text, option_a, option_b, option_c, option_d, correct, row_number=None):
+    question_text = normalize_import_value(question_text)
+    option_a = normalize_import_value(option_a)
+    option_b = normalize_import_value(option_b)
+    option_c = normalize_import_value(option_c)
+    option_d = normalize_import_value(option_d)
+    correct_raw = normalize_import_value(correct)
+    correct_norm = normalize_correct_answer(correct_raw)
+
+    options_by_key = {
+        "a": option_a,
+        "b": option_b,
+        "c": option_c,
+        "d": option_d,
+    }
+
+    errors = []
+    if not question_text:
+        errors.append("Thiếu câu hỏi")
+    if not option_a:
+        errors.append("Thiếu đáp án A")
+    if not option_b:
+        errors.append("Thiếu đáp án B")
+    if not option_c:
+        errors.append("Thiếu đáp án C")
+    if not option_d:
+        errors.append("Thiếu đáp án D")
+
+    valid_correct_values = {"a", "b", "c", "d"}
+    valid_correct_values.update(v.lower() for v in options_by_key.values() if v)
+
+    if correct_norm not in valid_correct_values:
+        errors.append("Đáp án đúng không hợp lệ")
+
+    if correct_norm not in {"a", "b", "c", "d"}:
+        for key, val in options_by_key.items():
+            if val and correct_norm == val.lower():
+                correct_norm = key
+                break
+
+    return {
+        "row_number": row_number,
+        "question_text": question_text,
+        "option_a": option_a,
+        "option_b": option_b,
+        "option_c": option_c,
+        "option_d": option_d,
+        "correct": correct_norm,
+        "correct_raw": correct_raw,
+        "is_valid": len(errors) == 0,
+        "error": "; ".join(errors) if errors else "Hợp lệ",
+    }
+
+
+def parse_option_line(line: str):
+    line = normalize_import_value(line)
+    match = re.match(r"^([A-Da-d])[\.\)\:\-]\s*(.+)$", line)
+    if not match:
+        return None
+    return match.group(1).lower(), normalize_import_value(match.group(2))
+
+
+def parse_correct_line(line: str):
+    line = normalize_import_value(line)
+    match = re.search(
+        r"(đáp\s*án\s*(đúng)?|dap\s*an\s*(dung)?|correct\s*answer|answer)\s*[:：\-]?\s*([A-Da-d1-4])",
+        line,
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+    return normalize_correct_answer(match.group(4))
+
+
+def parse_horizontal_line(line: str, row_number=None):
+    line = normalize_import_value(line)
+    if not line:
+        return None
+
+    delimiter = detect_delimiter(line)
+    # Không cố đọc dòng dạng dọc.
+    if delimiter == "," and line.count(",") < 5:
+        return None
+    if delimiter != "," and delimiter not in line:
+        return None
+
+    try:
+        reader = csv.reader(io.StringIO(line), delimiter=delimiter)
+        cols = next(reader)
+    except Exception:
+        return None
+
+    cols = [normalize_import_value(c) for c in cols]
+    if len(cols) < 6:
+        return None
+
+    first = " ".join(cols[:2]).lower()
+    if "question" in first or "câu hỏi" in first or "cau hoi" in first:
+        return None
+
+    return make_import_row(cols[0], cols[1], cols[2], cols[3], cols[4], cols[5], row_number)
+
+
+def parse_vertical_blocks(lines):
+    rows = []
+
+    current_question = None
+    current_options = {}
+    current_correct = None
+    current_row_number = None
+
+    def flush_current():
+        nonlocal current_question, current_options, current_correct, current_row_number
+
+        if current_question or current_options or current_correct:
+            rows.append(
+                make_import_row(
+                    current_question or "",
+                    current_options.get("a", ""),
+                    current_options.get("b", ""),
+                    current_options.get("c", ""),
+                    current_options.get("d", ""),
+                    current_correct or "",
+                    current_row_number,
+                )
+            )
+
+        current_question = None
+        current_options = {}
+        current_correct = None
+        current_row_number = None
+
+    for row_number, raw_line in lines:
+        line = normalize_import_value(raw_line)
+        if not line:
+            continue
+
+        option_data = parse_option_line(line)
+        if option_data:
+            key, value = option_data
+            current_options[key] = value
+            continue
+
+        correct_data = parse_correct_line(line)
+        if correct_data:
+            current_correct = correct_data
+            flush_current()
+            continue
+
+        # Gặp câu mới khi câu cũ đã có dữ liệu thì đóng câu cũ.
+        if current_question and current_options:
+            flush_current()
+
+        current_question = line
+        current_row_number = row_number
+
+    flush_current()
+    return rows
+
+
+def parse_text_import(text: str):
+    text = text.replace("\ufeff", "")
+    lines = [(idx, line) for idx, line in enumerate(text.splitlines(), start=1) if normalize_import_value(line)]
+
+    horizontal_rows = []
+    vertical_source = []
+
+    for row_number, line in lines:
+        row = parse_horizontal_line(line, row_number)
+        if row:
+            horizontal_rows.append(row)
+        else:
+            vertical_source.append((row_number, line))
+
+    vertical_rows = parse_vertical_blocks(vertical_source)
+
+    rows = []
+    rows.extend(horizontal_rows)
+    rows.extend(vertical_rows)
+
+    return rows
+
+
+def rows_from_dataframe(df: pd.DataFrame):
+    df = auto_map_dataframe(df)
+    rows = []
+    for idx, item in enumerate(df.fillna("").to_dict(orient="records"), start=1):
+        rows.append(
+            make_import_row(
+                item.get("question_text", ""),
+                item.get("option_a", ""),
+                item.get("option_b", ""),
+                item.get("option_c", ""),
+                item.get("option_d", ""),
+                item.get("correct", ""),
+                idx,
+            )
+        )
+    return rows
+
+
+def parse_import_file(content: bytes, filename: str):
+    name = (filename or "").lower()
+
+    if name.endswith(".xlsx"):
+        df = pd.read_excel(io.BytesIO(content))
+        return rows_from_dataframe(df)
+
+    if name.endswith(".csv"):
+        text = content.decode("utf-8-sig", errors="ignore")
+        # Ưu tiên parser text vì đọc được cả không header.
+        rows = parse_text_import(text)
+        if rows:
+            return rows
+
+        delimiter = detect_delimiter(text[:500])
+        df = pd.read_csv(io.BytesIO(content), encoding="utf-8-sig", sep=delimiter, on_bad_lines="skip", engine="python")
+        return rows_from_dataframe(df)
+
+    if name.endswith(".txt") or name.endswith(".md"):
+        text = content.decode("utf-8-sig", errors="ignore")
+        return parse_text_import(text)
+
+    raise HTTPException(400, "Định dạng file không hỗ trợ. Hãy dùng .txt, .md, .csv hoặc .xlsx.")
 
 # ======================================================
 # 12) IMPORT — UPLOAD PAGE
@@ -535,38 +908,16 @@ async def import_preview(
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
 
-    cache = ensure_import_cache(request)
-
     content = await file.read()
-    name = file.filename.lower()
+    rows = parse_import_file(content, file.filename or "")
 
-    try:
-        if name.endswith(".xlsx"):
-            df = pd.read_excel(io.BytesIO(content))
-        elif name.endswith(".csv"):
-            sample = content.decode("utf-8", errors="ignore")[:200]
-            delimiter = detect_delimiter(sample)
-            df = pd.read_csv(
-                io.BytesIO(content),
-                encoding="utf-8",
-                sep=delimiter,
-                on_bad_lines="skip",
-                engine="python"
-            )
-        elif name.endswith(".txt"):
-            lines = content.decode("utf-8", errors="ignore").splitlines()
-            df = pd.DataFrame([row.split("|") for row in lines], columns=REQUIRED_COLS[:6])
-        else:
-            raise HTTPException(400, "Định dạng file không hỗ trợ.")
-    except Exception as e:
-        raise HTTPException(400, f"Lỗi đọc file: {e}")
+    valid_rows = [r for r in rows if r.get("is_valid")]
+    invalid_rows = [r for r in rows if not r.get("is_valid")]
 
-    df = auto_map_dataframe(df)
-    questions = df.fillna("").to_dict(orient="records")
-
-    uid = request.session.get("user_id")
+    cache = ensure_import_cache(request)
+    uid = request.session.get("user_id") or teacher.id
     key = f"import_quiz_{quiz_id}_{uid}"
-    cache[key] = questions
+    cache[key] = rows
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
@@ -575,7 +926,13 @@ async def import_preview(
             "request": request,
             "quiz": quiz,
             "quiz_id": quiz_id,
-            "questions": questions
+            "questions": rows,
+            "valid_rows": valid_rows,
+            "invalid_rows": invalid_rows,
+            "valid_count": len(valid_rows),
+            "invalid_count": len(invalid_rows),
+            "total_rows": len(rows),
+            "filename": file.filename,
         }
     )
 
@@ -583,7 +940,7 @@ async def import_preview(
 # ======================================================
 # 14) IMPORT — CONFIRM SAVE
 # ======================================================
-@router.post("/{quiz_id}/import/confirm")
+@router.post("/{quiz_id}/import/confirm", response_class=HTMLResponse)
 def import_confirm(
     quiz_id: str,
     request: Request,
@@ -595,56 +952,41 @@ def import_confirm(
         raise HTTPException(404, "Quiz không tồn tại.")
 
     cache = ensure_import_cache(request)
-
-    uid = request.session.get("user_id")
+    uid = request.session.get("user_id") or teacher.id
     key = f"import_quiz_{quiz_id}_{uid}"
     questions = cache.get(key)
 
     if not questions:
         raise HTTPException(
             400,
-            "Không có dữ liệu để import. Vui lòng làm lại bước Upload."
+            "Không có dữ liệu để import. Vui lòng quay lại bước chọn file."
         )
 
-    invalid_rows = []
-    for idx, q in enumerate(questions, start=1):
-        q_text = normalize_import_value(q.get("question_text"))
-        a = normalize_import_value(q.get("option_a"))
-        b = normalize_import_value(q.get("option_b"))
-        c = normalize_import_value(q.get("option_c"))
-        d = normalize_import_value(q.get("option_d"))
-        correct = normalize_import_value(q.get("correct")).lower()
+    valid_questions = [q for q in questions if q.get("is_valid")]
+    invalid_questions = [q for q in questions if not q.get("is_valid")]
 
-        if not q_text or not a or not b or not c or not d or not correct:
-            invalid_rows.append(idx)
-            continue
+    if not valid_questions:
+        raise HTTPException(400, "Không có câu hỏi hợp lệ để import.")
 
-        valid_correct = {
-            "a", "b", "c", "d",
-            "option_a", "option_b", "option_c", "option_d",
-            a.lower(), b.lower(), c.lower(), d.lower()
-        }
-        if correct not in valid_correct:
-            invalid_rows.append(idx)
+    added_count = 0
+    existed_count = db.query(Question).filter(Question.quiz_id == quiz_id).count()
 
-    if invalid_rows:
-        raise HTTPException(
-            400,
-            f"Dữ liệu import còn lỗi ở các dòng: {', '.join(map(str, invalid_rows[:20]))}"
-        )
-
-    for q in questions:
+    for idx, q in enumerate(valid_questions, start=1):
         text = normalize_import_value(q.get("question_text"))
         a = normalize_import_value(q.get("option_a"))
         b = normalize_import_value(q.get("option_b"))
         c = normalize_import_value(q.get("option_c"))
         d = normalize_import_value(q.get("option_d"))
-        correct_raw = normalize_import_value(q.get("correct")).lower()
+        correct = normalize_correct_answer(q.get("correct"))
 
         new_q = Question(
             id=str(uuid.uuid4()),
             quiz_id=quiz_id,
-            question_text=text
+            question_type="multiple_choice",
+            question_text=text,
+            points=1,
+            difficulty_level="medium",
+            question_order=existed_count + idx,
         )
         db.add(new_q)
         db.flush()
@@ -656,25 +998,33 @@ def import_confirm(
             "d": d,
         }
 
-        for key_opt, val in options.items():
+        for order, (key_opt, val) in enumerate(options.items(), start=1):
             db.add(QuestionOption(
                 id=str(uuid.uuid4()),
                 question_id=new_q.id,
                 option_text=val,
-                is_correct=(
-                    correct_raw == key_opt or
-                    correct_raw == f"option_{key_opt}" or
-                    correct_raw == val.lower()
-                )
+                is_correct=1 if correct == key_opt else 0,
+                option_order=order,
             ))
+
+        added_count += 1
 
     db.flush()
     refresh_total_questions(db, quiz)
     db.commit()
-
     cache.pop(key, None)
 
-    return RedirectResponse(f"/teacher/quizzes/detail/{quiz_id}", 303)
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/import_confirm.html",
+        {
+            "request": request,
+            "quiz": quiz,
+            "added_count": added_count,
+            "skipped_count": len(invalid_questions),
+            "total_rows": len(questions),
+        }
+    )
 
 
 # ======================================================
@@ -717,15 +1067,25 @@ def create_question_post(
     option_c: str = Form(...),
     option_d: str = Form(...),
     correct: str = Form(...),
+    points: float = Form(1),
+    explanation: str = Form(""),
+    difficulty_level: str = Form("medium"),
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
         raise HTTPException(404, "Quiz không tồn tại.")
 
+    existed_count = db.query(Question).filter(Question.quiz_id == quiz_id).count()
+
     new_q = Question(
         id=str(uuid.uuid4()),
         quiz_id=quiz_id,
-        question_text=question_text.strip()
+        question_type="multiple_choice",
+        question_text=question_text.strip(),
+        explanation=explanation.strip() if explanation else None,
+        points=points or 1,
+        difficulty_level=difficulty_level if difficulty_level in ["easy", "medium", "hard"] else "medium",
+        question_order=existed_count + 1,
     )
     db.add(new_q)
     db.flush()
@@ -737,14 +1097,17 @@ def create_question_post(
         "d": option_d,
     }
 
-    for key, text in options.items():
+    correct = normalize_correct_answer(correct)
+
+    for order, (key, text) in enumerate(options.items(), start=1):
         text = text.strip()
         if text:
             db.add(QuestionOption(
                 id=str(uuid.uuid4()),
                 question_id=new_q.id,
                 option_text=text,
-                is_correct=(correct == key)
+                is_correct=1 if correct == key else 0,
+                option_order=order,
             ))
 
     db.flush()
@@ -756,8 +1119,259 @@ def create_question_post(
     )
 
 
+
 # ======================================================
-# 17) TEMPLATE LIST
+# 17) EDIT QUESTION – PAGE
+# ======================================================
+@router.get("/{quiz_id}/question/edit/{question_id}", response_class=HTMLResponse)
+def edit_question_page(
+    quiz_id: str,
+    question_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    question = (
+        db.query(Question)
+        .options(joinedload(Question.options))
+        .filter(Question.id == question_id, Question.quiz_id == quiz_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(404, "Không tìm thấy câu hỏi.")
+
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/question_edit.html",
+        {
+            "request": request,
+            "quiz": quiz,
+            "question": question,
+        },
+    )
+
+
+# ======================================================
+# 18) EDIT QUESTION – POST
+# ======================================================
+@router.post("/{quiz_id}/question/edit/{question_id}")
+def edit_question_post(
+    quiz_id: str,
+    question_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+
+    question_text: str = Form(...),
+    option_a: str = Form(...),
+    option_b: str = Form(...),
+    option_c: str = Form(...),
+    option_d: str = Form(...),
+    correct: str = Form(...),
+    points: float = Form(1),
+    explanation: str = Form(""),
+    difficulty_level: str = Form("medium"),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    question = (
+        db.query(Question)
+        .options(joinedload(Question.options))
+        .filter(Question.id == question_id, Question.quiz_id == quiz_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(404, "Không tìm thấy câu hỏi.")
+
+    question.question_text = question_text.strip()
+    question.explanation = explanation.strip() if explanation else None
+    question.points = points or 1
+    question.difficulty_level = difficulty_level if difficulty_level in ["easy", "medium", "hard"] else "medium"
+
+    old_options = sorted(list(question.options or []), key=lambda x: x.option_order or 0)
+
+    option_values = [
+        ("a", option_a.strip()),
+        ("b", option_b.strip()),
+        ("c", option_c.strip()),
+        ("d", option_d.strip()),
+    ]
+    correct = normalize_correct_answer(correct)
+
+    for index, (key, text) in enumerate(option_values, start=1):
+        if index <= len(old_options):
+            opt = old_options[index - 1]
+            opt.option_text = text
+            opt.is_correct = 1 if correct == key else 0
+            opt.option_order = index
+        else:
+            db.add(QuestionOption(
+                id=str(uuid.uuid4()),
+                question_id=question.id,
+                option_text=text,
+                is_correct=1 if correct == key else 0,
+                option_order=index,
+            ))
+
+    # Nếu cũ có hơn 4 đáp án thì xóa phần dư để giao diện A/B/C/D nhất quán.
+    if len(old_options) > 4:
+        for opt in old_options[4:]:
+            db.delete(opt)
+
+    db.commit()
+
+    return RedirectResponse(
+        f"/teacher/quizzes/detail/{quiz_id}", 303
+    )
+
+
+# ======================================================
+# 19) DELETE QUESTION – PAGE
+# ======================================================
+@router.get("/{quiz_id}/question/delete/{question_id}", response_class=HTMLResponse)
+def delete_question_page(
+    quiz_id: str,
+    question_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    question = (
+        db.query(Question)
+        .options(joinedload(Question.options))
+        .filter(Question.id == question_id, Question.quiz_id == quiz_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(404, "Không tìm thấy câu hỏi.")
+
+    attempts_count = db.query(QuizAttempt).filter(QuizAttempt.quiz_id == quiz_id).count()
+
+    tpl = get_template_by_path(request.url.path)
+    return tpl.TemplateResponse(
+        "quizzes/question_delete.html",
+        {
+            "request": request,
+            "quiz": quiz,
+            "question": question,
+            "attempts_count": attempts_count,
+        },
+    )
+
+
+# ======================================================
+# 20) DELETE QUESTION – POST
+# ======================================================
+@router.post("/{quiz_id}/question/delete/{question_id}")
+def delete_question_post(
+    quiz_id: str,
+    question_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    question = (
+        db.query(Question)
+        .filter(Question.id == question_id, Question.quiz_id == quiz_id)
+        .first()
+    )
+    if not question:
+        raise HTTPException(404, "Không tìm thấy câu hỏi.")
+
+    db.delete(question)
+    db.flush()
+    refresh_total_questions(db, quiz)
+    db.commit()
+
+    return RedirectResponse(
+        f"/teacher/quizzes/detail/{quiz_id}", 303
+    )
+
+
+# ======================================================
+# 21) EXPORT QUIZ RESULTS – EXCEL
+# ======================================================
+@router.get("/export/{quiz_id}")
+def export_quiz_results(
+    quiz_id: str,
+    request: Request,
+    db=Depends(get_db),
+    teacher=Depends(get_current_teacher),
+):
+    quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
+    if not quiz:
+        raise HTTPException(404, "Quiz không tồn tại.")
+
+    attempts = (
+        db.query(QuizAttempt)
+        .options(joinedload(QuizAttempt.user).joinedload(User.profile))
+        .filter(QuizAttempt.quiz_id == quiz_id)
+        .order_by(
+            case((QuizAttempt.submitted_at.is_(None), 1), else_=0),
+            QuizAttempt.submitted_at.desc(),
+            QuizAttempt.started_at.desc(),
+        )
+        .all()
+    )
+
+    rows = []
+    for a in attempts:
+        student_name = "Không rõ"
+        if a.user:
+            if getattr(a.user, "profile", None) and a.user.profile.full_name:
+                student_name = a.user.profile.full_name
+            else:
+                student_name = a.user.username or a.user.email or "Không rõ"
+
+        rows.append({
+            "Học viên": student_name,
+            "Email": a.user.email if a.user else "",
+            "Lần làm": a.attempt_number,
+            "Điểm": float(a.score or 0),
+            "Số câu đúng": a.correct_answers or 0,
+            "Tổng số câu": a.total_questions or 0,
+            "Thời gian làm (giây)": a.time_spent_seconds or 0,
+            "Trạng thái": a.status,
+            "Bắt đầu": a.started_at.strftime("%d/%m/%Y %H:%M") if a.started_at else "",
+            "Nộp bài": a.submitted_at.strftime("%d/%m/%Y %H:%M") if a.submitted_at else "",
+        })
+
+    output = io.BytesIO()
+    df = pd.DataFrame(rows)
+    if df.empty:
+        df = pd.DataFrame([{"Thông báo": "Chưa có bài làm nào"}])
+
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Ket qua quiz")
+
+    output.seek(0)
+    safe_name = re.sub(r"[^a-zA-Z0-9_-]+", "_", quiz.title or "quiz")
+    filename = f"quiz_results_{safe_name}.xlsx"
+
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+
+# ======================================================
+# 22) TEMPLATE LIST
 # ======================================================
 @router.get("/templates", response_class=HTMLResponse)
 def quiz_templates(request: Request, db=Depends(get_db), teacher=Depends(get_current_teacher)):

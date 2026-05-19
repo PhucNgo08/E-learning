@@ -193,13 +193,19 @@ def delete_assignment_by_teacher(db: Session, assignment_id: str, teacher_id: st
 # 📄 Danh sách bài nộp theo bài tập
 # ====================================================
 def get_submissions_by_assignment(db: Session, assignment_id: str):
-    return (
+    submissions = (
         db.query(AssignmentSubmission)
         .options(joinedload(AssignmentSubmission.student))
         .filter(AssignmentSubmission.assignment_id == assignment_id)
         .order_by(AssignmentSubmission.submission_time.desc())
         .all()
     )
+
+    # Đảm bảo template giáo viên luôn có s.files để hiển thị/tải file bài nộp.
+    for submission in submissions:
+        submission.files = get_submission_files(db, submission.id)
+
+    return submissions
 
 
 # ====================================================
@@ -370,7 +376,7 @@ def get_student_progress_by_course(db: Session, course_id: str):
             .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
             .filter(
                 QuizAttempt.user_id == stu.id,
-                QuizAttempt.status == "submitted",
+                QuizAttempt.status.in_(["submitted", "graded"]),
                 Quiz.course_id == course_id,
             )
             .count()

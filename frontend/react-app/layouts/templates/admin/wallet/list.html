@@ -1,113 +1,453 @@
 {% extends "layout_admin.html" %}
+
 {% block title %}💰 Danh sách tài khoản ví{% endblock %}
 
-{% block content %}
-
-<!-- Background full page -->
+{% block extra_css %}
 <style>
-    body {
-        background: url('/frontend/react-app/assets/admin-bg.jpg') 
-                    no-repeat center center fixed !important;
-        background-size: cover !important;
-        backdrop-filter: blur(6px);
+  .wallet-list-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    color: #0f172a;
+    animation: walletFadeIn 0.35s ease-in-out;
+  }
+
+  @keyframes walletFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .wallet-page-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .wallet-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .wallet-table-card {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid #dbe3ef;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+  }
+
+  .wallet-table-card .table {
+    --bs-table-bg: #ffffff;
+    --bs-table-color: #0f172a;
+    --bs-table-border-color: #e2e8f0;
+    --bs-table-hover-bg: #f1f5ff;
+    --bs-table-hover-color: #0f172a;
+    margin-bottom: 0;
+    color: #0f172a;
+  }
+
+  .wallet-table-card .table thead th {
+    background: #eaf1ff;
+    color: #1e293b;
+    border-bottom: 1px solid #dbe3ef;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 800;
+    padding: 16px 14px;
+  }
+
+  .wallet-table-card .table tbody tr {
+    background: #ffffff;
+  }
+
+  .wallet-table-card .table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .wallet-table-card .table tbody tr:hover {
+    background: #eef6ff;
+  }
+
+  .wallet-table-card .table tbody td {
+    color: #0f172a;
+    border-color: #e2e8f0;
+    vertical-align: middle;
+    padding: 16px 14px;
+  }
+
+  .wallet-user-id {
+    display: inline-flex;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background: #e8f0ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .wallet-name {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  .wallet-email {
+    color: #334155;
+    font-weight: 600;
+  }
+
+  .wallet-balance {
+    color: #15803d;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .wallet-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 0.48rem 0.78rem;
+    font-size: 0.82rem;
+    font-weight: 900;
+  }
+
+  .wallet-status-active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+  }
+
+  .wallet-status-locked {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+  }
+
+  .wallet-date {
+    color: #475569;
+    white-space: nowrap;
+  }
+
+  .wallet-action-btn {
+    border-radius: 999px;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    border: none;
+    color: #ffffff;
+    font-weight: 800;
+    padding: 0.48rem 0.95rem;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+  }
+
+  .wallet-action-btn:hover {
+    transform: translateY(-1px);
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(14, 165, 233, 0.25);
+  }
+
+  .wallet-empty-state {
+    text-align: center;
+    color: #64748b;
+    padding: 42px 20px !important;
+  }
+
+  .wallet-empty-state i {
+    display: block;
+    font-size: 2.4rem;
+    margin-bottom: 10px;
+    color: #2563eb;
+  }
+
+  .wallet-section-title {
+    color: #1d4ed8;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin-bottom: 0;
+  }
+
+  .wallet-search-btn {
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    background: #ffffff;
+    border-radius: 999px;
+    font-weight: 800;
+    padding: 0.65rem 1.2rem;
+  }
+
+  .wallet-search-btn:hover {
+    background: #eaf1ff;
+    color: #1d4ed8;
+  }
+
+  /*
+    DARK MODE ONLY
+    Chỉ chạy khi layout_admin.html thêm body.dark-mode
+    hoặc html[data-bs-theme="dark"]
+  */
+  body.dark-mode .wallet-list-page,
+  html[data-bs-theme="dark"] .wallet-list-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .wallet-table-card,
+  html[data-bs-theme="dark"] .wallet-table-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .wallet-table-card .table,
+  html[data-bs-theme="dark"] .wallet-table-card .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #e5e7eb;
+    --bs-table-border-color: rgba(148, 163, 184, 0.2);
+    --bs-table-hover-bg: rgba(56, 189, 248, 0.08);
+    --bs-table-hover-color: #ffffff;
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .wallet-table-card .table thead th,
+  html[data-bs-theme="dark"] .wallet-table-card .table thead th {
+    background: #172033;
+    color: #f8fafc;
+    border-bottom-color: rgba(148, 163, 184, 0.28);
+  }
+
+  body.dark-mode .wallet-table-card .table tbody tr,
+  html[data-bs-theme="dark"] .wallet-table-card .table tbody tr {
+    background: rgba(15, 23, 42, 0.88);
+  }
+
+  body.dark-mode .wallet-table-card .table tbody tr:nth-child(even),
+  html[data-bs-theme="dark"] .wallet-table-card .table tbody tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.78);
+  }
+
+  body.dark-mode .wallet-table-card .table tbody tr:hover,
+  html[data-bs-theme="dark"] .wallet-table-card .table tbody tr:hover {
+    background: rgba(56, 189, 248, 0.1);
+  }
+
+  body.dark-mode .wallet-table-card .table tbody td,
+  html[data-bs-theme="dark"] .wallet-table-card .table tbody td {
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.16);
+  }
+
+  body.dark-mode .wallet-user-id,
+  html[data-bs-theme="dark"] .wallet-user-id {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  body.dark-mode .wallet-name,
+  html[data-bs-theme="dark"] .wallet-name {
+    color: #ffffff;
+  }
+
+  body.dark-mode .wallet-email,
+  html[data-bs-theme="dark"] .wallet-email {
+    color: #dbeafe;
+  }
+
+  body.dark-mode .wallet-balance,
+  html[data-bs-theme="dark"] .wallet-balance {
+    color: #86efac;
+  }
+
+  body.dark-mode .wallet-status-active,
+  html[data-bs-theme="dark"] .wallet-status-active {
+    background: rgba(34, 197, 94, 0.18);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+
+  body.dark-mode .wallet-status-locked,
+  html[data-bs-theme="dark"] .wallet-status-locked {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+
+  body.dark-mode .wallet-date,
+  html[data-bs-theme="dark"] .wallet-date {
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .wallet-empty-state,
+  html[data-bs-theme="dark"] .wallet-empty-state {
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .wallet-empty-state i,
+  html[data-bs-theme="dark"] .wallet-empty-state i {
+    color: #38bdf8;
+  }
+
+  body.dark-mode .wallet-section-title,
+  html[data-bs-theme="dark"] .wallet-section-title {
+    color: #60a5fa;
+  }
+
+  body.dark-mode .wallet-search-btn,
+  html[data-bs-theme="dark"] .wallet-search-btn {
+    color: #7dd3fc;
+    border-color: rgba(56, 189, 248, 0.35);
+    background: rgba(15, 23, 42, 0.75);
+  }
+
+  body.dark-mode .wallet-search-btn:hover,
+  html[data-bs-theme="dark"] .wallet-search-btn:hover {
+    background: rgba(56, 189, 248, 0.14);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .wallet-page-header {
+      padding: 18px;
     }
 
-    /* Glass effect cho card */
-    .glass-card, .card {
-        background: rgba(255, 255, 255, 0.78) !important;
-        backdrop-filter: blur(14px) !important;
-        border-radius: 18px !important;
-        border: 1px solid rgba(255, 255, 255, 0.35) !important;
-        box-shadow:
-            0 8px 32px rgba(0, 0, 0, 0.12),
-            0 0 40px rgba(86, 131, 255, 0.15);
+    .wallet-page-header .btn,
+    .wallet-search-btn,
+    .wallet-action-btn {
+      width: 100%;
     }
 
-    .fade-in {
-        animation: fadeIn .4s ease-in-out;
+    .wallet-user-id {
+      max-width: 180px;
     }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
+  }
 </style>
+{% endblock %}
 
-<div class="container py-4 fade-in">
+{% block content %}
+<div class="wallet-list-page">
 
-    <!-- Title -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="fw-bold text-primary mb-0">
-            <i class="bi bi-wallet2 me-2"></i>Danh sách tài khoản ví
-        </h3>
-
-        <a href="/admin/wallets/search-email"
-           class="btn btn-outline-primary fw-semibold px-4 py-2 rounded-pill">
-            🔎 Tìm ví theo Email
-        </a>
+  <div class="wallet-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-wallet2 me-2"></i>Danh sách tài khoản ví
+      </h3>
+      <p class="header-subtitle mb-0">
+        Theo dõi số dư, trạng thái ví và truy cập nhanh thông tin ví của từng người dùng.
+      </p>
     </div>
 
-    <!-- Table Card -->
-    <div class="card shadow-sm border-0 rounded-4 glass-card">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>User ID</th>
-                        <th>Họ tên</th>
-                        <th>Email</th>
-                        <th class="text-end">Số dư</th>
-                        <th class="text-center">Trạng thái</th>
-                        <th>Ngày tạo</th>
-                        <th></th>
-                    </tr>
-                </thead>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/wallets/search-email" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-search me-1"></i>Tìm ví theo Email
+      </a>
 
-                <tbody>
-                    {% if wallets|length == 0 %}
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-3">
-                            <i class="bi bi-inbox"></i> Chưa có tài khoản ví nào.
-                        </td>
-                    </tr>
-                    {% endif %}
-
-                    {% for wa, user in wallets %}
-                    <tr>
-                        <td><code>{{ wa.user_id }}</code></td>
-
-                        <td><strong>{{ user.full_name if user else "—" }}</strong></td>
-
-                        <td>{{ user.email if user else "—" }}</td>
-
-                        <td class="fw-bold text-success text-end">
-                            {{ "{:,.0f}".format(wa.balance) }} đ
-                        </td>
-
-                        <td class="text-center">
-                            {% if wa.status == "active" %}
-                                <span class="badge bg-success px-3 py-2 rounded-pill">Active</span>
-                            {% else %}
-                                <span class="badge bg-danger px-3 py-2 rounded-pill">Locked</span>
-                            {% endif %}
-                        </td>
-
-                        <td>{{ wa.created_at.strftime("%Y-%m-%d") if wa.created_at else "—" }}</td>
-
-                        <td class="text-end">
-                            <a href="/admin/wallets/info/{{ wa.user_id }}"
-                               class="btn btn-sm btn-primary rounded-pill px-3">
-                                <i class="bi bi-eye"></i> Xem ví
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-
-            </table>
-        </div>
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+      </a>
     </div>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h4 class="wallet-section-title">
+      <i class="bi bi-folder2-open me-2"></i>Danh sách ví người dùng
+    </h4>
+
+    <a href="/admin/wallets/search-email" class="btn wallet-search-btn">
+      <i class="bi bi-search me-1"></i>Tìm ví theo Email
+    </a>
+  </div>
+
+  <div class="wallet-table-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>User ID</th>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th class="text-end">Số dư</th>
+            <th class="text-center">Trạng thái</th>
+            <th>Ngày tạo</th>
+            <th class="text-end">Thao tác</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% if wallets|length == 0 %}
+          <tr>
+            <td colspan="7" class="wallet-empty-state">
+              <i class="bi bi-inbox"></i>
+              <strong>Chưa có tài khoản ví nào.</strong>
+            </td>
+          </tr>
+          {% endif %}
+
+          {% for wa, user in wallets %}
+          <tr>
+            <td>
+              <span class="wallet-user-id" title="{{ wa.user_id }}">
+                {{ wa.user_id }}
+              </span>
+            </td>
+
+            <td>
+              <span class="wallet-name">
+                {{ user.full_name if user else "—" }}
+              </span>
+            </td>
+
+            <td>
+              <span class="wallet-email">
+                {{ user.email if user else "—" }}
+              </span>
+            </td>
+
+            <td class="text-end">
+              <span class="wallet-balance">
+                {{ "{:,.0f}".format(wa.balance or 0) }} đ
+              </span>
+            </td>
+
+            <td class="text-center">
+              {% if wa.status == "active" %}
+              <span class="wallet-status wallet-status-active">
+                <i class="bi bi-check-circle"></i>Active
+              </span>
+              {% else %}
+              <span class="wallet-status wallet-status-locked">
+                <i class="bi bi-lock"></i>Locked
+              </span>
+              {% endif %}
+            </td>
+
+            <td>
+              <span class="wallet-date">
+                {{ wa.created_at.strftime("%Y-%m-%d") if wa.created_at else "—" }}
+              </span>
+            </td>
+
+            <td class="text-end">
+              <a href="/admin/wallets/info/{{ wa.user_id }}"
+                 class="btn btn-sm wallet-action-btn">
+                <i class="bi bi-eye me-1"></i>Xem ví
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
 
 </div>
-
 {% endblock %}

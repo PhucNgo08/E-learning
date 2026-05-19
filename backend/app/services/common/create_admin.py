@@ -1,15 +1,15 @@
-import mysql.connector
 from uuid import uuid4
+
 import bcrypt
+import pymysql
+from pymysql.cursors import DictCursor
+
+from app.core.config import Settings
 
 # =====================================================
-# CẤU HÌNH DB
+# CẤU HÌNH DB - đọc từ .env, không hard-code mật khẩu trong code
 # =====================================================
-DB_HOST = "localhost"
-DB_PORT = 3309
-DB_USER = "root"
-DB_PASS = "111004@"
-DB_NAME = "e_learning"
+settings = Settings()
 
 # =====================================================
 # CẤU HÌNH ADMIN MẶC ĐỊNH
@@ -27,12 +27,15 @@ ADMIN_ROLE_NAME = "Quản trị viên"
 # KẾT NỐI DB
 # =====================================================
 def get_db_connection():
-    return mysql.connector.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        user=DB_USER,
-        password=DB_PASS,
-        database=DB_NAME,
+    return pymysql.connect(
+        host=settings.DB_HOST,
+        port=settings.DB_PORT,
+        user=settings.DB_USER,
+        password=settings.DB_PASS,
+        database=settings.DB_NAME,
+        charset="utf8mb4",
+        cursorclass=DictCursor,
+        autocommit=False,
     )
 
 
@@ -194,7 +197,7 @@ def ensure_admin_account():
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         role_id = ensure_admin_role(cursor)
 
@@ -277,7 +280,7 @@ def ensure_admin_account():
         conn.commit()
         print("🎯 Tài khoản admin đã sẵn sàng sử dụng.")
 
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
         print(f"❌ Lỗi MySQL: {err}")
 
     finally:
@@ -297,7 +300,7 @@ def quick_login_check():
 
     try:
         conn = get_db_connection()
-        cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor()
 
         cursor.execute(
             "SELECT password_hash FROM users WHERE username = %s LIMIT 1",
@@ -324,7 +327,7 @@ def quick_login_check():
         else:
             print("⚠️ Admin tồn tại nhưng mật khẩu hiện tại không phải mật khẩu mặc định.")
 
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
         print(f"❌ Lỗi MySQL: {err}")
 
     finally:

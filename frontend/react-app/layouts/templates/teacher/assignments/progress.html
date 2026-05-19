@@ -1,142 +1,459 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>📊 Tiến độ học viên</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background: #f4f6fa;
+{% extends "layout_teacher.html" %}
+{% block title %}📊 Tiến độ học viên{% endblock %}
+{% block content %}
+
+<style>
+  :root {
+    --asg-primary: #2563eb;
+    --asg-primary-2: #7c3aed;
+    --asg-success: #16a34a;
+    --asg-warning: #f59e0b;
+    --asg-danger: #dc2626;
+    --asg-text: #0f172a;
+    --asg-muted: #64748b;
+    --asg-line: #e5e7eb;
+    --asg-soft: #f8fafc;
+    --asg-card: rgba(255, 255, 255, 0.96);
+    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+  }
+
+  .assignment-page {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .a-hero,
+  .a-card,
+  .table-card,
+  .stat-card,
+  .empty-state {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: var(--asg-card);
+    box-shadow: var(--asg-shadow);
+  }
+
+  .a-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+
+  .a-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
+    pointer-events: none;
+  }
+
+  .a-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .a-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    color: var(--asg-primary);
+    margin: 0;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .a-subtitle {
+    color: var(--asg-muted);
+    margin: 8px 0 0;
+    line-height: 1.55;
+  }
+
+  .a-actions,
+  .action-buttons,
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .a-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    border-radius: 22px;
+    padding: 17px 18px;
+    transition: .18s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
+  }
+
+  .stat-label {
+    color: var(--asg-muted);
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+    font-size: 1.65rem;
+    font-weight: 850;
+    color: #1d4ed8;
+    line-height: 1.15;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .tool-row .form-control,
+  .tool-row .form-select {
+    max-width: 310px;
+    border-radius: 14px;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 14px;
+    border-color: #dbe3ef;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .table-card {
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff);
+    color: #1e40af;
+    font-weight: 850;
+    white-space: nowrap;
+    border-bottom: 1px solid #bfdbfe;
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .info-box,
+  .file-box {
+    border-radius: 18px;
+    background: var(--asg-soft);
+    border: 1px solid var(--asg-line);
+    padding: 14px 16px;
+  }
+
+  .file-box {
+    line-height: 1.65;
+  }
+
+  .status-badge,
+  .badge {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 750;
+  }
+
+  .text-pre-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    border-radius: 24px;
+    padding: 34px 20px;
+    text-align: center;
+  }
+
+  .mini-muted {
+    color: var(--asg-muted);
+    font-size: .9rem;
+  }
+
+  .progress-thin {
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .a-hero,
+  body.dark-mode .a-card,
+  body.dark-mode .table-card,
+  body.dark-mode .stat-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, .90);
+    border-color: rgba(148, 163, 184, .22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .a-title,
+  body.dark-mode .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .a-subtitle,
+  body.dark-mode .stat-label,
+  body.dark-mode .mini-muted {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-box,
+  body.dark-mode .file-box {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .25);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  @media (max-width: 992px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 768px) {
+    .assignment-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
     }
 
-    .page-card {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 28px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    .a-hero,
+    .a-card {
+      padding: 18px;
+      border-radius: 22px;
     }
 
-    .progress-title {
-      font-weight: 600;
-      font-size: 1rem;
+    .a-title {
+      font-size: 1.25rem;
     }
 
-    .progress {
-      height: 10px;
-      border-radius: 10px;
+    .a-actions,
+    .action-buttons,
+    .page-actions {
+      justify-content: flex-start;
+      width: 100%;
     }
 
-    .table thead th {
-      background: #0d6efd;
-      color: #ffffff;
-      text-align: center;
+    .a-actions .btn,
+    .action-buttons .btn,
+    .page-actions .btn {
+      width: 100%;
     }
 
-    .badge {
-      font-size: 0.8rem;
-      padding: 6px 10px;
+    .stat-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
     }
 
-    .student-name {
-      font-weight: 600;
-      color: #2563eb;
+    .tool-row .form-control,
+    .tool-row .form-select {
+      max-width: none;
+      width: 100%;
     }
-  </style>
-</head>
 
-<body class="p-4">
-  <div class="container page-card">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-      <div>
-        <h3 class="text-primary fw-bold mb-0">
-          <i class="bi bi-bar-chart-line"></i>
-          Tiến độ học viên – {{ course.course_name }}
-        </h3>
-        {% if teacher_name %}
-        <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
-        {% endif %}
-      </div>
+    .responsive-table thead {
+      display: none;
+    }
 
-      <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại
-      </a>
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .responsive-table tr {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    .a-hero,
+    .a-card {
+      padding: 14px;
+    }
+
+    .assignment-page {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+  }
+</style>
+
+{# Chấp nhận nhiều tên biến để không lệch route/service cũ và mới #}
+{% set rows = progress_data if progress_data is defined and progress_data else (progress_list if progress_list is defined and progress_list else (progress if progress is defined and progress else [])) %}
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title">
+        <i class="bi bi-graph-up-arrow me-2"></i>
+        Tiến độ học viên{% if course is defined and course %} – {{ course.course_name }}{% endif %}
+      </h3>
+      <p class="a-subtitle">Theo dõi bài học, bài tập và quiz theo khóa học.</p>
+      {% if teacher_name is defined and teacher_name %}
+        <div class="mini-muted">Giáo viên: {{ teacher_name }}</div>
+      {% endif %}
     </div>
 
-    {% if progress_data %}
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead>
+    <a href="/teacher/assignments/list" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="table-card table-responsive">
+    <table class="table table-hover align-middle mb-0 responsive-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Học viên</th>
+          <th>Bài học</th>
+          <th>Bài tập</th>
+          <th>Quiz</th>
+          <th style="min-width:220px">Tiến độ</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in rows %}
+          {% set progress_pct = p.overall_progress if p.overall_progress is defined and p.overall_progress is not none else 0 %}
+          {% set total_lessons = p.total_lessons if p.total_lessons is defined else none %}
+          {% set total_assignments = p.total_assignments if p.total_assignments is defined else none %}
+          {% set total_quizzes = p.total_quizzes if p.total_quizzes is defined else none %}
+
           <tr>
-            <th>👨‍🎓 Học viên</th>
-            <th>📘 Bài học</th>
-            <th>📝 Bài tập</th>
-            <th>❓ Quiz</th>
-            <th>📊 Tiến độ tổng</th>
+            <td data-label="#">{{ loop.index }}</td>
+
+            <td data-label="Học viên">
+              <strong>
+                {{ p.student.profile.full_name if p.student and p.student.profile else (p.student.full_name if p.student and p.student.full_name else (p.student.username if p.student else 'Không rõ')) }}
+              </strong>
+              {% if p.student and p.student.email %}
+                <div class="text-muted small">{{ p.student.email }}</div>
+              {% endif %}
+            </td>
+
+            <td data-label="Bài học">
+              {{ p.lessons_completed or 0 }}{% if total_lessons is not none %}/{{ total_lessons }}{% endif %}
+            </td>
+
+            <td data-label="Bài tập">
+              {{ p.assignments_submitted or 0 }}{% if total_assignments is not none %}/{{ total_assignments }}{% endif %}
+            </td>
+
+            <td data-label="Quiz">
+              {{ p.quiz_done or 0 }}{% if total_quizzes is not none %}/{{ total_quizzes }}{% endif %}
+            </td>
+
+            <td data-label="Tiến độ">
+              <div class="progress progress-thin">
+                <div
+                  class="progress-bar js-progress-bar"
+                  role="progressbar"
+                  data-progress="{{ progress_pct }}"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                ></div>
+              </div>
+              <span class="small fw-bold">{{ progress_pct }}%</span>
+            </td>
           </tr>
-        </thead>
-
-        <tbody>
-        {% for p in progress_data %}
+        {% else %}
           <tr>
-            <td>
-              <div class="student-name">
-                {{ p.student.full_name if p.student.full_name else (p.student.username if p.student.username else 'Không rõ') }}
-              </div>
-              <small class="text-muted">{{ p.student.email if p.student.email else '' }}</small>
-            </td>
-
-            <td class="text-center">
-              <span class="badge bg-info text-dark">
-                <i class="bi bi-journal-check"></i>
-                {{ p.lessons_completed }}
-              </span>
-            </td>
-
-            <td class="text-center">
-              <span class="badge bg-success">
-                <i class="bi bi-upload"></i>
-                {{ p.assignments_submitted }}
-              </span>
-            </td>
-
-            <td class="text-center">
-              <span class="badge bg-warning text-dark">
-                <i class="bi bi-patch-question"></i>
-                {{ p.quiz_done }}
-              </span>
-            </td>
-
-            <td style="width: 260px;">
-              {% set progress = p.overall_progress %}
-              {% set progress = 100 if progress > 100 else progress %}
-              {% set progress = 0 if progress < 0 else progress %}
-
-              <div class="progress-title mb-1">
-                {{ progress|round(1) }}%
-              </div>
-
-              <div class="progress">
-                <div class="progress-bar bg-primary" role="progressbar" data-width="{{ progress }}"></div>
-              </div>
+            <td colspan="6" class="text-center text-muted py-4">
+              Chưa có dữ liệu tiến độ.
             </td>
           </tr>
         {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="alert alert-warning text-center py-4">
-      <i class="bi bi-exclamation-circle"></i>
-      Chưa có dữ liệu tiến độ cho khóa học này.
-    </div>
-    {% endif %}
+      </tbody>
+    </table>
   </div>
+</div>
 
-  <script>
-    document.querySelectorAll(".progress-bar").forEach(bar => {
-      bar.style.width = bar.dataset.width + "%";
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll(".js-progress-bar").forEach(function (bar) {
+      var raw = Number(bar.dataset.progress || 0);
+      var value = Number.isFinite(raw) ? Math.max(0, Math.min(100, raw)) : 0;
+      bar.style.width = value + "%";
+      bar.setAttribute("aria-valuenow", String(value));
     });
-  </script>
-</body>
-</html>
+  });
+</script>
+{% endblock %}

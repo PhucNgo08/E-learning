@@ -93,11 +93,16 @@ async def cart_add(
         return RedirectResponse("/auth/login", status_code=302)
 
     result = cart_service.add_to_cart(db, user_id, course_id)
+
     request.session["cart_count"] = cart_service.get_cart_count(db, user_id)
-    request.session["cart_notice"] = result.get("message") if isinstance(result, dict) else None
 
-    return RedirectResponse("/student/cart", status_code=303)
+    if isinstance(result, dict):
+        request.session["cart_notice"] = result.get("message")
 
+    if isinstance(result, dict) and result.get("status") in ["success", "exists"]:
+        return RedirectResponse("/student/cart/", status_code=303)
+
+    return RedirectResponse("/student/course/", status_code=303)
 
 # ======================================================
 # ❌ Remove One Item

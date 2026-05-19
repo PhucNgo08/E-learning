@@ -1,0 +1,57 @@
+{% extends "layout_admin.html" %}
+{% block title %}📘 Chi tiết Quiz{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h3 class="fw-bold text-primary mb-0">📘 {{ quiz.title }}</h3>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/admin/quiz/list" class="btn btn-outline-secondary">← Danh sách</a>
+      <a href="/admin/quiz/edit/{{ quiz.id }}" class="btn btn-warning">Sửa</a>
+      <a href="/admin/quiz/attempts/{{ quiz.id }}" class="btn btn-info text-white">Bài làm ({{ attempts_count }})</a>
+      <a href="/admin/quiz/{{ quiz.id }}/question/create" class="btn btn-success">+ Câu hỏi</a>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-6"><b>Khóa học:</b> {{ quiz.course.course_name if quiz.course else '—' }}</div>
+        <div class="col-md-3"><b>Loại:</b> {{ quiz.quiz_type }}</div>
+        <div class="col-md-3"><b>Trạng thái:</b> {{ quiz.status }}</div>
+        <div class="col-md-3"><b>Số câu:</b> {{ quiz.total_questions or 0 }}</div>
+        <div class="col-md-3"><b>Thời lượng:</b> {{ quiz.time_limit_minutes or 0 }} phút</div>
+        <div class="col-md-3"><b>Điểm đạt:</b> {{ quiz.passing_score or 0 }}%</div>
+        <div class="col-md-3"><b>Duyệt:</b> {% if quiz.is_approved %}<span class="badge bg-success">Đã duyệt</span>{% else %}<span class="badge bg-secondary">Chưa duyệt</span>{% endif %}</div>
+      </div>
+      {% if quiz.description %}<hr><p class="mb-0">{{ quiz.description }}</p>{% endif %}
+      <div class="d-flex gap-2 mt-3">
+        <form method="post" action="/admin/quiz/approve/{{ quiz.id }}"><button class="btn btn-sm btn-success">Duyệt / Mở bài</button></form>
+        <form method="post" action="/admin/quiz/reject/{{ quiz.id }}"><button class="btn btn-sm btn-outline-danger">Từ chối</button></form>
+      </div>
+    </div>
+  </div>
+
+  <h5 class="fw-bold mb-3">🧩 Câu hỏi</h5>
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body">
+      {% for q in quiz.questions %}
+        <div class="border-bottom pb-3 mb-3">
+          <div class="d-flex justify-content-between gap-2">
+            <div class="fw-semibold">Câu {{ loop.index }}: {{ q.question_text }}</div>
+            <form method="post" action="/admin/quiz/question/delete/{{ q.id }}" onsubmit="return confirm('Xóa câu hỏi này?')">
+              <button class="btn btn-sm btn-outline-danger">Xóa</button>
+            </form>
+          </div>
+          <div class="mt-2">
+            {% for op in q.options %}
+              <div class="small {% if op.is_correct %}text-success fw-bold{% endif %}">- {{ op.option_text }} {% if op.is_correct %}(Đúng){% endif %}</div>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-info mb-0">Chưa có câu hỏi. Bấm “+ Câu hỏi” để thêm.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

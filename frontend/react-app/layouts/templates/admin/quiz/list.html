@@ -63,6 +63,7 @@
             <tr>
               <th>#</th>
               <th class="text-start">Tiêu đề</th>
+              <th>Khóa học</th>
               <th>Loại</th>
               <th>Độ khó</th>
               <th>Số câu</th>
@@ -76,6 +77,7 @@
             <tr>
               <td>{{ loop.index }}</td>
               <td class="text-start fw-semibold">{{ quiz.title or "—" }}</td>
+              <td>{{ quiz.course.course_name if quiz.course else "—" }}</td>
               <td>{{ quiz.quiz_type or "—" }}</td>
               <td>{{ quiz.difficulty_level or "—" }}</td>
               <td>{{ quiz.total_questions or 0 }}</td>
@@ -93,6 +95,7 @@
               <td>{{ quiz.created_at.strftime('%d/%m/%Y') if quiz.created_at else "—" }}</td>
               <td>
                 <div class="d-flex justify-content-center gap-2 flex-wrap">
+                  <a href="/admin/quiz/detail/{{ quiz.id }}" class="btn btn-sm btn-outline-primary">Xem</a>
                   <a href="/admin/quiz/edit/{{ quiz.id }}" class="btn btn-sm btn-outline-warning">Sửa</a>
                   <a href="/admin/quiz/delete/{{ quiz.id }}" class="btn btn-sm btn-outline-danger">Xóa</a>
                 </div>

@@ -1,0 +1,188 @@
+{% extends "layout_teacher.html" %}
+{% block title %}📄 Bài làm Quiz{% endblock %}
+
+{% block content %}
+
+<style>
+  :root {
+    --quiz-bg: #f5f7fb;
+    --quiz-card: #ffffff;
+    --quiz-border: #e5e7eb;
+    --quiz-text: #1f2937;
+    --quiz-muted: #6b7280;
+    --quiz-primary: #2563eb;
+    --quiz-soft: #eff6ff;
+    --quiz-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --quiz-bg: #071226;
+    --quiz-card: #0f1b33;
+    --quiz-border: rgba(255,255,255,.12);
+    --quiz-text: #e5edf8;
+    --quiz-muted: #9caec8;
+    --quiz-primary: #8ea6ff;
+    --quiz-soft: rgba(96, 165, 250, .12);
+    --quiz-shadow: 0 18px 44px rgba(0,0,0,.35);
+  }
+
+  .quiz-page {
+    min-height: calc(100vh - 90px);
+    padding: 24px 12px 42px;
+    background: var(--quiz-bg);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card {
+    background: var(--quiz-card);
+    border: 1px solid var(--quiz-border);
+    border-radius: 18px;
+    box-shadow: var(--quiz-shadow);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card .text-muted { color: var(--quiz-muted) !important; }
+  .quiz-title { color: var(--quiz-primary); font-weight: 800; }
+
+  .quiz-card .form-label { font-weight: 700; color: var(--quiz-text); }
+  .quiz-card .form-control,
+  .quiz-card .form-select,
+  .quiz-card textarea {
+    border-radius: 12px;
+    border-color: var(--quiz-border);
+    background-color: var(--quiz-card);
+    color: var(--quiz-text);
+  }
+  .quiz-card .form-control:focus,
+  .quiz-card .form-select:focus,
+  .quiz-card textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+  .quiz-card .form-select option { background: var(--quiz-card); color: var(--quiz-text); }
+
+  .quiz-table { margin-bottom: 0; }
+  .quiz-table thead th {
+    background: var(--quiz-soft) !important;
+    color: var(--quiz-primary) !important;
+    border-color: var(--quiz-border) !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .quiz-table td { border-color: var(--quiz-border); vertical-align: middle; color: var(--quiz-text); }
+
+  .quiz-empty {
+    border: 1px dashed var(--quiz-border);
+    border-radius: 16px;
+    padding: 34px 18px;
+    background: var(--quiz-soft);
+    text-align: center;
+  }
+
+  .quiz-stat {
+    border: 1px solid var(--quiz-border);
+    border-radius: 16px;
+    background: var(--quiz-card);
+    padding: 18px;
+    height: 100%;
+  }
+
+  .quiz-action-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hidden-block { display: none !important; }
+
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 14px; }
+    .quiz-action-group { justify-content: flex-start; }
+  }
+</style>
+
+
+
+<div class="quiz-page">
+  <div class="container-fluid">
+    <div class="quiz-card p-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+          <h3 class="quiz-title mb-1"><i class="bi bi-clipboard-data"></i> Bài làm học viên</h3>
+          <p class="text-muted mb-0">Quiz: {{ quiz.title }}</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Chi tiết
+          </a>
+          <a href="/teacher/quizzes/statistics/{{ quiz.id }}" class="btn btn-warning">
+            <i class="bi bi-graph-up"></i> Thống kê
+          </a>
+        </div>
+      </div>
+
+      {% if attempts %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle quiz-table">
+          <thead class="text-center">
+            <tr>
+              <th>#</th>
+              <th class="text-start">Học viên</th>
+              <th>Điểm</th>
+              <th>Kết quả</th>
+              <th>Lần làm</th>
+              <th>Trạng thái</th>
+              <th>Thời gian nộp</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for a in attempts %}
+            {% set total = a.total_questions or 0 %}
+            {% set correct = a.correct_answers or 0 %}
+            {% set wrong = total - correct %}
+            <tr>
+              <td class="text-center fw-bold">{{ loop.index }}</td>
+              <td class="text-start fw-semibold">
+                {{ a.user.profile.full_name if a.user and a.user.profile else (a.user.username if a.user else 'Không rõ') }}
+              </td>
+              <td class="text-center fw-bold text-primary">{{ a.score if a.score is not none else 0 }}%</td>
+              <td class="text-center">
+                <span class="text-success fw-semibold">{{ correct }} đúng</span>
+                <span class="text-muted">/</span>
+                <span class="text-danger fw-semibold">{{ wrong }} sai</span>
+              </td>
+              <td class="text-center">{{ a.attempt_number or 1 }}</td>
+              <td class="text-center">
+                {% if a.status == 'submitted' %}
+                  <span class="badge bg-info text-dark">Đã nộp</span>
+                {% elif a.status == 'graded' %}
+                  <span class="badge bg-success">Đã chấm</span>
+                {% elif a.status == 'in_progress' %}
+                  <span class="badge bg-warning text-dark">Đang làm</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ a.status or '—' }}</span>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ a.submitted_at.strftime('%d/%m/%Y %H:%M') if a.submitted_at else '—' }}</td>
+              <td class="text-center">
+                <a href="/teacher/quizzes/attempt/{{ a.id }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye"></i> Chi tiết
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="quiz-empty">
+        <h6 class="fw-bold mb-2">Chưa có học viên làm quiz</h6>
+        <p class="text-muted mb-0">Khi học viên nộp bài, kết quả sẽ hiển thị tại đây.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.config.template_config import templates
 from app.database.connection import get_db
+from app.models.major import Major
 from app.services import course_service
 
 router = APIRouter(prefix="/student/course", tags=["Student - Course"])
@@ -21,18 +22,45 @@ def get_current_student_id(request: Request) -> str | None:
 
 
 @router.get("/", response_class=HTMLResponse, name="student_course_list")
-async def list_courses(request: Request, db: Session = Depends(get_db), q: str | None = None):
+async def list_courses(
+    request: Request,
+    db: Session = Depends(get_db),
+    q: str | None = None,
+    major_id: str | None = None,
+    difficulty_level: str | None = None,
+    price_filter: str | None = None,
+    sort: str | None = "newest",
+):
     try:
         student_id = get_current_student_id(request)
         if not student_id:
             return RedirectResponse("/auth/login", 302)
+
+        if major_id in ("", "all", None):
+            major_id = None
+        if difficulty_level in ("", "all", None):
+            difficulty_level = None
+        if price_filter in ("", "all", None):
+            price_filter = None
 
         courses = course_service.get_all_courses(
             db=db,
             user_id=student_id,
             role="student",
             search=q,
+            major_id=major_id,
+            difficulty_level=difficulty_level,
+            price_filter=price_filter,
+            sort=sort,
         )
+
+        majors = (
+            db.query(Major)
+            .filter(Major.is_active.is_(True))
+            .order_by(Major.major_name.asc())
+            .all()
+        )
+
         enrolled_ids = set(course_service.get_enrolled_course_ids(db, student_id) or [])
         purchased_ids = set(course_service.get_purchased_course_ids(db, student_id) or [])
 
@@ -41,9 +69,14 @@ async def list_courses(request: Request, db: Session = Depends(get_db), q: str |
             {
                 "request": request,
                 "courses": courses,
+                "majors": majors,
                 "enrolled_course_ids": enrolled_ids,
                 "purchased_ids": purchased_ids,
                 "search_query": q or "",
+                "selected_major_id": major_id or "",
+                "selected_difficulty": difficulty_level or "",
+                "selected_price_filter": price_filter or "",
+                "selected_sort": sort or "newest",
                 "page_title": "Danh sách khóa học",
                 "active_page": "courses",
             },
@@ -54,18 +87,54 @@ async def list_courses(request: Request, db: Session = Depends(get_db), q: str |
 
 
 @router.get("/enrolled", response_class=HTMLResponse, name="student_course_enrolled")
-async def enrolled_courses(request: Request, db: Session = Depends(get_db)):
+async def enrolled_courses(
+    request: Request,
+    db: Session = Depends(get_db),
+    q: str | None = None,
+    major_id: str | None = None,
+    difficulty_level: str | None = None,
+    progress_filter: str | None = None,
+    sort: str | None = "name_asc",
+):
     student_id = get_current_student_id(request)
     if not student_id:
         return RedirectResponse("/auth/login", 302)
 
-    courses = course_service.get_enrolled_courses(db, student_id)
+    if major_id in ("", "all", None):
+        major_id = None
+    if difficulty_level in ("", "all", None):
+        difficulty_level = None
+    if progress_filter in ("", "all", None):
+        progress_filter = None
+
+    courses = course_service.get_enrolled_courses(
+        db=db,
+        user_id=student_id,
+        search=q,
+        major_id=major_id,
+        difficulty_level=difficulty_level,
+        progress_filter=progress_filter,
+        sort=sort,
+    )
+
+    majors = (
+        db.query(Major)
+        .filter(Major.is_active.is_(True))
+        .order_by(Major.major_name.asc())
+        .all()
+    )
 
     return templates["student"].TemplateResponse(
         "course/enrolled_courses.html",
         {
             "request": request,
             "courses": courses,
+            "majors": majors,
+            "search_query": q or "",
+            "selected_major_id": major_id or "",
+            "selected_difficulty": difficulty_level or "",
+            "selected_progress_filter": progress_filter or "",
+            "selected_sort": sort or "name_asc",
             "page_title": "Khóa học của tôi",
             "active_page": "courses",
         },

@@ -1,0 +1,36 @@
+{% extends "layout_admin.html" %}
+{% block title %}📄 Bài làm Quiz{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="fw-bold text-primary mb-0">📄 Bài làm — {{ quiz.title }}</h3>
+    <a href="/admin/quiz/detail/{{ quiz.id }}" class="btn btn-outline-secondary">← Chi tiết</a>
+  </div>
+  <div class="table-responsive card border-0 shadow-sm rounded-4 p-3">
+    <table class="table table-hover align-middle mb-0 text-center">
+      <thead class="table-primary"><tr><th>#</th><th class="text-start">Học viên</th><th>Điểm</th><th>Đúng/Sai</th><th>Lần</th><th>Thời gian nộp</th><th>Thao tác</th></tr></thead>
+      <tbody>
+      {% for a in attempts %}
+        {% set total = a.total_questions or 0 %}
+        {% set correct = a.correct_answers or 0 %}
+        {% set wrong = total - correct %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td class="text-start">{{ a.user.profile.full_name if a.user and a.user.profile else (a.user.username if a.user else 'Không rõ') }}</td>
+          <td class="fw-bold">{{ a.score or 0 }}%</td>
+          <td><span class="text-success">{{ correct }} đúng</span> / <span class="text-danger">{{ wrong }} sai</span></td>
+          <td>{{ a.attempt_number }}</td>
+          <td>{{ a.submitted_at.strftime('%d/%m/%Y %H:%M') if a.submitted_at else '—' }}</td>
+          <td>
+            <a href="/admin/quiz/attempt/{{ a.id }}" class="btn btn-sm btn-outline-primary">Xem</a>
+            <form method="post" action="/admin/quiz/attempt/delete/{{ a.id }}" class="d-inline" onsubmit="return confirm('Xóa bài làm này?')"><button class="btn btn-sm btn-outline-danger">Xóa</button></form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="text-muted">Chưa có bài làm.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

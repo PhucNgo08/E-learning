@@ -1,60 +1,158 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <title>📄 Xem Báo Cáo</title>
+{% extends "layout_admin.html" %}
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block title %}Xem báo cáo{% endblock %}
 
-    <style>
-        body {
-            background: #eef3ff;
-            font-family: "Inter", sans-serif;
-            min-height: 100vh;
-        }
-        .report-box {
-            background: white;
-            max-width: 900px;
-            margin: 60px auto;
-            padding: 35px;
-            border-radius: 12px;
-            box-shadow: 0 5px 18px rgba(0,0,0,0.12);
-        }
-        pre {
-            background: #f8f9fc;
-            padding: 15px;
-            border-radius: 8px;
-            white-space: pre-wrap;
-        }
-    </style>
-</head>
+{% block extra_css %}
+<style>
+  .report-view-page {
+    max-width: 960px;
+    margin: 0 auto;
+    color: #e5e7eb;
+  }
 
-<body>
+  .report-page-header {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.96), rgba(37, 99, 235, 0.9));
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.26);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+  }
 
-<div class="report-box">
-    <h3 class="text-primary mb-3">
-        📄 {{ report.title if report.title else "Báo cáo không có tiêu đề" }}
+  .report-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.84);
+  }
+
+  .report-box {
+    background: rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 18px;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+    padding: 28px;
+  }
+
+  .report-title {
+    color: #ffffff;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .report-section-label {
+    color: #cbd5e1;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .report-description {
+    background: rgba(30, 41, 59, 0.72);
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    color: #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+    line-height: 1.65;
+  }
+
+  .report-content {
+    background: #111827;
+    color: #e5e7eb;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    padding: 18px;
+    border-radius: 14px;
+    white-space: pre-wrap;
+    min-height: 180px;
+  }
+
+  .created-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0.5rem 0.78rem;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.18);
+    color: #bfdbfe;
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    font-weight: 800;
+    font-size: 0.86rem;
+  }
+
+  .report-actions {
+    border-top: 1px solid rgba(148, 163, 184, 0.22);
+    margin-top: 24px;
+    padding-top: 18px;
+  }
+
+  @media (max-width: 768px) {
+    .report-page-header,
+    .report-box {
+      padding: 18px;
+    }
+
+    .report-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-view-page">
+
+  <div class="report-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-file-earmark-text-fill me-2"></i>Xem báo cáo
+      </h3>
+      <p class="header-subtitle mb-0">
+        Xem nội dung chi tiết của báo cáo đã tạo trong hệ thống.
+      </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/reports/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Quản lý báo cáo
+      </a>
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+      </a>
+    </div>
+  </div>
+
+  <div class="report-box">
+    <h3 class="report-title mb-3">
+      <i class="bi bi-clipboard-data me-2 text-info"></i>
+      {{ report.title if report.title else "Báo cáo không có tiêu đề" }}
     </h3>
 
-    <p><strong>Mô tả:</strong></p>
-    <p class="text-secondary">
+    <div class="mb-4">
+      <div class="report-section-label">
+        <i class="bi bi-card-text me-1"></i>Mô tả
+      </div>
+      <div class="report-description">
         {{ report.description if report.description else "— Không có mô tả —" }}
-    </p>
-
-    <p class="mt-4"><strong>Nội dung báo cáo:</strong></p>
-    <pre>{{ report.content if report.content else "Không có nội dung báo cáo." }}</pre>
-
-    <p class="mt-4 text-muted">
-        <strong>Ngày tạo:</strong>
-        {{ report.created_at.strftime("%Y-%m-%d %H:%M") if report.created_at else "Không rõ" }}
-    </p>
-
-    <div class="mt-4">
-        <a href="/admin/reports/manage" class="btn btn-secondary">
-            ⬅ Quay lại Quản lý Báo cáo
-        </a>
+      </div>
     </div>
-</div>
 
-</body>
-</html>
+    <div class="mb-4">
+      <div class="report-section-label">
+        <i class="bi bi-file-text me-1"></i>Nội dung báo cáo
+      </div>
+      <pre class="report-content mb-0">{{ report.content if report.content else "Không có nội dung báo cáo." }}</pre>
+    </div>
+
+    <div>
+      <span class="created-chip">
+        <i class="bi bi-clock-history"></i>
+        Ngày tạo:
+        {{ report.created_at.strftime("%Y-%m-%d %H:%M") if report.created_at else "Không rõ" }}
+      </span>
+    </div>
+
+    <div class="report-actions d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <a href="/admin/reports/manage" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại quản lý báo cáo
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

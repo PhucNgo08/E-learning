@@ -1,172 +1,329 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>✏️ Chỉnh sửa lớp học</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+{% extends "layout_admin.html" %}
 
-  <style>
-    body {
-      background: linear-gradient(135deg, #f3f8ff, #e9f2ff);
-      font-family: "Inter", "Segoe UI", sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+{% block title %}Chỉnh sửa lớp học{% endblock %}
+
+{% block extra_css %}
+<style>
+  .class-form-page {
+    max-width: 920px;
+    margin: 0 auto;
+    color: #0f172a;
+  }
+
+  .class-page-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .class-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .class-form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    padding: 28px;
+  }
+
+  .class-section-title {
+    color: #1e3a8a;
+    font-weight: 900;
+    margin-top: 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .class-section-title:first-child {
+    margin-top: 0;
+  }
+
+  .class-form-card .form-label {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  .class-form-card .form-control,
+  .class-form-card .form-select {
+    min-height: 48px;
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    border-radius: 14px;
+  }
+
+  .class-form-card .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  .class-form-card .form-control:focus,
+  .class-form-card .form-select:focus {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.14);
+  }
+
+  .form-actions {
+    border-top: 1px solid #e2e8f0;
+    margin-top: 28px;
+    padding-top: 20px;
+  }
+
+  body.dark-mode .class-form-page,
+  html[data-bs-theme="dark"] .class-form-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .class-form-card,
+  html[data-bs-theme="dark"] .class-form-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .class-section-title,
+  html[data-bs-theme="dark"] .class-section-title {
+    color: #dbeafe;
+  }
+
+  body.dark-mode .class-form-card .form-label,
+  html[data-bs-theme="dark"] .class-form-card .form-label {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .class-form-card .form-control,
+  body.dark-mode .class-form-card .form-select,
+  html[data-bs-theme="dark"] .class-form-card .form-control,
+  html[data-bs-theme="dark"] .class-form-card .form-select {
+    background: #111827;
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+
+  body.dark-mode .class-form-card .form-control::placeholder,
+  html[data-bs-theme="dark"] .class-form-card .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .class-form-card .form-control:focus,
+  body.dark-mode .class-form-card .form-select:focus,
+  html[data-bs-theme="dark"] .class-form-card .form-control:focus,
+  html[data-bs-theme="dark"] .class-form-card .form-select:focus {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.18);
+  }
+
+  body.dark-mode .class-form-card .form-select option,
+  html[data-bs-theme="dark"] .class-form-card .form-select option {
+    background: #111827;
+    color: #f8fafc;
+  }
+
+  body.dark-mode .form-actions,
+  html[data-bs-theme="dark"] .form-actions {
+    border-top-color: rgba(148, 163, 184, 0.22);
+  }
+
+  @media (max-width: 768px) {
+    .class-page-header,
+    .class-form-card {
+      padding: 18px;
     }
-    .form-wrapper {
+
+    .class-page-header .btn,
+    .form-actions .btn {
       width: 100%;
-      max-width: 780px;
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      padding: 2.5rem;
-      animation: fadeIn .5s ease;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    h3 { font-weight: 700; color: #0d47a1; }
-  </style>
-</head>
+  }
+</style>
+{% endblock %}
 
-<body>
-<div class="form-wrapper">
-  <div class="text-center mb-4">
-    <i class="bi bi-pencil-square text-primary fs-1 mb-2"></i>
-    <h3>Cập nhật thông tin lớp học</h3>
-    <p class="text-muted">Điều chỉnh thông tin chi tiết của lớp học bên dưới.</p>
+{% block content %}
+<div class="class-form-page">
+
+  <div class="class-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-pencil-square me-2"></i>Cập nhật lớp học
+      </h3>
+      <p class="header-subtitle mb-0">
+        Điều chỉnh thông tin cơ bản, học vụ, thời gian và trạng thái lớp học.
+      </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Class/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Danh sách lớp
+      </a>
+
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+      </a>
+    </div>
   </div>
 
-  {% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
-  {% endif %}
-
-  <form method="post" action="/admin/Class/edit/{{ cls.id }}">
-    <h5 class="fw-bold text-secondary mb-3">📘 Thông tin cơ bản</h5>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Mã lớp</label>
-        <input type="text" class="form-control" name="class_code" value="{{ cls.class_code }}" required>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Tên lớp</label>
-        <input type="text" class="form-control" name="class_name" value="{{ cls.class_name }}" required>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Loại lớp</label>
-        <select class="form-select" name="class_type">
-          <option value="official" {% if cls.class_type == 'official' %}selected{% endif %}>Chính thức</option>
-          <option value="club" {% if cls.class_type == 'club' %}selected{% endif %}>Câu lạc bộ</option>
-          <option value="course" {% if cls.class_type == 'course' %}selected{% endif %}>Lớp khóa học</option>
-          <option value="temporary" {% if cls.class_type == 'temporary' %}selected{% endif %}>Tạm thời</option>
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Khối / Niên khóa (Grade Level)</label>
-        <input type="number" class="form-control" name="grade_level"
-               value="{{ cls.grade_level or '' }}" placeholder="VD: 12">
-      </div>
+  <div class="class-form-card">
+    {% if error %}
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <div>{{ error }}</div>
     </div>
+    {% endif %}
 
-    <h5 class="fw-bold text-secondary mt-4 mb-3">🏫 Thông tin học vụ</h5>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Ngành học</label>
-        <select class="form-select" name="major_id">
-          <option value="">-- Chọn ngành --</option>
-          {% for m in majors %}
-          <option value="{{ m.id }}" {% if cls.major_id == m.id %}selected{% endif %}>{{ m.major_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Năm học</label>
-        <select class="form-select" name="academic_year_id">
-          <option value="">-- Chọn năm học --</option>
-          {% for y in academic_years %}
-          <option value="{{ y.id }}" {% if cls.academic_year_id == y.id %}selected{% endif %}>
-            {{ y.year_name }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Giáo viên chủ nhiệm</label>
-        <select class="form-select" name="homeroom_teacher_id">
-          <option value="">-- Chưa phân công --</option>
-          {% for t in teachers %}
-          <option value="{{ t.id }}" {% if cls.homeroom_teacher_id == t.id %}selected{% endif %}>
-            {{ t.name }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="col-md-6">
-        <label class="form-label">Số lượng tối đa</label>
-        <input type="number" class="form-control" name="max_students"
-               min="1" value="{{ cls.max_students or 50 }}">
-      </div>
+    {% if success %}
+    <div class="alert alert-success d-flex align-items-center" role="alert">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <div>{{ success }}</div>
     </div>
+    {% endif %}
 
-    <h5 class="fw-bold text-secondary mt-4 mb-3">⏳ Thời gian lớp học</h5>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Ngày bắt đầu</label>
-        <input type="date" class="form-control" name="start_date"
-               value="{{ cls.start_date.strftime('%Y-%m-%d') if cls.start_date else '' }}">
+    <form method="post" action="/admin/Class/edit/{{ cls.id }}">
+      <h5 class="class-section-title">
+        <i class="bi bi-card-text"></i>Thông tin cơ bản
+      </h5>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Mã lớp <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="class_code" value="{{ cls.class_code }}" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Tên lớp <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="class_name" value="{{ cls.class_name }}" required>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Loại lớp</label>
+          <select class="form-select" name="class_type">
+            <option value="official" {% if cls.class_type == 'official' %}selected{% endif %}>Chính thức</option>
+            <option value="club" {% if cls.class_type == 'club' %}selected{% endif %}>Câu lạc bộ</option>
+            <option value="course" {% if cls.class_type == 'course' %}selected{% endif %}>Lớp khóa học</option>
+            <option value="temporary" {% if cls.class_type == 'temporary' %}selected{% endif %}>Tạm thời</option>
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Khối / Niên khóa</label>
+          <input type="number" class="form-control" name="grade_level"
+                 value="{{ cls.grade_level or '' }}" placeholder="VD: 12">
+        </div>
       </div>
 
-      <div class="col-md-6">
-        <label class="form-label">Ngày kết thúc</label>
-        <input type="date" class="form-control" name="end_date"
-               value="{{ cls.end_date.strftime('%Y-%m-%d') if cls.end_date else '' }}">
-      </div>
-    </div>
+      <h5 class="class-section-title">
+        <i class="bi bi-mortarboard-fill"></i>Thông tin học vụ
+      </h5>
 
-    <h5 class="fw-bold text-secondary mt-4 mb-3">📝 Thời gian ghi danh</h5>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Mở ghi danh</label>
-        <input type="date" class="form-control" name="enrollment_start"
-               value="{{ cls.enrollment_start.strftime('%Y-%m-%d') if cls.enrollment_start else '' }}">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Ngành học</label>
+          <select class="form-select" name="major_id">
+            <option value="">-- Chọn ngành --</option>
+            {% for m in majors %}
+            <option value="{{ m.id }}" {% if cls.major_id == m.id %}selected{% endif %}>{{ m.major_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Năm học</label>
+          <select class="form-select" name="academic_year_id">
+            <option value="">-- Chọn năm học --</option>
+            {% for y in academic_years %}
+            <option value="{{ y.id }}" {% if cls.academic_year_id == y.id %}selected{% endif %}>
+              {{ y.year_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Giáo viên chủ nhiệm</label>
+          <select class="form-select" name="homeroom_teacher_id">
+            <option value="">-- Chưa phân công --</option>
+            {% for t in teachers %}
+            <option value="{{ t.id }}" {% if cls.homeroom_teacher_id == t.id %}selected{% endif %}>
+              {{ t.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Số lượng tối đa</label>
+          <input type="number" class="form-control" name="max_students"
+                 min="1" value="{{ cls.max_students or 50 }}">
+        </div>
       </div>
 
-      <div class="col-md-6">
-        <label class="form-label">Hạn ghi danh</label>
-        <input type="date" class="form-control" name="enrollment_end"
-               value="{{ cls.enrollment_end.strftime('%Y-%m-%d') if cls.enrollment_end else '' }}">
+      <h5 class="class-section-title">
+        <i class="bi bi-calendar-week-fill"></i>Thời gian lớp học
+      </h5>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Ngày bắt đầu</label>
+          <input type="date" class="form-control" name="start_date"
+                 value="{{ cls.start_date.strftime('%Y-%m-%d') if cls.start_date else '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Ngày kết thúc</label>
+          <input type="date" class="form-control" name="end_date"
+                 value="{{ cls.end_date.strftime('%Y-%m-%d') if cls.end_date else '' }}">
+        </div>
       </div>
 
-      <div class="col-md-6">
-        <label class="form-label">Trạng thái lớp</label>
-        <select class="form-select" name="status">
-          <option value="planning" {% if cls.status == 'planning' %}selected{% endif %}>Đang lên kế hoạch</option>
-          <option value="open_for_enrollment" {% if cls.status == 'open_for_enrollment' %}selected{% endif %}>Mở ghi danh</option>
-          <option value="active" {% if cls.status == 'active' %}selected{% endif %}>Đang học</option>
-          <option value="completed" {% if cls.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
-          <option value="cancelled" {% if cls.status == 'cancelled' %}selected{% endif %}>Đã huỷ</option>
-        </select>
-      </div>
-    </div>
+      <h5 class="class-section-title">
+        <i class="bi bi-person-plus-fill"></i>Thời gian ghi danh
+      </h5>
 
-    <div class="d-flex justify-content-between mt-5">
-      <a href="/admin/Class/manage" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
-      </a>
-      <button type="submit" class="btn btn-primary px-4">
-        <i class="bi bi-save2 me-1"></i> Lưu thay đổi
-      </button>
-    </div>
-  </form>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Mở ghi danh</label>
+          <input type="date" class="form-control" name="enrollment_start"
+                 value="{{ cls.enrollment_start.strftime('%Y-%m-%d') if cls.enrollment_start else '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Hạn ghi danh</label>
+          <input type="date" class="form-control" name="enrollment_end"
+                 value="{{ cls.enrollment_end.strftime('%Y-%m-%d') if cls.enrollment_end else '' }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label">Trạng thái lớp</label>
+          <select class="form-select" name="status">
+            <option value="planning" {% if cls.status == 'planning' %}selected{% endif %}>Đang lên kế hoạch</option>
+            <option value="open_for_enrollment" {% if cls.status == 'open_for_enrollment' %}selected{% endif %}>Mở ghi danh</option>
+            <option value="active" {% if cls.status == 'active' %}selected{% endif %}>Đang học</option>
+            <option value="completed" {% if cls.status == 'completed' %}selected{% endif %}>Đã hoàn thành</option>
+            <option value="cancelled" {% if cls.status == 'cancelled' %}selected{% endif %}>Đã huỷ</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-actions d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <a href="/admin/Class/manage" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-arrow-left-circle me-1"></i>Quay lại
+        </a>
+
+        <button type="submit" class="btn btn-primary px-4">
+          <i class="bi bi-save2 me-1"></i>Lưu thay đổi
+        </button>
+      </div>
+    </form>
+  </div>
+
 </div>
-</body>
-</html>
+{% endblock %}

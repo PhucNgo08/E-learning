@@ -1,54 +1,173 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>📊 Thống kê điểm lớp {{ class_info.class_name }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      background: linear-gradient(180deg, #eef3ff, #f9fbff);
-      font-family: "Inter", "Segoe UI", sans-serif;
+{% extends "layout_teacher.html" %}
+{% block title %}📊 Thống kê điểm lớp {{ class_info.class_name }}{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --class-page-bg: #f5f8ff;
+    --class-card-bg: #ffffff;
+    --class-card-border: #e5e7eb;
+    --class-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --class-text-main: #1e293b;
+    --class-text-muted: #64748b;
+    --class-heading: #0d6efd;
+
+    --class-table-head-bg: #003087;
+    --class-table-head-text: #ffffff;
+    --class-table-border: #e5e7eb;
+    --class-table-row-hover: #f1f7ff;
+    --class-table-row-bg: #ffffff;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --class-page-bg: #071226;
+    --class-card-bg: #0f1b33;
+    --class-card-border: rgba(255, 255, 255, 0.1);
+    --class-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --class-text-main: #e5edf8;
+    --class-text-muted: #9caec8;
+    --class-heading: #8ea6ff;
+
+    --class-table-head-bg: #172846;
+    --class-table-head-text: #dbeafe;
+    --class-table-border: rgba(255, 255, 255, 0.1);
+    --class-table-row-hover: #132445;
+    --class-table-row-bg: #0f1b33;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .teacher-stats-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--class-page-bg);
+    color: var(--class-text-main);
+  }
+
+  .teacher-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    background: var(--class-card-bg);
+    color: var(--class-text-main);
+    border: 1px solid var(--class-card-border);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: var(--class-card-shadow);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .teacher-page-header h3 {
+    color: var(--class-heading);
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .teacher-stats-page .text-muted {
+    color: var(--class-text-muted) !important;
+  }
+
+  .teacher-card,
+  .chart-container {
+    background: var(--class-card-bg);
+    color: var(--class-text-main);
+    border: 1px solid var(--class-card-border);
+    border-radius: 16px;
+    box-shadow: var(--class-card-shadow);
+    overflow: hidden;
+  }
+
+  .chart-container {
+    padding: 1rem;
+    margin-top: 2rem;
+  }
+
+  .teacher-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--class-text-main);
+    --bs-table-border-color: var(--class-table-border);
+    color: var(--class-text-main);
+  }
+
+  .teacher-table th {
+    background-color: var(--class-table-head-bg) !important;
+    color: var(--class-table-head-text) !important;
+    border-color: var(--class-table-border) !important;
+    vertical-align: middle;
+  }
+
+  .teacher-table td {
+    background-color: var(--class-table-row-bg) !important;
+    color: var(--class-text-main) !important;
+    border-color: var(--class-table-border) !important;
+  }
+
+  .teacher-table tbody tr:hover td {
+    background-color: var(--class-table-row-hover) !important;
+  }
+
+  body.dark-mode .teacher-stats-page .btn-outline-secondary,
+  body.theme-dark .teacher-stats-page .btn-outline-secondary,
+  html[data-theme="dark"] .teacher-stats-page .btn-outline-secondary,
+  body[data-theme="dark"] .teacher-stats-page .btn-outline-secondary,
+  [data-bs-theme="dark"] .teacher-stats-page .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .teacher-stats-page .btn-outline-secondary:hover,
+  body.theme-dark .teacher-stats-page .btn-outline-secondary:hover,
+  html[data-theme="dark"] .teacher-stats-page .btn-outline-secondary:hover,
+  body[data-theme="dark"] .teacher-stats-page .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .teacher-stats-page .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .teacher-stats-page {
+      padding: 16px 8px 32px;
     }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      background: #fff;
-      padding: 1rem 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .page-header h3 {
-      color: #003087;
-      font-weight: 600;
-      margin: 0;
-    }
-    table th {
-      background-color: #003087 !important;
-      color: white !important;
-      vertical-align: middle;
-    }
-    table tbody tr:hover {
-      background-color: #f5f9ff;
-    }
-    #chartContainer {
-      background: #fff;
-      border-radius: 12px;
+
+    .teacher-page-header {
       padding: 1rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      margin-top: 2rem;
     }
-  </style>
-</head>
-<body class="p-4">
-  <div class="container">
-    <div class="page-header">
+  }
+</style>
+
+<div class="teacher-stats-page">
+  <div class="container-fluid">
+    <div class="teacher-page-header">
       <div>
         <h3><i class="bi bi-bar-chart-line"></i> Thống kê điểm lớp {{ class_info.class_name }}</h3>
         {% if teacher_name %}
@@ -60,9 +179,9 @@
       </a>
     </div>
 
-    <div class="card p-3">
+    <div class="teacher-card p-3">
       <div class="table-responsive">
-        <table class="table table-striped align-middle text-center mb-0">
+        <table class="table table-striped align-middle text-center mb-0 teacher-table">
           <thead>
             <tr>
               <th>#</th>
@@ -95,60 +214,83 @@
       </div>
     </div>
 
-    <div id="chartContainer">
+    <div class="chart-container">
       <canvas id="scoreChart" height="110"></canvas>
     </div>
   </div>
+</div>
 
-  <script id="chart-labels" type="application/json">
-    {{ chart_labels | tojson | safe }}
-  </script>
-  <script id="chart-quiz" type="application/json">
-    {{ chart_quiz | tojson | safe }}
-  </script>
-  <script id="chart-assign" type="application/json">
-    {{ chart_assign | tojson | safe }}
-  </script>
-  <script id="chart-total" type="application/json">
-    {{ chart_total | tojson | safe }}
-  </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <script>
-    const labels = JSON.parse(document.getElementById("chart-labels").textContent);
-    const quizData = JSON.parse(document.getElementById("chart-quiz").textContent);
-    const assignData = JSON.parse(document.getElementById("chart-assign").textContent);
-    const totalData = JSON.parse(document.getElementById("chart-total").textContent);
+<script id="chart-labels" type="application/json">
+  {{ chart_labels | tojson | safe }}
+</script>
+<script id="chart-quiz" type="application/json">
+  {{ chart_quiz | tojson | safe }}
+</script>
+<script id="chart-assign" type="application/json">
+  {{ chart_assign | tojson | safe }}
+</script>
+<script id="chart-total" type="application/json">
+  {{ chart_total | tojson | safe }}
+</script>
 
-    new Chart(document.getElementById('scoreChart'), {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          { label: 'Quiz TB', data: quizData, backgroundColor: '#6ea8fe' },
-          { label: 'Assignment TB', data: assignData, backgroundColor: '#74d3ae' },
-          { label: 'Tổng hợp', data: totalData, backgroundColor: '#ffc107' }
-        ]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-            max: 100,
-            ticks: { stepSize: 10 }
-          }
+<script>
+  const labels = JSON.parse(document.getElementById("chart-labels").textContent);
+  const quizData = JSON.parse(document.getElementById("chart-quiz").textContent);
+  const assignData = JSON.parse(document.getElementById("chart-assign").textContent);
+  const totalData = JSON.parse(document.getElementById("chart-total").textContent);
+
+  const isDarkMode =
+    document.body.classList.contains("dark-mode") ||
+    document.body.classList.contains("theme-dark") ||
+    document.documentElement.classList.contains("dark-mode") ||
+    document.documentElement.dataset.theme === "dark" ||
+    document.body.dataset.theme === "dark" ||
+    document.documentElement.getAttribute("data-bs-theme") === "dark" ||
+    document.body.getAttribute("data-bs-theme") === "dark";
+
+  const chartTextColor = isDarkMode ? "#dbeafe" : "#1e293b";
+  const chartGridColor = isDarkMode ? "rgba(255,255,255,0.12)" : "rgba(15,23,42,0.12)";
+
+  new Chart(document.getElementById("scoreChart"), {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        { label: "Quiz TB", data: quizData, backgroundColor: "#6ea8fe" },
+        { label: "Assignment TB", data: assignData, backgroundColor: "#74d3ae" },
+        { label: "Tổng hợp", data: totalData, backgroundColor: "#ffc107" }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: {
+          ticks: { color: chartTextColor },
+          grid: { color: chartGridColor }
         },
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              usePointStyle: true,
-              boxWidth: 10
-            }
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            stepSize: 10,
+            color: chartTextColor
+          },
+          grid: { color: chartGridColor }
+        }
+      },
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            color: chartTextColor,
+            usePointStyle: true,
+            boxWidth: 10
           }
         }
       }
-    });
-  </script>
-</body>
-</html>
+    }
+  });
+</script>
+{% endblock %}

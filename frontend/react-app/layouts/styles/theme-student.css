@@ -1,0 +1,340 @@
+/* =========================================================
+   STUDENT ROLE THEME - Friendly Learning UI
+   Load SAU student.css, wallet_system.css va student_dashboard.css.
+========================================================= */
+
+:root {
+  --student-primary: #0ea5e9;
+  --student-primary-rgb: 14, 165, 233;
+  --student-secondary: #22c55e;
+  --student-secondary-rgb: 34, 197, 94;
+  --student-accent: #8b5cf6;
+  --primary: var(--student-primary);
+  --primary-rgb: var(--student-primary-rgb);
+  --primary-strong: #0284c7;
+  --secondary: var(--student-secondary);
+  --secondary-rgb: var(--student-secondary-rgb);
+  --accent: var(--student-accent);
+  --accent-rgb: 139, 92, 246;
+  --sidebar-width: 286px;
+  --header-height: 80px;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(14,165,233,.13), transparent 32rem),
+    radial-gradient(circle at top right, rgba(34,197,94,.09), transparent 25rem),
+    linear-gradient(180deg, #f6fbff, #eef7f2) !important;
+}
+
+body.dark-mode {
+  --primary: #38bdf8;
+  --primary-rgb: 56, 189, 248;
+  --primary-strong: #0ea5e9;
+  --secondary: #4ade80;
+  --secondary-rgb: 74, 222, 128;
+  --accent: #a78bfa;
+  background:
+    radial-gradient(circle at top left, rgba(56,189,248,.13), transparent 32rem),
+    radial-gradient(circle at top right, rgba(74,222,128,.08), transparent 25rem),
+    #07111f !important;
+}
+
+.student-wrapper {
+  background: transparent !important;
+}
+
+/* SIDEBAR */
+.student-sidebar {
+  width: var(--sidebar-width) !important;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(255,255,255,.16), transparent 28%),
+    linear-gradient(180deg, #075985 0%, #0284c7 44%, #166534 100%) !important;
+  box-shadow: 16px 0 42px rgba(8,47,73,.18) !important;
+  border-right: 1px solid rgba(255,255,255,.12);
+}
+
+body.dark-mode .student-sidebar {
+  background:
+    radial-gradient(circle at 15% 0%, rgba(56,189,248,.16), transparent 28%),
+    linear-gradient(180deg, #020617 0%, #0c4a6e 48%, #14532d 100%) !important;
+}
+
+.sidebar-glow { opacity: .24 !important; }
+.sidebar-avatar {
+  border-color: rgba(255,255,255,.82) !important;
+  box-shadow: 0 14px 30px rgba(0,0,0,.24) !important;
+}
+.sidebar-avatar-ring { animation: none !important; border-style: solid !important; }
+.sidebar-role { background: rgba(255,255,255,.14) !important; }
+
+.sidebar-link {
+  border-radius: 16px !important;
+  color: rgba(255,255,255,.90) !important;
+  font-weight: 750;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: rgba(255,255,255,.16) !important;
+  color: #fff !important;
+  transform: translateX(3px) !important;
+}
+
+.sidebar-link.active {
+  box-shadow: inset 4px 0 0 #bbf7d0;
+}
+
+.sidebar-link-icon {
+  background: rgba(255,255,255,.12) !important;
+  color: #fff !important;
+}
+
+.sidebar-link-logout {
+  background: rgba(239,68,68,.12) !important;
+  color: #fecaca !important;
+}
+
+/* CONTENT + HEADER */
+.content-wrapper {
+  background: transparent !important;
+  min-width: 0;
+}
+
+.student-header {
+  height: var(--header-height) !important;
+  background: rgba(255,255,255,.84) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-xs) !important;
+  backdrop-filter: blur(18px);
+  border-radius: 0 0 24px 24px !important;
+}
+
+body.dark-mode .student-header {
+  background: rgba(15,23,42,.84) !important;
+}
+
+.header-title {
+  color: var(--text-main) !important;
+  font-weight: 900 !important;
+}
+
+.header-subtitle {
+  color: var(--text-muted) !important;
+}
+
+.nav-icons {
+  display: flex !important;
+  align-items: center !important;
+  gap: .6rem !important;
+  flex-wrap: nowrap;
+}
+
+.nav-icon,
+.mode-toggle-btn,
+.btn-floating,
+.wallet-header-btn {
+  border: 1px solid var(--border-soft) !important;
+  background: var(--surface) !important;
+  color: var(--text-main) !important;
+  box-shadow: var(--shadow-xs) !important;
+}
+
+.nav-icon:hover,
+.mode-toggle-btn:hover,
+.btn-floating:hover,
+.wallet-header-btn:hover {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+  transform: translateY(-2px) !important;
+}
+
+.wallet-header-btn {
+  min-height: 46px !important;
+  border-radius: 16px !important;
+  padding: .45rem .7rem !important;
+}
+
+.wallet-icon-box {
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+  color: #fff !important;
+}
+
+.wallet-meta small { color: var(--text-muted) !important; }
+.wallet-balance-mini { color: var(--text-main) !important; }
+
+.page-content,
+#content.page-content {
+  padding: var(--page-gutter) !important;
+  color: var(--text-main) !important;
+}
+
+.student-footer {
+  color: var(--text-muted) !important;
+}
+
+/* DASHBOARD */
+.dashboard-hero,
+.welcome-card {
+  overflow: hidden;
+}
+
+.dashboard-hero {
+  background:
+    linear-gradient(135deg, rgba(14,165,233,.96), rgba(56,189,248,.88) 52%, rgba(34,197,94,.84)) !important;
+  color: #fff !important;
+  border: 0 !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.dashboard-hero *,
+.dashboard-hero .text-muted,
+.dashboard-title,
+.dashboard-subtitle {
+  color: #fff !important;
+}
+
+.welcome-card h5,
+.welcome-card p {
+  color: var(--text-main) !important;
+}
+
+.stat-card {
+  min-height: 140px;
+  background: var(--surface-soft) !important;
+  color: var(--text-main) !important;
+}
+
+.stat-card.gradient-blue,
+.stat-card.gradient-green,
+.stat-card.gradient-purple,
+.stat-card.gradient-orange,
+.gradient-blue,
+.gradient-green,
+.gradient-purple,
+.gradient-orange {
+  background: var(--surface-soft) !important;
+}
+
+.stat-card i {
+  color: var(--primary) !important;
+  background: var(--primary-soft) !important;
+}
+
+.stat-card h5,
+.stat-card .stat-value {
+  color: var(--text-main) !important;
+  font-weight: 900 !important;
+}
+
+.stat-card p,
+.stat-card .stat-meta {
+  color: var(--text-muted) !important;
+}
+
+.course-card,
+.lesson-card,
+.assignment-card,
+.quiz-card,
+.material-card {
+  background: var(--surface-soft) !important;
+}
+
+/* CHATBOT */
+#chatBotWindow {
+  background: var(--surface) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border-radius: 24px !important;
+  overflow: hidden;
+}
+
+#chatBotHeader {
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+}
+
+.msg-bubble.msg-ai {
+  background: var(--surface-muted) !important;
+  color: var(--text-main) !important;
+}
+
+.msg-bubble.msg-user {
+  background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+  color: #fff !important;
+}
+
+#chatBotForm {
+  border-top: 1px solid var(--border-soft) !important;
+  background: var(--surface) !important;
+}
+
+@media (min-width: 992px) {
+  .student-sidebar {
+    position: sticky !important;
+    top: 0 !important;
+    transform: none !important;
+  }
+
+  .student-sidebar.collapsed {
+    width: 96px !important;
+  }
+
+  .student-sidebar.collapsed .sidebar-name,
+  .student-sidebar.collapsed .sidebar-role,
+  .student-sidebar.collapsed .sidebar-link-text,
+  .student-sidebar.collapsed .sidebar-footer {
+    display: none !important;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .student-sidebar {
+    position: fixed !important;
+    inset: 0 auto 0 0;
+    height: 100vh;
+    transform: translateX(-102%) !important;
+    z-index: 1060 !important;
+  }
+
+  .student-sidebar.mobile-show {
+    transform: translateX(0) !important;
+  }
+
+  #sidebar-overlay.show {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .student-header {
+    min-height: 68px !important;
+    border-radius: 0 0 18px 18px !important;
+    padding: .65rem .9rem .65rem 4.5rem !important;
+  }
+
+  .header-subtitle { display: none !important; }
+  .page-content, #content.page-content { padding: .95rem !important; }
+}
+
+@media (max-width: 767px) {
+  .wallet-meta { display: none !important; }
+  .wallet-header-btn {
+    width: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    justify-content: center !important;
+  }
+  .header-title { font-size: .95rem !important; }
+  .nav-icons { gap: .35rem !important; }
+  .nav-icon,
+  .mode-toggle-btn,
+  .wallet-header-btn {
+    width: 42px !important;
+    height: 42px !important;
+    border-radius: 14px !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-title-wrap { display: none !important; }
+  .student-header { justify-content: flex-end !important; }
+}

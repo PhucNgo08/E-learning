@@ -1,30 +1,6 @@
 {% extends "layout_student.html" %}
 {% block title %}📄 Chi tiết thảo luận{% endblock %}
 
-{% block head_extra %}
-<style>
-  .comment-box {
-    border-left: 3px solid #e5e7eb;
-    margin-left: 1rem;
-    padding-left: 1rem;
-  }
-  .reply-btn {
-    cursor: pointer;
-    font-size: 0.85rem;
-  }
-  .reply-btn:hover {
-    text-decoration: underline;
-  }
-  .text-gradient {
-    background: linear-gradient(90deg, #2563eb, #0ea5e9);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-    -webkit-text-fill-color: transparent;
-  }
-</style>
-{% endblock %}
-
 {% block content %}
 {% from "discussion/reply_block.html" import render_replies %}
 {% set current_user_id = request.session.get("user_id") %}
@@ -38,7 +14,7 @@
     </a>
   </div>
 
-  <div class="card shadow-sm rounded-4 mb-4">
+  <article class="card discussion-main-card shadow-sm rounded-4 mb-4">
     <div class="card-body">
 
       <h5 class="fw-bold text-gradient mb-3">
@@ -46,7 +22,7 @@
       </h5>
 
       <div class="d-flex justify-content-between mb-2 flex-wrap gap-2">
-        <span class="fw-semibold">
+        <span class="fw-semibold discussion-author">
           {% if discussion.author %}
             {{ discussion.author.full_name if discussion.author.full_name else (discussion.author.username if discussion.author.username else "Ẩn danh") }}
           {% else %}
@@ -60,11 +36,11 @@
         </small>
       </div>
 
-      <p class="mb-3" style="white-space: pre-line;">{{ discussion.content }}</p>
+      <p class="discussion-content mb-3">{{ discussion.content }}</p>
 
-      <div class="d-flex gap-2 flex-wrap">
+      <div class="discussion-actions d-flex gap-2 flex-wrap">
         <form action="/student/discussion/like/{{ discussion.id }}" method="post">
-          <button type="submit" class="btn btn-sm btn-outline-primary">
+          <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill">
             <i class="bi bi-hand-thumbs-up"></i>
             Thích
             {% if discussion.like_count is defined %}
@@ -76,7 +52,7 @@
         {% if current_user_id == discussion.user_id %}
         <form action="/student/discussion/delete/{{ discussion.id }}" method="post"
               onsubmit="return confirm('Bạn có chắc muốn xóa bài thảo luận này?');">
-          <button type="submit" class="btn btn-sm btn-outline-danger">
+          <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill">
             <i class="bi bi-trash"></i> Xóa
           </button>
         </form>
@@ -84,9 +60,9 @@
       </div>
 
     </div>
-  </div>
+  </article>
 
-  <h6 class="fw-bold mb-3">
+  <h6 class="fw-bold mb-3 discussion-section-title">
     <i class="bi bi-reply-all"></i> Phản hồi
   </h6>
 
@@ -96,7 +72,7 @@
     <p class="text-muted">Chưa có phản hồi nào. Hãy là người đầu tiên!</p>
   {% endif %}
 
-  <div class="card mt-4 shadow-sm rounded-3">
+  <div class="card discussion-reply-form mt-4 shadow-sm rounded-3">
     <div class="card-body">
 
       <form action="/student/discussion/reply/{{ discussion.id }}" method="post">
@@ -106,11 +82,11 @@
 
         <textarea name="content"
                   rows="3"
-                  class="form-control mb-2"
+                  class="form-control mb-3 rounded-3 discussion-textarea"
                   placeholder="Nhập phản hồi của bạn..."
                   required></textarea>
 
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="discussion-actions d-flex gap-2 flex-wrap">
           <button class="btn btn-primary rounded-pill">
             <i class="bi bi-send"></i> Gửi
           </button>

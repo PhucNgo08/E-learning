@@ -1,83 +1,219 @@
 {% extends "layout_teacher.html" %}
-{% block title %}🔎 Xem trước import quiz{% endblock %}
+
+{% block title %}Xem trước import{% endblock %}
 
 {% block content %}
+
 <style>
-  .bad-row {
-    background: rgba(220, 53, 69, 0.08) !important;
+  .quiz-page {
+    padding: 24px 12px 42px;
+  }
+  .quiz-card {
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+  }
+  .quiz-title {
+    font-weight: 800;
+    color: #2563eb;
+  }
+  .quiz-muted {
+    color: #64748b;
+  }
+  .quiz-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .quiz-actions .btn {
+    border-radius: 12px;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+  }
+  .info-item {
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+  .question-card {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .question-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 15px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .option-item.correct {
+    background: #ecfdf5;
+    border-color: #22c55e;
+  }
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    background: #fff;
+    color: #334155;
+    flex-shrink: 0;
+  }
+  .option-item.correct .option-letter {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .quiz-table {
+    min-width: 880px;
+  }
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 16px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .quiz-actions { width: 100%; }
+    .quiz-actions .btn { width: 100%; }
+    .question-card { padding: 14px; }
   }
 </style>
 
-<div class="container py-4">
-  <div class="bg-white rounded shadow-sm p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-      <div>
-        <h3 class="fw-bold text-primary mb-1">🔎 Xem trước dữ liệu import</h3>
-        <p class="text-muted mb-0">Quiz: {{ quiz.title }}</p>
+<div class="quiz-page">
+  <div class="container-fluid">
+    <div class="quiz-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="quiz-title mb-1">
+            <i class="bi bi-search"></i> Xem trước import
+          </h3>
+          <p class="quiz-muted mb-0">
+            Quiz: <strong>{{ quiz.title }}</strong>
+            {% if filename %} · File: <strong>{{ filename }}</strong>{% endif %}
+          </p>
+        </div>
+
+        <div class="quiz-actions">
+          <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Chọn file khác
+          </a>
+          <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-outline-primary">
+            Chi tiết quiz
+          </a>
+        </div>
       </div>
-      <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-outline-secondary">← Chọn file khác</a>
     </div>
 
-    {% if questions %}
-    <div class="alert alert-secondary">
-      Tổng số dòng đọc được: <strong>{{ questions|length }}</strong>
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="quiz-card p-3 text-center">
+          <div class="fw-bold fs-3 text-primary">{{ total_rows or 0 }}</div>
+          <div class="text-muted">Tổng dòng đọc được</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="quiz-card p-3 text-center">
+          <div class="fw-bold fs-3 text-success">{{ valid_count or 0 }}</div>
+          <div class="text-muted">Câu hợp lệ</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="quiz-card p-3 text-center">
+          <div class="fw-bold fs-3 text-danger">{{ invalid_count or 0 }}</div>
+          <div class="text-muted">Câu lỗi</div>
+        </div>
+      </div>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-bordered align-middle">
-        <thead class="table-primary text-center">
-          <tr>
-            <th>#</th>
-            <th>Câu hỏi</th>
-            <th>A</th>
-            <th>B</th>
-            <th>C</th>
-            <th>D</th>
-            <th>Đáp án đúng</th>
-            <th>Trạng thái</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for q in questions %}
-          {% set q_text = (q.question_text or '')|trim %}
-          {% set a = (q.option_a or '')|trim %}
-          {% set b = (q.option_b or '')|trim %}
-          {% set c = (q.option_c or '')|trim %}
-          {% set d = (q.option_d or '')|trim %}
-          {% set correct = (q.correct or '')|trim|lower %}
-          {% set valid = q_text and a and b and c and d and correct %}
-          <tr class="{% if not valid %}bad-row{% endif %}">
-            <td>{{ loop.index }}</td>
-            <td>{{ q.question_text or '—' }}</td>
-            <td>{{ q.option_a or '—' }}</td>
-            <td>{{ q.option_b or '—' }}</td>
-            <td>{{ q.option_c or '—' }}</td>
-            <td>{{ q.option_d or '—' }}</td>
-            <td>{{ q.correct or '—' }}</td>
-            <td class="text-center">
-              {% if valid %}
-                <span class="badge bg-success">Hợp lệ</span>
-              {% else %}
-                <span class="badge bg-danger">Thiếu dữ liệu</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+    <div class="quiz-card p-4">
+      {% if questions %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle quiz-table">
+            <thead class="table-primary text-center">
+              <tr>
+                <th>#</th>
+                <th>Câu hỏi</th>
+                <th>A</th>
+                <th>B</th>
+                <th>C</th>
+                <th>D</th>
+                <th>Đúng</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for q in questions %}
+              <tr>
+                <td class="text-center">{{ q.row_number or loop.index }}</td>
+                <td style="min-width:260px;">{{ q.question_text }}</td>
+                <td>{{ q.option_a }}</td>
+                <td>{{ q.option_b }}</td>
+                <td>{{ q.option_c }}</td>
+                <td>{{ q.option_d }}</td>
+                <td class="text-center fw-bold text-primary">{{ q.correct|upper }}</td>
+                <td class="text-center">
+                  {% if q.is_valid %}
+                    <span class="badge bg-success">Hợp lệ</span>
+                  {% else %}
+                    <span class="badge bg-danger">Lỗi</span>
+                    <div class="small text-danger mt-1">{{ q.error }}</div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-    <div class="d-flex justify-content-end gap-2 mt-3">
-      <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-outline-secondary">Quay lại</a>
-      <form method="post" action="/teacher/quizzes/{{ quiz.id }}/import/confirm">
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-check-circle"></i> Xác nhận import
-        </button>
-      </form>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+          <div class="text-muted">
+            Chỉ các câu hợp lệ mới được lưu vào quiz.
+          </div>
+
+          <form method="post" action="/teacher/quizzes/{{ quiz.id }}/import/confirm">
+            <button type="submit"
+                    class="btn btn-success px-4"
+                    {% if not valid_count %}disabled{% endif %}>
+              <i class="bi bi-check-circle"></i> Xác nhận import {{ valid_count or 0 }} câu
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <div class="alert alert-warning mb-0">
+          Không đọc được câu hỏi nào từ file. Vui lòng kiểm tra lại định dạng file.
+        </div>
+      {% endif %}
     </div>
-    {% else %}
-    <div class="alert alert-warning mb-0">Không có dữ liệu để xem trước.</div>
-    {% endif %}
   </div>
 </div>
 {% endblock %}

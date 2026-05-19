@@ -2,7 +2,7 @@
 {% block title %}📈 Tiến độ: {{ course.course_name }}{% endblock %}
 
 {% block content %}
-<div class="container py-3">
+<div class="container py-3 course-progress-page">
 
   <div class="mb-3">
     <a href="/student/course/detail/{{ course.id }}" class="btn btn-outline-secondary btn-sm rounded-pill">
@@ -11,11 +11,14 @@
   </div>
 
   <div class="card mb-4 shadow-sm border-0 progress-card">
-    <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
-      <div class="mb-2">
+    <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
         <div class="fw-bold fs-5 text-primary">{{ course.course_name }}</div>
         <div class="text-muted small">
           {{ progress.completed_lessons }}/{{ progress.total_lessons }} bài học hoàn thành
+        </div>
+        <div class="text-muted small">
+          Ngành: {{ course.major.major_name if course.major else "Chưa phân ngành" }}
         </div>
       </div>
 
@@ -39,7 +42,6 @@
       {% if modules %}
         {% for m in modules %}
         <div class="list-group-item module-item">
-
           <div class="fw-semibold mb-2 text-dark fs-6">
             <i class="bi bi-folder2-open text-warning"></i>
             Module {{ m.module_number }}: {{ m.title }}
@@ -62,7 +64,6 @@
               <span class="text-muted small">⛔ Chưa có bài học nào.</span>
             {% endif %}
           </div>
-
         </div>
         {% endfor %}
       {% else %}
@@ -91,17 +92,85 @@
 </script>
 
 <style>
-  .card { border-radius: 12px; }
-  .progress-card { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(12px); }
-  .progress { height: 12px; background: #e9ecef; border-radius: 20px; overflow: hidden; }
-  .progress-bar { background: linear-gradient(90deg,#0d6efd,#6ec1ff); transition: width .8s cubic-bezier(.4,0,.2,1); }
-  .module-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(10px); }
-  .module-item { border-left: 4px solid transparent; transition: 0.25s; }
-  .module-item:hover { background: #f8faff; border-left: 4px solid #0d6efd; }
-  .lesson-btn { border-radius: 20px; padding: 6px 12px; font-size: .85rem; transition: 0.25s; }
-  .lesson-done { background: #198754 !important; border-color: #198754 !important; color: #fff !important; }
-  .lesson-done:hover { background: #157347 !important; }
-  .lesson-pending { background: #fff; border: 1px solid #d0d7de; color: #495057; }
-  .lesson-pending:hover { background: #eef3ff; border-color: #0d6efd; color: #0d6efd; }
+  .course-progress-page .card {
+    border-radius: 12px;
+  }
+
+  .course-progress-page .progress-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px);
+  }
+
+  .course-progress-page .progress {
+    height: 12px;
+    background: #e9ecef;
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .course-progress-page .progress-bar {
+    width: 0;
+    background: linear-gradient(90deg,#0d6efd,#6ec1ff);
+    transition: width .8s cubic-bezier(.4,0,.2,1);
+  }
+
+  .course-progress-page .module-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+  }
+
+  .course-progress-page .module-item {
+    border-left: 4px solid transparent;
+    transition: 0.25s;
+  }
+
+  .course-progress-page .module-item:hover {
+    background: #f8faff;
+    border-left: 4px solid #0d6efd;
+  }
+
+  .course-progress-page .lesson-btn {
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: .85rem;
+    transition: 0.25s;
+  }
+
+  .course-progress-page .lesson-done {
+    background: #198754 !important;
+    border-color: #198754 !important;
+    color: #fff !important;
+  }
+
+  .course-progress-page .lesson-done:hover {
+    background: #157347 !important;
+  }
+
+  .course-progress-page .lesson-pending {
+    background: #fff;
+    border: 1px solid #d0d7de;
+    color: #495057;
+  }
+
+  .course-progress-page .lesson-pending:hover {
+    background: #eef3ff;
+    border-color: #0d6efd;
+    color: #0d6efd;
+  }
+
+  body.dark-mode .course-progress-page .progress-card,
+  body.dark-mode .course-progress-page .module-card,
+  body.dark-mode .course-progress-page .list-group-item {
+    background: rgba(15, 23, 42, .82);
+    color: #e2e8f0;
+  }
+
+  body.dark-mode .course-progress-page .text-dark {
+    color: #e2e8f0 !important;
+  }
+
+  body.dark-mode .course-progress-page .text-muted {
+    color: #94a3b8 !important;
+  }
 </style>
 {% endblock %}

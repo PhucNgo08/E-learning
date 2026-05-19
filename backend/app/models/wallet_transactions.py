@@ -40,6 +40,12 @@ class WalletTransaction(Base):
 
     wallet = relationship("WalletAccount", back_populates="transactions")
     order = relationship("Order", back_populates="wallet_transactions")
+    topup_request = relationship(
+        "WalletTopupRequest",
+        back_populates="wallet_transaction",
+        foreign_keys="WalletTopupRequest.wallet_transaction_id",
+        uselist=False,
+    )
 
     def __repr__(self):
         return (

@@ -18,6 +18,7 @@ from app.services.quiz_service_full_v12 import (
 )
 from app.models.quiz import Quiz
 from app.models.question import Question
+from app.models.course import Course
 from app.models.course_enrollment import CourseEnrollment
 
 router = APIRouter(
@@ -29,8 +30,10 @@ router = APIRouter(
 def get_current_student_id(request: Request) -> str | None:
     user_id = request.session.get("user_id")
     role = request.session.get("role")
+
     if not user_id or role != "student":
         return None
+
     return user_id
 
 
@@ -67,6 +70,10 @@ async def quiz_by_course(request: Request, course_id: str, db=Depends(get_db)):
         if not user_id:
             return RedirectResponse("/auth/login", 302)
 
+        course = db.query(Course).filter(Course.id == course_id).first()
+        if not course:
+            return HTMLResponse("Không tìm thấy khóa học.", 404)
+
         enrolled = (
             db.query(CourseEnrollment)
             .filter(
@@ -76,6 +83,7 @@ async def quiz_by_course(request: Request, course_id: str, db=Depends(get_db)):
             )
             .first()
         )
+
         if not enrolled:
             return HTMLResponse("Bạn không học khóa này.", 403)
 
@@ -85,6 +93,7 @@ async def quiz_by_course(request: Request, course_id: str, db=Depends(get_db)):
             "quiz/quiz_list_by_course.html",
             {
                 "request": request,
+                "course": course,
                 "quizzes": quizzes,
                 "page_title": "Quiz theo khóa học",
                 "active_page": "quiz",
@@ -115,20 +124,13 @@ async def attempt_quiz(request: Request, quiz_id: str, db=Depends(get_db)):
         if not quiz:
             return HTMLResponse("Quiz không tồn tại.", 404)
 
-        if quiz.quiz_type == "practice":
-            quiz.questions = list(quiz.questions or [])
-            if quiz.randomize_questions:
-                random.shuffle(quiz.questions)
+        if quiz.status != "published":
+            return HTMLResponse("Quiz chưa được mở.", 403)
 
-            if quiz.randomize_options:
-                for q in quiz.questions:
-                    q.options = list(q.options or [])
-                    random.shuffle(q.options)
+        if quiz.quiz_type == "graded" and not bool(quiz.is_approved):
+            return HTMLResponse("Bài thi chưa được admin duyệt.", 403)
 
-        if quiz.quiz_type == "graded":
-            if not quiz.is_approved or quiz.status != "published":
-                return HTMLResponse("Bài thi chưa được mở.", 403)
-
+        if quiz.course_id:
             enrollment = (
                 db.query(CourseEnrollment)
                 .filter(
@@ -138,22 +140,52 @@ async def attempt_quiz(request: Request, quiz_id: str, db=Depends(get_db)):
                 )
                 .first()
             )
+
             if not enrollment:
                 return HTMLResponse("Bạn không học khóa này.", 403)
 
-            now = datetime.utcnow()
-            if quiz.available_from and now < quiz.available_from:
-                return HTMLResponse("Bài thi chưa mở.", 403)
+        now = datetime.utcnow()
 
-            if quiz.available_to and now > quiz.available_to:
-                return HTMLResponse("Bài thi đã kết thúc.", 403)
+        if quiz.available_from and now < quiz.available_from:
+            return HTMLResponse("Bài chưa mở.", 403)
 
-            attempts = get_quiz_attempt_count_for_student(db, user_id, quiz_id)
-            if quiz.max_attempts and attempts >= quiz.max_attempts:
-                return templates["student"].TemplateResponse(
-                    "quiz/quiz_limit.html",
-                    {"request": request, "quiz": quiz, "page_title": "Đã hết lượt làm", "active_page": "quiz"},
-                )
+        if quiz.available_to and now > quiz.available_to:
+            return HTMLResponse("Bài đã kết thúc.", 403)
+
+        attempts = get_quiz_attempt_count_for_student(db, user_id, quiz_id)
+
+        if quiz.max_attempts and attempts >= quiz.max_attempts:
+            return templates["student"].TemplateResponse(
+                "quiz/quiz_limit.html",
+                {
+                    "request": request,
+                    "quiz": quiz,
+                    "max_attempts": quiz.max_attempts or 1,
+                    "page_title": "Đã hết lượt làm",
+                    "active_page": "quiz",
+                },
+            )
+
+        quiz.questions = list(quiz.questions or [])
+
+        if not quiz.questions:
+            return templates["student"].TemplateResponse(
+                "quiz/quiz_empty.html",
+                {
+                    "request": request,
+                    "quiz": quiz,
+                    "page_title": "Quiz chưa có câu hỏi",
+                    "active_page": "quiz",
+                },
+            )
+
+        if quiz.randomize_questions:
+            random.shuffle(quiz.questions)
+
+        if quiz.randomize_options:
+            for q in quiz.questions:
+                q.options = list(q.options or [])
+                random.shuffle(q.options)
 
         request.session["quiz_started_at"] = datetime.utcnow().isoformat()
         request.session.pop("submitted_flag", None)
@@ -197,9 +229,26 @@ async def submit_quiz_post(request: Request, quiz_id: str, db=Depends(get_db)):
         request.session.pop("quiz_started_at", None)
 
         if not result or "attempt_id" not in result:
-            return HTMLResponse("Lỗi khi nộp bài quiz.", 400)
+            error_message = "Lỗi khi nộp bài quiz."
 
-        return RedirectResponse(f"/student/quiz/result/{result['attempt_id']}", status_code=303)
+            if isinstance(result, dict):
+                error_message = result.get("error", error_message)
+
+            return templates["student"].TemplateResponse(
+                "quiz/quiz_error.html",
+                {
+                    "request": request,
+                    "message": error_message,
+                    "page_title": "Lỗi nộp bài",
+                    "active_page": "quiz",
+                },
+                status_code=400,
+            )
+
+        return RedirectResponse(
+            f"/student/quiz/result/{result['attempt_id']}",
+            status_code=303,
+        )
 
     except Exception:
         request.session.pop("submitted_flag", None)
@@ -215,6 +264,7 @@ async def quiz_result_page(request: Request, attempt_id: str, db=Depends(get_db)
             return RedirectResponse("/auth/login", 302)
 
         result = get_quiz_result(db, attempt_id)
+
         if not result:
             return HTMLResponse("Không tìm thấy kết quả.", 404)
 

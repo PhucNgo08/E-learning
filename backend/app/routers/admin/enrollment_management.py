@@ -60,7 +60,7 @@ def create_form(request: Request, db: Session = Depends(get_db), admin=Depends(g
 def add_enrollment_route(user_id: str = Form(...), class_id: str = Form(...), enrollment_type: str = Form("official"), db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     del admin
     try:
-        add_enrollment(user_id=user_id, class_id=class_id, enrollment_type=enrollment_type, db=db)
+        add_enrollment(db=db, user_id=user_id, class_id=class_id, enrollment_type=enrollment_type, approved_by=admin.id)
         return RedirectResponse("/admin/enrollments/manage", status_code=303)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -71,7 +71,7 @@ def add_enrollment_route(user_id: str = Form(...), class_id: str = Form(...), en
 @enrollment_router.post("/update/{enrollment_id}")
 def update_status(enrollment_id: str, new_status: str = Form(...), approved_by: str = Form(None), db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     try:
-        update_enrollment_status(enrollment_id=enrollment_id, new_status=new_status, approved_by=approved_by or admin.id, db=db)
+        update_enrollment_status(db=db, enrollment_id=enrollment_id, new_status=new_status, approved_by=approved_by or admin.id)
         return RedirectResponse("/admin/enrollments/manage", status_code=303)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -82,7 +82,7 @@ def update_status(enrollment_id: str, new_status: str = Form(...), approved_by: 
 @enrollment_router.post("/approve/{enrollment_id}")
 def approve_route(enrollment_id: str, db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     try:
-        approve_enrollment(enrollment_id=enrollment_id, approved_by=admin.id, db=db)
+        approve_enrollment(db=db, enrollment_id=enrollment_id, approved_by=admin.id)
         return RedirectResponse("/admin/enrollments/manage", status_code=303)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -93,7 +93,7 @@ def approve_route(enrollment_id: str, db: Session = Depends(get_db), admin=Depen
 @enrollment_router.post("/reject/{enrollment_id}")
 def reject_route(enrollment_id: str, db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     try:
-        reject_enrollment(enrollment_id=enrollment_id, approved_by=admin.id, db=db)
+        reject_enrollment(db=db, enrollment_id=enrollment_id, approved_by=admin.id)
         return RedirectResponse("/admin/enrollments/manage", status_code=303)
     except ValueError as e:
         raise HTTPException(400, str(e)) from e
@@ -114,7 +114,7 @@ def delete_form(request: Request, enrollment_id: str, db: Session = Depends(get_
 def delete_route(enrollment_id: str, db: Session = Depends(get_db), admin=Depends(get_current_admin)):
     del admin
     try:
-        service_delete_enrollment(enrollment_id, db)
+        service_delete_enrollment(db=db, enrollment_id=enrollment_id)
         return RedirectResponse("/admin/enrollments/manage", status_code=303)
     except ValueError as e:
         raise HTTPException(404, str(e)) from e

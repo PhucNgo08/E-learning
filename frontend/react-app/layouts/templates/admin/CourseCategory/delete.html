@@ -1,67 +1,111 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>Xác nhận xóa danh mục</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #fef2f2;
-      font-family: "Inter", sans-serif;
+{% extends "layout_admin.html" %}
+
+{% block title %}Xác nhận xóa danh mục{% endblock %}
+
+{% block extra_css %}
+<style>
+  .category-delete-page {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .delete-card {
+    background: var(--surface, #fff);
+    border: 1px solid rgba(220, 38, 38, 0.18);
+    border-radius: var(--radius-xl, 18px);
+    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
+    padding: 32px;
+    text-align: center;
+  }
+
+  .delete-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 999px;
+    background: rgba(220, 38, 38, 0.1);
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+  }
+
+  .delete-title {
+    color: #b91c1c;
+    font-weight: 800;
+  }
+
+  .category-name-box {
+    background: rgba(248, 113, 113, 0.08);
+    border: 1px dashed rgba(220, 38, 38, 0.25);
+    border-radius: 14px;
+    padding: 14px 16px;
+    color: var(--text-main, #0f172a);
+    font-weight: 800;
+  }
+
+  .delete-warning {
+    color: var(--text-muted, #64748b);
+    line-height: 1.65;
+  }
+
+  .delete-actions {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .delete-card {
+      padding: 22px;
     }
-    .confirm-box {
-      max-width: 600px;
-      margin: 80px auto;
-      background: #fff;
-      border-radius: 14px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      padding: 2rem;
-      text-align: center;
+
+    .delete-actions .btn {
+      width: 100%;
     }
-    h2 {
-      color: #dc3545;
-      font-weight: 700;
-    }
-    .alert-icon {
-      font-size: 3rem;
-      color: #dc3545;
-      margin-bottom: 1rem;
-    }
-    .btn-danger {
-      background: linear-gradient(45deg, #dc3545, #b02a37);
-      border: none;
-      transition: all 0.2s ease;
-    }
-    .btn-danger:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
-    }
-  </style>
-</head>
-<body>
-  <div class="confirm-box">
-    <div class="alert-icon">
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="category-delete-page">
+
+  <div class="delete-card">
+    <div class="delete-icon">
       <i class="bi bi-exclamation-triangle-fill"></i>
     </div>
-    <h2>Xác nhận xóa danh mục</h2>
-    <p class="text-muted mt-3 mb-4">
-      Bạn có chắc chắn muốn xóa danh mục <strong class="text-dark">"{{ category.category_name }}"</strong> không?<br>
-      Hành động này không thể hoàn tác.
+
+    <h3 class="delete-title mb-3">Xác nhận xóa danh mục</h3>
+
+    <p class="delete-warning mb-3">
+      Bạn có chắc chắn muốn xóa danh mục bên dưới không?
+      Hành động này có thể ảnh hưởng đến các khóa học đang gắn với danh mục.
     </p>
 
+    <div class="category-name-box mb-3">
+      <i class="bi bi-tag-fill me-1 text-danger"></i>
+      {{ category.category_name }}
+    </div>
+
+    {% if category.description %}
+    <p class="text-muted mb-0">
+      {{ category.description }}
+    </p>
+    {% endif %}
+
     <form method="post" action="/admin/CourseCategory/delete/{{ category.id }}">
-      <div class="d-flex justify-content-center gap-3">
-        <a href="/admin/CourseCategory/manage" class="btn btn-secondary px-4">
-          <i class="bi bi-x-circle"></i> Hủy
+      <div class="delete-actions d-flex justify-content-center gap-2 flex-wrap">
+        <a href="/admin/CourseCategory/manage" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-x-circle me-1"></i>Hủy
         </a>
+
         <button type="submit" class="btn btn-danger px-4">
-          <i class="bi bi-trash"></i> Xóa
+          <i class="bi bi-trash me-1"></i>Xóa danh mục
         </button>
       </div>
     </form>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>
+{% endblock %}

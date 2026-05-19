@@ -3,36 +3,163 @@
 
 {% block content %}
 <style>
-  .page-wrapper {
+  :root {
+    --course-page-bg: #ffffff;
+    --course-page-border: #e5e7eb;
+    --course-page-shadow: 0 6px 25px rgba(0,0,0,0.08);
+    --course-text-main: #1e293b;
+    --course-text-muted: #64748b;
+    --course-heading: #0d6efd;
+    --course-input-bg: #ffffff;
+    --course-input-text: #1e293b;
+    --course-input-border: #ced4da;
+    --course-input-readonly-bg: #f8f9fa;
+    --course-tab-text: #334155;
+    --course-tab-active-bg: #0d6efd;
+    --course-tab-active-text: #ffffff;
+    --course-alert-bg: rgba(13,110,253,0.08);
+    --course-alert-border: rgba(13,110,253,0.22);
+  }
+
+  body.dark-mode {
+    --course-page-bg: #0f1b33;
+    --course-page-border: rgba(255,255,255,0.08);
+    --course-page-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    --course-text-main: #e5edf8;
+    --course-text-muted: #9caec8;
+    --course-heading: #7aa2ff;
+    --course-input-bg: #111f3a;
+    --course-input-text: #e5edf8;
+    --course-input-border: rgba(255,255,255,0.14);
+    --course-input-readonly-bg: #172846;
+    --course-tab-text: #c9d6ea;
+    --course-tab-active-bg: #2563eb;
+    --course-tab-active-text: #ffffff;
+    --course-alert-bg: rgba(37,99,235,0.16);
+    --course-alert-border: rgba(96,165,250,0.28);
+  }
+
+  .course-form-page {
     max-width: 1000px;
-    margin: 35px auto;
-    background: #fff;
+    margin: 24px auto 40px;
+    background: var(--course-page-bg);
+    color: var(--course-text-main);
     padding: 2rem 2.5rem;
     border-radius: 18px;
-    box-shadow: 0 6px 25px rgba(0,0,0,0.08);
+    border: 1px solid var(--course-page-border);
+    box-shadow: var(--course-page-shadow);
     font-family: "Inter", sans-serif;
   }
-  .nav-tabs .nav-link.active {
-    background: #0d6efd;
-    color: #fff !important;
+
+  .course-form-page h3,
+  .course-form-page .text-primary {
+    color: var(--course-heading) !important;
   }
-  label {
+
+  .course-form-page label {
+    font-weight: 600;
+    color: var(--course-text-main);
+  }
+
+  .course-form-page .text-muted,
+  .course-form-page .form-text {
+    color: var(--course-text-muted) !important;
+  }
+
+  .course-form-page .form-control,
+  .course-form-page .form-select,
+  .course-form-page textarea {
+    background-color: var(--course-input-bg);
+    color: var(--course-input-text);
+    border-color: var(--course-input-border);
+  }
+
+  .course-form-page .form-control:focus,
+  .course-form-page .form-select:focus,
+  .course-form-page textarea:focus {
+    background-color: var(--course-input-bg);
+    color: var(--course-input-text);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59,130,246,0.2);
+  }
+
+  .course-form-page .form-control::placeholder,
+  .course-form-page textarea::placeholder {
+    color: var(--course-text-muted);
+  }
+
+  .course-form-page .bg-light,
+  .course-form-page .form-control.bg-light {
+    background-color: var(--course-input-readonly-bg) !important;
+    color: var(--course-input-text) !important;
+    border-color: var(--course-input-border);
+  }
+
+  .course-form-page .nav-tabs {
+    border-bottom-color: var(--course-page-border);
+  }
+
+  .course-form-page .nav-tabs .nav-link {
+    color: var(--course-tab-text);
+    background: transparent;
+    border-color: transparent;
     font-weight: 600;
   }
+
+  .course-form-page .nav-tabs .nav-link:hover {
+    border-color: var(--course-page-border);
+  }
+
+  .course-form-page .nav-tabs .nav-link.active {
+    background: var(--course-tab-active-bg);
+    color: var(--course-tab-active-text) !important;
+    border-color: var(--course-tab-active-bg);
+  }
+
+  .course-form-page .alert-info {
+    background: var(--course-alert-bg);
+    border-color: var(--course-alert-border);
+    color: var(--course-text-main);
+  }
+
   .preview-img {
     width: 100%;
     max-height: 260px;
     border-radius: 14px;
-    border: 1px solid rgba(0,0,0,0.2);
+    border: 1px solid var(--course-input-border);
     object-fit: cover;
     margin-top: 10px;
+    background: var(--course-input-readonly-bg);
+  }
+
+  body.dark-mode .course-form-page .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  body.dark-mode .course-form-page .btn-outline-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .course-form-page {
+      padding: 1.25rem;
+      margin: 16px auto 32px;
+    }
   }
 </style>
 
-<div class="page-wrapper">
-  <h3 class="text-primary fw-bold mb-3">
-    <i class="bi bi-pencil-square"></i> Chỉnh sửa Khóa Học
-  </h3>
+<div class="course-form-page">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h3 class="text-primary fw-bold mb-0">
+      <i class="bi bi-pencil-square"></i> Chỉnh sửa Khóa Học
+    </h3>
+
+    <a href="/teacher/courses/manage" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left-circle"></i> Quay lại
+    </a>
+  </div>
 
   <div class="alert alert-info d-flex align-items-start mb-4">
     <i class="bi bi-shield-check me-2 fs-4"></i>
@@ -46,16 +173,35 @@
   </div>
 
   <ul class="nav nav-tabs mb-4">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">Thông tin chính</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time">Lịch - Học vụ</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings">Cài đặt khóa học</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-limit">Giới hạn</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-thumb">Ảnh đại diện</button></li>
+    <li class="nav-item">
+      <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic">
+        Thông tin chính
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time">
+        Lịch - Học vụ
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings">
+        Cài đặt khóa học
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-limit">
+        Giới hạn
+      </button>
+    </li>
+    <li class="nav-item">
+      <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-thumb">
+        Ảnh đại diện
+      </button>
+    </li>
   </ul>
 
   <form method="post" action="/teacher/courses/edit/{{ course.id }}" enctype="multipart/form-data">
     <div class="tab-content">
-
       <div class="tab-pane fade show active" id="tab-basic">
         <div class="row g-3">
           <div class="col-md-6">
@@ -84,7 +230,7 @@
 
           <div class="col-md-4">
             <label class="form-label">Cấp độ lớp</label>
-            <input type="number" class="form-control" name="grade_level" value="{{ course.grade_level }}">
+            <input type="number" class="form-control" name="grade_level" value="{{ course.grade_level or '' }}">
           </div>
 
           <div class="col-12">
@@ -111,12 +257,12 @@
           <div class="col-md-6">
             <label class="form-label">Ngành học (Tự động)</label>
             <input type="text" readonly class="form-control bg-light"
-                   value="{{ teacher.major.major_name if teacher.major else 'Không xác định' }}">
+                   value="{{ teacher.major.major_name if teacher and teacher.major else 'Không xác định' }}">
           </div>
 
           <div class="col-md-4">
             <label class="form-label">Học kỳ</label>
-            <input type="number" class="form-control" name="semester" value="{{ course.semester }}">
+            <input type="number" class="form-control" name="semester" value="{{ course.semester or '' }}">
           </div>
         </div>
       </div>
@@ -150,12 +296,12 @@
         <div class="row g-3">
           <div class="col-md-6">
             <label class="form-label">Giá khóa học (VNĐ)</label>
-            <input type="number" class="form-control" name="price" min="0" value="{{ course.price }}" step="1000">
+            <input type="number" class="form-control" name="price" min="0" value="{{ course.price or 0 }}" step="1000">
           </div>
 
           <div class="col-md-6">
             <label class="form-label">Số lượng tối đa</label>
-            <input type="number" class="form-control" name="max_students" min="1" value="{{ course.max_students }}">
+            <input type="number" class="form-control" name="max_students" min="1" value="{{ course.max_students or 100 }}">
           </div>
 
           <div class="col-md-6">
@@ -172,9 +318,7 @@
               <div>Trạng thái: <strong>{{ course.status|capitalize }}</strong></div>
               <div>Công khai: <strong>{{ 'Có' if course.is_public else 'Không' }}</strong></div>
             </div>
-            <div class="form-text">
-              Chỉ Admin mới có thể thay đổi trạng thái xuất bản và thiết lập công khai.
-            </div>
+            <div class="form-text">Chỉ Admin mới có thể thay đổi trạng thái xuất bản và thiết lập công khai.</div>
           </div>
         </div>
       </div>
@@ -183,13 +327,11 @@
         <div class="col-md-6">
           <label class="form-label">Ảnh đại diện</label>
           <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-               id="preview" class="preview-img">
-          <input type="file" class="form-control mt-2" name="thumbnail"
-                 accept="image/*" onchange="previewImage(event)">
+               id="preview" class="preview-img"
+               onerror="this.src='/uploads/course_thumbnails/default-course.png'">
+          <input type="file" class="form-control mt-2" name="thumbnail" accept="image/*" onchange="previewImage(event)">
         </div>
-        <p class="text-muted mt-2">
-          Hỗ trợ: JPG, PNG, GIF, WEBP (khuyến nghị 1280x720)
-        </p>
+        <p class="text-muted mt-2">Hỗ trợ: JPG, PNG, GIF, WEBP (khuyến nghị 1280x720)</p>
       </div>
 
       <input type="hidden" name="status_str" value="{{ course.status }}">

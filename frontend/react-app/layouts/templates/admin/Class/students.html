@@ -1,114 +1,458 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>Quản lý sinh viên trong lớp</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+{% extends "layout_admin.html" %}
 
-  <style>
-    body {
-      background: #eef2f7;
-      font-family: "Segoe UI", sans-serif;
+{% block title %}Quản lý sinh viên trong lớp{% endblock %}
+
+{% block extra_css %}
+<style>
+  .class-students-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    color: #0f172a;
+  }
+
+  .class-page-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb);
+    color: #fff;
+    border-radius: 18px;
+    padding: 24px 28px;
+    box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+
+  .class-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .class-info-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 0.55rem 0.85rem;
+    font-weight: 800;
+    color: #fff;
+    margin-top: 10px;
+  }
+
+  .students-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    overflow: hidden;
+  }
+
+  .students-card-header {
+    padding: 18px 22px;
+    background: #eaf1ff;
+    color: #1e293b;
+    border-bottom: 1px solid #dbe3ef;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .students-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    background: #e8f0ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .students-table {
+    --bs-table-bg: #ffffff;
+    --bs-table-color: #0f172a;
+    --bs-table-border-color: #e2e8f0;
+    --bs-table-hover-bg: #f1f5ff;
+    --bs-table-hover-color: #0f172a;
+    margin-bottom: 0;
+  }
+
+  .students-table thead th {
+    background: #f8fafc;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+    white-space: nowrap;
+    font-weight: 800;
+    padding: 15px 14px;
+  }
+
+  .students-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  .students-table tbody tr:hover {
+    background: #eef6ff;
+  }
+
+  .students-table tbody td {
+    color: #0f172a;
+    border-color: #e2e8f0;
+    vertical-align: middle;
+    padding: 15px 14px;
+  }
+
+  .student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    background: #e8f0ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    margin-right: 10px;
+  }
+
+  .student-name {
+    font-weight: 900;
+    color: #0f172a;
+  }
+
+  .student-email {
+    color: #334155;
+    font-weight: 600;
+  }
+
+  .student-code {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
+    padding: 0.42rem 0.7rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+  }
+
+  .add-student-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    padding: 24px;
+  }
+
+  .add-student-card .form-label {
+    color: #0f172a;
+    font-weight: 800;
+  }
+
+  .add-student-card .form-select {
+    min-height: 48px;
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #cbd5e1;
+    border-radius: 14px;
+  }
+
+  .add-student-card .form-select:focus {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.14);
+  }
+
+  .empty-state {
+    text-align: center;
+    color: #64748b;
+    padding: 42px 20px;
+  }
+
+  .empty-state i {
+    display: block;
+    font-size: 2.4rem;
+    color: #2563eb;
+    margin-bottom: 10px;
+  }
+
+  body.dark-mode .class-students-page,
+  html[data-bs-theme="dark"] .class-students-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .students-card,
+  body.dark-mode .add-student-card,
+  html[data-bs-theme="dark"] .students-card,
+  html[data-bs-theme="dark"] .add-student-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .students-card-header,
+  html[data-bs-theme="dark"] .students-card-header {
+    background: #172033;
+    color: #f8fafc;
+    border-bottom-color: rgba(148, 163, 184, 0.28);
+  }
+
+  body.dark-mode .students-count,
+  html[data-bs-theme="dark"] .students-count {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  body.dark-mode .students-table,
+  html[data-bs-theme="dark"] .students-table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #e5e7eb;
+    --bs-table-border-color: rgba(148, 163, 184, 0.2);
+    --bs-table-hover-bg: rgba(56, 189, 248, 0.08);
+    --bs-table-hover-color: #ffffff;
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .students-table thead th,
+  html[data-bs-theme="dark"] .students-table thead th {
+    background: #111827;
+    color: #f8fafc;
+    border-bottom-color: rgba(148, 163, 184, 0.28);
+  }
+
+  body.dark-mode .students-table tbody tr,
+  html[data-bs-theme="dark"] .students-table tbody tr {
+    background: rgba(15, 23, 42, 0.88);
+  }
+
+  body.dark-mode .students-table tbody tr:nth-child(even),
+  html[data-bs-theme="dark"] .students-table tbody tr:nth-child(even) {
+    background: rgba(30, 41, 59, 0.78);
+  }
+
+  body.dark-mode .students-table tbody td,
+  html[data-bs-theme="dark"] .students-table tbody td {
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.16);
+  }
+
+  body.dark-mode .student-avatar,
+  html[data-bs-theme="dark"] .student-avatar {
+    background: rgba(59, 130, 246, 0.2);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  body.dark-mode .student-name,
+  html[data-bs-theme="dark"] .student-name {
+    color: #ffffff;
+  }
+
+  body.dark-mode .student-email,
+  html[data-bs-theme="dark"] .student-email {
+    color: #dbeafe;
+  }
+
+  body.dark-mode .student-code,
+  html[data-bs-theme="dark"] .student-code {
+    background: rgba(34, 197, 94, 0.18);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.25);
+  }
+
+  body.dark-mode .add-student-card .form-label,
+  html[data-bs-theme="dark"] .add-student-card .form-label {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .add-student-card .form-select,
+  html[data-bs-theme="dark"] .add-student-card .form-select {
+    background: #111827;
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+
+  body.dark-mode .add-student-card .form-select option,
+  html[data-bs-theme="dark"] .add-student-card .form-select option {
+    background: #111827;
+    color: #f8fafc;
+  }
+
+  body.dark-mode .add-student-card .form-select:focus,
+  html[data-bs-theme="dark"] .add-student-card .form-select:focus {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 0.2rem rgba(56, 189, 248, 0.18);
+  }
+
+  body.dark-mode .empty-state,
+  html[data-bs-theme="dark"] .empty-state {
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .empty-state i,
+  html[data-bs-theme="dark"] .empty-state i {
+    color: #38bdf8;
+  }
+
+  @media (max-width: 768px) {
+    .class-page-header,
+    .add-student-card {
+      padding: 18px;
     }
-    .card {
-      border-radius: 10px;
-      border: none;
+
+    .class-page-header .btn,
+    .add-student-card .btn {
+      width: 100%;
     }
-    .card-header {
-      font-weight: 600;
-    }
-  </style>
-</head>
+  }
+</style>
+{% endblock %}
 
-<body>
-<div class="container mt-4">
-    <h3 class="mb-3 text-primary">
-        👨‍🎓 Quản lý sinh viên trong lớp: <b>{{ cls.class_name }}</b>
-    </h3>
+{% block content %}
+<div class="class-students-page">
 
-    <a href="/admin/Class/manage" class="btn btn-secondary mb-3">
-        ⬅ Quay lại danh sách lớp
-    </a>
+  <div class="class-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-people-fill me-2"></i>Quản lý sinh viên trong lớp
+      </h3>
 
-    {% if success %}
-      <div class="alert alert-success shadow-sm">{{ success }}</div>
-    {% endif %}
-    {% if error %}
-      <div class="alert alert-danger shadow-sm">{{ error }}</div>
-    {% endif %}
-
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header bg-primary text-white">
-            Danh sách sinh viên trong lớp
-        </div>
-        <div class="card-body">
-            {% if students %}
-            <table class="table table-bordered">
-                <thead>
-                    <tr class="table-light">
-                        <th>Họ tên</th>
-                        <th>Email</th>
-                        <th>MSSV</th>
-                        <th class="text-center">Thao tác</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for s in students %}
-                    <tr>
-                        <td>{{ s.full_name }}</td>
-                        <td>{{ s.email }}</td>
-                        <td>{{ s.mssv or "—" }}</td>
-                        <td class="text-center">
-                            <form method="post" action="/admin/Class/remove-student"
-                                  onsubmit="return confirm('Xóa sinh viên {{ s.full_name }} khỏi lớp?')">
-                                <input type="hidden" name="class_id" value="{{ cls.id }}">
-                                <input type="hidden" name="student_id" value="{{ s.id }}">
-                                <button class="btn btn-sm btn-danger">
-                                    ❌ Xóa khỏi lớp
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            {% else %}
-            <p class="text-muted">Chưa có sinh viên nào trong lớp.</p>
-            {% endif %}
-        </div>
+      <div class="class-info-pill">
+        <i class="bi bi-mortarboard-fill"></i>
+        {{ cls.class_name }}
+      </div>
     </div>
 
-    <div class="card shadow-sm">
-        <div class="card-header bg-success text-white">
-            ➕ Thêm sinh viên vào lớp
-        </div>
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Class/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Danh sách lớp
+      </a>
 
-        <div class="card-body">
-            <form method="post" action="/admin/Class/add-student">
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+      </a>
+    </div>
+  </div>
+
+  {% if success %}
+  <div class="alert alert-success d-flex align-items-center shadow-sm" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <div>{{ success }}</div>
+  </div>
+  {% endif %}
+
+  {% if error %}
+  <div class="alert alert-danger d-flex align-items-center shadow-sm" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <div>{{ error }}</div>
+  </div>
+  {% endif %}
+
+  <div class="students-card mb-4">
+    <div class="students-card-header">
+      <span>
+        <i class="bi bi-list-check me-1"></i>
+        Danh sách sinh viên trong lớp
+      </span>
+
+      <span class="students-count">
+        <i class="bi bi-people"></i>
+        {{ students|length if students else 0 }} sinh viên
+      </span>
+    </div>
+
+    <div class="table-responsive">
+      {% if students %}
+      <table class="table table-hover align-middle students-table">
+        <thead>
+          <tr>
+            <th>Họ tên</th>
+            <th>Email</th>
+            <th style="width: 160px;">MSSV</th>
+            <th style="width: 170px;" class="text-center">Thao tác</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for s in students %}
+          <tr>
+            <td>
+              <span class="student-avatar">
+                {{ (s.full_name or 'S')[:1]|upper }}
+              </span>
+              <span class="student-name">{{ s.full_name }}</span>
+            </td>
+
+            <td>
+              <span class="student-email">{{ s.email }}</span>
+            </td>
+
+            <td>
+              <span class="student-code">
+                {{ s.mssv or "—" }}
+              </span>
+            </td>
+
+            <td class="text-center">
+              <form method="post"
+                    action="/admin/Class/remove-student"
+                    onsubmit="return confirm('Xóa sinh viên {{ s.full_name }} khỏi lớp?')">
                 <input type="hidden" name="class_id" value="{{ cls.id }}">
+                <input type="hidden" name="student_id" value="{{ s.id }}">
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Chọn sinh viên</label>
-                    <select name="student_id" class="form-select" required>
-                        <option value="">-- Chọn sinh viên --</option>
-
-                        {% for s in available_students %}
-                        <option value="{{ s.id }}">
-                            {{ s.full_name }} ({{ s.email }} - MSSV: {{ s.mssv or "N/A" }})
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <button class="btn btn-success">
-                    ➕ Thêm vào lớp
+                <button class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-person-dash me-1"></i>Xóa khỏi lớp
                 </button>
-            </form>
-        </div>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <strong>Chưa có sinh viên nào trong lớp.</strong>
+      </div>
+      {% endif %}
     </div>
-</div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  <div class="add-student-card">
+    <h5 class="fw-bold mb-3">
+      <i class="bi bi-person-plus-fill me-2 text-success"></i>
+      Thêm sinh viên vào lớp
+    </h5>
+
+    <form method="post" action="/admin/Class/add-student">
+      <input type="hidden" name="class_id" value="{{ cls.id }}">
+
+      <div class="mb-3">
+        <label class="form-label">Chọn sinh viên</label>
+        <select name="student_id" class="form-select" required>
+          <option value="">-- Chọn sinh viên --</option>
+
+          {% for s in available_students %}
+          <option value="{{ s.id }}">
+            {{ s.full_name }} ({{ s.email }} - MSSV: {{ s.mssv or "N/A" }})
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button class="btn btn-success px-4">
+        <i class="bi bi-plus-circle me-1"></i>Thêm vào lớp
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

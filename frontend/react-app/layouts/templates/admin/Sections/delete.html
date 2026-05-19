@@ -1,54 +1,162 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🗑️ Xóa học phần</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
-  <style>
-    body {
-      background: linear-gradient(135deg, #f3f8ff, #e9f2ff);
-      font-family: "Inter", "Segoe UI", sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .confirm-card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-      padding: 2rem 2.5rem;
-      max-width: 600px;
-      text-align: center;
-    }
-    h2 { color: #dc3545; font-weight: 700; }
-  </style>
-</head>
-<body>
-  <div class="confirm-card">
-    <i class="bi bi-exclamation-triangle-fill text-danger fs-1 mb-3"></i>
-    <h2>Xác nhận xóa học phần</h2>
+{% extends "layout_admin.html" %}
 
-    <p>
-      Bạn có chắc chắn muốn xóa học phần
-      <strong>{{ section.section_name }}</strong><br>
-      (Mã: <strong>{{ section.section_code }}</strong>)?
+{% block title %}Xóa học phần{% endblock %}
+
+{% block nav_sections %}active{% endblock %}
+
+{% block extra_css %}
+<style>
+  .section-delete-page {
+    max-width: 720px;
+    margin: 0 auto;
+    color: #0f172a;
+  }
+
+  .delete-card {
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    border-radius: 18px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+    padding: 32px;
+    text-align: center;
+  }
+
+  .delete-icon {
+    width: 78px;
+    height: 78px;
+    border-radius: 999px;
+    background: #fee2e2;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.3rem;
+    margin-bottom: 18px;
+  }
+
+  .delete-title {
+    color: #b91c1c;
+    font-weight: 900;
+  }
+
+  .section-name-box {
+    background: #fff1f2;
+    border: 1px dashed #fca5a5;
+    border-radius: 16px;
+    padding: 16px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .delete-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  .delete-actions {
+    border-top: 1px solid #e2e8f0;
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  body.dark-mode .section-delete-page,
+  html[data-bs-theme="dark"] .section-delete-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .delete-card,
+  html[data-bs-theme="dark"] .delete-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(239, 68, 68, 0.3);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .delete-icon,
+  html[data-bs-theme="dark"] .delete-icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+  }
+
+  body.dark-mode .delete-title,
+  html[data-bs-theme="dark"] .delete-title {
+    color: #fca5a5;
+  }
+
+  body.dark-mode .section-name-box,
+  html[data-bs-theme="dark"] .section-name-box {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.28);
+  }
+
+  body.dark-mode .delete-warning,
+  html[data-bs-theme="dark"] .delete-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+
+  body.dark-mode .delete-actions,
+  html[data-bs-theme="dark"] .delete-actions {
+    border-top-color: rgba(148, 163, 184, 0.22);
+  }
+
+  @media (max-width: 768px) {
+    .delete-card {
+      padding: 22px;
+    }
+
+    .delete-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="section-delete-page">
+
+  <div class="delete-card">
+    <div class="delete-icon">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+    </div>
+
+    <h3 class="delete-title mb-3">Xác nhận xóa học phần</h3>
+
+    <p class="text-muted mb-3">
+      Bạn có chắc chắn muốn xóa học phần bên dưới không?
     </p>
 
-    <div class="alert alert-warning">
+    <div class="section-name-box mb-3">
+      <div>
+        <i class="bi bi-diagram-3-fill me-1 text-danger"></i>
+        {{ section.section_name }}
+      </div>
+      <div class="mt-1">
+        Mã: {{ section.section_code }}
+      </div>
+    </div>
+
+    <div class="delete-warning mb-0">
+      <i class="bi bi-exclamation-circle me-1"></i>
       Nếu học phần đang có dữ liệu liên kết, hệ thống có thể từ chối xóa.
     </div>
 
-    <form action="/admin/sections/delete/{{ section.id }}" method="post" class="d-flex justify-content-center gap-3">
-      <a href="/admin/sections/manage" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại
-      </a>
-      <button type="submit" class="btn btn-danger px-4">
-        <i class="bi bi-trash3-fill me-1"></i> Xóa học phần
-      </button>
+    <form action="/admin/sections/delete/{{ section.id }}" method="post">
+      <div class="delete-actions d-flex justify-content-center gap-2 flex-wrap">
+        <a href="/admin/sections/manage" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-arrow-left-circle me-1"></i>Quay lại
+        </a>
+
+        <button type="submit" class="btn btn-danger px-4">
+          <i class="bi bi-trash3-fill me-1"></i>Xóa học phần
+        </button>
+      </div>
     </form>
   </div>
-</body>
-</html>
+
+</div>
+{% endblock %}

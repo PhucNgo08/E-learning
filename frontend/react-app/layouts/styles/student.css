@@ -142,7 +142,10 @@ body.dark-mode .input-group-text {
 
 .student-sidebar {
   width: var(--sidebar-width);
+  flex: 0 0 var(--sidebar-width);
   min-height: 100vh;
+  height: 100vh;
+  max-height: 100vh;
   position: sticky;
   top: 0;
   z-index: 1040;
@@ -153,7 +156,7 @@ body.dark-mode .input-group-text {
     linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 58, 138, 0.98) 55%, rgba(37, 99, 235, 0.96) 100%);
   color: #ffffff;
   box-shadow: 10px 0 30px rgba(15, 23, 42, 0.18);
-  transition: width 0.3s ease, transform 0.3s ease;
+  transition: width 0.3s ease, flex-basis 0.3s ease, opacity 0.2s ease, transform 0.3s ease;
 }
 
 .sidebar-glow {
@@ -180,8 +183,25 @@ body.dark-mode .input-group-text {
   background: rgba(168, 85, 247, 0.35);
 }
 
-.student-sidebar.collapsed {
-  width: 96px;
+/* Desktop: ẩn sidebar hoàn toàn, không chừa cột icon */
+@media (min-width: 992px) {
+  .student-sidebar.collapsed {
+    width: 0;
+    min-width: 0;
+    flex-basis: 0;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-100%);
+    box-shadow: none;
+  }
+
+  .student-sidebar.collapsed .sidebar-glow,
+  .student-sidebar.collapsed .sidebar-header,
+  .student-sidebar.collapsed .sidebar-inner,
+  .student-sidebar.collapsed .sidebar-footer {
+    display: none !important;
+  }
 }
 
 .sidebar-header {
@@ -242,7 +262,25 @@ body.dark-mode .input-group-text {
   gap: 0.42rem;
   padding: 1rem 0.8rem;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
+
+.sidebar-inner::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-inner::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+}
+
+.sidebar-inner::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 
 .sidebar-link {
   display: flex;
@@ -608,6 +646,10 @@ body.dark-mode .wallet-header-btn {
   visibility: visible;
 }
 
+body.sidebar-open {
+  overflow: hidden;
+}
+
 /* =====================================================
 🤖 CHATBOT
 ===================================================== */
@@ -871,12 +913,29 @@ body.dark-mode .msg-ai {
     position: fixed;
     left: 0;
     top: 0;
-    transform: translateX(-100%);
     width: min(88vw, 320px);
+    flex-basis: min(88vw, 320px);
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    transform: translateX(-100%);
   }
 
   .student-sidebar.mobile-show {
     transform: translateX(0);
+  }
+
+  /* Nếu đang thu sidebar ở desktop rồi chuyển sang mobile thì vẫn mở đúng full menu */
+  .student-sidebar.collapsed {
+    width: min(88vw, 320px);
+    flex-basis: min(88vw, 320px);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
 
   .content-wrapper {
@@ -940,5 +999,646 @@ body.dark-mode .msg-ai {
   .btn-floating.chat-btn {
     right: 16px;
     bottom: 16px;
+  }
+}
+
+/* =====================================================
+✅ STUDENT COMMON RESPONSIVE + DARK MODE PATCH
+Dùng chung cho mọi trang extend layout_student.html
+===================================================== */
+
+/* Bootstrap variable bridge */
+body {
+  --bs-body-bg: var(--bg);
+  --bs-body-color: var(--text);
+  --bs-border-color: var(--border);
+  --bs-secondary-color: var(--text-muted);
+}
+
+body.dark-mode {
+  color-scheme: dark;
+}
+
+/* Page helpers */
+.fade-in,
+.student-page {
+  animation: studentFadeIn 0.28s ease both;
+}
+
+@keyframes studentFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.container,
+.container-fluid {
+  max-width: 100%;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+/* Cards / panels dùng chung */
+.student-card,
+.card,
+.modal-content,
+.dropdown-menu,
+.offcanvas,
+.toast,
+.list-group-item {
+  background-color: var(--surface-strong) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.card-header,
+.card-footer,
+.modal-header,
+.modal-footer {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.dropdown-item {
+  color: var(--text) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background-color: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+hr {
+  border-color: var(--border);
+  opacity: 1;
+}
+
+/* Form dark/light */
+.form-label,
+.form-check-label {
+  color: var(--text);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow: 0 0 0 0.22rem rgba(37, 99, 235, 0.12);
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+  border-color: rgba(96, 165, 250, 0.48);
+  box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.14);
+}
+
+.input-group-text {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+/* Alert sáng/tối */
+.alert {
+  border-color: var(--border) !important;
+  border-radius: var(--radius-md);
+}
+
+body.dark-mode .alert-info {
+  color: #bfdbfe;
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+body.dark-mode .alert-success {
+  color: #bbf7d0;
+  background-color: rgba(22, 163, 74, 0.15);
+}
+
+body.dark-mode .alert-warning {
+  color: #fde68a;
+  background-color: rgba(217, 119, 6, 0.16);
+}
+
+body.dark-mode .alert-danger {
+  color: #fecaca;
+  background-color: rgba(220, 38, 38, 0.16);
+}
+
+/* =====================================================
+📊 TABLE RESPONSIVE DARK/LIGHT
+===================================================== */
+.table-responsive,
+.student-table-wrap {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.table,
+.student-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--text);
+  --bs-table-border-color: var(--border);
+  --bs-table-striped-bg: rgba(148, 163, 184, 0.06);
+  --bs-table-striped-color: var(--text);
+  --bs-table-hover-bg: var(--primary-soft);
+  --bs-table-hover-color: var(--text);
+  color: var(--text) !important;
+  margin-bottom: 0;
+}
+
+.table > :not(caption) > * > * {
+  color: var(--text) !important;
+  background-color: transparent !important;
+  border-bottom-color: var(--border) !important;
+}
+
+.table thead,
+.table-light,
+.table-light > th,
+.table-light > td {
+  --bs-table-bg: rgba(148, 163, 184, 0.10);
+  --bs-table-color: var(--text);
+  background-color: rgba(148, 163, 184, 0.10) !important;
+  color: var(--text) !important;
+}
+
+body.dark-mode .table thead,
+body.dark-mode .table-light,
+body.dark-mode .table-light > th,
+body.dark-mode .table-light > td {
+  --bs-table-bg: rgba(30, 41, 59, 0.88);
+  background-color: rgba(30, 41, 59, 0.88) !important;
+}
+
+.table th {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table td {
+  word-break: break-word;
+}
+
+.table .btn,
+.student-table .btn {
+  white-space: nowrap;
+}
+
+/* Nếu bảng chưa thêm responsive-card-table thì mobile sẽ cuộn ngang, không vỡ giao diện */
+@media (max-width: 767.98px) {
+  .table-responsive > .table:not(.responsive-card-table),
+  .table-responsive > table:not(.responsive-card-table) {
+    min-width: 720px;
+  }
+}
+
+/* Bảng có class responsive-card-table sẽ đổi thành card trên điện thoại */
+@media (max-width: 767.98px) {
+  .responsive-card-table {
+    min-width: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .responsive-card-table thead {
+    display: none;
+  }
+
+  .responsive-card-table,
+  .responsive-card-table tbody,
+  .responsive-card-table tr,
+  .responsive-card-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-card-table tr {
+    padding: 0.85rem;
+    margin: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-strong);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .responsive-card-table td {
+    padding: 0.55rem 0 !important;
+    border: 0 !important;
+  }
+
+  .responsive-card-table td + td {
+    border-top: 1px dashed var(--border) !important;
+  }
+
+  .responsive-card-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .responsive-card-table td.text-center {
+    text-align: left !important;
+  }
+
+  .responsive-card-table .d-flex,
+  .responsive-card-table .student-actions {
+    justify-content: flex-start !important;
+  }
+}
+
+/* =====================================================
+📱 MOBILE COMMON FIXES
+===================================================== */
+.student-actions,
+.page-actions,
+.form-actions,
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.text-break-safe,
+.fw-semibold,
+.card-title,
+h1, h2, h3, h4, h5, h6 {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767.98px) {
+  h1, .h1 { font-size: 1.65rem; }
+  h2, .h2 { font-size: 1.45rem; }
+  h3, .h3 { font-size: 1.25rem; }
+  h4, .h4 { font-size: 1.12rem; }
+
+  .container,
+  .container-fluid {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .card-body {
+    padding: 1rem;
+  }
+
+  .student-actions,
+  .page-actions,
+  .form-actions,
+  .action-buttons {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+
+  .student-actions .btn,
+  .page-actions .btn,
+  .form-actions .btn,
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2,
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-3,
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-4 {
+    align-items: stretch !important;
+  }
+
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2 > .btn,
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-3 > .btn,
+  .d-flex.flex-wrap.justify-content-between.align-items-center.gap-2.mb-4 > .btn {
+    width: 100%;
+  }
+
+  .badge {
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .list-group-item {
+    align-items: flex-start !important;
+  }
+
+  .list-group-item .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .student-header {
+    min-height: 68px;
+  }
+
+  .wallet-header-btn {
+    max-width: 160px;
+  }
+
+  .wallet-balance-mini {
+    max-width: 92px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .page-content {
+    padding: 0.85rem 0.7rem;
+  }
+}
+
+/* =====================================================
+🧾 ASSIGNMENT PAGE OPTIONAL LABELS
+Thêm class responsive-card-table + data-label vào td để mobile đẹp nhất.
+===================================================== */
+.assignment-page .card,
+.assignment-card {
+  border-radius: var(--radius-lg);
+}
+
+.assignment-page textarea {
+  min-height: 140px;
+}
+
+.assignment-page .table-responsive {
+  box-shadow: var(--shadow-soft);
+}
+
+.assignment-page .file-name,
+.file-name {
+  overflow-wrap: anywhere;
+}
+
+/* Print */
+@media print {
+  .student-sidebar,
+  .student-header,
+  .btn-floating,
+  #chatBotWindow,
+  #sidebar-overlay,
+  .student-footer,
+  .btn {
+    display: none !important;
+  }
+
+  .page-content {
+    padding: 0 !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .card,
+  .table-responsive {
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+  }
+}
+
+
+/* =====================================================
+💬 STUDENT DISCUSSION DARK/LIGHT + RESPONSIVE
+===================================================== */
+.text-gradient {
+  background: linear-gradient(90deg, var(--primary), #0ea5e9);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.discussion-container,
+.discussion-detail {
+  color: var(--text);
+}
+
+.discussion-panel,
+.discussion-card,
+.reply-item,
+.discussion-main-card,
+.discussion-reply-form {
+  background: var(--surface-strong) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-soft);
+}
+
+.discussion-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem;
+  border-radius: 18px;
+  animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.discussion-card-link {
+  display: block;
+  color: var(--text) !important;
+  text-decoration: none !important;
+}
+
+.discussion-card {
+  padding: 18px;
+  border-radius: 16px;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+}
+
+.discussion-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-strong);
+  border-color: rgba(37, 99, 235, 0.34) !important;
+}
+
+body.dark-mode .discussion-card:hover {
+  border-color: rgba(96, 165, 250, 0.42) !important;
+}
+
+.avatar-discuss,
+.reply-avatar {
+  object-fit: cover;
+  border: 2px solid var(--border);
+  background: var(--surface-muted);
+  flex-shrink: 0;
+}
+
+.avatar-discuss {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+}
+
+.discussion-author,
+.reply-author {
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.text-preview,
+.discussion-content,
+.reply-content {
+  color: var(--text-soft);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  line-height: 1.65;
+}
+
+.course-badge {
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+body.dark-mode .course-badge {
+  border-color: rgba(96, 165, 250, 0.24);
+}
+
+.discussion-search .input-group,
+.discussion-search .input-group-text,
+.discussion-search .form-control,
+.discussion-search .btn {
+  border-color: var(--border) !important;
+}
+
+.discussion-search .input-group {
+  border-radius: 16px;
+}
+
+.discussion-search .input-group-text {
+  background: var(--surface-strong) !important;
+  color: var(--text-muted) !important;
+}
+
+.discussion-textarea {
+  resize: vertical;
+  min-height: 130px;
+}
+
+.discussion-section-title {
+  color: var(--text);
+}
+
+.reply-item {
+  border-radius: 16px !important;
+}
+
+.reply-tree {
+  margin-left: 1.25rem;
+  padding-left: 1rem;
+  border-left: 3px solid var(--border);
+}
+
+body.dark-mode .reply-tree {
+  border-left-color: rgba(255, 255, 255, 0.14);
+}
+
+.discussion-pagination .page-link {
+  background: var(--surface-strong) !important;
+  color: var(--text) !important;
+  border-color: var(--border) !important;
+}
+
+.discussion-pagination .page-link:hover {
+  background: var(--primary-soft) !important;
+  color: var(--primary) !important;
+}
+
+.discussion-pagination .page-item.disabled .page-link {
+  background: var(--surface-muted) !important;
+  color: var(--text-muted) !important;
+}
+
+@media (max-width: 767.98px) {
+  .discussion-page-head {
+    align-items: stretch !important;
+  }
+
+  .discussion-page-head > div,
+  .discussion-actions,
+  .discussion-actions .btn,
+  .discussion-actions form,
+  .discussion-actions form .btn {
+    width: 100%;
+  }
+
+  .discussion-actions {
+    display: grid !important;
+    grid-template-columns: 1fr;
+  }
+
+  .discussion-panel {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .discussion-card {
+    padding: 1rem;
+  }
+
+  .discussion-meta {
+    justify-content: flex-start !important;
+  }
+
+  .discussion-search .input-group {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+  }
+
+  .discussion-search .input-group .btn {
+    grid-column: 1 / -1;
+    width: 100%;
+    border-radius: 0 0 14px 14px !important;
+  }
+
+  .reply-tree {
+    margin-left: 0.35rem;
+    padding-left: 0.75rem;
   }
 }

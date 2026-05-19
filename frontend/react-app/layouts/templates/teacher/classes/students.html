@@ -1,32 +1,191 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>👨‍🎓 Danh sách học viên</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
-  <style>
-    body {
-      background-color: #f6f9ff;
-      font-family: "Inter", "Segoe UI", sans-serif;
+{% extends "layout_teacher.html" %}
+{% block title %}👨‍🎓 Danh sách học viên{% endblock %}
+
+{% block content %}
+<style>
+  :root {
+    --student-page-bg: #f5f8ff;
+    --student-card-bg: #ffffff;
+    --student-card-border: #e5e7eb;
+    --student-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --student-text-main: #1e293b;
+    --student-text-muted: #64748b;
+    --student-heading: #0d6efd;
+
+    --student-table-head-bg: #f8fbff;
+    --student-table-head-text: #1e40af;
+    --student-table-border: #e5e7eb;
+    --student-table-row-bg: #ffffff;
+    --student-table-row-alt: #f8fbff;
+    --student-table-row-hover: #f1f7ff;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --student-page-bg: #071226;
+    --student-card-bg: #0f1b33;
+    --student-card-border: rgba(255, 255, 255, 0.1);
+    --student-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --student-text-main: #e5edf8;
+    --student-text-muted: #9caec8;
+    --student-heading: #8ea6ff;
+
+    --student-table-head-bg: #172846;
+    --student-table-head-text: #dbeafe;
+    --student-table-border: rgba(255, 255, 255, 0.1);
+    --student-table-row-bg: #0f1b33;
+    --student-table-row-alt: #101d36;
+    --student-table-row-hover: #132445;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .teacher-students-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--student-page-bg);
+    color: var(--student-text-main);
+  }
+
+  .teacher-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 12px;
+    flex-wrap: wrap;
+    background: var(--student-card-bg);
+    color: var(--student-text-main);
+    border: 1px solid var(--student-card-border);
+    border-radius: 16px;
+    padding: 1rem 1.5rem;
+    box-shadow: var(--student-card-shadow);
+  }
+
+  .teacher-page-header h3,
+  .teacher-page-header .text-primary {
+    color: var(--student-heading) !important;
+  }
+
+  .teacher-students-page .text-muted {
+    color: var(--student-text-muted) !important;
+  }
+
+  .teacher-student-table {
+    background: var(--student-card-bg);
+    color: var(--student-text-main);
+    border: 1px solid var(--student-card-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--student-card-shadow);
+  }
+
+  .teacher-student-table .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--student-text-main);
+    --bs-table-border-color: var(--student-table-border);
+    color: var(--student-text-main);
+  }
+
+  .teacher-student-table thead th {
+    background: var(--student-table-head-bg) !important;
+    color: var(--student-table-head-text) !important;
+    border-color: var(--student-table-border) !important;
+    vertical-align: middle;
+  }
+
+  .teacher-student-table tbody td {
+    background: var(--student-table-row-bg) !important;
+    color: var(--student-text-main) !important;
+    border-color: var(--student-table-border) !important;
+    vertical-align: middle;
+  }
+
+  .teacher-student-table tbody tr:nth-child(even) td {
+    background: var(--student-table-row-alt) !important;
+  }
+
+  .teacher-student-table tbody tr:hover td {
+    background: var(--student-table-row-hover) !important;
+  }
+
+  body.dark-mode .teacher-students-page .badge.bg-light,
+  body.theme-dark .teacher-students-page .badge.bg-light,
+  html[data-theme="dark"] .teacher-students-page .badge.bg-light,
+  body[data-theme="dark"] .teacher-students-page .badge.bg-light,
+  [data-bs-theme="dark"] .teacher-students-page .badge.bg-light {
+    background-color: rgba(148, 163, 184, 0.18) !important;
+    color: #cbd5e1 !important;
+  }
+
+  body.dark-mode .teacher-students-page .badge.bg-info,
+  body.theme-dark .teacher-students-page .badge.bg-info,
+  html[data-theme="dark"] .teacher-students-page .badge.bg-info,
+  body[data-theme="dark"] .teacher-students-page .badge.bg-info,
+  [data-bs-theme="dark"] .teacher-students-page .badge.bg-info {
+    background-color: rgba(96, 165, 250, 0.24) !important;
+    color: #dbeafe !important;
+  }
+
+  body.dark-mode .teacher-students-page .btn-outline-secondary,
+  body.theme-dark .teacher-students-page .btn-outline-secondary,
+  html[data-theme="dark"] .teacher-students-page .btn-outline-secondary,
+  body[data-theme="dark"] .teacher-students-page .btn-outline-secondary,
+  [data-bs-theme="dark"] .teacher-students-page .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .teacher-students-page .btn-outline-secondary:hover,
+  body.theme-dark .teacher-students-page .btn-outline-secondary:hover,
+  html[data-theme="dark"] .teacher-students-page .btn-outline-secondary:hover,
+  body[data-theme="dark"] .teacher-students-page .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .teacher-students-page .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .teacher-students-page {
+      padding: 16px 8px 32px;
     }
-    .container {
-      max-width: 1000px;
+
+    .teacher-page-header {
+      padding: 1rem;
     }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-  </style>
-</head>
-<body>
-  <div class="container py-4">
-    <div class="page-header">
+  }
+</style>
+
+<div class="teacher-students-page">
+  <div class="container-fluid">
+    <div class="teacher-page-header">
       <div>
         <h3 class="fw-bold text-primary mb-1">
           <i class="bi bi-person-lines-fill"></i>
@@ -42,46 +201,48 @@
       </a>
     </div>
 
-    <table class="table table-striped shadow-sm align-middle bg-white">
-      <thead class="table-light text-center">
-        <tr>
-          <th>#</th>
-          <th>Họ và tên</th>
-          <th>Email</th>
-          <th>MSSV</th>
-          <th>Trạng thái</th>
-          <th>Chức vụ</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in students %}
-        <tr class="text-center">
-          <td>{{ loop.index }}</td>
-          <td class="text-start">{{ s.full_name }}</td>
-          <td>{{ s.email or '-' }}</td>
-          <td>{{ s.mssv or '-' }}</td>
-          <td>
-            {% if s.status == 'active' %}
-              <span class="badge bg-success">Đang học</span>
-            {% elif s.status == 'approved' %}
-              <span class="badge bg-info text-dark">Đã duyệt</span>
-            {% elif s.status == 'completed' %}
-              <span class="badge bg-secondary">Hoàn thành</span>
-            {% else %}
-              <span class="badge bg-light text-dark">{{ s.status or '-' }}</span>
-            {% endif %}
-          </td>
-          <td>{{ s.role_in_class or 'Thành viên' }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="text-center text-muted py-3">
-            Chưa có học viên nào trong lớp này.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="table-responsive teacher-student-table">
+      <table class="table table-striped align-middle mb-0">
+        <thead class="text-center">
+          <tr>
+            <th>#</th>
+            <th>Họ và tên</th>
+            <th>Email</th>
+            <th>MSSV</th>
+            <th>Trạng thái</th>
+            <th>Chức vụ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in students %}
+          <tr class="text-center">
+            <td>{{ loop.index }}</td>
+            <td class="text-start">{{ s.full_name }}</td>
+            <td>{{ s.email or '-' }}</td>
+            <td>{{ s.mssv or '-' }}</td>
+            <td>
+              {% if s.status == 'active' %}
+                <span class="badge bg-success">Đang học</span>
+              {% elif s.status == 'approved' %}
+                <span class="badge bg-info text-dark">Đã duyệt</span>
+              {% elif s.status == 'completed' %}
+                <span class="badge bg-secondary">Hoàn thành</span>
+              {% else %}
+                <span class="badge bg-light text-dark">{{ s.status or '-' }}</span>
+              {% endif %}
+            </td>
+            <td>{{ s.role_in_class or 'Thành viên' }}</td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-3">
+              Chưa có học viên nào trong lớp này.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

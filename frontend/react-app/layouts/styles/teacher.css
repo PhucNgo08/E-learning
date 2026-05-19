@@ -287,3 +287,356 @@ body.dark-mode::-webkit-scrollbar-thumb {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+
+/* =====================================================
+✅ RESPONSIVE FIX – xem tốt cả màn hình dọc/ngang
+Dán cuối file teacher.css
+===================================================== */
+
+/* Không cho layout tràn ngang toàn trang */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+/* Nút header không bị đè vào nút dark mode */
+.nav-icons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 70px;
+}
+
+.nav-icons a,
+.nav-icons i {
+  margin-left: 0;
+}
+
+.profile-dropdown .dropdown-toggle {
+  min-width: 46px;
+  min-height: 46px;
+  border-radius: 16px;
+}
+
+/* Overlay chỉ hiện khi JS thêm class .show, không phụ thuộc sidebar.show */
+#sidebar-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#sidebar-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Fix bảng, ảnh, biểu đồ không làm vỡ giao diện */
+.table-responsive {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive table {
+  min-width: 760px;
+}
+
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+.card,
+.card-custom,
+.teacher-card,
+.quiz-card,
+.modal-content {
+  max-width: 100%;
+}
+
+/* Header/action trong các trang con tự xuống dòng */
+.page-header,
+.teacher-page-header,
+.quiz-page-header,
+.action-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.page-actions,
+.action-buttons,
+.quiz-actions,
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Desktop */
+@media (min-width: 993px) {
+  #sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .teacher-header {
+    left: 260px;
+  }
+
+  #content {
+    margin: 90px 25px 40px 285px;
+    width: auto;
+    max-width: calc(100% - 310px);
+  }
+
+  body.teacher-sidebar-collapsed #sidebar {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.teacher-sidebar-collapsed .teacher-header {
+    left: 0;
+  }
+
+  body.teacher-sidebar-collapsed #content {
+    margin-left: 25px;
+    max-width: calc(100% - 50px);
+  }
+}
+
+/* Tablet + mobile */
+@media (max-width: 992px) {
+  #sidebar {
+    width: min(86vw, 300px);
+    transform: translateX(-105%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #sidebar.show {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .teacher-header {
+    left: 0;
+    right: 0;
+    height: 65px;
+    padding: 0 12px;
+  }
+
+  .nav-icons {
+    gap: 8px;
+    padding-right: 56px;
+  }
+
+  .nav-icons a,
+  .profile-dropdown .dropdown-toggle {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .nav-icons a i,
+  .nav-icons i {
+    font-size: 1.15rem;
+  }
+
+  .toggle-btn,
+  .mode-toggle {
+    width: 42px;
+    height: 42px;
+    top: 12px;
+  }
+
+  .toggle-btn {
+    left: 12px;
+  }
+
+  .mode-toggle {
+    right: 12px;
+  }
+
+  #content {
+    margin: 80px 12px 28px 12px;
+    padding: 18px;
+    border-radius: 18px;
+    max-width: calc(100% - 24px);
+    overflow-x: hidden;
+  }
+
+  footer {
+    padding: 12px;
+    font-size: 0.82rem;
+  }
+}
+
+/* Màn hình dọc điện thoại */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  #content {
+    margin: 76px 8px 22px 8px;
+    padding: 14px;
+    border-radius: 16px;
+    max-width: calc(100% - 16px);
+  }
+
+  .container,
+  .container-fluid {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .card,
+  .card-custom,
+  .teacher-card,
+  .quiz-card {
+    border-radius: 16px !important;
+    padding: 14px !important;
+  }
+
+  h1,
+  .h1 {
+    font-size: 1.55rem;
+  }
+
+  h2,
+  .h2 {
+    font-size: 1.35rem;
+  }
+
+  h3,
+  .h3 {
+    font-size: 1.22rem;
+  }
+
+  h4,
+  .h4 {
+    font-size: 1.08rem;
+  }
+
+  .page-header,
+  .teacher-page-header,
+  .quiz-page-header,
+  .action-header,
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    align-items: flex-start !important;
+  }
+
+  .page-actions,
+  .action-buttons,
+  .quiz-actions,
+  .header-actions {
+    width: 100%;
+  }
+
+  .page-actions .btn,
+  .action-buttons .btn,
+  .quiz-actions .btn,
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .btn {
+    white-space: normal;
+  }
+
+  .row > [class*="col-"] {
+    margin-bottom: 14px;
+  }
+
+  .table-responsive table {
+    min-width: 680px;
+  }
+}
+
+/* Màn hình ngang điện thoại */
+@media (orientation: landscape) and (max-height: 560px) {
+  .teacher-header {
+    height: 56px;
+  }
+
+  .toggle-btn,
+  .mode-toggle {
+    top: 7px;
+    width: 40px;
+    height: 40px;
+  }
+
+  #content {
+    margin-top: 66px;
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .sidebar-header {
+    padding: 14px 12px 10px;
+  }
+
+  .avatar-wrapper img,
+  .sidebar-avatar {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .sidebar-inner a {
+    padding: 9px 18px;
+    font-size: 0.88rem;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    margin-bottom: 8px;
+  }
+
+  .card,
+  .card-custom,
+  .teacher-card,
+  .quiz-card {
+    padding: 12px !important;
+  }
+}
+
+/* Màn hình rất nhỏ */
+@media (max-width: 420px) {
+  .nav-icons {
+    gap: 4px;
+    padding-right: 50px;
+  }
+
+  .nav-icons a,
+  .profile-dropdown .dropdown-toggle {
+    width: 38px;
+    height: 38px;
+  }
+
+  #content {
+    margin-left: 6px;
+    margin-right: 6px;
+    max-width: calc(100% - 12px);
+  }
+}

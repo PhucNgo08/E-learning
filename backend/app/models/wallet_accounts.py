@@ -32,5 +32,12 @@ class WalletAccount(Base):
         order_by="WalletTransaction.created_at.desc()",
     )
 
+    topup_requests = relationship(
+        "WalletTopupRequest",
+        back_populates="wallet",
+        foreign_keys="WalletTopupRequest.wallet_id",
+        lazy="selectin",
+    )
+
     def __repr__(self):
         return f"<WalletAccount user_id={self.user_id} balance={self.balance} status={self.status}>"

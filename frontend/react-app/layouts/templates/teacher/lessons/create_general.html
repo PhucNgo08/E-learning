@@ -1,58 +1,227 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>➕ Tạo bài học mới</title>
+{% extends "layout_teacher.html" %}
+{% block title %}➕ Tạo bài học mới{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+{% block content %}
+<style>
+  :root {
+    --lesson-select-page-bg: #f5f8ff;
+    --lesson-select-card-bg: #ffffff;
+    --lesson-select-card-border: #e5e7eb;
+    --lesson-select-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
 
-  <style>
-    body {
-      background: #f3f6fc;
-      font-family: "Inter", "Segoe UI", sans-serif;
+    --lesson-select-text-main: #1e293b;
+    --lesson-select-text-muted: #64748b;
+    --lesson-select-heading: #0d6efd;
+
+    --lesson-select-input-bg: #ffffff;
+    --lesson-select-input-text: #1e293b;
+    --lesson-select-input-border: #cbd5e1;
+
+    --lesson-select-alert-bg: rgba(13, 110, 253, 0.08);
+    --lesson-select-alert-border: rgba(13, 110, 253, 0.22);
+
+    --lesson-select-primary-start: #0062ff;
+    --lesson-select-primary-end: #004aad;
+    --lesson-select-primary-hover-start: #004aad;
+    --lesson-select-primary-hover-end: #00398c;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --lesson-select-page-bg: #071226;
+    --lesson-select-card-bg: #0f1b33;
+    --lesson-select-card-border: rgba(255, 255, 255, 0.1);
+    --lesson-select-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --lesson-select-text-main: #e5edf8;
+    --lesson-select-text-muted: #9caec8;
+    --lesson-select-heading: #8ea6ff;
+
+    --lesson-select-input-bg: #101d36;
+    --lesson-select-input-text: #e5edf8;
+    --lesson-select-input-border: rgba(255, 255, 255, 0.16);
+
+    --lesson-select-alert-bg: rgba(37, 99, 235, 0.16);
+    --lesson-select-alert-border: rgba(96, 165, 250, 0.28);
+
+    --lesson-select-primary-start: #2563eb;
+    --lesson-select-primary-end: #1d4ed8;
+    --lesson-select-primary-hover-start: #1d4ed8;
+    --lesson-select-primary-hover-end: #1e40af;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .lesson-select-page {
+    background: var(--lesson-select-page-bg) !important;
+    color: var(--lesson-select-text-main);
+    font-family: "Inter", "Segoe UI", sans-serif;
+    min-height: calc(100vh - 110px);
+    padding: 40px 16px;
+  }
+
+  .lesson-select-wrapper {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .lesson-select-card {
+    border: 1px solid var(--lesson-select-card-border);
+    border-radius: 22px;
+    box-shadow: var(--lesson-select-card-shadow);
+    background: var(--lesson-select-card-bg);
+    color: var(--lesson-select-text-main);
+    padding: 28px;
+    overflow: hidden;
+  }
+
+  .lesson-select-card h3 {
+    color: var(--lesson-select-text-main);
+  }
+
+  .lesson-select-card .header-icon {
+    color: var(--lesson-select-heading);
+  }
+
+  .lesson-select-card .text-muted {
+    color: var(--lesson-select-text-muted) !important;
+  }
+
+  .lesson-select-card .form-label {
+    color: var(--lesson-select-text-main);
+    font-weight: 600;
+  }
+
+  .lesson-select-card .form-select,
+  .lesson-select-card .form-control {
+    background-color: var(--lesson-select-input-bg) !important;
+    color: var(--lesson-select-input-text) !important;
+    border-color: var(--lesson-select-input-border) !important;
+    border-radius: 12px !important;
+    padding: 10px 14px !important;
+    box-shadow: none !important;
+  }
+
+  .lesson-select-card .form-select:focus,
+  .lesson-select-card .form-control:focus {
+    background-color: var(--lesson-select-input-bg) !important;
+    color: var(--lesson-select-input-text) !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.18) !important;
+  }
+
+  .lesson-select-card .form-select option {
+    background: var(--lesson-select-input-bg);
+    color: var(--lesson-select-input-text);
+  }
+
+  .lesson-select-card .alert-info {
+    background: var(--lesson-select-alert-bg);
+    border-color: var(--lesson-select-alert-border);
+    color: var(--lesson-select-text-main);
+    border-radius: 14px;
+  }
+
+  .lesson-select-card .btn-primary {
+    background: linear-gradient(
+      90deg,
+      var(--lesson-select-primary-start),
+      var(--lesson-select-primary-end)
+    );
+    border: none;
+    font-weight: 600;
+    padding: 0.6rem 1.6rem;
+    border-radius: 999px;
+    color: #ffffff;
+  }
+
+  .lesson-select-card .btn-primary:hover {
+    background: linear-gradient(
+      90deg,
+      var(--lesson-select-primary-hover-start),
+      var(--lesson-select-primary-hover-end)
+    );
+    color: #ffffff;
+  }
+
+  .lesson-select-card .btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+
+  body.dark-mode .lesson-select-card .btn-outline-secondary,
+  body.theme-dark .lesson-select-card .btn-outline-secondary,
+  html[data-theme="dark"] .lesson-select-card .btn-outline-secondary,
+  body[data-theme="dark"] .lesson-select-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .lesson-select-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .lesson-select-card .btn-outline-secondary:hover,
+  body.theme-dark .lesson-select-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .lesson-select-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .lesson-select-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .lesson-select-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 576px) {
+    .lesson-select-page {
+      padding: 24px 12px;
     }
 
-    .card {
-      border: none;
+    .lesson-select-card {
+      padding: 22px;
       border-radius: 18px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-      background: #ffffffdd;
-      backdrop-filter: blur(6px);
     }
 
-    .btn-primary {
-      background: linear-gradient(90deg, #0062ff, #004aad);
-      border: none;
-      font-weight: 600;
-      padding: 0.6rem 1.6rem;
-      border-radius: 50px;
+    .lesson-select-card .d-flex.justify-content-between.mt-4 {
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .btn-primary:hover {
-      background: linear-gradient(90deg, #004aad, #00398c);
+    .lesson-select-card .d-flex.justify-content-between.mt-4 .btn {
+      width: 100%;
     }
+  }
+</style>
 
-    .header-icon {
-      color: #0062ff;
-    }
-
-    select {
-      padding: 10px 14px !important;
-      border-radius: 10px !important;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="container py-5">
-    <div class="card p-4 mx-auto" style="max-width: 720px;">
+<div class="lesson-select-page">
+  <div class="lesson-select-wrapper">
+    <div class="lesson-select-card">
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
         <div>
           <h3 class="fw-bold mb-1">
             <i class="bi bi-journal-plus header-icon"></i> Tạo bài học mới
           </h3>
+
           {% if teacher_name %}
           <small class="text-muted">Giảng viên: {{ teacher_name }}</small>
           {% endif %}
@@ -69,7 +238,7 @@
 
       <form id="selectModuleForm">
         <div class="mb-3">
-          <label class="form-label fw-semibold">Chọn chương</label>
+          <label class="form-label">Chọn chương</label>
           <select id="module_id" name="module_id" class="form-select" required>
             <option value="">-- Chọn chương --</option>
 
@@ -99,12 +268,17 @@
       </form>
     </div>
   </div>
+</div>
 
-  <script>
-    document.getElementById("selectModuleForm").addEventListener("submit", function (e) {
+<script>
+  const selectModuleForm = document.getElementById("selectModuleForm");
+
+  if (selectModuleForm) {
+    selectModuleForm.addEventListener("submit", function (e) {
       e.preventDefault();
 
       const moduleId = document.getElementById("module_id").value;
+
       if (!moduleId) {
         alert("⚠️ Vui lòng chọn module trước khi tiếp tục!");
         return;
@@ -112,8 +286,6 @@
 
       window.location.href = "/teacher/lessons/create/" + moduleId;
     });
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}

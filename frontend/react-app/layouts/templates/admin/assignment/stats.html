@@ -1,164 +1,510 @@
 {% extends "layout_admin.html" %}
-{% block title %}📈 Dashboard thống kê bài tập{% endblock %}
-
+{% block title %}📊 Thống kê bài tập{% endblock %}
 {% block content %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  body { background: #f5f7fa; }
-  .stat-card {
-    border-radius: 14px;
+  :root {
+    --asg-primary: #2563eb;
+    --asg-primary-2: #7c3aed;
+    --asg-success: #16a34a;
+    --asg-warning: #f59e0b;
+    --asg-danger: #dc2626;
+    --asg-text: #0f172a;
+    --asg-muted: #64748b;
+    --asg-line: #e5e7eb;
+    --asg-soft: #f8fafc;
+    --asg-card: rgba(255, 255, 255, 0.96);
+    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+  }
+
+  .assignment-page {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .a-hero,
+  .a-card,
+  .table-card,
+  .stat-card,
+  .empty-state {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: var(--asg-card);
+    box-shadow: var(--asg-shadow);
+  }
+
+  .a-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
+
+  .a-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
+    pointer-events: none;
+  }
+
+  .a-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .a-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    color: var(--asg-primary);
+    margin: 0;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .a-subtitle {
+    color: var(--asg-muted);
+    margin: 8px 0 0;
+    line-height: 1.55;
+  }
+
+  .a-actions,
+  .action-buttons,
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .a-card {
+    border-radius: 24px;
     padding: 22px;
-    color: white;
-    transition: 0.25s;
-    border: none;
   }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    border-radius: 22px;
+    padding: 17px 18px;
+    transition: .18s ease;
+  }
+
   .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
   }
-  .table thead th { font-weight: bold; }
+
+  .stat-label {
+    color: var(--asg-muted);
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+    font-size: 1.65rem;
+    font-weight: 850;
+    color: #1d4ed8;
+    line-height: 1.15;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .tool-row .form-control,
+  .tool-row .form-select {
+    max-width: 310px;
+    border-radius: 14px;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 14px;
+    border-color: #dbe3ef;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .table-card {
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff);
+    color: #1e40af;
+    font-weight: 850;
+    white-space: nowrap;
+    border-bottom: 1px solid #bfdbfe;
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .info-box,
+  .file-box {
+    border-radius: 18px;
+    background: var(--asg-soft);
+    border: 1px solid var(--asg-line);
+    padding: 14px 16px;
+  }
+
+  .file-box {
+    line-height: 1.65;
+  }
+
+  .status-badge,
+  .badge {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 750;
+  }
+
+  .text-pre-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    border-radius: 24px;
+    padding: 34px 20px;
+    text-align: center;
+  }
+
+  .mini-muted {
+    color: var(--asg-muted);
+    font-size: .9rem;
+  }
+
+  .progress-thin {
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .a-hero,
+  body.dark-mode .a-card,
+  body.dark-mode .table-card,
+  body.dark-mode .stat-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, .90);
+    border-color: rgba(148, 163, 184, .22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .a-title,
+  body.dark-mode .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .a-subtitle,
+  body.dark-mode .stat-label,
+  body.dark-mode .mini-muted {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-box,
+  body.dark-mode .file-box {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .25);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  @media (max-width: 992px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 768px) {
+    .assignment-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .a-hero,
+    .a-card {
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .a-title {
+      font-size: 1.25rem;
+    }
+
+    .a-actions,
+    .action-buttons,
+    .page-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .a-actions .btn,
+    .action-buttons .btn,
+    .page-actions .btn {
+      width: 100%;
+    }
+
+    .stat-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-row .form-control,
+    .tool-row .form-select {
+      max-width: none;
+      width: 100%;
+    }
+
+    .responsive-table thead {
+      display: none;
+    }
+
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .responsive-table tr {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    .a-hero,
+    .a-card {
+      padding: 14px;
+    }
+
+    .assignment-page {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+  }
 </style>
 
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary fw-bold">📈 Dashboard Thống kê Bài tập</h3>
-    <a href="/admin/assignment/list" class="btn btn-secondary">⬅️ Quay lại</a>
+{% set total_assignments = global_stats.total_assignments | default(0) %}
+{% set total_submissions = global_stats.total_submissions | default(0) %}
+{% set graded_submissions = global_stats.graded_submissions | default(0) %}
+{% set late_submissions = global_stats.late_submissions | default(0) %}
+{% set average_grade = global_stats.average_grade | default(0) %}
+{% set ungraded_submissions = total_submissions - graded_submissions - late_submissions %}
+{% if ungraded_submissions < 0 %}{% set ungraded_submissions = 0 %}{% endif %}
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title">
+        <i class="bi bi-bar-chart-line me-2"></i>
+        Thống kê bài tập
+      </h3>
+      <p class="a-subtitle">Tổng quan bài tập, bài nộp, trạng thái chấm điểm và tiến độ theo giảng viên/sinh viên.</p>
+    </div>
+    <a href="/admin/assignment" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
   </div>
 
-  <div class="row g-4 text-center">
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm" style="background: linear-gradient(135deg, #4e73df, #224abe);">
-        <div class="mb-2"><i class="bi bi-files fs-2"></i></div>
-        <h6 class="text-light">Tổng bài tập</h6>
-        <h3 class="fw-bold">{{ global_stats.total_assignments | default(0) }}</h3>
-      </div>
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-label">Tổng bài tập</div>
+      <div class="stat-value">{{ total_assignments }}</div>
     </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm" style="background: linear-gradient(135deg, #1cc88a, #17a673);">
-        <div class="mb-2"><i class="bi bi-send-check fs-2"></i></div>
-        <h6 class="text-light">Lượt nộp</h6>
-        <h3 class="fw-bold">{{ global_stats.total_submissions | default(0) }}</h3>
-      </div>
+    <div class="stat-card">
+      <div class="stat-label">Tổng bài nộp</div>
+      <div class="stat-value">{{ total_submissions }}</div>
     </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm" style="background: linear-gradient(135deg, #36b9cc, #258ea6);">
-        <div class="mb-2"><i class="bi bi-check2-circle fs-2"></i></div>
-        <h6 class="text-light">Đã chấm</h6>
-        <h3 class="fw-bold">{{ global_stats.graded_submissions | default(0) }}</h3>
-      </div>
+    <div class="stat-card">
+      <div class="stat-label">Đã chấm</div>
+      <div class="stat-value">{{ graded_submissions }}</div>
     </div>
-
-    <div class="col-md-3">
-      <div class="stat-card shadow-sm" style="background: linear-gradient(135deg, #f6c23e, #dda20a);">
-        <div class="mb-2"><i class="bi bi-bar-chart fs-2"></i></div>
-        <h6 class="text-light">Điểm trung bình</h6>
-        <h3 class="fw-bold">{{ global_stats.average_grade | default(0) }}</h3>
-      </div>
+    <div class="stat-card">
+      <div class="stat-label">Điểm TB</div>
+      <div class="stat-value">{{ average_grade }}</div>
     </div>
   </div>
 
-  <div class="card shadow-sm mt-5 p-4 border-0">
-    <h5 class="fw-bold text-primary mb-3">📘 Biểu đồ tỉ lệ chấm điểm</h5>
-    <canvas id="chartOverall" height="100"></canvas>
+  <div class="a-card mb-3">
+    <h5 class="fw-bold mb-3">Biểu đồ trạng thái bài nộp</h5>
+    <canvas id="chartOverall" height="110"></canvas>
   </div>
 
-  <h5 class="mt-5 text-primary fw-bold">👨‍🏫 Thống kê theo giảng viên</h5>
-  <div class="card shadow-sm p-3 border-0">
-    <table class="table table-bordered table-hover align-middle">
-      <thead class="table-primary text-center">
+  <div class="table-card table-responsive mb-3">
+    <table class="table table-hover align-middle mb-0 responsive-table">
+      <thead>
         <tr>
+          <th>#</th>
           <th>Giảng viên</th>
           <th>Khóa học</th>
           <th>Bài tập</th>
-          <th>Đã nộp</th>
+          <th>Bài nộp</th>
           <th>Nộp trễ</th>
           <th>Điểm TB</th>
         </tr>
       </thead>
       <tbody>
-        {% if teacher_stats and teacher_stats|length > 0 %}
-          {% for t in teacher_stats %}
-            {% if t.data and t.data|length > 0 %}
-              {% for c in t.data %}
-              <tr>
-                <td class="fw-semibold">{{ t.teacher_name | default("Không rõ") }}</td>
-                <td>{{ c.course_name | default("Không có") }}</td>
-                <td>{{ c.total_assignments | default(0) }}</td>
-                <td>{{ c.total_submissions | default(0) }}</td>
-                <td class="text-danger fw-bold">{{ c.late_submissions | default(0) }}</td>
-                <td class="text-success fw-bold">{{ c.average_grade | default(0) }}</td>
-              </tr>
-              {% endfor %}
-            {% endif %}
+        {% for item in teacher_stats or [] %}
+          {% set teacher_name = item.teacher_name if item.teacher_name is defined else 'Không rõ' %}
+          {% for row in item.data or [] %}
+            <tr>
+              <td data-label="#">{{ loop.index }}</td>
+              <td data-label="Giảng viên"><strong>{{ teacher_name }}</strong></td>
+              <td data-label="Khóa học">{{ row.course_name }}</td>
+              <td data-label="Bài tập">{{ row.total_assignments or 0 }}</td>
+              <td data-label="Bài nộp">{{ row.total_submissions or 0 }}</td>
+              <td data-label="Nộp trễ">{{ row.late_submissions or 0 }}</td>
+              <td data-label="Điểm TB">{{ row.average_grade or 0 }}</td>
+            </tr>
+          {% else %}
+            <tr>
+              <td data-label="#">{{ loop.index }}</td>
+              <td data-label="Giảng viên"><strong>{{ teacher_name }}</strong></td>
+              <td colspan="5" class="text-muted">Chưa có dữ liệu.</td>
+            </tr>
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="6" class="text-center text-muted py-3">Không có dữ liệu giảng viên.</td>
+            <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu giảng viên.</td>
           </tr>
-        {% endif %}
+        {% endfor %}
       </tbody>
     </table>
   </div>
 
-  <h5 class="mt-5 text-success fw-bold">🎓 Thống kê nhanh sinh viên</h5>
-  <div class="card shadow-sm p-3 border-0">
-    <table class="table table-bordered table-striped align-middle">
-      <thead class="table-success text-center">
+  <div class="table-card table-responsive">
+    <table class="table table-hover align-middle mb-0 responsive-table">
+      <thead>
         <tr>
+          <th>#</th>
           <th>Sinh viên</th>
           <th>Đã giao</th>
           <th>Đã nộp</th>
           <th>Đã chấm</th>
-          <th>Trễ</th>
+          <th>Nộp trễ</th>
           <th>Điểm TB</th>
         </tr>
       </thead>
       <tbody>
-        {% if student_stats and student_stats|length > 0 %}
-          {% for s in student_stats %}
+        {% for item in student_stats or [] %}
+          {% set d = item.data if item.data is defined and item.data else {} %}
           <tr>
-            <td class="fw-semibold">{{ s.student_name | default("Không rõ") }}</td>
-            <td>{{ s.data.total_assigned | default(0) }}</td>
-            <td>{{ s.data.total_submitted | default(0) }}</td>
-            <td>{{ s.data.graded | default(0) }}</td>
-            <td class="text-danger fw-bold">{{ s.data.late | default(0) }}</td>
-            <td class="text-primary fw-bold">{{ s.data.avg_grade | default(0) }}</td>
+            <td data-label="#">{{ loop.index }}</td>
+            <td data-label="Sinh viên"><strong>{{ item.student_name }}</strong></td>
+            <td data-label="Đã giao">{{ d.total_assigned or 0 }}</td>
+            <td data-label="Đã nộp">{{ d.total_submitted or 0 }}</td>
+            <td data-label="Đã chấm">{{ d.graded or 0 }}</td>
+            <td data-label="Nộp trễ">{{ d.late or 0 }}</td>
+            <td data-label="Điểm TB">{{ d.avg_grade or 0 }}</td>
           </tr>
-          {% endfor %}
         {% else %}
           <tr>
-            <td colspan="6" class="text-center text-muted py-3">Không có dữ liệu sinh viên.</td>
+            <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu sinh viên.</td>
           </tr>
-        {% endif %}
+        {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const graded = parseInt("{{ global_stats.graded_submissions | default(0) }}") || 0;
-  const late = parseInt("{{ global_stats.late_submissions | default(0) }}") || 0;
-  const total = parseInt("{{ global_stats.total_submissions | default(0) }}") || 0;
-  const ungraded = Math.max(total - graded - late, 0);
+  document.addEventListener("DOMContentLoaded", function () {
+    var canvas = document.getElementById("chartOverall");
+    if (!canvas || typeof Chart === "undefined") return;
 
-  new Chart(document.getElementById("chartOverall"), {
-    type: "doughnut",
-    data: {
-      labels: ["Đã chấm", "Nộp trễ", "Chưa chấm"],
-      datasets: [{
-        data: [graded, late, ungraded],
-        backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"]
-      }]
-    },
-    options: {
-      plugins: {
-        legend: { position: "bottom" }
+    var graded = Number("{{ graded_submissions }}") || 0;
+    var late = Number("{{ late_submissions }}") || 0;
+    var ungraded = Number("{{ ungraded_submissions }}") || 0;
+
+    new Chart(canvas, {
+      type: "doughnut",
+      data: {
+        labels: ["Đã chấm", "Nộp trễ", "Chưa chấm"],
+        datasets: [{
+          data: [graded, late, ungraded],
+          backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: "bottom" }
+        }
       }
-    }
+    });
   });
 </script>
 {% endblock %}

@@ -1,87 +1,286 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>➕ Tạo bài học mới</title>
+{% extends "layout_teacher.html" %}
+{% block title %}➕ Tạo bài học mới{% endblock %}
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block content %}
+<style>
+  :root {
+    --lesson-page-bg: #f5f8ff;
+    --lesson-card-bg: #ffffff;
+    --lesson-card-border: #e5e7eb;
+    --lesson-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
 
-  <style>
-    body {
-      background: #eef3ff;
-      font-family: "Inter", "Segoe UI", sans-serif;
+    --lesson-text-main: #1e293b;
+    --lesson-text-muted: #64748b;
+    --lesson-heading: #0d6efd;
+    --lesson-label: #003087;
+
+    --lesson-input-bg: #ffffff;
+    --lesson-input-text: #1e293b;
+    --lesson-input-border: #cbd5e1;
+    --lesson-input-placeholder: #94a3b8;
+
+    --lesson-section-title: #003087;
+    --lesson-section-border: #0d6efd;
+
+    --lesson-question-bg: #fafbff;
+    --lesson-question-border: #d6d6d6;
+
+    --lesson-addon-bg: #f1f5ff;
+    --lesson-addon-text: #1e40af;
+
+    --lesson-alert-bg: rgba(13, 110, 253, 0.08);
+    --lesson-alert-border: rgba(13, 110, 253, 0.22);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --lesson-page-bg: #071226;
+    --lesson-card-bg: #0f1b33;
+    --lesson-card-border: rgba(255, 255, 255, 0.1);
+    --lesson-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --lesson-text-main: #e5edf8;
+    --lesson-text-muted: #9caec8;
+    --lesson-heading: #8ea6ff;
+    --lesson-label: #dbeafe;
+
+    --lesson-input-bg: #101d36;
+    --lesson-input-text: #e5edf8;
+    --lesson-input-border: rgba(255, 255, 255, 0.16);
+    --lesson-input-placeholder: #8ea0bb;
+
+    --lesson-section-title: #8ea6ff;
+    --lesson-section-border: #60a5fa;
+
+    --lesson-question-bg: #101d36;
+    --lesson-question-border: rgba(255, 255, 255, 0.12);
+
+    --lesson-addon-bg: #172846;
+    --lesson-addon-text: #dbeafe;
+
+    --lesson-alert-bg: rgba(37, 99, 235, 0.16);
+    --lesson-alert-border: rgba(96, 165, 250, 0.28);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .lesson-create-page {
+    background: var(--lesson-page-bg) !important;
+    color: var(--lesson-text-main);
+    font-family: "Inter", "Segoe UI", sans-serif;
+    min-height: calc(100vh - 110px);
+    padding: 40px 16px;
+  }
+
+  .lesson-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .lesson-card {
+    border-radius: 22px;
+    padding: 30px;
+    background: var(--lesson-card-bg) !important;
+    color: var(--lesson-text-main);
+    border: 1px solid var(--lesson-card-border);
+    box-shadow: var(--lesson-card-shadow);
+  }
+
+  .lesson-card h3,
+  .lesson-card .text-primary {
+    color: var(--lesson-heading) !important;
+  }
+
+  .lesson-card .text-muted {
+    color: var(--lesson-text-muted) !important;
+  }
+
+  .lesson-card .form-label {
+    font-weight: 600;
+    color: var(--lesson-label);
+  }
+
+  .lesson-card .section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--lesson-section-title);
+    border-left: 4px solid var(--lesson-section-border);
+    padding-left: 10px;
+    margin-bottom: 12px;
+  }
+
+  .lesson-card .form-control,
+  .lesson-card .form-select,
+  .lesson-card textarea {
+    background-color: var(--lesson-input-bg) !important;
+    color: var(--lesson-input-text) !important;
+    border-color: var(--lesson-input-border) !important;
+    border-radius: 12px;
+    box-shadow: none !important;
+  }
+
+  .lesson-card .form-control:focus,
+  .lesson-card .form-select:focus,
+  .lesson-card textarea:focus {
+    background-color: var(--lesson-input-bg) !important;
+    color: var(--lesson-input-text) !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.18) !important;
+  }
+
+  .lesson-card .form-control::placeholder,
+  .lesson-card textarea::placeholder {
+    color: var(--lesson-input-placeholder);
+  }
+
+  .lesson-card .form-control:disabled,
+  .lesson-card .form-control[readonly] {
+    background-color: var(--lesson-input-bg) !important;
+    color: var(--lesson-input-text) !important;
+    border-color: var(--lesson-input-border) !important;
+    opacity: 0.9;
+  }
+
+  .lesson-card .input-group-text {
+    background: var(--lesson-addon-bg) !important;
+    color: var(--lesson-addon-text) !important;
+    border-color: var(--lesson-input-border) !important;
+    font-weight: 600;
+  }
+
+  .lesson-card input[type="file"]::file-selector-button {
+    background: var(--lesson-addon-bg);
+    color: var(--lesson-addon-text);
+    border: 0;
+    border-right: 1px solid var(--lesson-input-border);
+    padding: 0.45rem 0.9rem;
+    margin-right: 12px;
+  }
+
+  .question-card {
+    border: 1px solid var(--lesson-question-border);
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--lesson-question-bg);
+    margin-bottom: 16px;
+  }
+
+  .thumbnail-preview {
+    max-height: 180px;
+    max-width: 100%;
+    border-radius: 12px;
+    margin-top: 10px;
+    border: 1px solid var(--lesson-input-border);
+    object-fit: cover;
+  }
+
+  .lesson-card .alert-info {
+    background: var(--lesson-alert-bg);
+    border-color: var(--lesson-alert-border);
+    color: var(--lesson-text-main);
+  }
+
+  body.dark-mode .lesson-card .btn-outline-secondary,
+  body.theme-dark .lesson-card .btn-outline-secondary,
+  html[data-theme="dark"] .lesson-card .btn-outline-secondary,
+  body[data-theme="dark"] .lesson-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .lesson-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .lesson-card .btn-outline-secondary:hover,
+  body.theme-dark .lesson-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .lesson-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .lesson-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .lesson-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  body.dark-mode .lesson-card .btn-outline-primary,
+  body.theme-dark .lesson-card .btn-outline-primary,
+  html[data-theme="dark"] .lesson-card .btn-outline-primary,
+  body[data-theme="dark"] .lesson-card .btn-outline-primary,
+  [data-bs-theme="dark"] .lesson-card .btn-outline-primary {
+    color: #93c5fd;
+    border-color: rgba(147, 197, 253, 0.45);
+  }
+
+  body.dark-mode .lesson-card .btn-outline-primary:hover,
+  body.theme-dark .lesson-card .btn-outline-primary:hover,
+  html[data-theme="dark"] .lesson-card .btn-outline-primary:hover,
+  body[data-theme="dark"] .lesson-card .btn-outline-primary:hover,
+  [data-bs-theme="dark"] .lesson-card .btn-outline-primary:hover {
+    background: rgba(37, 99, 235, 0.28);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .lesson-create-page {
+      padding: 24px 12px;
     }
-    .navbar {
-      background: linear-gradient(90deg, #0056d2, #003087);
-    }
+
     .lesson-card {
+      padding: 22px;
       border-radius: 18px;
-      padding: 28px;
-      background: white;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, .08);
     }
-    .form-label {
-      font-weight: 600;
-      color: #003087;
+
+    .lesson-card .d-flex.justify-content-between.mt-4 {
+      flex-direction: column;
+      gap: 10px;
     }
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: #003087;
-      border-left: 4px solid #0d6efd;
-      padding-left: 10px;
-      margin-bottom: 12px;
+
+    .lesson-card .d-flex.justify-content-between.mt-4 .btn {
+      width: 100%;
     }
-    .thumbnail-preview {
-      max-height: 180px;
-      border-radius: 12px;
-      margin-top: 10px;
-      border: 1px solid #d0d0d0;
-    }
-    .question-card {
-      border: 1px solid #d6d6d6;
-      padding: 16px;
-      border-radius: 10px;
-      background: #fafbff;
-      margin-bottom: 16px;
-    }
-  </style>
-</head>
+  }
+</style>
 
-<body>
+<div class="lesson-create-page">
+  <div class="lesson-wrapper">
+    <div class="lesson-card">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <h3 class="fw-bold text-primary mb-0">
+          <i class="bi bi-journal-plus"></i> Tạo bài học mới
+        </h3>
 
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-expand-lg navbar-dark shadow-sm">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="/teacher/dashboard">
-        <i class="bi bi-mortarboard-fill"></i> E-Learning Teacher
-      </a>
-      <a href="/teacher/lessons/list/{{ module.id }}" class="btn btn-outline-light">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-    </div>
-  </nav>
+        <a href="/teacher/lessons/list/{{ module.id }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+      </div>
 
-  <!-- CONTENT -->
-  <div class="container mt-5">
-    <div class="lesson-card mx-auto" style="max-width: 800px;">
-
-      <h3 class="fw-bold text-primary mb-3">
-        <i class="bi bi-journal-plus"></i> Tạo bài học mới
-      </h3>
-
-      <!-- Module Info -->
       <div class="mb-3">
         <label class="form-label">📘 Thuộc chương</label>
         <input class="form-control" value="{{ module.title }}" disabled>
       </div>
 
       <form method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
-
-        <!-- TITLE -->
         <div class="mb-4">
           <div class="section-title">📝 Thông tin cơ bản</div>
 
@@ -89,31 +288,29 @@
           <input type="text" name="title" class="form-control" required placeholder="Nhập tên bài học...">
         </div>
 
-        <!-- DESCRIPTION -->
         <div class="mb-4">
           <label class="form-label">📄 Mô tả bài học</label>
           <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả..."></textarea>
         </div>
 
-        <!-- VIDEO -->
         <div class="mb-4">
           <div class="section-title">🎥 Video bài học (tuỳ chọn)</div>
           <input type="url" name="video_url" class="form-control" placeholder="https://youtube.com/...">
         </div>
 
-        <!-- DOCUMENT UPLOAD -->
         <div class="mb-4">
-          <div class="section-title">📁 Tài liệu bài học (upload file *tuỳ chọn*)</div>
+          <div class="section-title">📁 Tài liệu bài học (upload file tuỳ chọn)</div>
 
-          <input type="file" name="document_file" id="document_file"
-            class="form-control"
-            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
-            onchange="showDocName()">
+          <input type="file"
+                 name="document_file"
+                 id="document_file"
+                 class="form-control"
+                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
+                 onchange="showDocName()">
 
-          <small id="doc_name" class="text-muted mt-1 d-block"></small>
+          <small id="doc_name" class="text-muted mt-2 d-block"></small>
         </div>
 
-        <!-- QUIZ AREA -->
         <div class="section-title">
           <i class="bi bi-ui-checks-grid"></i> Thêm câu hỏi trắc nghiệm (tuỳ chọn)
         </div>
@@ -124,133 +321,149 @@
           <i class="bi bi-plus-circle"></i> Thêm câu hỏi
         </button>
 
-        <textarea id="questions_json" name="questions_json" class="d-none"></textarea>
+        <textarea id="questions_json" name="questions_json" class="d-none">[]</textarea>
 
-        <!-- THUMBNAIL -->
         <div class="mb-4">
           <label class="form-label">🖼 Thumbnail ảnh (tuỳ chọn)</label>
           <input type="file" name="thumbnail" class="form-control" accept="image/*" onchange="previewImg(event)">
-          <img id="thumbnail_preview" class="thumbnail-preview d-none">
+          <img id="thumbnail_preview" class="thumbnail-preview d-none" alt="Thumbnail preview">
         </div>
 
-        <!-- ACTION BUTTONS -->
         <div class="d-flex justify-content-between mt-4">
           <a href="/teacher/lessons/list/{{ module.id }}" class="btn btn-outline-secondary">
             <i class="bi bi-x-circle"></i> Hủy
           </a>
 
-          <button type="submit" class="btn btn-primary" onclick="saveQuestions()">
+          <button type="submit" class="btn btn-primary">
             <i class="bi bi-check-circle"></i> Lưu bài học
           </button>
         </div>
-
       </form>
     </div>
   </div>
+</div>
 
-  <!-- SCRIPT -->
-  <script>
-    /* Hiển thị tên file tài liệu */
-    function showDocName() {
-      const file = document.getElementById("document_file").files[0];
-      const nameBox = document.getElementById("doc_name");
+<script>
+  function showDocName() {
+    const fileInput = document.getElementById("document_file");
+    const nameBox = document.getElementById("doc_name");
 
-      if (file) nameBox.innerHTML = "📄 Đã chọn: <b>" + file.name + "</b>";
-      else nameBox.innerHTML = "";
+    if (!fileInput || !nameBox) return;
+
+    const file = fileInput.files[0];
+
+    if (file) {
+      nameBox.innerHTML = "📄 Đã chọn: <b>" + file.name + "</b>";
+    } else {
+      nameBox.innerHTML = "";
     }
+  }
 
-    /* Add question card */
-    let qIndex = 0;
+  let qIndex = 0;
 
-    function addQuestion() {
-      qIndex++;
+  function addQuestion() {
+    qIndex++;
 
-      const qHtml = `
-        <div class="question-card" id="q${qIndex}">
-          <label class="form-label">❓ Câu hỏi ${qIndex}</label>
-          <input type="text" class="form-control mb-3" placeholder="Nhập câu hỏi..." id="question_${qIndex}">
+    const qHtml = `
+      <div class="question-card" id="q${qIndex}">
+        <label class="form-label">❓ Câu hỏi ${qIndex}</label>
+        <input type="text" class="form-control mb-3" placeholder="Nhập câu hỏi..." id="question_${qIndex}">
 
-          <label class="form-label">Đáp án</label>
+        <label class="form-label">Đáp án</label>
 
-          ${[1,2,3,4].map(n => `
-            <div class="input-group mb-2">
-              <span class="input-group-text">Đáp án ${n}</span>
-              <input type="text" class="form-control" id="q${qIndex}_opt${n}">
-            </div>
-          `).join("")}
+        ${[1, 2, 3, 4].map(n => `
+          <div class="input-group mb-2">
+            <span class="input-group-text">Đáp án ${n}</span>
+            <input type="text" class="form-control" id="q${qIndex}_opt${n}">
+          </div>
+        `).join("")}
 
-          <label class="form-label mt-3">✔ Chọn đáp án đúng</label>
-          <select id="correct_${qIndex}" class="form-select mb-3" style="max-width:220px;">
-            <option value="">-- Chọn đáp án --</option>
-            <option value="1">Đáp án 1</option>
-            <option value="2">Đáp án 2</option>
-            <option value="3">Đáp án 3</option>
-            <option value="4">Đáp án 4</option>
-          </select>
+        <label class="form-label mt-3">✔ Chọn đáp án đúng</label>
+        <select id="correct_${qIndex}" class="form-select mb-3" style="max-width: 220px;">
+          <option value="">-- Chọn đáp án --</option>
+          <option value="1">Đáp án 1</option>
+          <option value="2">Đáp án 2</option>
+          <option value="3">Đáp án 3</option>
+          <option value="4">Đáp án 4</option>
+        </select>
 
-          <button type="button" class="btn btn-danger btn-sm mt-1" onclick="removeQ(${qIndex})">
-            <i class="bi bi-trash"></i> Xóa câu
-          </button>
-        </div>
-      `;
+        <button type="button" class="btn btn-danger btn-sm mt-1" onclick="removeQ(${qIndex})">
+          <i class="bi bi-trash"></i> Xóa câu
+        </button>
+      </div>
+    `;
 
-      document.getElementById("questions_list").insertAdjacentHTML("beforeend", qHtml);
-    }
+    document.getElementById("questions_list").insertAdjacentHTML("beforeend", qHtml);
+  }
 
-    function removeQ(index) {
-      document.getElementById("q" + index)?.remove();
-    }
+  function removeQ(index) {
+    document.getElementById("q" + index)?.remove();
+  }
 
-    /* Save questions to JSON */
-    function saveQuestions() {
-      const questions = [];
+  function saveQuestions() {
+    const questions = [];
 
-      for (let i = 1; i <= qIndex; i++) {
-        const box = document.getElementById("q" + i);
-        if (!box) continue;
+    for (let i = 1; i <= qIndex; i++) {
+      const box = document.getElementById("q" + i);
+      if (!box) continue;
 
-        const question = document.getElementById(`question_${i}`).value;
+      const questionInput = document.getElementById(`question_${i}`);
+      const correctInput = document.getElementById(`correct_${i}`);
 
-        const options = [
-          document.getElementById(`q${i}_opt1`).value,
-          document.getElementById(`q${i}_opt2`).value,
-          document.getElementById(`q${i}_opt3`).value,
-          document.getElementById(`q${i}_opt4`).value
-        ];
+      const question = questionInput ? questionInput.value.trim() : "";
 
-        const correct = document.getElementById(`correct_${i}`).value;
-        const correctAnswer = correct ? parseInt(correct) : null;
+      const options = [
+        document.getElementById(`q${i}_opt1`)?.value.trim() || "",
+        document.getElementById(`q${i}_opt2`)?.value.trim() || "",
+        document.getElementById(`q${i}_opt3`)?.value.trim() || "",
+        document.getElementById(`q${i}_opt4`)?.value.trim() || ""
+      ];
 
-        questions.push({ question, options, correct: correctAnswer });
+      const correct = correctInput ? correctInput.value : "";
+      const correctAnswer = correct ? parseInt(correct) : null;
+
+      if (question || options.some(Boolean) || correctAnswer) {
+        questions.push({
+          question,
+          options,
+          correct: correctAnswer
+        });
       }
-
-      document.getElementById("questions_json").value = JSON.stringify(questions);
     }
 
-    /* Thumbnail preview */
-    function previewImg(e) {
-      const file = e.target.files[0];
-      const preview = document.getElementById("thumbnail_preview");
+    document.getElementById("questions_json").value = JSON.stringify(questions);
+    return questions;
+  }
 
-      if (file) {
-        preview.src = URL.createObjectURL(file);
-        preview.classList.remove("d-none");
-      }
+  function previewImg(e) {
+    const file = e.target.files[0];
+    const preview = document.getElementById("thumbnail_preview");
+
+    if (!preview) return;
+
+    if (file) {
+      preview.src = URL.createObjectURL(file);
+      preview.classList.remove("d-none");
+    } else {
+      preview.src = "";
+      preview.classList.add("d-none");
+    }
+  }
+
+  function validateForm() {
+    const questions = saveQuestions();
+    const videoInput = document.querySelector("[name='video_url']");
+    const fileInput = document.getElementById("document_file");
+
+    const video = videoInput ? videoInput.value.trim() : "";
+    const docFile = fileInput ? fileInput.files.length : 0;
+
+    if (video === "" && docFile === 0 && questions.length === 0) {
+      alert("❌ Vui lòng thêm Video hoặc File tài liệu hoặc Câu hỏi Trắc nghiệm!");
+      return false;
     }
 
-    /* Validate: ít nhất 1 loại nội dung */
-    function validateForm() {
-      let video = document.querySelector("[name='video_url']").value.trim();
-      let docFile = document.getElementById("document_file").files.length;
-      let quiz = document.getElementById("questions_json").value.trim();
-
-      if (video === "" && docFile === 0 && quiz === "[]") {
-        alert("❌ Vui lòng thêm Video hoặc File tài liệu hoặc Câu hỏi Trắc nghiệm!");
-        return false;
-      }
-      return true;
-    }
-  </script>
-
-</body>
-</html>
+    return true;
+  }
+</script>
+{% endblock %}

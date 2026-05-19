@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
@@ -139,6 +140,12 @@ class User(Base):
         foreign_keys="AssignmentSubmission.student_id",
     )
 
+    graded_assignment_submissions = relationship(
+        "AssignmentSubmission",
+        back_populates="grader",
+        foreign_keys="AssignmentSubmission.graded_by",
+    )
+
     assignment_groups_led = relationship(
         "AssignmentGroup",
         back_populates="leader",
@@ -235,6 +242,21 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
+    wallet_topup_requests = relationship(
+        "WalletTopupRequest",
+        back_populates="user",
+        foreign_keys="WalletTopupRequest.user_id",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    reviewed_wallet_topup_requests = relationship(
+        "WalletTopupRequest",
+        back_populates="reviewer",
+        foreign_keys="WalletTopupRequest.reviewed_by",
+        lazy="selectin",
+    )
+
     # Legacy compatibility only
     user_courses = relationship(
         "UserCourse",
@@ -254,6 +276,31 @@ class User(Base):
     # =====================================================
     # READ-ONLY COMPATIBILITY HELPERS
     # =====================================================
+    @property
+    def user_profile(self):
+        # Alias tương thích với code/template cũ.
+        return self.profile
+
+    @property
+    def wallet_account(self):
+        # Alias tương thích với code cũ.
+        return self.wallet
+
+    @property
+    def is_active(self) -> bool:
+        return self.status == "active" and self.deleted_at is None
+
+    def has_role(self, role_code: str) -> bool:
+        return any(role.role_code == role_code for role in (self.roles or []))
+
+    def soft_delete(self):
+        self.deleted_at = datetime.utcnow()
+        self.status = "inactive"
+
+    def restore(self):
+        self.deleted_at = None
+        self.status = "active"
+
     @property
     def full_name(self):
         return self.profile.full_name if self.profile else None

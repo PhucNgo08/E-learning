@@ -163,8 +163,25 @@ def remove_student_from_class(db: Session, class_id: str, user_id: str):
         raise RuntimeError(f"Lỗi khi xóa sinh viên khỏi lớp: {str(e)}") from e
 
 
-def add_enrollment(db: Session, class_id: str, user_id: str):
-    return add_student_to_class(db, class_id, user_id)
+def add_enrollment(
+    db: Session,
+    class_id: str,
+    user_id: str,
+    enrollment_type: str | None = None,
+    approved_by: str | None = None,
+):
+    """
+    Wrapper tương thích với router cũ.
+    enrollment_type hiện chỉ dùng cho UI, DB class_enrollments chưa có cột riêng.
+    """
+    del enrollment_type
+    enrollment = add_student_to_class(db, class_id, user_id)
+    if approved_by and hasattr(enrollment, "approved_by"):
+        enrollment.approved_by = approved_by
+        enrollment.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(enrollment)
+    return enrollment
 
 
 def delete_enrollment(db: Session, enrollment_id: str):
@@ -187,7 +204,7 @@ def delete_enrollment(db: Session, enrollment_id: str):
         raise RuntimeError(f"Lỗi khi xóa ghi danh: {str(e)}") from e
 
 
-def approve_enrollment(db: Session, enrollment_id: str):
+def approve_enrollment(db: Session, enrollment_id: str, approved_by: str | None = None):
     enrollment = get_enrollment_by_id(db, enrollment_id)
     if not enrollment:
         raise ValueError("Không tìm thấy yêu cầu ghi danh.")
@@ -210,6 +227,8 @@ def approve_enrollment(db: Session, enrollment_id: str):
     try:
         enrollment.enrollment_status = "approved"
         enrollment.approved_at = datetime.utcnow()
+        if approved_by and hasattr(enrollment, "approved_by"):
+            enrollment.approved_by = approved_by
         enrollment.joined_at = enrollment.joined_at or datetime.utcnow()
         enrollment.left_at = None
         enrollment.updated_at = datetime.utcnow()
@@ -224,13 +243,15 @@ def approve_enrollment(db: Session, enrollment_id: str):
         raise RuntimeError(f"Lỗi khi duyệt ghi danh: {str(e)}") from e
 
 
-def reject_enrollment(db: Session, enrollment_id: str):
+def reject_enrollment(db: Session, enrollment_id: str, approved_by: str | None = None):
     enrollment = get_enrollment_by_id(db, enrollment_id)
     if not enrollment:
         raise ValueError("Không tìm thấy yêu cầu ghi danh.")
 
     try:
         enrollment.enrollment_status = "rejected"
+        if approved_by and hasattr(enrollment, "approved_by"):
+            enrollment.approved_by = approved_by
         enrollment.updated_at = datetime.utcnow()
 
         db.flush()
@@ -243,12 +264,12 @@ def reject_enrollment(db: Session, enrollment_id: str):
         raise RuntimeError(f"Lỗi khi từ chối ghi danh: {str(e)}") from e
 
 
-def update_enrollment_status(db: Session, enrollment_id: str, status: str):
+def update_enrollment_status(db: Session, enrollment_id: str, status: str | None = None, new_status: str | None = None, approved_by: str | None = None):
     enrollment = get_enrollment_by_id(db, enrollment_id)
     if not enrollment:
         raise ValueError("Không tìm thấy yêu cầu ghi danh.")
 
-    status = (status or "").strip().lower()
+    status = (new_status or status or "").strip().lower()
     allowed_statuses = {
         "applied",
         "approved",
@@ -284,6 +305,8 @@ def update_enrollment_status(db: Session, enrollment_id: str, status: str):
     try:
         enrollment.enrollment_status = status
         now = datetime.utcnow()
+        if approved_by and hasattr(enrollment, "approved_by") and status in {"approved", "active", "rejected"}:
+            enrollment.approved_by = approved_by
 
         if status in {"approved", "active"}:
             enrollment.approved_at = enrollment.approved_at or now

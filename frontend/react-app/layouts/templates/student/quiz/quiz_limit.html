@@ -1,22 +1,40 @@
 {% extends "layout_student.html" %}
+
 {% block title %}🚫 Hết lượt làm bài{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="card shadow-sm p-4 text-center glass-card">
+  <div class="card shadow-sm p-4 text-center glass-card" style="max-width: 620px; margin: 0 auto; border-radius: 20px;">
 
-        <h2 class="fw-bold text-danger mb-3">
-            🚫 Bạn đã hết lượt làm bài
-        </h2>
-
-        <p class="text-muted mb-4">
-            Bài kiểm tra này chỉ cho phép <strong>{{ max_attempts }}</strong> lần làm.
-        </p>
-
-        <a href="/student/quiz" class="btn btn-primary fw-semibold">
-            ← Quay lại danh sách quiz
-        </a>
-
+    <div class="mb-3">
+      <i class="bi bi-x-circle-fill text-danger" style="font-size: 3rem;"></i>
     </div>
+
+    <h2 class="fw-bold text-danger mb-3">
+      Bạn đã hết lượt làm bài
+    </h2>
+
+    <p class="text-muted mb-2">
+      Bài kiểm tra:
+      <strong>{{ quiz.title if quiz else "Không xác định" }}</strong>
+    </p>
+
+    <p class="text-muted mb-4">
+      Bài này chỉ cho phép
+      <strong>{{ max_attempts if max_attempts is defined else (quiz.max_attempts if quiz and quiz.max_attempts else 1) }}</strong>
+      lần làm.
+    </p>
+
+    <div class="d-flex justify-content-center gap-2 flex-wrap">
+      <a href="/student/quiz" class="btn btn-primary fw-semibold">
+        <i class="bi bi-arrow-left"></i> Quay lại danh sách quiz
+      </a>
+
+      <a href="/student/quiz/history" class="btn btn-outline-secondary fw-semibold">
+        <i class="bi bi-clock-history"></i> Xem lịch sử làm bài
+      </a>
+    </div>
+
+  </div>
 </div>
 {% endblock %}

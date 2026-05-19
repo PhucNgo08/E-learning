@@ -3,27 +3,58 @@
 
 {% block content %}
 <style>
-  body {
-    background: linear-gradient(135deg, #dbe8ff, #f6f9ff);
+  :root {
+    --courses-card-bg: #ffffff;
+    --courses-card-border: #e5e7eb;
+    --courses-card-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    --courses-card-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.12);
+    --courses-text-main: #1e293b;
+    --courses-text-muted: #64748b;
+    --courses-heading: #0d6efd;
+    --courses-hr: #e5e7eb;
+    --courses-status-bg: rgba(255, 255, 255, 0.88);
+    --courses-status-border: rgba(0, 0, 0, 0.06);
+    --courses-alert-bg: rgba(13,110,253,0.08);
+    --courses-alert-border: rgba(13,110,253,0.18);
+  }
+
+  body.dark-mode {
+    --courses-card-bg: #0f1b33;
+    --courses-card-border: rgba(255,255,255,0.08);
+    --courses-card-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    --courses-card-shadow-hover: 0 16px 38px rgba(0,0,0,0.45);
+    --courses-text-main: #e5edf8;
+    --courses-text-muted: #9caec8;
+    --courses-heading: #7aa2ff;
+    --courses-hr: rgba(255,255,255,0.12);
+    --courses-status-bg: rgba(15, 27, 51, 0.92);
+    --courses-status-border: rgba(255,255,255,0.12);
+    --courses-alert-bg: rgba(37,99,235,0.14);
+    --courses-alert-border: rgba(96,165,250,0.25);
+  }
+
+  .courses-page {
+    max-width: 1200px;
+    margin: 24px auto 40px;
     font-family: "Inter", sans-serif;
-    min-height: 100vh;
-    padding-bottom: 80px;
+    color: var(--courses-text-main);
   }
-  .navbar-glass {
-    backdrop-filter: blur(16px);
-    background: rgba(255, 255, 255, 0.18);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+
+  .courses-page h3,
+  .courses-page .text-primary {
+    color: var(--courses-heading) !important;
   }
-  .navbar-brand {
-    font-weight: 700;
-    color: #003087 !important;
+
+  .courses-page .text-muted {
+    color: var(--courses-text-muted) !important;
   }
+
   .course-card {
-    backdrop-filter: blur(18px);
-    background: rgba(255, 255, 255, 0.28);
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: var(--courses-card-bg);
+    color: var(--courses-text-main);
+    border: 1px solid var(--courses-card-border);
     border-radius: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--courses-card-shadow);
     overflow: hidden;
     transition: all 0.25s ease;
     cursor: pointer;
@@ -32,16 +63,34 @@
     flex-direction: column;
     position: relative;
   }
+
   .course-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--courses-card-shadow-hover);
   }
+
   .course-thumb {
     height: 160px;
     width: 100%;
     object-fit: cover;
     border-radius: 20px 20px 0 0;
   }
+
+  .course-card h5 {
+    color: var(--courses-text-main);
+    font-weight: 700;
+  }
+
+  .course-card p,
+  .course-card .small {
+    color: var(--courses-text-muted) !important;
+  }
+
+  .course-card hr {
+    border-color: var(--courses-hr);
+    opacity: 1;
+  }
+
   .status-badge {
     position: absolute;
     top: 12px;
@@ -49,13 +98,15 @@
     padding: 4px 12px;
     border-radius: 12px;
     font-size: 0.7rem;
-    backdrop-filter: blur(10px);
-    background: rgba(255, 255, 255, 0.55);
+    background: var(--courses-status-bg);
+    border: 1px solid var(--courses-status-border);
+    backdrop-filter: blur(8px);
     font-weight: 700;
   }
-  .published { color: #0a7f32; }
-  .draft { color: #c59e00; }
-  .archived { color: #6c757d; }
+
+  .published { color: #22c55e; }
+  .draft { color: #facc15; }
+  .archived { color: #94a3b8; }
 
   .meta-badges span {
     font-size: 0.7rem;
@@ -63,39 +114,79 @@
     padding: 3px 9px;
   }
 
-  footer.course-footer {
-    text-align: center;
-    padding: 12px 0;
-    color: #003087;
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(12px);
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+  .courses-page .alert-info {
+    background: var(--courses-alert-bg);
+    border-color: var(--courses-alert-border);
+    color: var(--courses-text-main);
+  }
+
+  body.dark-mode .courses-page .badge.bg-dark-subtle {
+    background-color: rgba(148,163,184,0.16) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148,163,184,0.25) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-primary-subtle {
+    background-color: rgba(37,99,235,0.2) !important;
+    color: #93c5fd !important;
+    border-color: rgba(37,99,235,0.35) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-success-subtle {
+    background-color: rgba(34,197,94,0.16) !important;
+    color: #86efac !important;
+    border-color: rgba(34,197,94,0.28) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-warning-subtle {
+    background-color: rgba(250,204,21,0.16) !important;
+    color: #fde68a !important;
+    border-color: rgba(250,204,21,0.28) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-secondary-subtle {
+    background-color: rgba(148,163,184,0.16) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148,163,184,0.25) !important;
+  }
+
+  body.dark-mode .courses-page .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  body.dark-mode .courses-page .btn-outline-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .courses-page {
+      margin: 16px auto 32px;
+    }
   }
 </style>
 
-<nav class="navbar navbar-expand-lg navbar-glass shadow-sm py-3">
-  <div class="container">
-    <a class="navbar-brand" href="/teacher/dashboard">
-      <i class="bi bi-mortarboard-fill"></i> E-Learning – Giáo viên
-    </a>
+<div class="courses-page">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-journal-bookmark"></i> Khóa học của tôi
+      </h3>
+      {% if teacher_name %}
+      <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+      {% endif %}
+    </div>
 
-    <div class="d-flex gap-2 ms-auto">
+    <div class="d-flex gap-2">
       <a href="/teacher/courses/create" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> Tạo khóa học
       </a>
-      <a href="/teacher/dashboard" class="btn btn-outline-dark">
-        <i class="bi bi-arrow-left"></i>
+      <a href="/teacher/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle"></i> Quay lại
       </a>
     </div>
   </div>
-</nav>
-
-<div class="container py-4">
-  <h3 class="fw-bold text-primary mb-3">
-    <i class="bi bi-journal-bookmark"></i> Khóa học của tôi
-  </h3>
 
   <div class="alert alert-info py-2 mb-4">
     <i class="bi bi-info-circle"></i>
@@ -109,7 +200,8 @@
       <div class="course-card" onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
         <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.src='/uploads/course_thumbnails/default-course.png'"
-             class="course-thumb">
+             class="course-thumb"
+             alt="{{ c.course_name }}">
 
         <span class="status-badge {{ c.status }}">
           {% if c.status == 'published' %}
@@ -188,7 +280,6 @@
             </form>
           </div>
         </div>
-
       </div>
     </div>
     {% endfor %}
@@ -199,8 +290,4 @@
   </div>
   {% endif %}
 </div>
-
-<footer class="footer-text course-footer">
-  © {{ now.year }} E-Learning | Giáo viên {{ teacher.full_name }}
-</footer>
 {% endblock %}

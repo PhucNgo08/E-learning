@@ -53,10 +53,27 @@ class WalletTopupRequest(Base):
     reviewed_at = Column(DateTime, nullable=True)
     expires_at = Column(DateTime, nullable=True)
 
-    user = relationship("User", foreign_keys=[user_id])
-    reviewer = relationship("User", foreign_keys=[reviewed_by])
-    wallet = relationship("WalletAccount")
-    wallet_transaction = relationship("WalletTransaction")
+    user = relationship(
+        "User",
+        back_populates="wallet_topup_requests",
+        foreign_keys=[user_id],
+    )
+    reviewer = relationship(
+        "User",
+        back_populates="reviewed_wallet_topup_requests",
+        foreign_keys=[reviewed_by],
+    )
+    wallet = relationship(
+        "WalletAccount",
+        back_populates="topup_requests",
+        foreign_keys=[wallet_id],
+    )
+    wallet_transaction = relationship(
+        "WalletTransaction",
+        back_populates="topup_request",
+        foreign_keys=[wallet_transaction_id],
+        uselist=False,
+    )
 
     def __repr__(self):
         return (

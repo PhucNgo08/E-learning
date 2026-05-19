@@ -1,195 +1,231 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Request, HTTPException, Depends, Query, status
+from fastapi import APIRouter, Depends, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.config.template_config import get_template_by_path
 from app.database.connection import get_db
-from app.models.user import User
+from app.models.assignment import Assignment
 from app.models.course import Course
-from app.models.lesson import Lesson
-from app.models.rbac import Role
+from app.models.course_enrollment import CourseEnrollment
+from app.models.quiz import Quiz
+from app.models.user import User
+from app.utils.user_query import filter_users_by_role
 
 
 dashboard_router = APIRouter(
     prefix="/admin",
-    tags=["Admin - Dashboard"]
+    tags=["Admin - Dashboard"],
 )
 
 
-def wants_json(request: Request, format: str | None = None) -> bool:
+def _require_admin(request: Request):
     """
-    Xác định client muốn nhận JSON hay HTML.
-    Ưu tiên:
-    - ?format=json
-    - header Accept: application/json
+    Chỉ cho phép admin vào trang dashboard.
+    Nếu chưa đăng nhập hoặc không phải admin thì chuyển về login.
     """
-    if format == "json":
-        return True
-
-    accept = request.headers.get("accept", "").lower()
-    if "application/json" in accept:
-        return True
-
-    return False
+    if request.session.get("role") != "admin":
+        return RedirectResponse("/auth/login", status_code=303)
+    return None
 
 
-def build_dashboard_stats(db: Session) -> dict:
-    total_users = db.query(func.count(User.id)).scalar() or 0
-    total_courses = db.query(func.count(Course.id)).scalar() or 0
-    total_lessons = db.query(func.count(Lesson.id)).scalar() or 0
-
-    total_teachers = (
-        db.query(func.count(User.id))
-        .join(User.roles)
-        .filter(Role.role_code == "teacher")
-        .scalar()
-        or 0
-    )
-
-    total_students = (
-        db.query(func.count(User.id))
-        .join(User.roles)
-        .filter(Role.role_code == "student")
-        .scalar()
-        or 0
-    )
-
-    return {
-        "total_users": int(total_users),
-        "total_courses": int(total_courses),
-        "total_lessons": int(total_lessons),
-        "total_teachers": int(total_teachers),
-        "total_students": int(total_students),
-    }
+def _safe_count(query) -> int:
+    """
+    Tránh lỗi None khi query count không trả về dữ liệu.
+    """
+    return int(query.scalar() or 0)
 
 
-def get_recent_courses(db: Session, limit: int = 5) -> list[dict]:
-    rows = (
+def _serialize_datetime(value):
+    """
+    Dùng cho JSONResponse vì datetime không tự chuyển sang JSON được.
+    Template HTML vẫn có thể dùng datetime gốc bình thường.
+    """
+    if value is None:
+        return None
+    return value.isoformat() if hasattr(value, "isoformat") else value
+
+
+def get_recent_courses(db: Session, limit: int = 5):
+    courses = (
         db.query(Course)
+        .options(
+            joinedload(Course.teacher).joinedload(User.profile),
+        )
+        .filter(Course.deleted_at.is_(None))
         .order_by(Course.created_at.desc())
         .limit(limit)
         .all()
     )
 
-    results = []
-    for course in rows:
-        teacher_name = "Chưa gán"
+    result = []
 
+    for course in courses:
         teacher = getattr(course, "teacher", None)
-        if teacher:
-            teacher_name = (
-                getattr(teacher, "full_name", None)
-                or getattr(getattr(teacher, "user_profile", None), "full_name", None)
-                or getattr(teacher, "username", None)
-                or "Chưa gán"
-            )
+        teacher_profile = getattr(teacher, "profile", None) if teacher else None
 
-        results.append(
+        result.append(
             {
-                "course_id": course.id,
-                "course_name": getattr(course, "course_name", None) or "—",
-                "teacher_name": teacher_name,
-                "status": getattr(course, "status", None) or "draft",
-                "created_at": (
-                    course.created_at.strftime("%Y-%m-%d %H:%M")
-                    if getattr(course, "created_at", None)
-                    else None
+                "id": course.id,
+                "course_code": course.course_code,
+                "course_name": course.course_name,
+                "status": course.status,
+                "teacher_name": (
+                    getattr(teacher_profile, "full_name", None)
+                    or getattr(teacher, "username", None)
+                    or "Chưa phân công"
                 ),
+                "created_at": course.created_at,
             }
         )
 
-    return results
+    return result
+
+
+def get_dashboard_stats(db: Session) -> dict:
+    total_users = _safe_count(
+        db.query(func.count(User.id)).filter(User.deleted_at.is_(None))
+    )
+
+    total_teachers = filter_users_by_role(
+        db.query(User),
+        "teacher",
+    ).count()
+
+    total_students = filter_users_by_role(
+        db.query(User),
+        "student",
+    ).count()
+
+    total_courses = _safe_count(
+        db.query(func.count(Course.id)).filter(Course.deleted_at.is_(None))
+    )
+
+    published_courses = _safe_count(
+        db.query(func.count(Course.id)).filter(
+            Course.deleted_at.is_(None),
+            Course.status == "published",
+        )
+    )
+
+    draft_courses = _safe_count(
+        db.query(func.count(Course.id)).filter(
+            Course.deleted_at.is_(None),
+            Course.status == "draft",
+        )
+    )
+
+    archived_courses = _safe_count(
+        db.query(func.count(Course.id)).filter(
+            Course.deleted_at.is_(None),
+            Course.status == "archived",
+        )
+    )
+
+    total_enrollments = _safe_count(
+        db.query(func.count(CourseEnrollment.id))
+        .join(Course, CourseEnrollment.course_id == Course.id)
+        .filter(Course.deleted_at.is_(None))
+    )
+
+    active_enrollments = _safe_count(
+        db.query(func.count(CourseEnrollment.id))
+        .join(Course, CourseEnrollment.course_id == Course.id)
+        .filter(
+            Course.deleted_at.is_(None),
+            CourseEnrollment.enrollment_status.in_(
+                ["approved", "active", "completed"]
+            ),
+        )
+    )
+
+    total_assignments = _safe_count(
+        db.query(func.count(Assignment.id))
+    )
+
+    total_quizzes = _safe_count(
+        db.query(func.count(Quiz.id))
+    )
+
+    return {
+        "total_users": total_users,
+        "total_teachers": total_teachers,
+        "total_students": total_students,
+        "total_courses": total_courses,
+        "published_courses": published_courses,
+        "draft_courses": draft_courses,
+        "archived_courses": archived_courses,
+        "total_enrollments": total_enrollments,
+        "active_enrollments": active_enrollments,
+        "total_assignments": total_assignments,
+        "total_quizzes": total_quizzes,
+    }
+
+
+def serialize_recent_courses_for_json(recent_courses: list[dict]) -> list[dict]:
+    """
+    Bản dành riêng cho API JSON, tránh lỗi datetime không serialize được.
+    """
+    return [
+        {
+            **course,
+            "created_at": _serialize_datetime(course.get("created_at")),
+        }
+        for course in recent_courses
+    ]
 
 
 @dashboard_router.get("/dashboard", response_class=HTMLResponse)
-def get_dashboard(
+async def admin_dashboard(
     request: Request,
-    format: str | None = Query(None),
     db: Session = Depends(get_db),
+    format: str | None = Query(None),
 ):
-    """
-    Admin dashboard:
-    - Web: render template
-    - API: trả JSON nếu ?format=json hoặc Accept: application/json
-    """
+    auth_redirect = _require_admin(request)
+    if auth_redirect:
+        return auth_redirect
 
-    user_role = request.session.get("role")
-    username = request.session.get("username")
-    is_json = wants_json(request, format)
-
-    # ===========================
-    # AUTH CHECK
-    # ===========================
-    if not user_role:
-        if is_json:
-            return JSONResponse(
-                {"error": "Unauthorized", "message": "No session provided"},
-                status_code=status.HTTP_401_UNAUTHORIZED,
-            )
-
-        return RedirectResponse(
-            url="/auth/login",
-            status_code=status.HTTP_303_SEE_OTHER,
-        )
-
-    if user_role != "admin":
-        if is_json:
-            return JSONResponse(
-                {"error": "Forbidden", "message": "Admin only"},
-                status_code=status.HTTP_403_FORBIDDEN,
-            )
-
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Bạn không có quyền truy cập trang này.",
-        )
-
-    # ===========================
-    # LOAD REAL DATA
-    # ===========================
     try:
-        stats = build_dashboard_stats(db)
-        courses = get_recent_courses(db, limit=5)
-    except Exception as e:
-        if is_json:
-            return JSONResponse(
-                {"error": "Internal Server Error", "message": str(e)},
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi khi tải dữ liệu dashboard: {str(e)}",
-        ) from e
+        stats = get_dashboard_stats(db)
+        recent_courses = get_recent_courses(db)
 
-    # ===========================
-    # JSON RESPONSE
-    # ===========================
-    if is_json:
-        return JSONResponse(
-            {
-                "status": "success",
-                "username": username,
-                "stats": stats,
-                "courses": courses,
-            }
+        data = {
+            "request": request,
+            "stats": stats,
+            "recent_courses": recent_courses,
+            "now": datetime.now(),
+        }
+
+        if format == "json":
+            return JSONResponse(
+                {
+                    "ok": True,
+                    "stats": stats,
+                    "recent_courses": serialize_recent_courses_for_json(
+                        recent_courses
+                    ),
+                }
+            )
+
+        # get_template_by_path("/admin/dashboard") đã trỏ vào thư mục templates/admin
+        # nên ở đây chỉ truyền tên file template, không truyền "admin/...".
+        tpl = get_template_by_path(request.url.path)
+        return tpl.TemplateResponse(
+            "admin_dashboard.html",
+            data,
         )
 
-    # ===========================
-    # TEMPLATE RESPONSE
-    # ===========================
-    templates = get_template_by_path(request.url.path)
+    except Exception as e:
+        if format == "json":
+            return JSONResponse(
+                {
+                    "ok": False,
+                    "error": "Internal Server Error",
+                    "message": str(e),
+                },
+                status_code=500,
+            )
 
-    return templates.TemplateResponse(
-        "admin_dashboard.html",
-        {
-            "request": request,
-            "username": username,
-            "active_page": "dashboard",
-            "current_year": datetime.now().year,
-            "stats": stats,
-            "courses": courses,
-        },
-    )
+        raise

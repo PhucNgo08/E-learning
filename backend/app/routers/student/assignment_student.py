@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from starlette import status
+from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.config.template_config import templates
 from app.database.connection import get_db
@@ -21,10 +22,25 @@ router = APIRouter(
 
 
 def get_current_student_id(request: Request) -> str | None:
+    """
+    Lấy student_id từ session.
+    Một số file login lưu role là "role", một số bản lưu "user_role"/"current_role".
+    Nếu có role thì bắt buộc là student; nếu không có role nhưng có user_id thì vẫn cho qua
+    để tránh lỗi không vào được do session cũ thiếu role.
+    """
     user_id = request.session.get("user_id")
-    role = request.session.get("role")
-    if not user_id or role != "student":
+    role = (
+        request.session.get("role")
+        or request.session.get("user_role")
+        or request.session.get("current_role")
+    )
+
+    if not user_id:
         return None
+
+    if role and str(role).lower() != "student":
+        return None
+
     return str(user_id)
 
 
@@ -82,6 +98,42 @@ def _render_submit_page(
     )
 
 
+def _get_form_text(form, *names: str) -> str:
+    for name in names:
+        value = form.get(name)
+        if value is not None:
+            return str(value).strip()
+    return ""
+
+
+def _get_form_files(form, *names: str) -> list:
+    """
+    Lấy file từ nhiều tên input khác nhau để tránh lỗi 422 hoặc không nhận file.
+    Hỗ trợ:
+    - name="files"
+    - name="file"
+    - name="attachments"
+    - name="upload_files"
+    """
+    result = []
+
+    for name in names:
+        try:
+            values = form.getlist(name)
+        except Exception:
+            values = []
+
+        for value in values:
+            filename = getattr(value, "filename", None)
+            if not filename:
+                continue
+            if not str(filename).strip():
+                continue
+            result.append(value)
+
+    return result
+
+
 @router.get("/", response_class=HTMLResponse)
 async def assignment_home(request: Request, db: Session = Depends(get_db)):
     student_id = _redirect_login_if_needed(request)
@@ -102,7 +154,11 @@ async def assignment_home(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/course/{course_id}", response_class=HTMLResponse)
-async def list_assignments_by_course(request: Request, course_id: str, db: Session = Depends(get_db)):
+async def list_assignments_by_course(
+    request: Request,
+    course_id: str,
+    db: Session = Depends(get_db),
+):
     student_id = _redirect_login_if_needed(request)
     if isinstance(student_id, RedirectResponse):
         return student_id
@@ -142,14 +198,14 @@ async def assignment_list(request: Request, db: Session = Depends(get_db)):
     assignments = (
         db.query(Assignment)
         .join(Course, Course.id == Assignment.course_id)
-        .filter(Course.id == Assignment.course_id)
         .order_by(Assignment.due_date.asc(), Assignment.created_at.desc())
         .all()
     )
 
     assignments = [
-        a for a in assignments
-        if assignment_service.is_student_enrolled_in_course(db, student_id, a.course_id)
+        assignment
+        for assignment in assignments
+        if assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id)
     ]
 
     my_submissions = assignment_service.get_my_submissions(db, student_id) or []
@@ -170,7 +226,11 @@ async def assignment_list(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/detail/{assignment_id}", response_class=HTMLResponse)
-async def assignment_detail(request: Request, assignment_id: str, db: Session = Depends(get_db)):
+async def assignment_detail(
+    request: Request,
+    assignment_id: str,
+    db: Session = Depends(get_db),
+):
     student_id = _redirect_login_if_needed(request)
     if isinstance(student_id, RedirectResponse):
         return student_id
@@ -182,7 +242,11 @@ async def assignment_detail(request: Request, assignment_id: str, db: Session = 
     if not assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id):
         return HTMLResponse("Bạn không có quyền xem bài tập này.", status_code=403)
 
-    my_submission = assignment_service.get_my_submission_for_assignment(db, assignment_id, student_id)
+    my_submission = assignment_service.get_my_submission_for_assignment(
+        db,
+        assignment_id,
+        student_id,
+    )
 
     return templates["student"].TemplateResponse(
         "assignment/detail.html",
@@ -198,28 +262,9 @@ async def assignment_detail(request: Request, assignment_id: str, db: Session = 
 
 
 @router.get("/submit/{assignment_id}", response_class=HTMLResponse)
-async def submit_page(request: Request, assignment_id: str, db: Session = Depends(get_db)):
-    student_id = _redirect_login_if_needed(request)
-    if isinstance(student_id, RedirectResponse):
-        return student_id
-
-    assignment = assignment_service.get_assignment_detail(db, assignment_id)
-    if not assignment:
-        raise HTTPException(status_code=404, detail="Không tìm thấy bài tập.")
-
-    if not assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id):
-        return HTMLResponse("Bạn không có quyền nộp bài cho bài tập này.", status_code=403)
-
-    current_submission = assignment_service.get_my_submission_for_assignment(db, assignment_id, student_id)
-    return _render_submit_page(request, assignment, current_submission)
-
-
-@router.post("/submit/{assignment_id}")
-async def submit_assignment(
+async def submit_page(
     request: Request,
     assignment_id: str,
-    submission_text: str = Form(""),
-    files: list[UploadFile] | None = File(None),
     db: Session = Depends(get_db),
 ):
     student_id = _redirect_login_if_needed(request)
@@ -233,13 +278,84 @@ async def submit_assignment(
     if not assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id):
         return HTMLResponse("Bạn không có quyền nộp bài cho bài tập này.", status_code=403)
 
-    current_submission = assignment_service.get_my_submission_for_assignment(db, assignment_id, student_id)
+    current_submission = assignment_service.get_my_submission_for_assignment(
+        db,
+        assignment_id,
+        student_id,
+    )
+
+    # Lấy lỗi đã lưu trong session nếu có.
+    error_message = request.session.get("assignment_error")
+    submitted_text = request.session.get("assignment_submitted_text") or ""
+    request.session["assignment_error"] = None
+    request.session["assignment_submitted_text"] = None
+
+    return _render_submit_page(
+        request,
+        assignment,
+        current_submission,
+        error_message=error_message,
+        submitted_text=submitted_text,
+    )
+
+
+@router.post("/submit/{assignment_id}")
+async def submit_assignment(
+    request: Request,
+    assignment_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    FIX 422:
+    Không khai báo submission_text: Form(...) hoặc files: File(...)
+    vì FastAPI sẽ chặn request trước khi vào hàm nếu form thiếu field.
+    Đọc request.form() thủ công để:
+    - Không lỗi 422 khi không chọn file
+    - Nhận được nhiều tên input khác nhau
+    - Tự trả lỗi đẹp trong trang nộp bài
+    """
+    student_id = _redirect_login_if_needed(request)
+    if isinstance(student_id, RedirectResponse):
+        return student_id
+
+    assignment = assignment_service.get_assignment_detail(db, assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bài tập.")
+
+    if not assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id):
+        return HTMLResponse("Bạn không có quyền nộp bài cho bài tập này.", status_code=403)
+
+    form = await request.form()
+
+    submission_text = _get_form_text(
+        form,
+        "submission_text",
+        "answer_text",
+        "content",
+        "description",
+        "text",
+    )
+
+    files = _get_form_files(
+        form,
+        "files",
+        "file",
+        "attachments",
+        "upload_files",
+    )
+
+    current_submission = assignment_service.get_my_submission_for_assignment(
+        db,
+        assignment_id,
+        student_id,
+    )
+
     result = assignment_service.submit_assignment(
         db=db,
         assignment_id=assignment_id,
         student_id=student_id,
         submission_text=submission_text,
-        files=files or [],
+        files=files,
     )
 
     if result.get("status") == "error":
@@ -252,6 +368,13 @@ async def submit_assignment(
             status_code=400,
         )
 
+    submission = result.get("submission")
+    if submission and getattr(submission, "id", None):
+        return RedirectResponse(
+            url=f"/student/assignment/submission/{submission.id}",
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+
     return RedirectResponse(
         url=f"/student/assignment/result/{assignment_id}",
         status_code=status.HTTP_303_SEE_OTHER,
@@ -259,7 +382,11 @@ async def submit_assignment(
 
 
 @router.get("/result/{assignment_id}", response_class=HTMLResponse)
-async def view_result(request: Request, assignment_id: str, db: Session = Depends(get_db)):
+async def view_result(
+    request: Request,
+    assignment_id: str,
+    db: Session = Depends(get_db),
+):
     student_id = _redirect_login_if_needed(request)
     if isinstance(student_id, RedirectResponse):
         return student_id
@@ -271,7 +398,11 @@ async def view_result(request: Request, assignment_id: str, db: Session = Depend
     if not assignment_service.is_student_enrolled_in_course(db, student_id, assignment.course_id):
         return HTMLResponse("Bạn không có quyền xem kết quả bài nộp này.", status_code=403)
 
-    my_submission = assignment_service.get_my_submission_for_assignment(db, assignment_id, student_id)
+    my_submission = assignment_service.get_my_submission_for_assignment(
+        db,
+        assignment_id,
+        student_id,
+    )
     submissions = [my_submission] if my_submission else []
 
     return templates["student"].TemplateResponse(
@@ -287,7 +418,11 @@ async def view_result(request: Request, assignment_id: str, db: Session = Depend
 
 
 @router.get("/submission/{submission_id}", response_class=HTMLResponse)
-async def submission_detail(request: Request, submission_id: str, db: Session = Depends(get_db)):
+async def submission_detail(
+    request: Request,
+    submission_id: str,
+    db: Session = Depends(get_db),
+):
     student_id = _redirect_login_if_needed(request)
     if isinstance(student_id, RedirectResponse):
         return student_id
@@ -311,7 +446,11 @@ async def submission_detail(request: Request, submission_id: str, db: Session = 
 
 
 @router.get("/download/{file_id}")
-async def download_submission_file(request: Request, file_id: str, db: Session = Depends(get_db)):
+async def download_submission_file(
+    request: Request,
+    file_id: str,
+    db: Session = Depends(get_db),
+):
     student_id = _redirect_login_if_needed(request)
     if isinstance(student_id, RedirectResponse):
         return student_id
@@ -326,10 +465,16 @@ async def download_submission_file(request: Request, file_id: str, db: Session =
 
     target = assignment_service.resolve_file_response_target(file_info)
     if not target.get("ok"):
-        raise HTTPException(status_code=404, detail=target.get("message", "Không thể tải file."))
+        raise HTTPException(
+            status_code=404,
+            detail=target.get("message", "Không thể tải file."),
+        )
 
     if target.get("type") == "remote":
-        return RedirectResponse(url=target["url"], status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+        return RedirectResponse(
+            url=target["url"],
+            status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+        )
 
     return FileResponse(
         path=target["path"],

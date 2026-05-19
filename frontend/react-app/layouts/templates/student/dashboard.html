@@ -2,17 +2,17 @@
 {% block title %}🎓 Bảng điều khiển Sinh viên{% endblock %}
 
 {% block head_extra %}
-<link rel="stylesheet" href="/frontend/react-app/layouts/styles/student_dashboard.css" />
+<link rel="stylesheet" href="/styles/student_dashboard.css" />
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-container">
+<div class="dashboard-container student-dashboard-page">
 
   <!-- HERO -->
-  <div class="dashboard-hero reveal">
+  <section class="dashboard-hero dashboard-surface reveal">
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-      <div>
-        <span class="badge rounded-pill text-bg-primary px-3 py-2 mb-3 fw-semibold">
+      <div class="min-w-0">
+        <span class="dashboard-kicker rounded-pill px-3 py-2 mb-3 fw-semibold">
           <i class="bi bi-stars me-1"></i> Trung tâm học tập cá nhân
         </span>
 
@@ -26,19 +26,19 @@
         </p>
       </div>
 
-      <div class="text-md-end">
+      <div class="dashboard-note text-md-end">
         <div class="small text-muted">Hôm nay là thời điểm tốt để tiếp tục khóa học đang học.</div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- WELCOME -->
-  <div class="welcome-card reveal">
+  <section class="welcome-card reveal">
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-      <div>
+      <div class="min-w-0">
         <h5 class="mb-2">
           Xin chào,
-          <span class="text-primary">
+          <span class="dashboard-name-highlight">
             {{ user.full_name if user is defined and user and user.full_name else (request.session.get('user_fullname') or 'Học viên') }}
           </span>
           👋
@@ -49,16 +49,16 @@
       </div>
 
       <div class="text-md-end">
-        <span class="badge rounded-pill text-bg-light border px-3 py-2 fw-semibold">
-          <i class="bi bi-lightning-charge-fill text-warning me-1"></i>
+        <span class="dashboard-status-badge rounded-pill px-3 py-2 fw-semibold">
+          <i class="bi bi-lightning-charge-fill me-1"></i>
           Sẵn sàng học tập
         </span>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- STATS -->
-  <div class="row g-3 mb-4">
+  <section class="row g-3 mb-4 dashboard-stats">
 
     <div class="col-12 col-sm-6 col-xl-3 reveal">
       <div class="stat-card gradient-blue h-100">
@@ -92,10 +92,10 @@
       </div>
     </div>
 
-  </div>
+  </section>
 
   <!-- COURSE SECTION -->
-  <div class="section-header reveal">
+  <section class="section-header reveal">
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
       <h5 class="section-title mb-0">
         <i class="bi bi-journals me-2"></i>
@@ -106,35 +106,34 @@
         {{ course_progress_list|default([], true)|length }} khóa học đang theo dõi
       </span>
     </div>
-  </div>
+  </section>
 
   {% set safe_course_progress_list = course_progress_list|default([], true) %}
 
   {% if safe_course_progress_list %}
-  <div class="courses-grid reveal">
+  <section class="courses-grid reveal">
     {% for item in safe_course_progress_list %}
       {% set safe_percent = item.percent|default(0, true)|float %}
       {% set display_percent = safe_percent|round(0)|int %}
       <article class="course-card-mini">
 
-        <div class="position-relative">
+        <div class="course-thumb-wrap">
           <img
             src="{{ item.course.thumbnail_url if item.course and item.course.thumbnail_url else '/uploads/course_thumbnails/default-course.png' }}"
             class="course-thumb"
             alt="Ảnh khóa học"
+            loading="lazy"
             onerror="this.onerror=null;this.src='/uploads/course_thumbnails/default-course.png';"
           />
 
-          <div class="position-absolute top-0 end-0 m-2">
-            <span class="badge rounded-pill text-bg-dark bg-opacity-75 px-3 py-2">
-              {{ display_percent }}%
-            </span>
+          <div class="course-percent-chip">
+            {{ display_percent }}%
           </div>
         </div>
 
-        <div class="px-2 pb-2">
+        <div class="course-card-body">
           <h6
-            class="course-title text-truncate"
+            class="course-title"
             title="{{ item.course.course_name if item.course else 'Khóa học' }}"
           >
             {{ item.course.course_name if item.course else "Khóa học không xác định" }}
@@ -152,9 +151,9 @@
             </div>
           </div>
 
-          <div class="d-flex align-items-center justify-content-between mt-2 px-1">
+          <div class="course-meta-row">
             <small class="course-progress-text mb-0">{{ display_percent }}%</small>
-            <small class="text-muted fw-semibold">
+            <small class="course-state-text fw-semibold">
               {% if display_percent >= 100 %}
                 Hoàn thành
               {% elif display_percent >= 70 %}
@@ -170,17 +169,17 @@
 
       </article>
     {% endfor %}
-  </div>
+  </section>
   {% else %}
-  <div class="alert alert-info text-center shadow-sm reveal border-0 rounded-4 py-4">
-    <div class="mb-2" style="font-size: 1.6rem;">
+  <section class="dashboard-empty alert alert-info text-center shadow-sm reveal border-0 rounded-4 py-4">
+    <div class="mb-2 dashboard-empty-icon">
       <i class="bi bi-info-circle"></i>
     </div>
     <div class="fw-semibold mb-1">Bạn chưa đăng ký khóa học nào</div>
     <div class="small text-muted">
       Hãy khám phá danh sách khóa học và bắt đầu hành trình học tập của bạn.
     </div>
-  </div>
+  </section>
   {% endif %}
 
 </div>

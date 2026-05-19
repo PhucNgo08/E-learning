@@ -1,8 +1,8 @@
+from datetime import datetime
 import uuid
 
-from sqlalchemy import Column, DateTime, ForeignKey, String, Table, Text
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 
 from app.database.connection import Base
 
@@ -29,10 +29,11 @@ user_roles = Table(
     Column(
         "assigned_at",
         DateTime,
-        server_default=func.now(),
+        default=datetime.utcnow,
         nullable=False,
     ),
 )
+
 
 role_permissions = Table(
     "role_permissions",
@@ -56,10 +57,26 @@ class Role(Base):
     __tablename__ = "roles"
 
     id = Column(String(36), primary_key=True, default=uuid_str)
-    role_code = Column(String(50), unique=True, nullable=False)
-    role_name = Column(String(100), nullable=False)
-    description = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    role_code = Column(
+        String(50),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+
+    role_name = Column(
+        String(100),
+        nullable=False,
+    )
+
+    description = Column(String)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
 
     users = relationship(
         "User",
@@ -76,17 +93,33 @@ class Role(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Role(role_code='{self.role_code}', role_name='{self.role_name}')>"
+        return f"<Role(code='{self.role_code}', name='{self.role_name}')>"
 
 
 class Permission(Base):
     __tablename__ = "permissions"
 
     id = Column(String(36), primary_key=True, default=uuid_str)
-    permission_code = Column(String(100), unique=True, nullable=False)
-    permission_name = Column(String(150), nullable=False)
-    description = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+
+    permission_code = Column(
+        String(100),
+        unique=True,
+        index=True,
+        nullable=False,
+    )
+
+    permission_name = Column(
+        String(150),
+        nullable=False,
+    )
+
+    description = Column(String)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
 
     roles = relationship(
         "Role",
@@ -97,6 +130,8 @@ class Permission(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<Permission(permission_code='{self.permission_code}', "
-            f"permission_name='{self.permission_name}')>"
+            f"<Permission("
+            f"code='{self.permission_code}', "
+            f"name='{self.permission_name}'"
+            f")>"
         )

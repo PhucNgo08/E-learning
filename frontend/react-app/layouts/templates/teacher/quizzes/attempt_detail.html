@@ -1,0 +1,180 @@
+{% extends "layout_teacher.html" %}
+{% block title %}🎯 Chi tiết bài làm{% endblock %}
+
+{% block content %}
+
+<style>
+  :root {
+    --quiz-bg: #f5f7fb;
+    --quiz-card: #ffffff;
+    --quiz-border: #e5e7eb;
+    --quiz-text: #1f2937;
+    --quiz-muted: #6b7280;
+    --quiz-primary: #2563eb;
+    --quiz-soft: #eff6ff;
+    --quiz-shadow: 0 12px 28px rgba(15, 23, 42, .08);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --quiz-bg: #071226;
+    --quiz-card: #0f1b33;
+    --quiz-border: rgba(255,255,255,.12);
+    --quiz-text: #e5edf8;
+    --quiz-muted: #9caec8;
+    --quiz-primary: #8ea6ff;
+    --quiz-soft: rgba(96, 165, 250, .12);
+    --quiz-shadow: 0 18px 44px rgba(0,0,0,.35);
+  }
+
+  .quiz-page {
+    min-height: calc(100vh - 90px);
+    padding: 24px 12px 42px;
+    background: var(--quiz-bg);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card {
+    background: var(--quiz-card);
+    border: 1px solid var(--quiz-border);
+    border-radius: 18px;
+    box-shadow: var(--quiz-shadow);
+    color: var(--quiz-text);
+  }
+
+  .quiz-card .text-muted { color: var(--quiz-muted) !important; }
+  .quiz-title { color: var(--quiz-primary); font-weight: 800; }
+
+  .quiz-card .form-label { font-weight: 700; color: var(--quiz-text); }
+  .quiz-card .form-control,
+  .quiz-card .form-select,
+  .quiz-card textarea {
+    border-radius: 12px;
+    border-color: var(--quiz-border);
+    background-color: var(--quiz-card);
+    color: var(--quiz-text);
+  }
+  .quiz-card .form-control:focus,
+  .quiz-card .form-select:focus,
+  .quiz-card textarea:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+  .quiz-card .form-select option { background: var(--quiz-card); color: var(--quiz-text); }
+
+  .quiz-table { margin-bottom: 0; }
+  .quiz-table thead th {
+    background: var(--quiz-soft) !important;
+    color: var(--quiz-primary) !important;
+    border-color: var(--quiz-border) !important;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .quiz-table td { border-color: var(--quiz-border); vertical-align: middle; color: var(--quiz-text); }
+
+  .quiz-empty {
+    border: 1px dashed var(--quiz-border);
+    border-radius: 16px;
+    padding: 34px 18px;
+    background: var(--quiz-soft);
+    text-align: center;
+  }
+
+  .quiz-stat {
+    border: 1px solid var(--quiz-border);
+    border-radius: 16px;
+    background: var(--quiz-card);
+    padding: 18px;
+    height: 100%;
+  }
+
+  .quiz-action-group { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .hidden-block { display: none !important; }
+
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 14px; }
+    .quiz-action-group { justify-content: flex-start; }
+  }
+</style>
+
+
+
+<div class="quiz-page">
+  <div class="container-fluid">
+    <div class="quiz-card p-4 mb-4">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="quiz-title mb-1"><i class="bi bi-ui-checks-grid"></i> Chi tiết bài làm</h3>
+          <p class="text-muted mb-0">Xem câu đúng, câu sai và đáp án học viên đã chọn.</p>
+        </div>
+        <a href="/teacher/quizzes/attempts/{{ attempt.quiz_id }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Danh sách bài làm
+        </a>
+      </div>
+    </div>
+
+    {% set total = attempt.total_questions or 0 %}
+    {% set correct = attempt.correct_answers or 0 %}
+    {% set wrong = total - correct %}
+
+    <div class="row g-3 mb-4">
+      <div class="col-md-3"><div class="quiz-stat"><div class="text-muted">Điểm</div><h3 class="fw-bold text-primary mb-0">{{ attempt.score if attempt.score is not none else 0 }}%</h3></div></div>
+      <div class="col-md-3"><div class="quiz-stat"><div class="text-muted">Số câu</div><h3 class="fw-bold mb-0">{{ total }}</h3></div></div>
+      <div class="col-md-3"><div class="quiz-stat"><div class="text-muted">Đúng</div><h3 class="fw-bold text-success mb-0">{{ correct }}</h3></div></div>
+      <div class="col-md-3"><div class="quiz-stat"><div class="text-muted">Sai</div><h3 class="fw-bold text-danger mb-0">{{ wrong }}</h3></div></div>
+    </div>
+
+    <div class="quiz-card p-4 mb-4">
+      <div class="row g-3">
+        <div class="col-md-6"><strong>Quiz:</strong> {{ attempt.quiz.title if attempt.quiz else '—' }}</div>
+        <div class="col-md-6"><strong>Học viên:</strong> {{ attempt.user.profile.full_name if attempt.user and attempt.user.profile else (attempt.user.username if attempt.user else 'Không rõ') }}</div>
+        <div class="col-md-6"><strong>Lần làm:</strong> {{ attempt.attempt_number or 1 }}</div>
+        <div class="col-md-6"><strong>Thời gian nộp:</strong> {{ attempt.submitted_at.strftime('%d/%m/%Y %H:%M') if attempt.submitted_at else '—' }}</div>
+      </div>
+    </div>
+
+    {% if attempt.answers %}
+      {% for ans in attempt.answers %}
+        {% set q = ans.question %}
+        <div class="quiz-card p-4 mb-3">
+          <div class="d-flex justify-content-between gap-2 flex-wrap mb-3">
+            <h5 class="fw-bold mb-0">Câu {{ loop.index }}: {{ q.question_text if q else '—' }}</h5>
+            {% if ans.is_correct %}
+              <span class="badge bg-success align-self-start">Đúng</span>
+            {% else %}
+              <span class="badge bg-danger align-self-start">Sai</span>
+            {% endif %}
+          </div>
+
+          {% if q %}
+            {% for op in q.options %}
+              <div class="p-3 rounded mb-2 border {% if op.is_correct %}border-success bg-success bg-opacity-10{% elif op.id == ans.selected_option_id %}border-danger bg-danger bg-opacity-10{% else %}border-light{% endif %}">
+                <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                  <span>{{ op.option_text }}</span>
+                  <span>
+                    {% if op.is_correct %}<span class="badge bg-success">Đáp án đúng</span>{% endif %}
+                    {% if op.id == ans.selected_option_id %}<span class="badge bg-primary">Học viên chọn</span>{% endif %}
+                  </span>
+                </div>
+              </div>
+            {% endfor %}
+            {% if q.explanation %}
+            <div class="alert alert-info mt-3 mb-0"><strong>Giải thích:</strong> {{ q.explanation }}</div>
+            {% endif %}
+          {% endif %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="quiz-empty">
+        <h6 class="fw-bold mb-2">Chưa có dữ liệu đáp án</h6>
+        <p class="text-muted mb-0">Bài làm này chưa ghi nhận danh sách câu trả lời.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

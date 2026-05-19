@@ -1,125 +1,277 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>📈 Tổng Quan Khóa Học</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+{% extends "layout_admin.html" %}
 
-  <style>
-    body {
-      background: #f5f7ff;
-      font-family: "Inter", "Segoe UI", sans-serif;
-      padding: 40px 20px;
-    }
+{% block title %}Tổng quan khóa học{% endblock %}
 
+{% block extra_css %}
+<style>
+  .admin-course-overview-page {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .admin-page-header {
+    background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
+    color: #fff;
+    border-radius: var(--radius-xl, 18px);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
+  }
+
+  .admin-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .overview-card {
+    background: var(--surface, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-xl, 18px);
+    box-shadow: var(--shadow-sm, 0 4px 16px rgba(15, 23, 42, 0.06));
+    padding: 24px;
+  }
+
+  .course-title-card {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(14, 165, 233, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.12);
+    border-radius: var(--radius-lg, 16px);
+    padding: 22px;
+  }
+
+  .course-title-card .course-name {
+    color: var(--text-main, #0f172a);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .course-title-card .course-code {
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+  }
+
+  .stat-box {
+    height: 100%;
+    border-radius: var(--radius-lg, 16px);
+    padding: 20px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .stat-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+  }
+
+  .stat-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex: 0 0 auto;
+  }
+
+  .stat-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .stat-label {
+    font-size: 0.95rem;
+    opacity: 0.92;
+  }
+
+  .bg-lesson {
+    background: linear-gradient(135deg, #16a34a, #22c55e);
+  }
+
+  .bg-quiz {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+  }
+
+  .bg-assign {
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+  }
+
+  .bg-student {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  }
+
+  .bg-rating {
+    background: linear-gradient(135deg, #ea580c, #f97316);
+  }
+
+  .quick-actions {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .admin-page-header,
     .overview-card {
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-      padding: 25px 30px;
-      animation: fadeIn 0.5s ease;
+      padding: 18px;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    .quick-actions .btn {
+      width: 100%;
     }
+  }
+</style>
+{% endblock %}
 
-    h2, h3 {
-      font-weight: 700;
-      color: #0d47a1;
-    }
+{% block content %}
+<div class="admin-course-overview-page">
 
-    .stat-box {
-      padding: 15px 20px;
-      border-radius: 12px;
-      color: #fff;
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-
-    .stat-icon {
-      font-size: 2rem;
-      opacity: 0.9;
-    }
-
-    .bg-lesson { background: linear-gradient(45deg, #28a745, #4caf50); }
-    .bg-quiz { background: linear-gradient(45deg, #ffc107, #ffb300); }
-    .bg-assign { background: linear-gradient(45deg, #17a2b8, #138496); }
-    .bg-student { background: linear-gradient(45deg, #6610f2, #6f42c1); }
-    .bg-rating { background: linear-gradient(45deg, #ff5722, #e64a19); }
-
-    .back-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(13,110,253,0.35);
-    }
-
-  </style>
-</head>
-
-<body>
-
-  <div class="overview-card mx-auto" style="max-width: 700px;">
-
-    <!-- Header -->
-    <div class="text-center mb-4">
-      <i class="bi bi-graph-up-arrow text-primary fs-1 mb-2"></i>
-      <h2>Tổng quan khóa học</h2>
-      <h3 class="text-success mt-2">📘 {{ course.course_name }}</h3>
+  <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-graph-up-arrow me-2"></i>Tổng quan khóa học
+      </h3>
+      <p class="header-subtitle mb-0">
+        Xem nhanh số bài học, quiz, bài tập, học viên và điểm đánh giá của khóa học.
+      </p>
     </div>
 
-    <!-- Stats -->
-    <div class="stat-box bg-lesson">
-      <i class="bi bi-journal-bookmark stat-icon"></i>
-      <div>
-        <div class="fw-bold fs-5">{{ total_lessons }}</div>
-        <div class="small">Tổng số bài học</div>
-      </div>
-    </div>
-
-    <div class="stat-box bg-quiz">
-      <i class="bi bi-ui-checks-grid stat-icon"></i>
-      <div>
-        <div class="fw-bold fs-5">{{ total_quizzes }}</div>
-        <div class="small">Tổng số bài kiểm tra</div>
-      </div>
-    </div>
-
-    <div class="stat-box bg-assign">
-      <i class="bi bi-clipboard2-check stat-icon"></i>
-      <div>
-        <div class="fw-bold fs-5">{{ total_assignments }}</div>
-        <div class="small">Tổng số bài tập</div>
-      </div>
-    </div>
-
-    <div class="stat-box bg-student">
-      <i class="bi bi-people-fill stat-icon"></i>
-      <div>
-        <div class="fw-bold fs-5">{{ total_students }}</div>
-        <div class="small">Tổng học viên đã tham gia</div>
-      </div>
-    </div>
-
-    <div class="stat-box bg-rating">
-      <i class="bi bi-star-fill stat-icon"></i>
-      <div>
-        <div class="fw-bold fs-5">{{ avg_rating }}/5</div>
-        <div class="small">Điểm đánh giá trung bình</div>
-      </div>
-    </div>
-
-    <!-- Back button -->
-    <div class="text-center mt-4">
-      <a href="/admin/Course/manage" class="btn btn-primary px-4 back-btn">
-        <i class="bi bi-arrow-left-circle me-1"></i> Quay lại quản lý khóa học
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Course/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Quản lý khóa học
       </a>
+
+      {% if course and course.id %}
+      <a href="/admin/Course/detail/{{ course.id }}" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-eye-fill me-1"></i>Chi tiết
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="overview-card">
+
+    <div class="course-title-card mb-4">
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+        <div>
+          <div class="course-code mb-1">
+            <i class="bi bi-journal-bookmark me-1"></i>
+            {{ course.course_code if course and course.course_code else "COURSE" }}
+          </div>
+
+          <h3 class="course-name mb-1">
+            {{ course.course_name if course else "Khóa học" }}
+          </h3>
+
+          <p class="text-muted mb-0">
+            {{ course.description if course and course.description else "Tổng hợp nhanh dữ liệu liên quan đến khóa học." }}
+          </p>
+        </div>
+
+        {% if course and course.status %}
+          {% if course.status == 'published' %}
+          <span class="badge rounded-pill text-bg-success px-3 py-2">
+            <i class="bi bi-check-circle me-1"></i>Công khai
+          </span>
+          {% elif course.status == 'draft' %}
+          <span class="badge rounded-pill text-bg-warning px-3 py-2">
+            <i class="bi bi-pencil me-1"></i>Bản nháp
+          </span>
+          {% else %}
+          <span class="badge rounded-pill text-bg-secondary px-3 py-2">
+            <i class="bi bi-archive me-1"></i>Lưu trữ
+          </span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="row g-3">
+
+      <div class="col-12 col-md-6 col-xl">
+        <div class="stat-box bg-lesson">
+          <div class="stat-icon">
+            <i class="bi bi-journal-bookmark"></i>
+          </div>
+          <div>
+            <div class="stat-value">{{ total_lessons or 0 }}</div>
+            <div class="stat-label">Tổng số bài học</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl">
+        <div class="stat-box bg-quiz">
+          <div class="stat-icon">
+            <i class="bi bi-ui-checks-grid"></i>
+          </div>
+          <div>
+            <div class="stat-value">{{ total_quizzes or 0 }}</div>
+            <div class="stat-label">Tổng số bài kiểm tra</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl">
+        <div class="stat-box bg-assign">
+          <div class="stat-icon">
+            <i class="bi bi-clipboard2-check"></i>
+          </div>
+          <div>
+            <div class="stat-value">{{ total_assignments or 0 }}</div>
+            <div class="stat-label">Tổng số bài tập</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl">
+        <div class="stat-box bg-student">
+          <div class="stat-icon">
+            <i class="bi bi-people-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value">{{ total_students or 0 }}</div>
+            <div class="stat-label">Học viên đã tham gia</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-12 col-md-6 col-xl">
+        <div class="stat-box bg-rating">
+          <div class="stat-icon">
+            <i class="bi bi-star-fill"></i>
+          </div>
+          <div>
+            <div class="stat-value">{{ avg_rating or 0 }}/5</div>
+            <div class="stat-label">Đánh giá trung bình</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="quick-actions d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <a href="/admin/Course/manage" class="btn btn-outline-secondary px-4">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+      </a>
+
+      <div class="d-flex flex-wrap gap-2">
+        {% if course and course.id %}
+        <a href="/admin/Course/detail/{{ course.id }}" class="btn btn-outline-primary px-4">
+          <i class="bi bi-eye-fill me-1"></i>Xem chi tiết
+        </a>
+
+        <a href="/admin/Course/edit/{{ course.id }}" class="btn btn-primary px-4">
+          <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+        </a>
+        {% endif %}
+      </div>
     </div>
 
   </div>
 
-</body>
-</html>
+</div>
+{% endblock %}

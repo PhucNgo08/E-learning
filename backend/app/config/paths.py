@@ -19,6 +19,7 @@ UPLOAD_AVATARS = UPLOADS_BASE / "avatars"
 UPLOAD_MATERIALS = UPLOADS_BASE / "materials"
 UPLOAD_VIDEOS = UPLOADS_BASE / "videos"
 UPLOAD_MESSAGES = UPLOADS_BASE / "messages"
+UPLOAD_DOCUMENTS = UPLOADS_BASE / "documents"
 
 UPLOAD_DIRS = {
     "course_thumbnails": UPLOAD_COURSE_THUMBNAILS,
@@ -26,6 +27,7 @@ UPLOAD_DIRS = {
     "materials": UPLOAD_MATERIALS,
     "videos": UPLOAD_VIDEOS,
     "messages": UPLOAD_MESSAGES,
+    "documents": UPLOAD_DOCUMENTS,
 }
 
 

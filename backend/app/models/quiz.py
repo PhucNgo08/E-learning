@@ -33,7 +33,7 @@ class Quiz(Base):
     randomize_options = Column(Boolean, default=False)
 
     status = Column(
-        Enum("draft", "published", "archived", name="quiz_status_enum"),
+        Enum("draft", "pending", "published", "rejected", "archived", name="quiz_status_enum"),
         default="published"
     )
     is_approved = Column(Boolean, default=False)

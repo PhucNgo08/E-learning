@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.config.paths import UPLOAD_MATERIALS, build_upload_url
+from app.config.paths import UPLOAD_MATERIALS, UPLOADS_BASE, build_upload_url
 from app.models.file_storage import FileStorage
 from app.models.cdn_cache import CDNCache
 
@@ -26,6 +26,22 @@ def _safe_filename(filename: str) -> str:
     filename = (filename or "").strip()
     filename = filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
     return filename
+
+
+def _build_public_file_url(upload_root: str, stored_name: str) -> str:
+    """
+    Trả về URL public có thể mở trong trình duyệt.
+    Tránh lỗi lưu file_url thành D:/... hoặc /mnt/... khiến giao diện không tải được.
+    """
+    root = Path(upload_root).resolve()
+    base = UPLOADS_BASE.resolve()
+
+    try:
+        relative_dir = root.relative_to(base).as_posix()
+        return f"/uploads/{relative_dir}/{stored_name}"
+    except ValueError:
+        # Nếu upload_dir custom nằm ngoài UPLOADS_BASE, vẫn fallback về materials.
+        return build_upload_url("materials", stored_name)
 
 
 def upload_file_service(
@@ -62,7 +78,7 @@ def upload_file_service(
             shutil.copyfileobj(file.file, buffer)
 
         file_size = os.path.getsize(file_path)
-        file_url = f"/{file_path.replace(os.sep, '/')}"
+        file_url = _build_public_file_url(upload_root, stored_name)
 
         new_file = FileStorage(
             id=file_id,

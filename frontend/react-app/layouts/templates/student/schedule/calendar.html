@@ -1,25 +1,196 @@
 {% extends "layout_student.html" %}
 {% block title %}🗓️ Lịch học & Kiểm tra{% endblock %}
 
+{% block head_extra %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet" />
+<style>
+  .schedule-page {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .schedule-page-title {
+    color: var(--text);
+  }
+
+  .schedule-calendar-card {
+    background: var(--surface-strong, #ffffff);
+    color: var(--text, #0f172a);
+    border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+    border-radius: 18px;
+    padding: 1rem;
+    box-shadow: var(--shadow-soft, 0 10px 28px rgba(15, 23, 42, 0.08));
+    overflow: hidden;
+  }
+
+  #calendar {
+    background: transparent;
+    color: var(--text, #0f172a);
+  }
+
+  .fc {
+    font-family: "Inter", "Segoe UI", sans-serif;
+    font-size: 0.95rem;
+    color: var(--text, #0f172a);
+  }
+
+  .fc .fc-toolbar {
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .fc .fc-toolbar-title {
+    font-weight: 800;
+    color: var(--primary, #2563eb);
+    font-size: 1.25rem;
+  }
+
+  .fc .fc-button {
+    border-radius: 999px !important;
+    border: 1px solid var(--border, rgba(15, 23, 42, 0.08)) !important;
+    background: var(--surface, #ffffff) !important;
+    color: var(--text, #0f172a) !important;
+    box-shadow: none !important;
+    font-weight: 600;
+  }
+
+  .fc .fc-button:hover,
+  .fc .fc-button:focus,
+  .fc .fc-button-primary:not(:disabled).fc-button-active {
+    background: var(--primary, #2563eb) !important;
+    border-color: var(--primary, #2563eb) !important;
+    color: #ffffff !important;
+  }
+
+  .fc-theme-standard .fc-scrollgrid,
+  .fc-theme-standard td,
+  .fc-theme-standard th {
+    border-color: var(--border, rgba(15, 23, 42, 0.08)) !important;
+  }
+
+  .fc .fc-scrollgrid,
+  .fc .fc-daygrid-day,
+  .fc .fc-timegrid-slot,
+  .fc .fc-timegrid-axis,
+  .fc .fc-col-header-cell {
+    background: transparent;
+  }
+
+  .fc .fc-col-header-cell-cushion,
+  .fc .fc-daygrid-day-number {
+    color: var(--text, #0f172a);
+    text-decoration: none;
+  }
+
+  .fc .fc-daygrid-day.fc-day-today,
+  .fc .fc-timegrid-col.fc-day-today {
+    background: var(--primary-soft, rgba(37, 99, 235, 0.12)) !important;
+  }
+
+  .fc .fc-event {
+    border: none !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    padding: 3px 6px;
+    border-radius: 9px;
+    box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
+  }
+
+  .fc .fc-daygrid-event-dot {
+    border-color: currentColor;
+  }
+
+  .schedule-empty-note {
+    background: var(--surface, #ffffff);
+    color: var(--text-muted, #64748b);
+    border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+    border-radius: 14px;
+    padding: 0.75rem 1rem;
+  }
+
+  body.dark-mode .fc .fc-list,
+  body.dark-mode .fc .fc-list-table,
+  body.dark-mode .fc .fc-list-day-cushion {
+    background: var(--surface-strong, #0f172a) !important;
+    color: var(--text, #f8fafc) !important;
+  }
+
+  @media (max-width: 768px) {
+    .schedule-page {
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
+    }
+
+    .schedule-calendar-card {
+      padding: 0.75rem;
+      border-radius: 16px;
+    }
+
+    .schedule-page .btn {
+      width: 100%;
+    }
+
+    .fc {
+      font-size: 0.82rem;
+    }
+
+    .fc .fc-toolbar {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.65rem;
+    }
+
+    .fc .fc-toolbar-chunk {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .fc .fc-toolbar-title {
+      font-size: 1.05rem;
+      text-align: center;
+    }
+
+    .fc .fc-button {
+      padding: 0.35rem 0.55rem !important;
+      font-size: 0.78rem !important;
+    }
+
+    .fc .fc-daygrid-day-number {
+      font-size: 0.8rem;
+      padding: 4px;
+    }
+
+    .fc .fc-event {
+      font-size: 0.72rem;
+      padding: 2px 4px;
+      white-space: normal;
+      line-height: 1.25;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4 fade-in">
+<div class="container py-4 fade-in schedule-page">
 
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    <h4 class="fw-bold text-primary mb-0">
-      <i class="bi bi-calendar3"></i> Lịch học & Kiểm tra
+    <h4 class="fw-bold schedule-page-title mb-0">
+      <i class="bi bi-calendar3 text-primary"></i> Lịch học & Kiểm tra
     </h4>
-    <a href="/student/schedule/list" class="btn btn-outline-primary btn-sm">
+    <a href="/student/schedule/list" class="btn btn-outline-primary btn-sm rounded-pill px-3">
       <i class="bi bi-list-task"></i> Xem dạng danh sách
     </a>
   </div>
 
-  <div id="calendar" class="shadow-sm border rounded-3 p-2"></div>
+  <div class="schedule-calendar-card">
+    <div id="calendar"></div>
+  </div>
 </div>
 
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
 
-<!-- Đưa dữ liệu Jinja ra ngoài JS để tránh lỗi parser của VS Code -->
 <script id="schedule-data" type="application/json">
   {{ events | tojson | safe }}
 </script>
@@ -43,7 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
       title: s.lesson_title ? `${s.course_name} - ${s.lesson_title}` : (s.course_name || "Sự kiện"),
       start: s.start,
       end: s.end,
-      color: s.color || "#0d6efd",
+      color: s.color || "#2563eb",
       extendedProps: {
         module_name: s.module_name || "Không có module",
         location: s.location || "Trực tuyến",
@@ -53,10 +224,12 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   const calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: "dayGridMonth",
+    initialView: window.innerWidth < 768 ? "timeGridWeek" : "dayGridMonth",
     locale: "vi",
     height: "auto",
     themeSystem: "bootstrap5",
+    nowIndicator: true,
+    eventDisplay: "block",
 
     headerToolbar: {
       left: "prev,next today",
@@ -88,38 +261,4 @@ document.addEventListener("DOMContentLoaded", function () {
   calendar.render();
 });
 </script>
-
-<style>
-  #calendar {
-    background: #fff;
-    border-radius: 15px;
-    padding: 15px;
-  }
-
-  .fc {
-    font-family: "Inter", sans-serif;
-    font-size: 0.95rem;
-  }
-
-  .fc-toolbar-title {
-    font-weight: 600;
-    color: #0d6efd;
-  }
-
-  .fc-button {
-    border-radius: 6px !important;
-  }
-
-  .fc-event {
-    border: none !important;
-    color: #fff !important;
-    font-weight: 500;
-    padding: 3px 6px;
-    border-radius: 8px;
-  }
-
-  .fc .fc-daygrid-day.fc-day-today {
-    background-color: rgba(13, 110, 253, 0.15) !important;
-  }
-</style>
 {% endblock %}

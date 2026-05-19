@@ -1,14 +1,15 @@
 {% extends "layout_student.html" %}
+{% set active_page = "cart" %}
 {% block title %}🎉 Thanh toán thành công{% endblock %}
 
 {% block content %}
-<div class="container py-5 fade" style="max-width: 860px;">
+<div class="container py-5 payment-success-page fade-in" style="max-width: 860px;">
   <div class="glass-card shadow-lg border-0 p-0" style="border-radius: 22px; overflow: hidden;">
     <div class="text-center py-4 header-success">
       <i class="bi bi-check-circle-fill text-white" style="font-size: 4rem;"></i>
       <h2 class="mt-3 text-white fw-bold">Thanh toán thành công!</h2>
       <p class="text-white-50 mb-0">
-        Đơn hàng đã được xử lý qua <strong>{{ payment_label }}</strong> và khóa học đã được kích hoạt.
+        Đơn hàng đã được xử lý qua <strong>{{ payment_label or 'Thanh toán' }}</strong> và khóa học đã được kích hoạt.
       </p>
     </div>
 
@@ -16,7 +17,7 @@
       {% if demo_gateway %}
       <div class="alert alert-warning shadow-sm">
         <i class="bi bi-exclamation-circle-fill me-2"></i>
-        VNPay/Thẻ quốc tế hiện đang ở chế độ mô phỏng nội bộ. Khi tích hợp cổng thật, bạn thay bước checkout trong service/router là dùng được.
+        VNPay/Thẻ quốc tế hiện đang ở chế độ mô phỏng nội bộ. Khi tích hợp cổng thật, bạn thay bước thanh toán trong service/router là dùng được.
       </div>
       {% endif %}
 
@@ -36,12 +37,12 @@
       <div class="list-group mb-4 shadow-sm rounded overflow-hidden">
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold">Phương thức thanh toán:</span>
-          <span class="fw-bold">{{ payment_label }}</span>
+          <span class="fw-bold">{{ payment_label or 'Thanh toán' }}</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold">Tổng ban đầu:</span>
-          <span>{{ "{:,.0f}".format(subtotal) }}₫</span>
+          <span>{{ "{:,.0f}".format(subtotal or 0) }}₫</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
@@ -51,17 +52,17 @@
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold">Sau giảm giá:</span>
-          <span>{{ "{:,.0f}".format(discounted) }}₫</span>
+          <span>{{ "{:,.0f}".format(discounted or 0) }}₫</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold text-danger">Phí thanh toán:</span>
-          <span class="fw-bold text-danger">{{ "{:,.0f}".format(fee) }}₫</span>
+          <span class="fw-bold text-danger">{{ "{:,.0f}".format(fee or 0) }}₫</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-total">
           <span class="fw-semibold">Tổng thanh toán:</span>
-          <span class="fw-bold text-primary">{{ "{:,.0f}".format(total) }}₫</span>
+          <span class="fw-bold text-primary">{{ "{:,.0f}".format(total or 0) }}₫</span>
         </div>
 
         {% if coupon_code %}
@@ -73,7 +74,7 @@
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold">Mã giao dịch:</span>
-          <span class="text-primary fw-bold">{{ transaction_id }}</span>
+          <span class="text-primary fw-bold">{{ transaction_id or '—' }}</span>
         </div>
 
         {% if order_id %}
@@ -89,17 +90,17 @@
       <div class="list-group mb-4 shadow-sm rounded overflow-hidden">
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold">Số dư trước giao dịch:</span>
-          <span>{{ "{:,.0f}".format(wallet_before) }}₫</span>
+          <span>{{ "{:,.0f}".format(wallet_before or 0) }}₫</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-light">
           <span class="fw-semibold text-danger">Đã trừ:</span>
-          <span class="fw-bold text-danger">-{{ "{:,.0f}".format(wallet_delta) }}₫</span>
+          <span class="fw-bold text-danger">-{{ "{:,.0f}".format(wallet_delta or 0) }}₫</span>
         </div>
 
         <div class="list-group-item d-flex justify-content-between py-3 glass-total">
           <span class="fw-semibold">Số dư hiện tại:</span>
-          <span class="fw-bold text-primary">{{ "{:,.0f}".format(wallet_after) }}₫</span>
+          <span class="fw-bold text-primary">{{ "{:,.0f}".format(wallet_after or 0) }}₫</span>
         </div>
       </div>
       {% endif %}
@@ -122,34 +123,54 @@
 </div>
 
 <style>
-.fade { animation: fadeIn .55s ease-out; }
+.payment-success-page.fade-in { animation: fadeIn .55s ease-out; }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.glass-card {
+
+.payment-success-page .glass-card {
   background: rgba(255,255,255,0.72);
   backdrop-filter: blur(14px);
 }
-.glass-light {
+
+.payment-success-page .glass-light {
   background: rgba(255,255,255,0.55);
   backdrop-filter: blur(8px);
 }
-.glass-total {
+
+.payment-success-page .glass-total {
   background: rgba(210, 230, 255, 0.55);
   backdrop-filter: blur(10px);
 }
-.header-success { background: linear-gradient(135deg, #22c55e, #16a34a); }
-.title-gradient {
+
+.payment-success-page .header-success {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.payment-success-page .title-gradient {
   background: linear-gradient(135deg, #0ea5e9, #2563eb);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-.list-group-item {
+
+.payment-success-page .list-group-item {
   border: none !important;
   border-bottom: 1px solid #eaeaea !important;
 }
-.list-group-item:last-child { border-bottom: none !important; }
+
+.payment-success-page .list-group-item:last-child {
+  border-bottom: none !important;
+}
+
+body.dark-mode .payment-success-page .glass-card,
+body.dark-mode .payment-success-page .glass-light,
+body.dark-mode .payment-success-page .glass-total,
+body.dark-mode .payment-success-page .list-group-item {
+  background: rgba(15, 23, 42, 0.78) !important;
+  color: #e2e8f0;
+  border-color: rgba(255,255,255,0.08) !important;
+}
 </style>
 {% endblock %}

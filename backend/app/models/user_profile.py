@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, Date, DateTime, ForeignKey, String
@@ -14,13 +13,25 @@ class UserProfile(Base):
         String(36),
         ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
+        index=True,
     )
-    full_name = Column(String(100), nullable=False)
-    phone = Column(String(20), nullable=True)
-    avatar_url = Column(String(500), nullable=True)
-    date_of_birth = Column(Date, nullable=True)
-    gender = Column(String(20), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    full_name = Column(
+        String(100),
+        nullable=False,
+    )
+
+    phone = Column(String(20))
+    avatar_url = Column(String(500))
+    date_of_birth = Column(Date)
+    gender = Column(String(20))
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+
     updated_at = Column(
         DateTime,
         default=datetime.utcnow,
@@ -28,7 +39,11 @@ class UserProfile(Base):
         nullable=False,
     )
 
-    user = relationship("User", back_populates="profile")
+    user = relationship(
+        "User",
+        back_populates="profile",
+        lazy="selectin",
+    )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<UserProfile(user_id='{self.user_id}', full_name='{self.full_name}')>"

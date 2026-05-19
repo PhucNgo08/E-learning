@@ -1,153 +1,398 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>📘 Chi tiết khóa học</title>
+{% extends "layout_admin.html" %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+{% block title %}Chi tiết khóa học{% endblock %}
 
-  <style>
-    body {
-      background: #f5f7ff;
-      font-family: 'Inter', sans-serif;
+{% block extra_css %}
+<style>
+  .admin-course-detail-page {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .admin-page-header {
+    background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
+    color: #fff;
+    border-radius: var(--radius-xl, 18px);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
+  }
+
+  .admin-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .course-detail-card,
+  .course-info-card {
+    background: var(--surface, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-xl, 18px);
+    box-shadow: var(--shadow-sm, 0 4px 16px rgba(15, 23, 42, 0.06));
+  }
+
+  .course-detail-card {
+    padding: 24px;
+  }
+
+  .course-thumbnail-wrap {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: var(--radius-lg, 16px);
+    overflow: hidden;
+    background: var(--surface-soft, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .course-thumbnail-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .course-title {
+    color: var(--text-main, #0f172a);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .course-description {
+    color: var(--text-muted, #64748b);
+    line-height: 1.65;
+  }
+
+  .badge-status,
+  .info-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 0.5rem 0.78rem;
+    font-weight: 700;
+    font-size: 0.82rem;
+    white-space: nowrap;
+  }
+
+  .status-published {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+  }
+
+  .status-draft {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+  }
+
+  .status-archived {
+    background: rgba(100, 116, 139, 0.16);
+    color: #334155;
+  }
+
+  .info-badge-primary {
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--role-primary, #2563eb);
+  }
+
+  .info-badge-success {
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+  }
+
+  .course-info-card {
+    overflow: hidden;
+  }
+
+  .course-info-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) 1fr;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  .course-info-row:last-child {
+    border-bottom: 0;
+  }
+
+  .course-info-label {
+    color: var(--text-muted, #64748b);
+    font-weight: 700;
+  }
+
+  .course-info-value {
+    color: var(--text-main, #0f172a);
+    font-weight: 600;
+    word-break: break-word;
+  }
+
+  .course-price {
+    color: #15803d;
+    font-weight: 800;
+  }
+
+  .course-action-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  @media (max-width: 768px) {
+    .admin-page-header,
+    .course-detail-card {
+      padding: 18px;
     }
-    .card {
-      border-radius: 18px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+
+    .course-info-row {
+      grid-template-columns: 1fr;
+      gap: 4px;
     }
-    .badge-status {
-      padding: 8px 14px;
-      border-radius: 30px;
-      font-size: 0.85rem;
-      font-weight: 600;
+
+    .course-action-bar .btn {
+      width: 100%;
     }
-    .status-published { background: #16a34a; color: white; }
-    .status-draft { background: #e2e8f0; color: #475569; }
-    .status-archived { background: #334155; color: white; }
-  </style>
-</head>
+  }
+</style>
+{% endblock %}
 
-<body class="p-4">
+{% block content %}
+<div class="admin-course-detail-page">
 
-  <div class="container">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold text-primary">
-        <i class="bi bi-journal-bookmark"></i> Chi tiết khóa học
-      </h2>
-
-      <a href="/admin/Course/manage" class="btn btn-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại
-      </a>
+  <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-journal-bookmark-fill me-2"></i>Chi tiết khóa học
+      </h3>
+      <p class="header-subtitle mb-0">Xem thông tin tổng quan, học vụ, giảng viên và trạng thái khóa học.</p>
     </div>
 
-    <!-- Main card -->
-    <div class="card p-4">
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Course/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left-circle me-1"></i>Quay lại
+      </a>
 
-      <div class="row g-4">
+      <a href="/admin/Course/edit/{{ course.id }}" class="btn btn-warning text-dark fw-semibold">
+        <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
+      </a>
+    </div>
+  </div>
 
-        <!-- Thumbnail -->
-        <div class="col-md-4">
+  <div class="course-detail-card">
+    <div class="row g-4">
+
+      <div class="col-lg-4">
+        <div class="course-thumbnail-wrap">
           <img src="{{ course.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-               class="img-fluid rounded shadow-sm"
-               alt="thumbnail">
+               alt="Ảnh đại diện khóa học">
         </div>
 
-        <!-- Info -->
-        <div class="col-md-8">
+        <div class="mt-3 d-flex flex-wrap gap-2">
+          {% if course.status == 'published' %}
+          <span class="badge-status status-published">
+            <i class="bi bi-check-circle"></i>Công khai
+          </span>
+          {% elif course.status == 'draft' %}
+          <span class="badge-status status-draft">
+            <i class="bi bi-pencil"></i>Bản nháp
+          </span>
+          {% else %}
+          <span class="badge-status status-archived">
+            <i class="bi bi-archive"></i>Lưu trữ
+          </span>
+          {% endif %}
 
-          <h3 class="fw-bold">{{ course.course_name }}</h3>
-          <p class="text-muted">{{ course.description }}</p>
+          <span class="info-badge info-badge-primary">
+            <i class="bi bi-upc-scan"></i>{{ course.course_code }}
+          </span>
+        </div>
+      </div>
 
-          <!-- STATUS BADGE -->
-          <div class="mt-3">
-            <span class="badge-status 
-              {% if course.status == 'published' %}status-published
-              {% elif course.status == 'draft' %}status-draft
-              {% else %}status-archived{% endif %}">
-              {{ course.status }}
-            </span>
+      <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+          <div>
+            <h3 class="course-title mb-2">{{ course.course_name }}</h3>
+            <p class="course-description mb-0">
+              {{ course.description or "Chưa có mô tả cho khóa học này." }}
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 course-info-card">
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-upc me-1"></i>Mã khóa học
+            </div>
+            <div class="course-info-value">{{ course.course_code }}</div>
           </div>
 
-          <hr>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-award me-1"></i>Số tín chỉ
+            </div>
+            <div class="course-info-value">{{ course.credit_hours or 0 }}</div>
+          </div>
 
-          <ul class="list-group">
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-cash-coin me-1"></i>Giá khóa học
+            </div>
+            <div class="course-info-value course-price">
+              {{ "{:,.0f}".format(course.price or 0) }} VNĐ
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Mã khóa học:</strong> {{ course.course_code }}
-            </li>
-
-            <li class="list-group-item">
-              <strong>Số tín chỉ:</strong> {{ course.credit_hours }}
-            </li>
-
-            <li class="list-group-item">
-              <strong>Giá khóa học:</strong> 
-              <span class="text-success fw-bold">
-                {{ "{:,.0f}".format(course.price) }} VNĐ
-              </span>
-            </li>
-
-            <li class="list-group-item">
-              <strong>Giảng viên:</strong>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-person-video3 me-1"></i>Giảng viên
+            </div>
+            <div class="course-info-value">
               {{ teacher.full_name if teacher else "Chưa phân công" }}
-            </li>
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Ngành học:</strong>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-diagram-3 me-1"></i>Ngành học
+            </div>
+            <div class="course-info-value">
               {{ course.major.major_name if course.major else "Không có" }}
-            </li>
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Năm học:</strong>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-calendar3 me-1"></i>Năm học
+            </div>
+            <div class="course-info-value">
               {{ course.year.year_name if course.year else "Không có" }}
-            </li>
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Độ khó:</strong> {{ course.difficulty_level }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-speedometer2 me-1"></i>Độ khó
+            </div>
+            <div class="course-info-value">
+              {% if course.difficulty_level == 'beginner' %}
+                Dễ
+              {% elif course.difficulty_level == 'intermediate' %}
+                Trung bình
+              {% elif course.difficulty_level == 'advanced' %}
+                Khó
+              {% else %}
+                {{ course.difficulty_level or "Chưa cập nhật" }}
+              {% endif %}
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Loại khóa học:</strong> {{ course.course_type }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-tag me-1"></i>Loại khóa học
+            </div>
+            <div class="course-info-value">
+              {% if course.course_type == 'mandatory' %}
+                Bắt buộc
+              {% elif course.course_type == 'elective' %}
+                Tự chọn
+              {% elif course.course_type == 'workshop' %}
+                Workshop
+              {% elif course.course_type == 'online' %}
+                Online
+              {% elif course.course_type == 'hybrid' %}
+                Hybrid
+              {% else %}
+                {{ course.course_type or "Chưa cập nhật" }}
+              {% endif %}
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Hình thức ghi danh:</strong> {{ course.enrollment_mode }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-person-check me-1"></i>Hình thức ghi danh
+            </div>
+            <div class="course-info-value">
+              {% if course.enrollment_mode == 'auto' %}
+                Tự động
+              {% elif course.enrollment_mode == 'approval' %}
+                Chờ duyệt
+              {% elif course.enrollment_mode == 'invite_only' %}
+                Mời riêng
+              {% else %}
+                {{ course.enrollment_mode or "Chưa cập nhật" }}
+              {% endif %}
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Giới hạn học viên:</strong> {{ course.max_students }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-people me-1"></i>Giới hạn học viên
+            </div>
+            <div class="course-info-value">{{ course.max_students or 0 }}</div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Đang học:</strong> {{ course.current_students }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-mortarboard me-1"></i>Đang học
+            </div>
+            <div class="course-info-value">
+              <span class="info-badge info-badge-success">
+                {{ course.current_students or 0 }} học viên
+              </span>
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Ngày bắt đầu:</strong>
-              {{ course.start_date.strftime("%d/%m/%Y") if course.start_date }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-calendar-check me-1"></i>Ngày bắt đầu
+            </div>
+            <div class="course-info-value">
+              {{ course.start_date.strftime("%d/%m/%Y") if course.start_date else "Chưa cập nhật" }}
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Ngày kết thúc:</strong>
-              {{ course.end_date.strftime("%d/%m/%Y") if course.end_date }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-calendar-x me-1"></i>Ngày kết thúc
+            </div>
+            <div class="course-info-value">
+              {{ course.end_date.strftime("%d/%m/%Y") if course.end_date else "Chưa cập nhật" }}
+            </div>
+          </div>
 
-            <li class="list-group-item">
-              <strong>Ngày tạo:</strong>
-              {{ course.created_at.strftime("%d/%m/%Y %H:%M") }}
-            </li>
+          <div class="course-info-row">
+            <div class="course-info-label">
+              <i class="bi bi-clock-history me-1"></i>Ngày tạo
+            </div>
+            <div class="course-info-value">
+              {{ course.created_at.strftime("%d/%m/%Y %H:%M") if course.created_at else "Chưa cập nhật" }}
+            </div>
+          </div>
+        </div>
 
-          </ul>
+        <div class="course-action-bar">
+          <a href="/admin/Course/manage" class="btn btn-outline-secondary px-4">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+          </a>
 
+          <div class="d-flex gap-2 flex-wrap">
+            <a href="/admin/Course/edit/{{ course.id }}" class="btn btn-primary px-4">
+              <i class="bi bi-pencil-square me-1"></i>Sửa khóa học
+            </a>
+
+            <a href="/admin/Course/delete/{{ course.id }}"
+               class="btn btn-outline-danger px-4"
+               onclick="return confirm('Bạn có chắc muốn xóa khóa học này?')">
+              <i class="bi bi-trash me-1"></i>Xóa
+            </a>
+          </div>
         </div>
 
       </div>
-
     </div>
-
   </div>
 
-</body>
-</html>
+</div>
+{% endblock %}

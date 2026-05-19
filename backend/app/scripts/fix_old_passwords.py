@@ -1,64 +1,90 @@
-import mysql.connector
 import bcrypt
+import pymysql
+from pymysql.cursors import DictCursor
 
-# ==========================
-# ⚙️ Cấu hình kết nối MySQL
-# ==========================
-DB_HOST = "localhost"
-DB_PORT = 3309           # Đổi nếu bạn dùng port khác
-DB_USER = "root"
-DB_PASS = "111004@"      # Mật khẩu MySQL của bạn
-DB_NAME = "e_learning"
+from app.core.config import Settings
 
-# ==========================
-# 🔧 Đặt lại mật khẩu teacher & student
-# ==========================
+
+settings = Settings()
+DEFAULT_PASSWORD = "123456"
+TARGET_ROLES = ("teacher", "student")
+
+
+def get_db_connection():
+    return pymysql.connect(
+        host=settings.DB_HOST,
+        port=settings.DB_PORT,
+        user=settings.DB_USER,
+        password=settings.DB_PASS,
+        database=settings.DB_NAME,
+        charset="utf8mb4",
+        cursorclass=DictCursor,
+        autocommit=False,
+    )
+
+
+def make_password_hash(password: str) -> str:
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def is_bcrypt_hash(value: str | None) -> bool:
+    if not value:
+        return False
+    return value.startswith(("$2a$", "$2b$", "$2y$"))
+
+
 def reset_teacher_student_passwords():
     db = None
     cursor = None
     try:
-        db = mysql.connector.connect(
-            host=DB_HOST,
-            port=DB_PORT,
-            user=DB_USER,
-            password=DB_PASS,
-            database=DB_NAME
-        )
+        db = get_db_connection()
         cursor = db.cursor()
 
-        # 🔎 Lọc tất cả teacher & student
-        cursor.execute("""
-            SELECT id, username, role, password_hash 
-            FROM users 
-            WHERE role IN ('teacher', 'student')
-        """)
+        placeholders = ", ".join(["%s"] * len(TARGET_ROLES))
+        cursor.execute(
+            f"""
+            SELECT DISTINCT u.id, u.username, u.password_hash, r.role_code
+            FROM users u
+            JOIN user_roles ur ON ur.user_id = u.id
+            JOIN roles r ON r.id = ur.role_id
+            WHERE r.role_code IN ({placeholders})
+            """,
+            TARGET_ROLES,
+        )
         users = cursor.fetchall()
 
         count = 0
-        for user_id, username, role, password_hash in users:
-            # Nếu hash chưa phải bcrypt
-            if not password_hash or not (password_hash.startswith("$2a$") or password_hash.startswith("$2b$")):
-                new_hash = bcrypt.hashpw("123456".encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-                cursor.execute("""
-                    UPDATE users 
-                    SET password_hash = %s 
+        for user in users:
+            if not is_bcrypt_hash(user.get("password_hash")):
+                new_hash = make_password_hash(DEFAULT_PASSWORD)
+                cursor.execute(
+                    """
+                    UPDATE users
+                    SET password_hash = %s, updated_at = NOW()
                     WHERE id = %s
-                """, (new_hash, user_id))
+                    """,
+                    (new_hash, user["id"]),
+                )
                 count += 1
-                print(f"🔁 {role.upper()} {username}: reset mật khẩu → 123456 (bcrypt)")
+                print(
+                    f"🔁 {user['role_code'].upper()} {user['username']}: "
+                    f"reset mật khẩu mặc định → {DEFAULT_PASSWORD}"
+                )
 
         db.commit()
-        print(f"✅ Đã cập nhật {count} tài khoản teacher/student sang bcrypt (mặc định 123456).")
+        print(f"✅ Đã cập nhật {count} tài khoản teacher/student sang bcrypt.")
 
-    except mysql.connector.Error as err:
+    except pymysql.MySQLError as err:
+        if db:
+            db.rollback()
         print(f"❌ Lỗi MySQL: {err}")
     finally:
-        if cursor: cursor.close()
-        if db: db.close()
+        if cursor:
+            cursor.close()
+        if db:
+            db.close()
         print("🔒 Kết nối tới MySQL đã đóng.")
 
-# ==========================
-# 🚀 Chạy trực tiếp
-# ==========================
+
 if __name__ == "__main__":
     reset_teacher_student_passwords()

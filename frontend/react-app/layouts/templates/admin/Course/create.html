@@ -1,347 +1,754 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>➕ Tạo Khóa Học</title>
+{% extends "layout_admin.html" %}
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+{% block title %}Tạo khóa học{% endblock %}
 
-  <style>
-    body {
-      background: #f0f4ff;
-      font-family: "Inter", sans-serif;
+{% block extra_css %}
+<style>
+  .admin-course-create-page {
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+
+  .admin-page-header {
+    background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
+    color: #fff;
+    border-radius: var(--radius-xl, 18px);
+    padding: 24px 28px;
+    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
+  }
+
+  .admin-page-header .header-subtitle {
+    color: rgba(255, 255, 255, 0.86);
+  }
+
+  .admin-form-card {
+    background: var(--surface, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: var(--radius-xl, 18px);
+    box-shadow: var(--shadow-sm, 0 4px 16px rgba(15, 23, 42, 0.06));
+    padding: 24px;
+  }
+
+  .course-step-tabs {
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    gap: 8px;
+  }
+
+  .course-step-tabs .nav-link {
+    border: 0;
+    border-radius: 999px;
+    color: var(--text-muted, #64748b);
+    background: var(--surface-soft, #f8fafc);
+    font-weight: 700;
+    padding: 0.72rem 1rem;
+  }
+
+  .course-step-tabs .nav-link:hover {
+    color: var(--role-primary, #2563eb);
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  .course-step-tabs .nav-link.active {
+    color: #fff !important;
+    background: var(--role-primary, #2563eb);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
+  }
+
+  .course-step-tabs .nav-link.tab-completed {
+    color: #15803d;
+    background: rgba(22, 163, 74, 0.12);
+  }
+
+  .course-step-tabs .nav-link.tab-completed.active {
+    color: #fff !important;
+    background: #16a34a;
+  }
+
+  .step-progress-wrap {
+    background: var(--surface-soft, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 999px;
+    height: 12px;
+    overflow: hidden;
+  }
+
+  .step-progress-bar {
+    width: 20%;
+    height: 100%;
+    background: var(--role-primary, #2563eb);
+    border-radius: 999px;
+    transition: width 0.25s ease;
+  }
+
+  .form-section-title {
+    color: var(--text-main, #0f172a);
+    font-size: 1.05rem;
+    font-weight: 800;
+    margin-bottom: 14px;
+  }
+
+  .form-label {
+    color: var(--text-main, #0f172a);
+    font-weight: 700;
+  }
+
+  .required-mark {
+    color: var(--danger, #dc2626);
+  }
+
+  .form-hint {
+    color: var(--text-muted, #64748b);
+    font-size: 0.88rem;
+  }
+
+  .tab-pane {
+    padding-top: 20px;
+  }
+
+  .tab-pane.auto-ready {
+    animation: softPulse 0.5s ease;
+  }
+
+  @keyframes softPulse {
+    0% { background: rgba(22, 163, 74, 0.05); }
+    100% { background: transparent; }
+  }
+
+  .step-actions {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    padding-top: 18px;
+    margin-top: 22px;
+  }
+
+  .auto-next-note {
+    color: var(--text-muted, #64748b);
+    font-size: 0.9rem;
+  }
+
+  .thumbnail-preview {
+    width: 100%;
+    max-width: 360px;
+    aspect-ratio: 16 / 9;
+    border: 1px dashed var(--border-color, #e2e8f0);
+    border-radius: var(--radius-lg, 16px);
+    background: var(--surface-soft, #f8fafc);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted, #64748b);
+    overflow: hidden;
+  }
+
+  .thumbnail-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    .admin-page-header,
+    .admin-form-card {
+      padding: 18px;
     }
-    .page-wrapper {
-      max-width: 1100px;
-      margin: auto;
-      background: #fff;
-      padding: 2rem 2.5rem;
-      margin-top: 40px;
-      margin-bottom: 40px;
-      border-radius: 16px;
-      box-shadow: 0px 8px 30px rgba(0,0,0,0.08);
+
+    .course-step-tabs .nav-link {
+      width: 100%;
+      text-align: left;
+      border-radius: 14px;
     }
-    .nav-tabs .nav-link { font-weight: 600; }
-    .nav-tabs .nav-link.active {
-      background: #0d6efd;
-      color: #fff !important;
+
+    .step-actions .btn {
+      width: 100%;
     }
-    label { font-weight: 600; }
-  </style>
-</head>
+  }
+</style>
+{% endblock %}
 
-<body>
-
-<div class="page-wrapper">
-
+{% block content %}
+<div class="admin-course-create-page">
   {% set f = form or {} %}
 
-  <h3 class="text-primary fw-bold mb-3">
-    <i class="bi bi-plus-circle"></i> Tạo Khóa Học Mới
-  </h3>
-
-  <!-- ✅ ALERTS -->
-  {% if flash_success %}
-    <div class="alert alert-success d-flex align-items-center" role="alert">
-      <i class="bi bi-check-circle-fill me-2"></i>
-      <div>{{ flash_success }}</div>
+  <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-plus-circle-fill me-2"></i>Tạo khóa học mới
+      </h3>
+      <p class="header-subtitle mb-0">Nhập thông tin theo từng bước. Khi nhập đủ các ô bắt buộc, hệ thống sẽ tự chuyển sang bước tiếp theo sau 5 giây.</p>
     </div>
+
+    <div class="d-flex flex-wrap gap-2">
+      <a href="/admin/Course/manage" class="btn btn-light text-primary fw-semibold">
+        <i class="bi bi-arrow-left me-1"></i>Danh sách khóa học
+      </a>
+      <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
+        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+      </a>
+    </div>
+  </div>
+
+  {% if flash_success %}
+  <div class="alert alert-success d-flex align-items-center shadow-sm" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>
+    <div>{{ flash_success }}</div>
+  </div>
   {% endif %}
 
   {% if flash_error %}
-    <div class="alert alert-danger d-flex align-items-center" role="alert">
-      <i class="bi bi-exclamation-triangle-fill me-2"></i>
-      <div>{{ flash_error }}</div>
-    </div>
+  <div class="alert alert-danger d-flex align-items-center shadow-sm" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <div>{{ flash_error }}</div>
+  </div>
   {% endif %}
 
   {% if errors %}
-    <div class="alert alert-danger" role="alert">
-      <div class="fw-bold mb-1">
-        <i class="bi bi-bug-fill me-1"></i> Vui lòng kiểm tra lại:
-      </div>
-      <ul class="mb-0">
-        {% for e in errors %}
-          <li>{{ e }}</li>
-        {% endfor %}
-      </ul>
+  <div class="alert alert-danger shadow-sm" role="alert">
+    <div class="fw-bold mb-1">
+      <i class="bi bi-bug-fill me-1"></i>Vui lòng kiểm tra lại:
     </div>
+    <ul class="mb-0">
+      {% for e in errors %}
+      <li>{{ e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
   {% endif %}
 
-  <!-- TAB -->
-  <ul class="nav nav-tabs mb-4" id="courseTab" role="tablist">
-    <li class="nav-item">
-      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-basic" type="button">Thông tin chính</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-time" type="button">Lịch - Học vụ</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-settings" type="button">Cài đặt khóa học</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-limit" type="button">Giới hạn & Enroll</button>
-    </li>
-    <li class="nav-item">
-      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-thumb" type="button">Ảnh Thumbnail</button>
-    </li>
-  </ul>
+  <div class="admin-form-card">
+    <div class="step-progress-wrap mb-3" aria-label="Tiến trình tạo khóa học">
+      <div class="step-progress-bar" id="stepProgressBar"></div>
+    </div>
 
-  <!-- FORM -->
-  <form method="post" action="/admin/Course/create" enctype="multipart/form-data">
-    <div class="tab-content">
+    <ul class="nav nav-tabs course-step-tabs mb-4" id="courseTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-basic-btn" data-bs-toggle="tab" data-bs-target="#tab-basic" type="button" role="tab">
+          <i class="bi bi-1-circle me-1"></i>Thông tin chính
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-time-btn" data-bs-toggle="tab" data-bs-target="#tab-time" type="button" role="tab">
+          <i class="bi bi-2-circle me-1"></i>Lịch - Học vụ
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-settings-btn" data-bs-toggle="tab" data-bs-target="#tab-settings" type="button" role="tab">
+          <i class="bi bi-3-circle me-1"></i>Cài đặt khóa học
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-limit-btn" data-bs-toggle="tab" data-bs-target="#tab-limit" type="button" role="tab">
+          <i class="bi bi-4-circle me-1"></i>Giới hạn & Enroll
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-thumb-btn" data-bs-toggle="tab" data-bs-target="#tab-thumb" type="button" role="tab">
+          <i class="bi bi-5-circle me-1"></i>Ảnh Thumbnail
+        </button>
+      </li>
+    </ul>
 
-      <!-- TAB 1 -->
-      <div class="tab-pane fade show active" id="tab-basic">
-        <div class="row g-3">
+    <form method="post" action="/admin/Course/create" enctype="multipart/form-data" id="courseCreateForm" novalidate>
+      <div class="tab-content">
 
-          <div class="col-md-6">
-            <label class="form-label">Tên khóa học *</label>
-            <input type="text" class="form-control" name="course_name" required
-                   value="{{ f.get('course_name','') }}">
+        <div class="tab-pane fade show active" id="tab-basic" role="tabpanel" aria-labelledby="tab-basic-btn" data-step="1">
+          <div class="form-section-title">
+            <i class="bi bi-card-text me-1"></i>Thông tin chính
           </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Môn học / Subject *</label>
-            <input type="text" class="form-control" name="subject" placeholder="VD: Python"
-                   value="{{ f.get('subject','') }}">
-          </div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Tên khóa học <span class="required-mark">*</span></label>
+              <input type="text" class="form-control" name="course_name" required data-auto-next-required value="{{ f.get('course_name','') }}" placeholder="VD: Nhập môn lập trình Web">
+            </div>
 
-          <div class="col-md-4">
-            <label class="form-label">Số tín chỉ *</label>
-            <input type="number" class="form-control" name="credit_hours" min="1"
-                   value="{{ f.get('credit_hours','3') }}">
-          </div>
+            <div class="col-md-6">
+              <label class="form-label">Môn học / Subject <span class="required-mark">*</span></label>
+              <input type="text" class="form-control" name="subject" required data-auto-next-required placeholder="VD: Python, Database, UI/UX" value="{{ f.get('subject','') }}">
+            </div>
 
-          <div class="col-md-4">
-            <label class="form-label">Độ khó</label>
-            <select class="form-select" name="difficulty_level">
-              {% set diff = f.get('difficulty_level','beginner') %}
-              <option value="beginner" {{ 'selected' if diff=='beginner' else '' }}>Dễ</option>
-              <option value="intermediate" {{ 'selected' if diff=='intermediate' else '' }}>Trung bình</option>
-              <option value="advanced" {{ 'selected' if diff=='advanced' else '' }}>Khó</option>
-            </select>
-          </div>
+            <div class="col-md-4">
+              <label class="form-label">Số tín chỉ <span class="required-mark">*</span></label>
+              <input type="number" class="form-control" name="credit_hours" min="1" required data-auto-next-required value="{{ f.get('credit_hours','3') }}">
+            </div>
 
-          <div class="col-md-4">
-            <label class="form-label">Cấp độ lớp / Grade</label>
-            <input type="number" class="form-control" name="grade_level" min="1"
-                   value="{{ f.get('grade_level','') }}">
-          </div>
+            <div class="col-md-4">
+              <label class="form-label">Độ khó <span class="required-mark">*</span></label>
+              <select class="form-select" name="difficulty_level" required data-auto-next-required>
+                {% set diff = f.get('difficulty_level','beginner') %}
+                <option value="beginner" {{ 'selected' if diff=='beginner' else '' }}>Dễ</option>
+                <option value="intermediate" {{ 'selected' if diff=='intermediate' else '' }}>Trung bình</option>
+                <option value="advanced" {{ 'selected' if diff=='advanced' else '' }}>Khó</option>
+              </select>
+            </div>
 
-          <div class="col-12">
-            <label class="form-label">Mô tả</label>
-            <textarea class="form-control" name="description" rows="3">{{ f.get('description','') }}</textarea>
-          </div>
+            <div class="col-md-4">
+              <label class="form-label">Cấp độ lớp / Grade</label>
+              <input type="number" class="form-control" name="grade_level" min="1" value="{{ f.get('grade_level','') }}" placeholder="VD: 1">
+            </div>
 
+            <div class="col-12">
+              <label class="form-label">Mô tả</label>
+              <textarea class="form-control" name="description" rows="3" placeholder="Mô tả ngắn nội dung khóa học">{{ f.get('description','') }}</textarea>
+            </div>
+          </div>
         </div>
-      </div>
 
-      <!-- TAB 2 -->
-      <div class="tab-pane fade" id="tab-time">
-        <div class="row g-3">
+        <div class="tab-pane fade" id="tab-time" role="tabpanel" aria-labelledby="tab-time-btn" data-step="2">
+          <div class="form-section-title">
+            <i class="bi bi-calendar-week me-1"></i>Lịch - Học vụ
+          </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Giảng viên *</label>
-            <select class="form-select" name="teacher_id">
-              <option value="">-- Chọn giảng viên --</option>
-              {% set teacher = f.get('teacher_id','') %}
-              {% for t in teachers %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Giảng viên <span class="required-mark">*</span></label>
+              <select class="form-select" name="teacher_id" required data-auto-next-required>
+                <option value="">-- Chọn giảng viên --</option>
+                {% set teacher = f.get('teacher_id','') %}
+                {% for t in teachers %}
                 <option value="{{ t.id }}" {{ 'selected' if (teacher|string)==(t.id|string) else '' }}>{{ t.full_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
+                {% endfor %}
+              </select>
+            </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Năm học</label>
-            <select class="form-select" name="academic_year_id">
-              <option value="">-- Chọn năm học --</option>
-              {% set year = f.get('academic_year_id','') %}
-              {% for y in years %}
-                <option value="{{ y.id }}" {{ 'selected' if year==y.id else '' }}>{{ y.year_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
+            <div class="col-md-6">
+              <label class="form-label">Năm học <span class="required-mark">*</span></label>
+              <select class="form-select" name="academic_year_id" required data-auto-next-required>
+                <option value="">-- Chọn năm học --</option>
+                {% set year = f.get('academic_year_id','') %}
+                {% for y in years %}
+                <option value="{{ y.id }}" {{ 'selected' if (year|string)==(y.id|string) else '' }}>{{ y.year_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Ngành học</label>
-            <select class="form-select" name="major_id">
-              <option value="">-- Chọn ngành --</option>
-              {% set major = f.get('major_id','') %}
-              {% for m in majors %}
-                <option value="{{ m.id }}" {{ 'selected' if major==m.id else '' }}>{{ m.major_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
+            <div class="col-md-6">
+              <label class="form-label">Ngành học <span class="required-mark">*</span></label>
+              <select class="form-select" name="major_id" required data-auto-next-required>
+                <option value="">-- Chọn ngành --</option>
+                {% set major = f.get('major_id','') %}
+                {% for m in majors %}
+                <option value="{{ m.id }}" {{ 'selected' if (major|string)==(m.id|string) else '' }}>{{ m.major_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
 
-          <div class="col-md-3">
-            <label class="form-label">Ngày bắt đầu</label>
-            <input type="date" class="form-control" name="start_date"
-                   value="{{ f.get('start_date','') }}">
-          </div>
+            <div class="col-md-3">
+              <label class="form-label">Ngày bắt đầu <span class="required-mark">*</span></label>
+              <input type="date" class="form-control" name="start_date" required data-auto-next-required value="{{ f.get('start_date','') }}">
+            </div>
 
-          <div class="col-md-3">
-            <label class="form-label">Ngày kết thúc</label>
-            <input type="date" class="form-control" name="end_date"
-                   value="{{ f.get('end_date','') }}">
-          </div>
+            <div class="col-md-3">
+              <label class="form-label">Ngày kết thúc <span class="required-mark">*</span></label>
+              <input type="date" class="form-control" name="end_date" required data-auto-next-required value="{{ f.get('end_date','') }}">
+            </div>
 
-          <div class="col-md-4">
-            <label class="form-label">Kỳ học (Semester)</label>
-            <input type="number" class="form-control" name="semester" min="1" max="10"
-                   value="{{ f.get('semester','') }}">
+            <div class="col-md-4">
+              <label class="form-label">Kỳ học / Semester <span class="required-mark">*</span></label>
+              <input type="number" class="form-control" name="semester" min="1" max="10" required data-auto-next-required value="{{ f.get('semester','') }}" placeholder="VD: 1">
+            </div>
           </div>
-
         </div>
+
+        <div class="tab-pane fade" id="tab-settings" role="tabpanel" aria-labelledby="tab-settings-btn" data-step="3">
+          <div class="form-section-title">
+            <i class="bi bi-sliders me-1"></i>Cài đặt khóa học
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Loại khóa học <span class="required-mark">*</span></label>
+              <select class="form-select" name="course_type" required data-auto-next-required>
+                {% set ctype = f.get('course_type','mandatory') %}
+                <option value="mandatory" {{ 'selected' if ctype=='mandatory' else '' }}>Bắt buộc</option>
+                <option value="elective" {{ 'selected' if ctype=='elective' else '' }}>Tự chọn</option>
+                <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Workshop</option>
+                <option value="online" {{ 'selected' if ctype=='online' else '' }}>Online</option>
+                <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Hybrid</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Trạng thái <span class="required-mark">*</span></label>
+              <select class="form-select" name="status_str" required data-auto-next-required>
+                {% set st = f.get('status_str','draft') %}
+                <option value="draft" {{ 'selected' if st=='draft' else '' }}>Bản nháp</option>
+                <option value="published" {{ 'selected' if st=='published' else '' }}>Công khai</option>
+                <option value="archived" {{ 'selected' if st=='archived' else '' }}>Lưu trữ</option>
+              </select>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">Môn tiên quyết / Prerequisites</label>
+              <textarea class="form-control" name="prerequisites" rows="2" placeholder="VD: Đã học HTML/CSS cơ bản">{{ f.get('prerequisites','') }}</textarea>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Cho phép bài tập <span class="required-mark">*</span></label>
+              <select class="form-select" name="allow_assignments" required data-auto-next-required>
+                {% set aa = f.get('allow_assignments','1') %}
+                <option value="1" {{ 'selected' if aa=='1' else '' }}>Có</option>
+                <option value="0" {{ 'selected' if aa=='0' else '' }}>Không</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Hình thức nộp bài <span class="required-mark">*</span></label>
+              <select class="form-select" name="default_submission_type" required data-auto-next-required>
+                {% set dst = f.get('default_submission_type','individual') %}
+                <option value="individual" {{ 'selected' if dst=='individual' else '' }}>Cá nhân</option>
+                <option value="group" {{ 'selected' if dst=='group' else '' }}>Nhóm</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-limit" role="tabpanel" aria-labelledby="tab-limit-btn" data-step="4">
+          <div class="form-section-title">
+            <i class="bi bi-person-check me-1"></i>Giới hạn & Enroll
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Giá khóa học / VNĐ <span class="required-mark">*</span></label>
+              <input type="number" class="form-control" name="price" min="0" step="1000" required data-auto-next-required value="{{ f.get('price','0') }}" placeholder="VD: 499000">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Số lượng tối đa <span class="required-mark">*</span></label>
+              <input type="number" class="form-control" name="max_students" min="1" required data-auto-next-required value="{{ f.get('max_students','100') }}">
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Chế độ đăng ký <span class="required-mark">*</span></label>
+              <select class="form-select" name="enrollment_mode" required data-auto-next-required>
+                {% set em = f.get('enrollment_mode','auto') %}
+                <option value="auto" {{ 'selected' if em=='auto' else '' }}>Tự động</option>
+                <option value="approval" {{ 'selected' if em=='approval' else '' }}>Chờ duyệt</option>
+                <option value="invite_only" {{ 'selected' if em=='invite_only' else '' }}>Chỉ dành cho người được mời</option>
+              </select>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Công khai / Public <span class="required-mark">*</span></label>
+              <select class="form-select" name="is_public" required data-auto-next-required>
+                {% set pub = f.get('is_public','0') %}
+                <option value="0" {{ 'selected' if pub=='0' else '' }}>Không</option>
+                <option value="1" {{ 'selected' if pub=='1' else '' }}>Có</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-thumb" role="tabpanel" aria-labelledby="tab-thumb-btn" data-step="5">
+          <div class="form-section-title">
+            <i class="bi bi-image me-1"></i>Ảnh Thumbnail
+          </div>
+
+          <div class="row g-3 align-items-start">
+            <div class="col-md-6">
+              <label class="form-label">Ảnh đại diện / Thumbnail</label>
+              <input type="file" class="form-control" name="thumbnail" id="thumbnailInput" accept="image/jpeg,image/png,image/gif,image/webp">
+              <p class="form-hint mt-2 mb-0">Hỗ trợ: JPG, PNG, GIF, WEBP. Nên dùng ảnh tỷ lệ 16:9.</p>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Xem trước</label>
+              <div class="thumbnail-preview" id="thumbnailPreview">
+                <div class="text-center">
+                  <i class="bi bi-image fs-2 d-block mb-1"></i>
+                  Chưa chọn ảnh
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- TAB 3 -->
-      <div class="tab-pane fade" id="tab-settings">
-        <div class="row g-3">
+      <div class="step-actions d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="auto-next-note">
+          <i class="bi bi-lightning-charge me-1"></i>
+          Khi nhập đủ các ô có dấu <span class="required-mark">*</span>, form sẽ tự chuyển sau <strong>5 giây</strong>.
+        </div>
 
-          <div class="col-md-6">
-            <label class="form-label">Loại khóa học</label>
-            <select class="form-select" name="course_type">
-              {% set ctype = f.get('course_type','mandatory') %}
-              <option value="mandatory" {{ 'selected' if ctype=='mandatory' else '' }}>Bắt buộc</option>
-              <option value="elective" {{ 'selected' if ctype=='elective' else '' }}>Tự chọn</option>
-              <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Workshop</option>
-              <option value="online" {{ 'selected' if ctype=='online' else '' }}>Online</option>
-              <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Hybrid</option>
-            </select>
-          </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-outline-secondary px-4" type="button" id="prevStepBtn">
+            <i class="bi bi-arrow-left me-1"></i>Trước
+          </button>
 
-          <div class="col-md-6">
-            <label class="form-label">Trạng thái</label>
-            <select class="form-select" name="status_str">
-              {% set st = f.get('status_str','draft') %}
-              <option value="draft" {{ 'selected' if st=='draft' else '' }}>Bản nháp</option>
-              <option value="published" {{ 'selected' if st=='published' else '' }}>Công khai</option>
-              <option value="archived" {{ 'selected' if st=='archived' else '' }}>Lưu trữ</option>
-            </select>
-          </div>
+          <button class="btn btn-primary px-4" type="button" id="nextStepBtn">
+            Tiếp theo<i class="bi bi-arrow-right ms-1"></i>
+          </button>
 
-          <div class="col-12">
-            <label class="form-label">Môn tiên quyết (Prerequisites)</label>
-            <textarea class="form-control" name="prerequisites" rows="2">{{ f.get('prerequisites','') }}</textarea>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Cho phép bài tập</label>
-            <select class="form-select" name="allow_assignments">
-              {% set aa = f.get('allow_assignments','1') %}
-              <option value="1" {{ 'selected' if aa=='1' else '' }}>Có</option>
-              <option value="0" {{ 'selected' if aa=='0' else '' }}>Không</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Hình thức nộp bài</label>
-            <select class="form-select" name="default_submission_type">
-              {% set dst = f.get('default_submission_type','individual') %}
-              <option value="individual" {{ 'selected' if dst=='individual' else '' }}>Cá nhân</option>
-              <option value="group" {{ 'selected' if dst=='group' else '' }}>Nhóm</option>
-            </select>
-          </div>
-
+          <button class="btn btn-success px-4 d-none" type="submit" id="submitCourseBtn">
+            <i class="bi bi-check-lg me-1"></i>Tạo khóa học
+          </button>
         </div>
       </div>
-
-      <!-- TAB 4 -->
-      <div class="tab-pane fade" id="tab-limit">
-        <div class="row g-3">
-
-          <div class="col-md-6">
-            <label class="form-label">Giá khóa học (VNĐ)</label>
-            <input type="number" class="form-control" name="price" min="0" step="1000"
-                   value="{{ f.get('price','') }}">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Số lượng tối đa</label>
-            <input type="number" class="form-control" name="max_students" min="1"
-                   value="{{ f.get('max_students','100') }}">
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Chế độ đăng ký</label>
-            <select class="form-select" name="enrollment_mode">
-              {% set em = f.get('enrollment_mode','auto') %}
-              <option value="auto" {{ 'selected' if em=='auto' else '' }}>Tự động</option>
-              <option value="approval" {{ 'selected' if em=='approval' else '' }}>Chờ duyệt</option>
-              <option value="invite_only" {{ 'selected' if em=='invite_only' else '' }}>Chỉ dành cho người được mời</option>
-            </select>
-          </div>
-
-          <div class="col-md-6">
-            <label class="form-label">Công khai (Public)</label>
-            <select class="form-select" name="is_public">
-              {% set pub = f.get('is_public','0') %}
-              <option value="0" {{ 'selected' if pub=='0' else '' }}>Không</option>
-              <option value="1" {{ 'selected' if pub=='1' else '' }}>Có</option>
-            </select>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- TAB 5 -->
-      <div class="tab-pane fade" id="tab-thumb">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">Ảnh đại diện (thumbnail)</label>
-            <input type="file" class="form-control" name="thumbnail">
-          </div>
-
-          <p class="text-muted mt-2 mb-0">
-            Hỗ trợ: JPG, PNG, GIF, WEBP — Tối ưu dung lượng & kích thước 16:9.
-          </p>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Action -->
-    <div class="d-flex justify-content-between mt-4">
-      <a href="/admin/Course/manage" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
-
-      <button class="btn btn-success px-4" type="submit">
-        <i class="bi bi-check-lg"></i> Tạo khóa học
-      </button>
-    </div>
-
-  </form>
-
+    </form>
+  </div>
 </div>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-<!-- ✅ nhớ tab đang chọn -->
+{% block extra_js %}
 <script>
-  (function () {
+  document.addEventListener("DOMContentLoaded", function () {
     const STORAGE_KEY = "admin_course_create_active_tab";
-    const tabButtons = document.querySelectorAll('#courseTab [data-bs-toggle="tab"]');
+    const AUTO_NEXT_DELAY = 5000;
 
-    // restore
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const btn = document.querySelector(`#courseTab [data-bs-target="${saved}"]`);
-      if (btn) new bootstrap.Tab(btn).show();
+    const tabButtons = Array.from(document.querySelectorAll('#courseTab [data-bs-toggle="tab"]'));
+    const tabPanes = Array.from(document.querySelectorAll('#courseCreateForm .tab-pane'));
+    const progressBar = document.getElementById("stepProgressBar");
+    const prevBtn = document.getElementById("prevStepBtn");
+    const nextBtn = document.getElementById("nextStepBtn");
+    const submitBtn = document.getElementById("submitCourseBtn");
+    const form = document.getElementById("courseCreateForm");
+    const thumbnailInput = document.getElementById("thumbnailInput");
+    const thumbnailPreview = document.getElementById("thumbnailPreview");
+
+    let autoNextTimer = null;
+
+    function getActiveIndex() {
+      const index = tabButtons.findIndex(btn => btn.classList.contains("active"));
+      return index >= 0 ? index : 0;
     }
 
-    // save on change
-    tabButtons.forEach(btn => {
-      btn.addEventListener('shown.bs.tab', (e) => {
-        localStorage.setItem(STORAGE_KEY, e.target.getAttribute('data-bs-target'));
+    function getTargetSelector(button) {
+      return button ? button.getAttribute("data-bs-target") : null;
+    }
+
+    function getPaneByButton(button) {
+      const target = getTargetSelector(button);
+      return target ? document.querySelector(target) : null;
+    }
+
+    function getRequiredFields(pane) {
+      if (!pane) return [];
+      return Array.from(pane.querySelectorAll("[data-auto-next-required]"));
+    }
+
+    function hasValue(field) {
+      if (!field) return false;
+
+      if (field.type === "checkbox" || field.type === "radio") {
+        const group = field.name ? document.querySelectorAll(`[name="${field.name}"]`) : [field];
+        return Array.from(group).some(item => item.checked);
+      }
+
+      if (field.type === "file") {
+        return field.files && field.files.length > 0;
+      }
+
+      return String(field.value || "").trim() !== "";
+    }
+
+    function isPaneCompleted(pane) {
+      const requiredFields = getRequiredFields(pane);
+      if (requiredFields.length === 0) return true;
+      return requiredFields.every(hasValue);
+    }
+
+    function markFields(pane) {
+      getRequiredFields(pane).forEach(field => {
+        const ok = hasValue(field);
+        field.classList.toggle("is-valid", ok);
+        field.classList.toggle("is-invalid", !ok);
+      });
+    }
+
+    function updateStepUI() {
+      const activeIndex = getActiveIndex();
+      const total = tabButtons.length || 1;
+      const isLast = activeIndex === tabButtons.length - 1;
+
+      if (progressBar) {
+        progressBar.style.width = `${((activeIndex + 1) / total) * 100}%`;
+      }
+
+      tabButtons.forEach(button => {
+        const pane = getPaneByButton(button);
+        button.classList.toggle("tab-completed", isPaneCompleted(pane));
+      });
+
+      if (prevBtn) {
+        prevBtn.disabled = activeIndex === 0;
+      }
+
+      if (nextBtn) {
+        nextBtn.classList.toggle("d-none", isLast);
+      }
+
+      if (submitBtn) {
+        submitBtn.classList.toggle("d-none", !isLast);
+      }
+    }
+
+    function activateTab(index) {
+      if (index < 0 || index >= tabButtons.length) return;
+
+      const button = tabButtons[index];
+      const target = getTargetSelector(button);
+      const pane = target ? document.querySelector(target) : null;
+
+      if (window.bootstrap && bootstrap.Tab) {
+        new bootstrap.Tab(button).show();
+      } else {
+        tabButtons.forEach(btn => btn.classList.remove("active"));
+        tabPanes.forEach(item => item.classList.remove("show", "active"));
+
+        button.classList.add("active");
+        if (pane) {
+          pane.classList.add("show", "active");
+        }
+      }
+
+      if (target) {
+        localStorage.setItem(STORAGE_KEY, target);
+      }
+
+      updateStepUI();
+      scheduleAutoNext();
+    }
+
+    function scheduleAutoNext() {
+      clearTimeout(autoNextTimer);
+
+      const activeIndex = getActiveIndex();
+      const activePane = getPaneByButton(tabButtons[activeIndex]);
+      const isLast = activeIndex === tabButtons.length - 1;
+
+      markFields(activePane);
+      updateStepUI();
+
+      if (isLast || !isPaneCompleted(activePane)) return;
+
+      autoNextTimer = setTimeout(() => {
+        const currentIndex = getActiveIndex();
+        const currentPane = getPaneByButton(tabButtons[currentIndex]);
+
+        if (
+          currentIndex === activeIndex &&
+          currentIndex < tabButtons.length - 1 &&
+          isPaneCompleted(currentPane)
+        ) {
+          activateTab(activeIndex + 1);
+        }
+      }, AUTO_NEXT_DELAY);
+    }
+
+    function goNextNow() {
+      clearTimeout(autoNextTimer);
+
+      const activeIndex = getActiveIndex();
+      const activePane = getPaneByButton(tabButtons[activeIndex]);
+
+      markFields(activePane);
+      updateStepUI();
+
+      if (!isPaneCompleted(activePane)) {
+        const firstInvalid = getRequiredFields(activePane).find(field => !hasValue(field));
+        if (firstInvalid) firstInvalid.focus();
+        return;
+      }
+
+      activateTab(activeIndex + 1);
+    }
+
+    function goPrev() {
+      clearTimeout(autoNextTimer);
+      activateTab(getActiveIndex() - 1);
+    }
+
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const savedIndex = tabButtons.findIndex(btn => getTargetSelector(btn) === saved);
+      if (savedIndex >= 0) {
+        activateTab(savedIndex);
+      }
+    }
+
+    tabButtons.forEach(button => {
+      button.addEventListener("shown.bs.tab", function (event) {
+        localStorage.setItem(STORAGE_KEY, event.target.getAttribute("data-bs-target"));
+        updateStepUI();
+        scheduleAutoNext();
+      });
+
+      button.addEventListener("click", function () {
+        clearTimeout(autoNextTimer);
+        setTimeout(scheduleAutoNext, 100);
       });
     });
-  })();
-</script>
 
-</body>
-</html>
+    tabPanes.forEach(pane => {
+      const fields = Array.from(pane.querySelectorAll("input, select, textarea"));
+
+      fields.forEach(field => {
+        ["input", "change", "keyup", "blur"].forEach(eventName => {
+          field.addEventListener(eventName, scheduleAutoNext);
+        });
+      });
+    });
+
+    if (prevBtn) {
+      prevBtn.addEventListener("click", goPrev);
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener("click", goNextNow);
+    }
+
+    if (form) {
+      form.addEventListener("submit", function (event) {
+        clearTimeout(autoNextTimer);
+
+        let firstInvalidIndex = -1;
+
+        tabPanes.forEach((pane, index) => {
+          markFields(pane);
+
+          if (firstInvalidIndex === -1 && !isPaneCompleted(pane)) {
+            firstInvalidIndex = index;
+          }
+        });
+
+        updateStepUI();
+
+        if (firstInvalidIndex !== -1) {
+          event.preventDefault();
+          activateTab(firstInvalidIndex);
+
+          setTimeout(() => {
+            const pane = tabPanes[firstInvalidIndex];
+            const firstInvalid = getRequiredFields(pane).find(field => !hasValue(field));
+            if (firstInvalid) firstInvalid.focus();
+          }, 150);
+        } else {
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      });
+    }
+
+    if (thumbnailInput && thumbnailPreview) {
+      thumbnailInput.addEventListener("change", function () {
+        const file = this.files && this.files[0];
+
+        if (!file) {
+          thumbnailPreview.innerHTML = `
+            <div class="text-center">
+              <i class="bi bi-image fs-2 d-block mb-1"></i>
+              Chưa chọn ảnh
+            </div>
+          `;
+          return;
+        }
+
+        const imageUrl = URL.createObjectURL(file);
+        thumbnailPreview.innerHTML = `<img src="${imageUrl}" alt="Thumbnail preview">`;
+      });
+    }
+
+    updateStepUI();
+    scheduleAutoNext();
+  });
+</script>
+{% endblock %}

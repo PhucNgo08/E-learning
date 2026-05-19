@@ -1,54 +1,201 @@
 {% extends "layout_student.html" %}
+
 {% block title %}📘 Quiz theo khóa học{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <div>
-      <h3 class="fw-bold text-primary mb-1">📘 Danh sách Quiz theo khóa học</h3>
-      <p class="text-muted mb-0">
-        Khóa học: <strong>{{ course.course_name if course else "Không xác định" }}</strong>
-      </p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="/student/quiz" class="btn btn-outline-secondary">← Tất cả Quiz</a>
-      <a href="/student/dashboard" class="btn btn-outline-primary">Trang chính</a>
+<style>
+  .course-quiz-page {
+    padding: 24px 0 40px;
+  }
+
+  .course-quiz-header {
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+
+  .course-quiz-title {
+    font-weight: 800;
+    color: #2563eb;
+    margin-bottom: 6px;
+  }
+
+  .course-quiz-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.07);
+    transition: 0.18s ease;
+  }
+
+  .course-quiz-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
+  }
+
+  .quiz-type-badge {
+    border-radius: 999px;
+    padding: 5px 10px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .quiz-meta {
+    font-size: 0.92rem;
+    color: #475569;
+    line-height: 1.8;
+  }
+
+  .empty-quiz-box {
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    padding: 36px 20px;
+    text-align: center;
+  }
+
+  @media (max-width: 768px) {
+    .course-quiz-header {
+      padding: 18px;
+    }
+
+    .course-header-actions {
+      width: 100%;
+    }
+
+    .course-header-actions .btn {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+
+    .quiz-card-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="container course-quiz-page">
+
+  <div class="course-quiz-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h3 class="course-quiz-title">
+          <i class="bi bi-journal-check"></i> Danh sách Quiz theo khóa học
+        </h3>
+
+        <p class="text-muted mb-0">
+          Khóa học:
+          <strong>{{ course.course_name if course else "Không xác định" }}</strong>
+        </p>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap course-header-actions">
+        <a href="/student/quiz" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Tất cả Quiz
+        </a>
+
+        <a href="/student/dashboard" class="btn btn-outline-primary">
+          <i class="bi bi-house"></i> Trang chính
+        </a>
+      </div>
     </div>
   </div>
 
   {% if quizzes %}
-  <div class="row g-3">
-    {% for quiz in quizzes %}
-    <div class="col-md-6 col-lg-4">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-body">
-          <h5 class="fw-bold text-primary">{{ quiz.title }}</h5>
-          <p class="text-muted small mb-2">{{ quiz.description or "Không có mô tả." }}</p>
+    <div class="row g-3">
+      {% for quiz in quizzes %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card course-quiz-card h-100">
+          <div class="card-body d-flex flex-column">
 
-          <div class="small mb-3">
-            <div><strong>Loại:</strong> {{ quiz.quiz_type or "—" }}</div>
-            <div><strong>Độ khó:</strong> {{ quiz.difficulty_level or "—" }}</div>
-            <div><strong>Thời gian:</strong> {{ quiz.time_limit_minutes or 0 }} phút</div>
-            <div><strong>Số câu:</strong> {{ quiz.total_questions or 0 }}</div>
-          </div>
+            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+              <h5 class="fw-bold text-primary mb-0">
+                {{ quiz.title }}
+              </h5>
 
-          <div class="d-flex gap-2 flex-wrap">
-            <a href="/student/quiz/detail/{{ quiz.id }}" class="btn btn-outline-primary btn-sm">
-              Xem chi tiết
-            </a>
-            <a href="/student/quiz/start/{{ quiz.id }}" class="btn btn-primary btn-sm">
-              Làm bài
-            </a>
+              {% if quiz.quiz_type == "graded" %}
+                <span class="quiz-type-badge bg-warning text-dark">Bài kiểm tra</span>
+              {% elif quiz.quiz_type == "practice" %}
+                <span class="quiz-type-badge bg-info text-dark">Luyện tập</span>
+              {% else %}
+                <span class="quiz-type-badge bg-secondary text-white">{{ quiz.quiz_type or "Quiz" }}</span>
+              {% endif %}
+            </div>
+
+            <p class="text-muted small mb-3">
+              {{ quiz.description or "Không có mô tả." }}
+            </p>
+
+            <div class="quiz-meta mb-3">
+              <div>
+                <i class="bi bi-bar-chart"></i>
+                <strong>Độ khó:</strong>
+                {% if quiz.difficulty_level == "easy" %}
+                  Dễ
+                {% elif quiz.difficulty_level == "medium" %}
+                  Trung bình
+                {% elif quiz.difficulty_level == "hard" %}
+                  Khó
+                {% else %}
+                  {{ quiz.difficulty_level or "—" }}
+                {% endif %}
+              </div>
+
+              <div>
+                <i class="bi bi-clock"></i>
+                <strong>Thời gian:</strong> {{ quiz.time_limit_minutes or 0 }} phút
+              </div>
+
+              <div>
+                <i class="bi bi-question-circle"></i>
+                <strong>Số câu:</strong> {{ quiz.total_questions or 0 }}
+              </div>
+
+              <div>
+                <i class="bi bi-arrow-repeat"></i>
+                <strong>Lượt làm:</strong> {{ quiz.max_attempts or 1 }}
+              </div>
+
+              <div>
+                <i class="bi bi-check-circle"></i>
+                <strong>Điểm đạt:</strong> {{ quiz.passing_score or 0 }}%
+              </div>
+            </div>
+
+            <div class="mt-auto d-flex gap-2 flex-wrap quiz-card-actions">
+              <a href="/student/quiz/attempt/{{ quiz.id }}" class="btn btn-primary btn-sm">
+                <i class="bi bi-play-circle"></i> Làm bài
+              </a>
+
+              <a href="/student/quiz/history" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-clock-history"></i> Lịch sử
+              </a>
+            </div>
+
           </div>
         </div>
       </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
   {% else %}
-  <div class="alert alert-info">
-    Khóa học này hiện chưa có quiz nào.
-  </div>
+    <div class="empty-quiz-box">
+      <h5 class="fw-bold text-primary mb-2">
+        <i class="bi bi-info-circle"></i> Chưa có quiz
+      </h5>
+
+      <p class="text-muted mb-3">
+        Khóa học này hiện chưa có quiz nào được mở cho học viên.
+      </p>
+
+      <a href="/student/quiz" class="btn btn-outline-primary">
+        Xem tất cả quiz
+      </a>
+    </div>
   {% endif %}
+
 </div>
 {% endblock %}

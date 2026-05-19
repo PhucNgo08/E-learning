@@ -1,104 +1,263 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chào mừng - E-Learning Academy</title>
+{% extends "base.html" %}
 
-  <!-- Font & Bootstrap -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet" />
+{% block title %}Chào mừng - E-Learning Academy{% endblock %}
 
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #dbeafe, #e0f2fe);
-      color: #1e293b;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 2rem;
-    }
+{% block extra_css %}
+<style>
+  .welcome-page {
+    min-height: calc(100vh - 260px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1rem;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.16), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.16), transparent 34%);
+  }
 
+  .welcome-card {
+    width: min(760px, 100%);
+    border-radius: 32px;
+    padding: 42px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.14);
+    backdrop-filter: blur(18px);
+    text-align: center;
+  }
+
+  html[data-bs-theme="dark"] .welcome-card {
+    background: rgba(15, 23, 42, 0.86);
+    border-color: rgba(148, 163, 184, 0.20);
+    box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+  }
+
+  .welcome-icon {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 22px;
+    border-radius: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 3rem;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 16px 36px rgba(37, 99, 235, 0.28);
+  }
+
+  .welcome-title {
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 900;
+    letter-spacing: -0.055em;
+    color: #1e3a8a;
+    margin-bottom: 12px;
+  }
+
+  html[data-bs-theme="dark"] .welcome-title {
+    color: #dbeafe;
+  }
+
+  .welcome-title span {
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .welcome-desc {
+    color: #64748b;
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-bottom: 22px;
+  }
+
+  html[data-bs-theme="dark"] .welcome-desc {
+    color: #cbd5e1;
+  }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border-radius: 999px;
+    padding: 0.65rem 0.95rem;
+    background: #e8f0ff;
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+    font-weight: 900;
+    margin-bottom: 28px;
+  }
+
+  html[data-bs-theme="dark"] .role-badge {
+    background: rgba(59, 130, 246, 0.18);
+    color: #bfdbfe;
+    border-color: rgba(147, 197, 253, 0.22);
+  }
+
+  .welcome-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .btn-dashboard,
+  .btn-home {
+    border-radius: 999px;
+    padding: 0.9rem 1.35rem;
+    font-weight: 900;
+    transition: 0.22s ease;
+  }
+
+  .btn-dashboard {
+    border: 0;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+  }
+
+  .btn-dashboard:hover {
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(14, 165, 233, 0.28);
+  }
+
+  .btn-home {
+    background: rgba(255, 255, 255, 0.78);
+    color: #1d4ed8;
+    border: 1px solid #bfdbfe;
+  }
+
+  .btn-home:hover {
+    background: #eaf1ff;
+    color: #1e40af;
+    transform: translateY(-2px);
+  }
+
+  html[data-bs-theme="dark"] .btn-home {
+    background: rgba(15, 23, 42, 0.72);
+    color: #93c5fd;
+    border-color: rgba(148, 163, 184, 0.24);
+  }
+
+  html[data-bs-theme="dark"] .btn-home:hover {
+    background: rgba(30, 41, 59, 0.94);
+    color: #dbeafe;
+  }
+
+  .welcome-info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 28px 0;
+  }
+
+  .welcome-info {
+    border-radius: 18px;
+    padding: 16px;
+    background: rgba(37, 99, 235, 0.06);
+    border: 1px solid rgba(37, 99, 235, 0.10);
+  }
+
+  html[data-bs-theme="dark"] .welcome-info {
+    background: rgba(59, 130, 246, 0.10);
+    border-color: rgba(147, 197, 253, 0.12);
+  }
+
+  .welcome-info i {
+    color: #2563eb;
+    font-size: 1.35rem;
+  }
+
+  html[data-bs-theme="dark"] .welcome-info i {
+    color: #93c5fd;
+  }
+
+  .welcome-info div {
+    color: #64748b;
+    font-size: 0.88rem;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  html[data-bs-theme="dark"] .welcome-info div {
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 576px) {
     .welcome-card {
-      background-color: #ffffffee;
-      backdrop-filter: blur(8px);
-      border-radius: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      padding: 3rem 2rem;
-      max-width: 480px;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      padding: 32px 22px;
+      border-radius: 26px;
     }
 
-    .welcome-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    .welcome-info-grid {
+      grid-template-columns: 1fr;
     }
 
-    .welcome-icon {
-      font-size: 3rem;
-      color: #2563eb;
-      margin-bottom: 1rem;
-    }
-
-    h2 {
-      font-weight: 700;
-      color: #1e3a8a;
-    }
-
-    p {
-      font-size: 1.05rem;
-      margin-top: 0.75rem;
-      color: #334155;
-    }
-
-    .btn-dashboard {
-      background: #2563eb;
-      color: white;
-      border-radius: 9999px;
-      padding: 0.6rem 1.6rem;
-      font-weight: 600;
-      margin-top: 1.5rem;
-      text-decoration: none;
-      display: inline-block;
-      transition: all 0.3s ease;
-    }
-
-    .btn-dashboard:hover {
-      background: #1d4ed8;
-      transform: translateY(-3px);
-    }
-
-    footer {
-      position: absolute;
-      bottom: 1rem;
+    .welcome-actions .btn {
       width: 100%;
-      text-align: center;
-      color: #64748b;
-      font-size: 0.9rem;
     }
-  </style>
-</head>
+  }
+</style>
+{% endblock %}
 
-<body>
-  <div class="welcome-card" data-aos="fade-up">
-    <div class="welcome-icon">🎓</div>
-    <h2>Xin chào, <span style="color:#2563eb;">{{ username }}</span>!</h2>
-    <p>Chào mừng bạn quay lại <strong>E-Learning Academy</strong>.</p>
-    <p><b>Vai trò:</b> {{ role }}</p>
+{% block content %}
+<section class="welcome-page">
+  <div class="welcome-card" data-aos="zoom-in">
+    <div class="welcome-icon">
+      <i class="bi bi-mortarboard-fill"></i>
+    </div>
 
-    <a href="/dashboard" class="btn-dashboard" data-aos="zoom-in" data-aos-delay="300">Vào trang quản lý</a>
+    <h1 class="welcome-title">
+      Xin chào, <span>{{ username }}</span>!
+    </h1>
+
+    <p class="welcome-desc">
+      Chào mừng bạn quay lại <strong>E-Learning Academy</strong>.
+      Hãy tiếp tục học tập, quản lý khóa học hoặc theo dõi tiến độ của bạn.
+    </p>
+
+    <div class="role-badge">
+      <i class="bi bi-person-badge-fill"></i>
+      Vai trò:
+      {% if role == 'admin' %}
+        Quản trị viên
+      {% elif role == 'teacher' %}
+        Giảng viên
+      {% elif role == 'student' %}
+        Học viên
+      {% else %}
+        {{ role }}
+      {% endif %}
+    </div>
+
+    <div class="welcome-info-grid">
+      <div class="welcome-info">
+        <i class="bi bi-speedometer2"></i>
+        <div>Quản lý nhanh</div>
+      </div>
+
+      <div class="welcome-info">
+        <i class="bi bi-journal-check"></i>
+        <div>Theo dõi học tập</div>
+      </div>
+
+      <div class="welcome-info">
+        <i class="bi bi-shield-check"></i>
+        <div>Phiên an toàn</div>
+      </div>
+    </div>
+
+    <div class="welcome-actions">
+      <a href="/dashboard" class="btn btn-dashboard">
+        <i class="bi bi-grid-1x2-fill me-1"></i>Vào trang quản lý
+      </a>
+
+      <a href="/" class="btn btn-home">
+        <i class="bi bi-house-door-fill me-1"></i>Về trang chủ
+      </a>
+    </div>
   </div>
-
-  <footer>
-    © 2025 E-Learning Academy. All rights reserved.
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-  <script>AOS.init({ duration: 1000, once: true });</script>
-</body>
-</html>
+</section>
+{% endblock %}

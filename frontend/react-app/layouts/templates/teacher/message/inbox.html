@@ -3,6 +3,115 @@
 
 {% block content %}
 <style>
+  :root {
+    --message-page-bg: #f5f8ff;
+    --message-card-bg: #ffffff;
+    --message-card-border: #e5e7eb;
+    --message-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --message-text-main: #1e293b;
+    --message-text-muted: #64748b;
+    --message-heading: #0d6efd;
+
+    --message-item-bg: #ffffff;
+    --message-item-hover: #f1f7ff;
+    --message-item-border: #e5e7eb;
+
+    --message-alert-info-bg: rgba(13, 110, 253, 0.08);
+    --message-alert-info-border: rgba(13, 110, 253, 0.22);
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --message-page-bg: #071226;
+    --message-card-bg: #0f1b33;
+    --message-card-border: rgba(255, 255, 255, 0.1);
+    --message-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --message-text-main: #e5edf8;
+    --message-text-muted: #9caec8;
+    --message-heading: #8ea6ff;
+
+    --message-item-bg: #0f1b33;
+    --message-item-hover: #132445;
+    --message-item-border: rgba(255, 255, 255, 0.1);
+
+    --message-alert-info-bg: rgba(37, 99, 235, 0.16);
+    --message-alert-info-border: rgba(96, 165, 250, 0.28);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .message-theme-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--message-page-bg);
+    color: var(--message-text-main);
+  }
+
+  .message-theme-page h4,
+  .message-theme-page .text-primary {
+    color: var(--message-heading) !important;
+  }
+
+  .message-theme-page .text-muted,
+  .message-theme-page .text-secondary {
+    color: var(--message-text-muted) !important;
+  }
+
+  .message-list-card {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--message-card-shadow);
+    border: 1px solid var(--message-card-border);
+  }
+
+  .message-theme-page .list-group-item {
+    background: var(--message-item-bg);
+    color: var(--message-text-main);
+    border-color: var(--message-item-border);
+    transition: background 0.2s ease-in-out;
+  }
+
+  .message-theme-page .list-group-item:hover {
+    background: var(--message-item-hover);
+  }
+
+  .message-theme-page .text-dark {
+    color: var(--message-text-main) !important;
+  }
+
+  .message-theme-page .alert-info {
+    background: var(--message-alert-info-bg);
+    border-color: var(--message-alert-info-border);
+    color: var(--message-text-main);
+  }
+
   .fab-compose {
     position: fixed;
     bottom: 40px;
@@ -21,66 +130,94 @@
     transition: all 0.3s ease;
     text-decoration: none;
   }
+
   .fab-compose:hover {
     transform: scale(1.1);
     background: linear-gradient(135deg, #0d6efd, #003e80);
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
     color: white;
   }
-  .list-group-item:hover {
-    background-color: #f8f9fa;
-    transition: background 0.2s ease-in-out;
+
+  body.dark-mode .message-theme-page .btn-outline-primary,
+  body.theme-dark .message-theme-page .btn-outline-primary,
+  html[data-theme="dark"] .message-theme-page .btn-outline-primary,
+  body[data-theme="dark"] .message-theme-page .btn-outline-primary,
+  [data-bs-theme="dark"] .message-theme-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: rgba(147, 197, 253, 0.45);
+  }
+
+  body.dark-mode .message-theme-page .btn-outline-primary:hover,
+  body.theme-dark .message-theme-page .btn-outline-primary:hover,
+  html[data-theme="dark"] .message-theme-page .btn-outline-primary:hover,
+  body[data-theme="dark"] .message-theme-page .btn-outline-primary:hover,
+  [data-bs-theme="dark"] .message-theme-page .btn-outline-primary:hover {
+    background: rgba(37, 99, 235, 0.28);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .message-theme-page {
+      padding: 16px 8px 32px;
+    }
+
+    .fab-compose {
+      right: 22px;
+      bottom: 22px;
+    }
   }
 </style>
 
-<div class="container py-3">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h4 class="fw-bold text-primary mb-0">
-        <i class="bi bi-inbox"></i> Hộp thư đến
-      </h4>
-      {% if teacher %}
-      <small class="text-muted">
-        Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
-      </small>
-      {% endif %}
+<div class="message-theme-page">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold text-primary mb-0">
+          <i class="bi bi-inbox"></i> Hộp thư đến
+        </h4>
+        {% if teacher %}
+        <small class="text-muted">
+          Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+        </small>
+        {% endif %}
+      </div>
+
+      <a href="/teacher/message/sent" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-send-check"></i> Thư đã gửi
+      </a>
     </div>
 
-    <a href="/teacher/message/sent" class="btn btn-outline-primary btn-sm">
-      <i class="bi bi-send-check"></i> Thư đã gửi
-    </a>
-  </div>
-
-  {% if messages and messages|length > 0 %}
-  <div class="list-group shadow-sm">
-    {% for msg in messages %}
-    <a href="/teacher/message/view/{{ msg.id }}"
-       class="list-group-item list-group-item-action d-flex justify-content-between align-items-start py-3">
-      <div class="flex-grow-1 me-3">
-        <div class="fw-semibold text-dark mb-1">
-          <i class="bi bi-person-circle text-primary"></i>
-          {{ msg.sender.full_name if msg.sender and msg.sender.full_name else (msg.sender.username if msg.sender else "Người gửi ẩn danh") }}
+    {% if messages and messages|length > 0 %}
+    <div class="list-group message-list-card">
+      {% for msg in messages %}
+      <a href="/teacher/message/view/{{ msg.id }}"
+         class="list-group-item list-group-item-action d-flex justify-content-between align-items-start py-3">
+        <div class="flex-grow-1 me-3">
+          <div class="fw-semibold text-dark mb-1">
+            <i class="bi bi-person-circle text-primary"></i>
+            {{ msg.sender.full_name if msg.sender and msg.sender.full_name else (msg.sender.username if msg.sender else "Người gửi ẩn danh") }}
+          </div>
+          <small class="text-muted">
+            {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
+          </small>
         </div>
-        <small class="text-muted">
-          {{ msg.content[:80] }}{% if msg.content|length > 80 %}...{% endif %}
-        </small>
-      </div>
-      <div class="text-end">
-        <small class="text-secondary">
-          {{ msg.sent_at.strftime("%d/%m/%Y %H:%M") if msg.sent_at else "" }}
-        </small>
-      </div>
-    </a>
-    {% endfor %}
+        <div class="text-end">
+          <small class="text-secondary">
+            {{ msg.sent_at.strftime("%d/%m/%Y %H:%M") if msg.sent_at else "" }}
+          </small>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info text-center mt-4 shadow-sm py-3">
+      <i class="bi bi-envelope-exclamation"></i> Chưa có tin nhắn nào.
+    </div>
+    {% endif %}
   </div>
-  {% else %}
-  <div class="alert alert-info text-center mt-4 shadow-sm py-3">
-    <i class="bi bi-envelope-exclamation"></i> Chưa có tin nhắn nào.
-  </div>
-  {% endif %}
-</div>
 
-<a href="/teacher/message/compose" class="fab-compose" title="Soạn tin nhắn">
-  <i class="bi bi-pencil-fill"></i>
-</a>
+  <a href="/teacher/message/compose" class="fab-compose" title="Soạn tin nhắn">
+    <i class="bi bi-pencil-fill"></i>
+  </a>
+</div>
 {% endblock %}

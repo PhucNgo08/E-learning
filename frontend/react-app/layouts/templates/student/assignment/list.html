@@ -2,97 +2,372 @@
 {% block title %}📚 Danh sách bài tập{% endblock %}
 {% block content %}
 
-<div class="container py-4 fade-in">
+<style>
+  :root {
+    --asg-primary: #2563eb;
+    --asg-primary-2: #7c3aed;
+    --asg-success: #16a34a;
+    --asg-warning: #f59e0b;
+    --asg-danger: #dc2626;
+    --asg-text: #0f172a;
+    --asg-muted: #64748b;
+    --asg-line: #e5e7eb;
+    --asg-soft: #f8fafc;
+    --asg-card: rgba(255, 255, 255, 0.96);
+    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+  }
 
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h3 class="fw-bold mb-0">
-      <i class="bi bi-journal-text me-2"></i>{{ page_title }}
-    </h3>
+  .assignment-page {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
 
-    <a href="/student/assignment" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Bài đã nộp
-    </a>
-  </div>
+  .a-hero,
+  .a-card,
+  .table-card,
+  .stat-card,
+  .empty-state {
+    border: 1px solid rgba(226, 232, 240, .95);
+    background: var(--asg-card);
+    box-shadow: var(--asg-shadow);
+  }
 
-  {% if assignments %}
-    <div class="table-responsive shadow-sm rounded-3">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Tên bài tập</th>
-            <th>Khóa học</th>
-            <th>Hình thức</th>
-            <th>Hạn nộp</th>
-            <th>Trạng thái</th>
-            <th class="text-center">Hành động</th>
-          </tr>
-        </thead>
+  .a-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    padding: 26px;
+    margin-bottom: 22px;
+  }
 
-        <tbody>
-        {% for a in assignments %}
-          {% set my_submission = submission_by_assignment.get(a.id) if submission_by_assignment else None %}
-          {% set my_status = status_by_assignment.get(a.id) if status_by_assignment else None %}
-          <tr>
-            <td>{{ loop.index }}</td>
-            <td class="fw-semibold">{{ a.title }}</td>
-            <td>{{ a.course.course_name if a.course else '—' }}</td>
-            <td>
-              {% if a.submission_type == 'group' %}
-                <span class="badge bg-primary">Nhóm</span>
-              {% else %}
-                <span class="badge bg-info text-dark">Cá nhân</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if a.due_date %}
-                {{ a.due_date.strftime("%d/%m/%Y %H:%M") }}
-              {% else %}
-                —
-              {% endif %}
-            </td>
-            <td>
-              {% if my_submission %}
-                {% if my_status == 'graded' %}
-                  <span class="badge bg-success">Đã chấm</span>
-                {% elif my_status == 'late' %}
-                  <span class="badge bg-warning text-dark">Nộp trễ</span>
-                {% elif my_status == 'resubmitted' %}
-                  <span class="badge bg-primary">Nộp lại</span>
-                {% elif my_status == 'submitted' %}
-                  <span class="badge bg-info text-dark">Đã nộp</span>
-                {% else %}
-                  <span class="badge bg-secondary">Đã có bài nộp</span>
-                {% endif %}
-              {% elif a.due_date and a.due_date < now %}
-                <span class="badge bg-danger">Đã quá hạn</span>
-              {% else %}
-                <span class="badge bg-secondary">Chưa nộp</span>
-              {% endif %}
-            </td>
-            <td class="text-center">
-              <div class="d-flex flex-wrap justify-content-center gap-2">
-                <a href="/student/assignment/detail/{{ a.id }}" class="btn btn-outline-primary btn-sm">
-                  <i class="bi bi-eye"></i> Xem
-                </a>
+  .a-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
+    pointer-events: none;
+  }
 
-                <a href="/student/assignment/submit/{{ a.id }}" class="btn btn-outline-success btn-sm">
-                  <i class="bi bi-upload"></i>
-                  {% if my_submission %}Nộp lại{% else %}Nộp bài{% endif %}
-                </a>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="alert alert-info text-center mt-3">
-      <i class="bi bi-info-circle me-2"></i>Chưa có bài tập nào.
-    </div>
-  {% endif %}
+  .a-hero > * {
+    position: relative;
+    z-index: 1;
+  }
 
+  .a-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 850;
+    color: var(--asg-primary);
+    margin: 0;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: break-word;
+  }
+
+  .a-subtitle {
+    color: var(--asg-muted);
+    margin: 8px 0 0;
+    line-height: 1.55;
+  }
+
+  .a-actions,
+  .action-buttons,
+  .page-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .a-card {
+    border-radius: 24px;
+    padding: 22px;
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    border-radius: 22px;
+    padding: 17px 18px;
+    transition: .18s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
+  }
+
+  .stat-label {
+    color: var(--asg-muted);
+    font-size: .88rem;
+    font-weight: 700;
+  }
+
+  .stat-value {
+    margin-top: 5px;
+    font-size: 1.65rem;
+    font-weight: 850;
+    color: #1d4ed8;
+    line-height: 1.15;
+  }
+
+  .tool-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+  }
+
+  .tool-row .form-control,
+  .tool-row .form-select {
+    max-width: 310px;
+    border-radius: 14px;
+  }
+
+  .form-control,
+  .form-select {
+    border-radius: 14px;
+    border-color: #dbe3ef;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .table-card {
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .table {
+    margin-bottom: 0;
+  }
+
+  .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff);
+    color: #1e40af;
+    font-weight: 850;
+    white-space: nowrap;
+    border-bottom: 1px solid #bfdbfe;
+    vertical-align: middle;
+  }
+
+  .table tbody td {
+    vertical-align: middle;
+  }
+
+  .table-hover tbody tr:hover {
+    background: #f8fbff;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .info-box,
+  .file-box {
+    border-radius: 18px;
+    background: var(--asg-soft);
+    border: 1px solid var(--asg-line);
+    padding: 14px 16px;
+  }
+
+  .file-box {
+    line-height: 1.65;
+  }
+
+  .status-badge,
+  .badge {
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-weight: 750;
+  }
+
+  .text-pre-wrap {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .empty-state {
+    border-radius: 24px;
+    padding: 34px 20px;
+    text-align: center;
+  }
+
+  .mini-muted {
+    color: var(--asg-muted);
+    font-size: .9rem;
+  }
+
+  .progress-thin {
+    height: 9px;
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  img,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .a-hero,
+  body.dark-mode .a-card,
+  body.dark-mode .table-card,
+  body.dark-mode .stat-card,
+  body.dark-mode .empty-state {
+    background: rgba(15, 23, 42, .90);
+    border-color: rgba(148, 163, 184, .22);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .a-title,
+  body.dark-mode .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .a-subtitle,
+  body.dark-mode .stat-label,
+  body.dark-mode .mini-muted {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .info-box,
+  body.dark-mode .file-box {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .25);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  body.dark-mode .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  @media (max-width: 992px) {
+    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  @media (max-width: 768px) {
+    .assignment-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .a-hero,
+    .a-card {
+      padding: 18px;
+      border-radius: 22px;
+    }
+
+    .a-title {
+      font-size: 1.25rem;
+    }
+
+    .a-actions,
+    .action-buttons,
+    .page-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .a-actions .btn,
+    .action-buttons .btn,
+    .page-actions .btn {
+      width: 100%;
+    }
+
+    .stat-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-row .form-control,
+    .tool-row .form-select {
+      max-width: none;
+      width: 100%;
+    }
+
+    .responsive-table thead {
+      display: none;
+    }
+
+    .responsive-table tbody,
+    .responsive-table tr,
+    .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .responsive-table tr {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+
+    .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: #475569;
+      margin-bottom: 2px;
+    }
+  }
+
+  @media (orientation: landscape) and (max-height: 540px) {
+    .a-hero,
+    .a-card {
+      padding: 14px;
+    }
+
+    .assignment-page {
+      padding-top: 10px !important;
+      padding-bottom: 10px !important;
+    }
+  }
+</style>
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
+ <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3"><div><h3 class="a-title"><i class="bi bi-journal-text me-2"></i>{{ page_title or 'Danh sách bài tập' }}</h3><p class="a-subtitle">Theo dõi hạn nộp, trạng thái và nộp bài.</p></div><a href="/student/assignment" class="btn btn-outline-secondary"><i class="bi bi-clock-history"></i> Bài đã nộp</a></div>
+ <div class="tool-row"><input id="searchInput" class="form-control" placeholder="Tìm bài tập / khóa học..."><select id="statusFilter" class="form-select"><option value="">Tất cả</option><option value="not_submitted">Chưa nộp</option><option value="submitted">Đã nộp</option><option value="graded">Đã chấm</option><option value="late">Nộp trễ / quá hạn</option></select></div>
+ <div class="table-card table-responsive"><table class="table table-hover align-middle mb-0 responsive-table" id="assignmentTable"><thead><tr><th>#</th><th>Bài tập</th><th>Khóa học</th><th>Hạn nộp</th><th>Trạng thái</th><th class="text-center">Hành động</th></tr></thead><tbody>
+ {% for a in assignments or [] %}
+   {% set my_submission = submission_by_assignment.get(a.id) if submission_by_assignment else None %}
+   {% set my_status = status_by_assignment.get(a.id) if status_by_assignment else None %}
+   {% set is_overdue = a.due_date and now and a.due_date < now %}
+   {% set st = my_status if my_submission else ('late' if is_overdue else 'not_submitted') %}
+   <tr data-status="{{ st }}"><td data-label="#">{{ loop.index }}</td><td data-label="Bài tập"><strong>{{ a.title }}</strong><div class="text-muted small">{{ (a.description or '')[:80] }}{{ '...' if a.description and a.description|length > 80 else '' }}</div></td><td data-label="Khóa học">{{ a.course.course_name if a.course else '—' }}</td><td data-label="Hạn nộp">{{ a.due_date.strftime('%d/%m/%Y %H:%M') if a.due_date else '—' }}</td><td data-label="Trạng thái">{% if my_submission %}{% if my_status=='graded' %}<span class="badge bg-success">Đã chấm</span>{% elif my_status=='late' %}<span class="badge bg-warning text-dark">Nộp trễ</span>{% elif my_status=='resubmitted' %}<span class="badge bg-primary">Nộp lại</span>{% else %}<span class="badge bg-info text-dark">Đã nộp</span>{% endif %}{% elif is_overdue %}<span class="badge bg-danger">Đã quá hạn</span>{% else %}<span class="badge bg-secondary">Chưa nộp</span>{% endif %}</td><td data-label="Hành động" class="text-center"><div class="d-flex flex-wrap gap-2 justify-content-center"><a href="/student/assignment/detail/{{ a.id }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> Xem</a><a href="/student/assignment/submit/{{ a.id }}" class="btn btn-sm btn-primary"><i class="bi bi-upload"></i> Nộp</a>{% if my_submission %}<a href="/student/assignment/submission/{{ my_submission.id }}" class="btn btn-sm btn-outline-success"><i class="bi bi-receipt"></i> Kết quả</a>{% endif %}</div></td></tr>
+ {% else %}<tr><td colspan="6" class="text-center text-muted py-4">Chưa có bài tập nào.</td></tr>{% endfor %}
+ </tbody></table></div>
 </div>
-
+<script>(function(){const s=document.getElementById('searchInput'),f=document.getElementById('statusFilter');function a(){const q=(s.value||'').toLowerCase(),st=f.value;document.querySelectorAll('#assignmentTable tbody tr').forEach(tr=>{tr.style.display=(tr.innerText.toLowerCase().includes(q)&&(!st||tr.dataset.status===st))?'':'none'})}s?.addEventListener('input',a);f?.addEventListener('change',a)})();</script>
 {% endblock %}

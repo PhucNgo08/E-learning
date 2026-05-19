@@ -1,27 +1,159 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>🗑️ Xóa lớp học</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+{% extends "layout_admin.html" %}
 
-<body class="bg-light d-flex justify-content-center align-items-center min-vh-100">
-  <div class="card shadow-lg p-4 text-center" style="max-width:500px;width:100%; border:none;">
-    <h4 class="text-danger mb-3">⚠️ Xác nhận xóa lớp học</h4>
+{% block title %}Xóa lớp học{% endblock %}
 
-    <p>Bạn có chắc muốn xóa lớp <strong>{{ cls.class_name }}</strong>?</p>
+{% block extra_css %}
+<style>
+  .class-delete-page {
+    max-width: 720px;
+    margin: 0 auto;
+    color: #0f172a;
+  }
 
-    <div class="alert alert-warning">
+  .class-delete-card {
+    background: #ffffff;
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    border-radius: 22px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.12);
+    padding: 34px;
+    text-align: center;
+  }
+
+  .delete-icon {
+    width: 86px;
+    height: 86px;
+    border-radius: 28px;
+    margin: 0 auto 18px;
+    background: #fee2e2;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+  }
+
+  .delete-title {
+    color: #b91c1c;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: 14px;
+  }
+
+  .class-name-box {
+    background: #fff1f2;
+    border: 1px dashed #fca5a5;
+    color: #0f172a;
+    border-radius: 16px;
+    padding: 16px;
+    font-weight: 800;
+    margin: 18px 0;
+  }
+
+  .delete-warning {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    border-radius: 14px;
+    padding: 14px 16px;
+    line-height: 1.6;
+  }
+
+  .delete-actions {
+    border-top: 1px solid #e2e8f0;
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  body.dark-mode .class-delete-page,
+  html[data-bs-theme="dark"] .class-delete-page {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .class-delete-card,
+  html[data-bs-theme="dark"] .class-delete-card {
+    background: rgba(15, 23, 42, 0.96);
+    border-color: rgba(239, 68, 68, 0.32);
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .delete-icon,
+  html[data-bs-theme="dark"] .delete-icon {
+    background: rgba(239, 68, 68, 0.18);
+    color: #fca5a5;
+  }
+
+  body.dark-mode .delete-title,
+  html[data-bs-theme="dark"] .delete-title {
+    color: #fca5a5;
+  }
+
+  body.dark-mode .class-name-box,
+  html[data-bs-theme="dark"] .class-name-box {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  body.dark-mode .delete-warning,
+  html[data-bs-theme="dark"] .delete-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.25);
+  }
+
+  body.dark-mode .delete-actions,
+  html[data-bs-theme="dark"] .delete-actions {
+    border-top-color: rgba(148, 163, 184, 0.22);
+  }
+
+  @media (max-width: 768px) {
+    .class-delete-card {
+      padding: 24px;
+    }
+
+    .delete-actions .btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="class-delete-page">
+
+  <div class="class-delete-card">
+    <div class="delete-icon">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+    </div>
+
+    <h3 class="delete-title">Xác nhận xóa lớp học</h3>
+
+    <p class="text-muted mb-0">
+      Bạn có chắc chắn muốn xóa lớp học bên dưới không?
+    </p>
+
+    <div class="class-name-box">
+      <i class="bi bi-mortarboard-fill me-1 text-danger"></i>
+      {{ cls.class_name }}
+    </div>
+
+    <div class="delete-warning">
+      <i class="bi bi-exclamation-circle-fill me-1"></i>
       Nếu lớp đang có ghi danh hoặc dữ liệu liên kết, hệ thống có thể từ chối xóa.
     </div>
 
-    <form action="/admin/Class/delete/{{ cls.id }}" method="post" class="mt-4">
-      <div class="d-flex justify-content-center gap-3">
-        <a href="/admin/Class/manage" class="btn btn-secondary">Hủy</a>
-        <button type="submit" class="btn btn-danger">🗑️ Xóa</button>
+    <form action="/admin/Class/delete/{{ cls.id }}" method="post">
+      <div class="delete-actions d-flex justify-content-center gap-2 flex-wrap">
+        <a href="/admin/Class/manage" class="btn btn-outline-secondary px-4">
+          <i class="bi bi-arrow-left-circle me-1"></i>Hủy
+        </a>
+
+        <button type="submit" class="btn btn-danger px-4">
+          <i class="bi bi-trash3-fill me-1"></i>Xóa lớp học
+        </button>
       </div>
     </form>
   </div>
-</body>
-</html>
+
+</div>
+{% endblock %}

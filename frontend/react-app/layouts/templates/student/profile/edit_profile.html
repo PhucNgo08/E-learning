@@ -8,7 +8,7 @@
 {% set current_year_id = student_profile.academic_year_id if student_profile and student_profile.academic_year_id else '' %}
 
 <style>
-.edit-area {
+.student-edit-profile-page .edit-area {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -17,7 +17,7 @@
   background: radial-gradient(circle at top left, #f0f7ff 0%, #dce6ff 100%);
 }
 
-.edit-box {
+.student-edit-profile-page .edit-box {
   background: #ffffff;
   border-radius: 22px;
   width: 100%;
@@ -29,7 +29,7 @@
   overflow: hidden;
 }
 
-.edit-box::before {
+.student-edit-profile-page .edit-box::before {
   content: "";
   position: absolute;
   top: -70px;
@@ -40,28 +40,31 @@
   background: radial-gradient(circle at center, #0d6efd40 0%, transparent 70%);
 }
 
-h3 {
+.student-edit-profile-page h3 {
   font-weight: 700;
   color: #0056d2;
   text-align: center;
   margin-bottom: 28px;
 }
 
-.form-label {
+.student-edit-profile-page .form-label {
   font-weight: 600;
   color: #003087;
 }
 
-.form-control, .form-select {
+.student-edit-profile-page .form-control,
+.student-edit-profile-page .form-select {
   border-radius: 12px;
   border-color: #cfd9e6;
 }
-.form-control:focus, .form-select:focus {
+
+.student-edit-profile-page .form-control:focus,
+.student-edit-profile-page .form-select:focus {
   border-color: #0d6efd;
-  box-shadow: 0 0 0 0.25rem rgba(13,110,253,.15);
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
 }
 
-.btn-save {
+.student-edit-profile-page .btn-save {
   background: linear-gradient(90deg, #007bff, #0056d2);
   color: white;
   font-weight: 600;
@@ -70,161 +73,214 @@ h3 {
   border: none;
   transition: 0.25s ease;
 }
-.btn-save:hover {
+
+.student-edit-profile-page .btn-save:hover {
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 5px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
 }
 
-.btn-back {
+.student-edit-profile-page .btn-back {
   border-radius: 12px;
   font-weight: 500;
   transition: 0.25s ease;
 }
-.btn-back:hover {
+
+.student-edit-profile-page .btn-back:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-.alert {
+.student-edit-profile-page .alert {
   border-radius: 12px;
   font-weight: 500;
 }
 
-body.dark-mode .edit-box {
+body.dark-mode .student-edit-profile-page .edit-area {
+  background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
+}
+
+body.dark-mode .student-edit-profile-page .edit-box {
   background: rgba(15, 23, 42, 0.85);
   color: #e2e8f0;
 }
-body.dark-mode .form-control,
-body.dark-mode .form-select {
+
+body.dark-mode .student-edit-profile-page .form-control,
+body.dark-mode .student-edit-profile-page .form-select {
   background: rgba(30, 41, 59, 0.85);
   border-color: #475569;
   color: #e2e8f0;
 }
-body.dark-mode h3 {
+
+body.dark-mode .student-edit-profile-page h3 {
   color: #60a5fa;
 }
-body.dark-mode .form-label {
+
+body.dark-mode .student-edit-profile-page .form-label {
   color: #93c5fd;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
 
-<div class="edit-area">
-  <div class="edit-box">
+<div class="student-edit-profile-page">
+  <div class="edit-area">
+    <div class="edit-box">
 
-    <h3><i class="bi bi-person-lines-fill"></i> Chỉnh sửa thông tin hồ sơ</h3>
+      <h3><i class="bi bi-person-lines-fill"></i> Chỉnh sửa thông tin hồ sơ</h3>
 
-    {% if request.query_params.get("error") == "update_failed" %}
-    <div class="alert alert-danger text-center py-2">
-      ❌ Không thể cập nhật. Vui lòng thử lại sau.
+      {% if request.query_params.get("error") == "update_failed" %}
+      <div class="alert alert-danger text-center py-2">
+        ❌ Không thể cập nhật. Vui lòng thử lại sau.
+      </div>
+      {% endif %}
+
+      <form method="post" action="/student/profile/edit" onsubmit="return kiemTraHoSo()">
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">👤 Họ và tên</label>
+            <input type="text"
+                   class="form-control"
+                   name="full_name"
+                   value="{{ profile.full_name if profile and profile.full_name else '' }}"
+                   placeholder="Nhập họ và tên"
+                   required>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">📧 Email</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ user.email }}"
+                   disabled>
+          </div>
+        </div>
+
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">📱 Số điện thoại</label>
+            <input type="text"
+                   class="form-control"
+                   name="phone"
+                   value="{{ profile.phone if profile and profile.phone else '' }}"
+                   placeholder="Nhập số điện thoại">
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">📅 Ngày sinh</label>
+            <input type="date"
+                   class="form-control"
+                   name="date_of_birth"
+                   value="{{ profile.date_of_birth.strftime('%Y-%m-%d') if profile and profile.date_of_birth else '' }}">
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">⚧ Giới tính</label>
+            <select class="form-select" name="gender">
+              <option value="">-- Chọn giới tính --</option>
+              <option value="male" {% if profile and profile.gender == 'male' %}selected{% endif %}>Nam</option>
+              <option value="female" {% if profile and profile.gender == 'female' %}selected{% endif %}>Nữ</option>
+              <option value="other" {% if profile and profile.gender == 'other' %}selected{% endif %}>Khác</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label class="form-label">🎓 Ngành học</label>
+            <select class="form-select" name="major_id">
+              <option value="">-- Chọn ngành học --</option>
+              {% if majors %}
+                {% for m in majors %}
+                <option value="{{ m.id }}" {% if current_major_id == m.id %}selected{% endif %}>
+                  {{ m.major_name }}
+                </option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+        </div>
+
+        <div class="row">
+
+          <div class="col-md-6 mb-4">
+            <label class="form-label">🏫 Năm học</label>
+            <select class="form-select" name="academic_year_id">
+              <option value="">-- Chọn năm học --</option>
+              {% if years %}
+                {% for y in years %}
+                <option value="{{ y.id }}" {% if current_year_id == y.id %}selected{% endif %}>
+                  {{ y.year_name }}
+                </option>
+                {% endfor %}
+              {% endif %}
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-4">
+            <label class="form-label">🆔 Mã số sinh viên</label>
+            <input type="text"
+                   class="form-control"
+                   value="{{ user.mssv if user.mssv else 'Chưa có' }}"
+                   disabled>
+          </div>
+
+        </div>
+
+        <div class="alert alert-info py-2">
+          📸 Nếu muốn đổi ảnh đại diện, hãy quay lại trang hồ sơ và nhấn trực tiếp vào ảnh đại diện.
+        </div>
+
+        <div class="d-flex justify-content-between mt-2">
+          <a href="/student/profile" class="btn btn-outline-secondary btn-back">
+            <i class="bi bi-arrow-left"></i> Quay lại
+          </a>
+
+          <button type="submit" class="btn btn-save">
+            <i class="bi bi-save"></i> Lưu thay đổi
+          </button>
+        </div>
+
+      </form>
+
     </div>
-    {% endif %}
-
-    <form method="post" action="/student/profile/edit">
-
-      <div class="row">
-        <div class="col-md-6 mb-3">
-          <label class="form-label">👤 Họ và tên</label>
-          <input type="text"
-                 class="form-control"
-                 name="full_name"
-                 value="{{ profile.full_name if profile and profile.full_name else (user.full_name if user.full_name else '') }}"
-                 required>
-        </div>
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">📧 Email</label>
-          <input type="text" class="form-control" value="{{ user.email }}" disabled>
-        </div>
-      </div>
-
-      <div class="row">
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">📱 Số điện thoại</label>
-          <input type="text"
-                 class="form-control"
-                 name="phone"
-                 value="{{ profile.phone if profile and profile.phone else '' }}"
-                 placeholder="Nhập số điện thoại">
-        </div>
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">📅 Ngày sinh</label>
-          <input type="date"
-                 class="form-control"
-                 name="date_of_birth"
-                 value="{{ profile.date_of_birth.strftime('%Y-%m-%d') if profile and profile.date_of_birth else '' }}">
-        </div>
-
-      </div>
-
-      <div class="row">
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">⚧ Giới tính</label>
-          <select class="form-select" name="gender">
-            <option value="">-- Chọn giới tính --</option>
-            <option value="male" {% if profile and profile.gender == 'male' %}selected{% endif %}>Nam</option>
-            <option value="female" {% if profile and profile.gender == 'female' %}selected{% endif %}>Nữ</option>
-            <option value="other" {% if profile and profile.gender == 'other' %}selected{% endif %}>Khác</option>
-          </select>
-        </div>
-
-        <div class="col-md-6 mb-3">
-          <label class="form-label">🎓 Ngành học</label>
-          <select class="form-select" name="major_id">
-            <option value="">-- Chọn ngành học --</option>
-            {% for m in majors %}
-            <option value="{{ m.id }}" {% if current_major_id == m.id %}selected{% endif %}>
-              {{ m.major_name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-
-      </div>
-
-      <div class="row">
-
-        <div class="col-md-6 mb-4">
-          <label class="form-label">🏫 Năm học</label>
-          <select class="form-select" name="academic_year_id">
-            <option value="">-- Chọn năm học --</option>
-            {% for y in years %}
-            <option value="{{ y.id }}" {% if current_year_id == y.id %}selected{% endif %}>
-              {{ y.year_name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div class="col-md-6 mb-4">
-          <label class="form-label">🆔 Mã số sinh viên</label>
-          <input type="text"
-                 class="form-control"
-                 value="{{ user.mssv or 'Chưa có' }}"
-                 disabled>
-        </div>
-
-      </div>
-
-      <div class="d-flex justify-content-between mt-2">
-        <a href="/student/profile" class="btn btn-outline-secondary btn-back">
-          <i class="bi bi-arrow-left"></i> Quay lại
-        </a>
-
-        <button type="submit" class="btn btn-save">
-          <i class="bi bi-save"></i> Lưu thay đổi
-        </button>
-      </div>
-
-    </form>
-
   </div>
 </div>
+
+<script>
+function kiemTraHoSo() {
+  const hoTenInput = document.querySelector("[name='full_name']");
+  const soDienThoaiInput = document.querySelector("[name='phone']");
+
+  const hoTen = hoTenInput ? hoTenInput.value.trim() : "";
+  const soDienThoai = soDienThoaiInput ? soDienThoaiInput.value.trim() : "";
+
+  if (!hoTen) {
+    alert("❌ Vui lòng nhập họ và tên!");
+    return false;
+  }
+
+  if (soDienThoai && !/^[0-9+\-\s]{8,20}$/.test(soDienThoai)) {
+    alert("❌ Số điện thoại không hợp lệ!");
+    return false;
+  }
+
+  return true;
+}
+</script>
 {% endblock %}

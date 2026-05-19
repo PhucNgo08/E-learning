@@ -1,14 +1,15 @@
 {% macro render_replies(replies) %}
   {% for r in replies %}
-    <div class="reply-item mb-3 p-3 bg-white shadow-sm rounded-3">
+    <article class="reply-item mb-3 p-3 shadow-sm rounded-3">
 
-      <div class="d-flex align-items-center mb-2">
+      <div class="d-flex align-items-center mb-2 gap-3">
         <img src="{{ r.author.avatar_url if r.author and r.author.avatar_url else '/static/img/default_avatar.png' }}"
-             class="rounded-circle me-3"
-             width="42" height="42" />
+             class="reply-avatar rounded-circle"
+             width="42" height="42"
+             alt="Avatar người phản hồi" />
 
-        <div>
-          <strong>
+        <div class="min-w-0">
+          <strong class="reply-author">
             {% if r.author %}
               {{ r.author.full_name if r.author.full_name else (r.author.username if r.author.username else "Người dùng") }}
             {% else %}
@@ -23,20 +24,20 @@
         </div>
       </div>
 
-      <p class="mb-2" style="white-space: pre-line;">{{ r.content }}</p>
+      <p class="reply-content mb-2">{{ r.content }}</p>
 
       <button type="button"
-              class="btn btn-sm btn-outline-primary"
+              class="btn btn-sm btn-outline-primary rounded-pill"
               onclick="setReplyParent('{{ r.id }}')">
         <i class="bi bi-reply"></i> Trả lời
       </button>
 
       {% if r.reply_tree %}
-      <div class="ms-4 mt-3 border-start ps-3">
+      <div class="reply-tree mt-3">
         {{ render_replies(r.reply_tree) }}
       </div>
       {% endif %}
 
-    </div>
+    </article>
   {% endfor %}
 {% endmacro %}

@@ -1,78 +1,223 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>✏️ Chỉnh sửa hồ sơ giáo viên</title>
+{% extends "layout_teacher.html" %}
+{% block title %}✏️ Chỉnh sửa hồ sơ giáo viên{% endblock %}
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+{% block content %}
+<style>
+  :root {
+    --profile-page-bg: #f5f8ff;
+    --profile-card-bg: #ffffff;
+    --profile-card-border: #e5e7eb;
+    --profile-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
 
-  <style>
-    body {
-      background: linear-gradient(180deg, #f6f9ff 0%, #eef3ff 100%);
-      font-family: "Inter", "Segoe UI", sans-serif;
-      min-height: 100vh;
+    --profile-text-main: #1e293b;
+    --profile-text-muted: #64748b;
+    --profile-heading: #ffffff;
+    --profile-label: #003087;
+
+    --profile-input-bg: #ffffff;
+    --profile-input-text: #1e293b;
+    --profile-input-border: #cfd9e6;
+    --profile-input-placeholder: #94a3b8;
+
+    --profile-header-bg: linear-gradient(90deg, #0056d2, #007bff);
+    --profile-avatar-border: #007bff;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --profile-page-bg: #071226;
+    --profile-card-bg: #0f1b33;
+    --profile-card-border: rgba(255, 255, 255, 0.1);
+    --profile-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --profile-text-main: #e5edf8;
+    --profile-text-muted: #9caec8;
+    --profile-heading: #ffffff;
+    --profile-label: #dbeafe;
+
+    --profile-input-bg: #101d36;
+    --profile-input-text: #e5edf8;
+    --profile-input-border: rgba(255, 255, 255, 0.16);
+    --profile-input-placeholder: #8ea0bb;
+
+    --profile-header-bg: linear-gradient(90deg, #1e3a8a, #0f766e);
+    --profile-avatar-border: #60a5fa;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .profile-edit-page {
+    min-height: calc(100vh - 110px);
+    padding: 40px 16px;
+    background: var(--profile-page-bg) !important;
+    color: var(--profile-text-main);
+    font-family: "Inter", "Segoe UI", sans-serif;
+  }
+
+  .edit-container {
+    max-width: 700px;
+    margin: 40px auto;
+    background: var(--profile-card-bg);
+    color: var(--profile-text-main);
+    border: 1px solid var(--profile-card-border);
+    border-radius: 18px;
+    box-shadow: var(--profile-card-shadow);
+    overflow: hidden;
+  }
+
+  .edit-header {
+    background: var(--profile-header-bg);
+    color: var(--profile-heading);
+    text-align: center;
+    padding: 45px 20px;
+  }
+
+  .edit-header h3 {
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .edit-header p {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .edit-body {
+    padding: 40px 50px;
+  }
+
+  .edit-body .form-label {
+    font-weight: 600;
+    color: var(--profile-label);
+  }
+
+  .edit-body .form-control {
+    background-color: var(--profile-input-bg);
+    color: var(--profile-input-text);
+    border-color: var(--profile-input-border);
+    border-radius: 12px;
+    box-shadow: none !important;
+  }
+
+  .edit-body .form-control:focus {
+    background-color: var(--profile-input-bg);
+    color: var(--profile-input-text);
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.18) !important;
+  }
+
+  .edit-body .form-control::placeholder {
+    color: var(--profile-input-placeholder);
+  }
+
+  .edit-body input[type="file"]::file-selector-button {
+    background: rgba(96, 165, 250, 0.12);
+    color: var(--profile-label);
+    border: 0;
+    border-right: 1px solid var(--profile-input-border);
+    padding: 0.45rem 0.9rem;
+    margin-right: 12px;
+  }
+
+  .avatar-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid var(--profile-avatar-border);
+    object-fit: cover;
+    display: block;
+    margin: 15px auto;
+    background: var(--profile-input-bg);
+  }
+
+  .btn-save {
+    background: linear-gradient(90deg, #007bff, #0056d2);
+    color: white;
+    font-weight: 600;
+    border-radius: 10px;
+    border: none;
+    transition: all 0.25s ease;
+  }
+
+  .btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
+    color: #fff;
+  }
+
+  body.dark-mode .profile-edit-page .btn-outline-secondary,
+  body.theme-dark .profile-edit-page .btn-outline-secondary,
+  html[data-theme="dark"] .profile-edit-page .btn-outline-secondary,
+  body[data-theme="dark"] .profile-edit-page .btn-outline-secondary,
+  [data-bs-theme="dark"] .profile-edit-page .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .profile-edit-page .btn-outline-secondary:hover,
+  body.theme-dark .profile-edit-page .btn-outline-secondary:hover,
+  html[data-theme="dark"] .profile-edit-page .btn-outline-secondary:hover,
+  body[data-theme="dark"] .profile-edit-page .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .profile-edit-page .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  @media (max-width: 768px) {
+    .profile-edit-page {
+      padding: 24px 12px;
     }
 
     .edit-container {
-      max-width: 700px;
-      margin: 80px auto;
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      overflow: hidden;
-    }
-
-    .edit-header {
-      background: linear-gradient(90deg, #0056d2, #007bff);
-      color: white;
-      text-align: center;
-      padding: 45px 20px;
+      margin: 16px auto;
     }
 
     .edit-body {
-      padding: 40px 50px;
+      padding: 25px;
     }
 
-    .form-label {
-      font-weight: 600;
-      color: #003087;
+    .text-center.mt-4 {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .avatar-preview {
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      border: 3px solid #007bff;
-      object-fit: cover;
-      display: block;
-      margin: 15px auto;
+    .text-center.mt-4 .btn {
+      width: 100%;
+      margin-left: 0 !important;
     }
+  }
+</style>
 
-    .btn-save {
-      background: linear-gradient(90deg, #007bff, #0056d2);
-      color: white;
-      font-weight: 500;
-      border-radius: 10px;
-    }
-
-    .btn-save:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
-    }
-
-    @media (max-width: 768px) {
-      .edit-body { padding: 25px; }
-    }
-  </style>
-</head>
-
-<body>
+<div class="profile-edit-page">
   <div class="edit-container">
     <div class="edit-header">
       <h3>✏️ Chỉnh sửa hồ sơ</h3>
-      <p>Cập nhật thông tin cá nhân của bạn bên dưới</p>
+      <p class="mb-0">Cập nhật thông tin cá nhân của bạn bên dưới</p>
     </div>
 
     <div class="edit-body">
@@ -116,17 +261,19 @@
       </form>
     </div>
   </div>
+</div>
 
-  <!-- Preview ảnh khi chọn -->
-  <script>
-    const fileInput = document.querySelector('input[name="avatar"]');
-    const previewImg = document.querySelector('.avatar-preview');
+<script>
+  const fileInput = document.querySelector('input[name="avatar"]');
+  const previewImg = document.querySelector('.avatar-preview');
+
+  if (fileInput && previewImg) {
     fileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (file) {
         previewImg.src = URL.createObjectURL(file);
       }
     });
-  </script>
-</body>
-</html>
+  }
+</script>
+{% endblock %}

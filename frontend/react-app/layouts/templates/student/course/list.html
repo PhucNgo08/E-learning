@@ -3,70 +3,122 @@
 
 {% block content %}
 <style>
-  body {
+  .student-course-page {
     background: #f5f8ff;
-    font-family: "Inter", "Segoe UI", sans-serif;
+    min-height: calc(100vh - 100px);
   }
 
-  .course-card {
+  .student-course-page .filter-card {
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(13,110,253,0.08);
+    border-radius: 18px;
+  }
+
+  .student-course-page .course-card {
     border: none;
-    border-radius: 14px;
+    border-radius: 16px;
     overflow: hidden;
     background: #fff;
     transition: .28s ease;
-    box-shadow: 0 3px 10px rgba(0,0,0,.08);
-  }
-  .course-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px rgba(0,0,0,.18);
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
   }
 
-  .card-img-wrapper { position: relative; display: block; overflow: hidden; }
-  .card-img-top {
+  .student-course-page .course-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(0,0,0,.16);
+  }
+
+  .student-course-page .card-img-wrapper {
+    position: relative;
+    display: block;
+    overflow: hidden;
+  }
+
+  .student-course-page .card-img-top {
     height: 180px;
+    width: 100%;
     object-fit: cover;
     transition: .25s ease;
   }
-  .card-img-wrapper:hover .card-img-top { opacity: .85; transform: scale(1.05); }
 
-  .overlay {
-    position: absolute; inset: 0;
+  .student-course-page .card-img-wrapper:hover .card-img-top {
+    opacity: .88;
+    transform: scale(1.05);
+  }
+
+  .student-course-page .overlay {
+    position: absolute;
+    inset: 0;
     background: rgba(0,0,0,.45);
-    color: #fff; opacity: 0;
-    display:flex; align-items:center; justify-content:center;
-    font-weight:600; font-size:1rem;
-    transition:.25s ease;
+    color: #fff;
+    opacity: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    transition: .25s ease;
   }
-  .card-img-wrapper:hover .overlay { opacity: 1; }
 
-  .badge-status {
-    position:absolute; top:12px; left:12px;
-    font-size:.75rem; padding:6px 10px;
-    border-radius:8px; font-weight:600;
-    text-transform: capitalize;
+  .student-course-page .card-img-wrapper:hover .overlay {
+    opacity: 1;
   }
-  .published { background:#198754; color:#fff; }
-  .draft { background:#ffc107; color:#212529; }
-  .archived { background:#6c757d; color:#fff; }
 
-  .course-title { font-weight: 600; color: #0d6efd; }
-  .price-tag { font-size: 1rem; font-weight:700; }
-  .price-final { color:#dc3545; }
-  .price-free { font-weight:600; color:#198754; }
+  .student-course-page .badge-status {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: .75rem;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 600;
+  }
 
-  .flying-img {
+  .student-course-page .published { background: #198754; color: #fff; }
+  .student-course-page .draft { background: #ffc107; color: #212529; }
+  .student-course-page .archived { background: #6c757d; color: #fff; }
+
+  .student-course-page .discount-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+
+  .student-course-page .course-title {
+    font-weight: 700;
+    color: #0d6efd;
+  }
+
+  .student-course-page .price-tag {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .student-course-page .price-final { color: #dc3545; }
+  .student-course-page .price-free { color: #198754; }
+
+  .student-course-page .major-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 999px;
+    padding: 4px 9px;
+    background: #eef6ff;
+    color: #0d6efd;
+    font-size: .78rem;
+    font-weight: 600;
+  }
+
+  .student-course-page .toast-add-cart {
     position: fixed;
-    width: 80px; height: 55px;
-    object-fit: cover;
-    border-radius: 10px;
-    z-index: 2000;
-    transition: all 0.6s cubic-bezier(.42,0,.58,1);
-    pointer-events: none;
-  }
-
-  .toast-add-cart {
-    position: fixed;
-    top: 20px; right: 20px;
+    top: 20px;
+    right: 20px;
     background: #2563eb;
     color: #fff;
     padding: 12px 22px;
@@ -78,176 +130,237 @@
     font-weight: 600;
     pointer-events: none;
   }
-  .toast-add-cart.show {
+
+  .student-course-page .toast-add-cart.show {
     opacity: 1;
     transform: translateY(0);
   }
+
+  body.dark-mode .student-course-page {
+    background: #071226;
+  }
+
+  body.dark-mode .student-course-page .filter-card,
+  body.dark-mode .student-course-page .course-card {
+    background: rgba(15, 23, 42, 0.85);
+    color: #e2e8f0;
+  }
+
+  body.dark-mode .student-course-page .text-muted {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .student-course-page .major-chip {
+    background: rgba(37, 99, 235, 0.18);
+    color: #bfdbfe;
+  }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-  <h4 class="fw-bold text-primary mb-3">
-    <i class="bi bi-journal-bookmark"></i> Danh sách khóa học
-  </h4>
+<div class="student-course-page py-3">
+  <div class="container-fluid">
 
-  <form class="d-flex" method="get">
-    <input name="q"
-           value="{{ search_query or request.query_params.get('q','') }}"
-           class="form-control me-2"
-           style="min-width:220px;"
-           placeholder="🔍 Tìm khóa học...">
-    <button class="btn btn-primary"><i class="bi bi-search"></i></button>
-  </form>
-</div>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold text-primary mb-1">
+          <i class="bi bi-journal-bookmark"></i> Danh sách khóa học
+        </h4>
+        <small class="text-muted">
+          Xem khóa học theo ngành, mức độ, học phí và tìm kiếm nhanh.
+        </small>
+      </div>
 
-{% if courses %}
-<div class="row g-4">
-
-  {% for c in courses %}
-  <div class="col-lg-4 col-md-6 col-sm-12">
-    <div class="course-card h-100">
-
-      <a href="{{ url_for('student_course_detail', course_id=c.id) }}"
-         class="card-img-wrapper text-decoration-none d-block">
-        <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-             onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png'"
-             class="card-img-top">
-
-        <div class="overlay">👁️ Xem chi tiết</div>
-
-        <span class="badge-status {{ c.status or 'published' }}">
-          {% if c.status == 'published' %}Đã xuất bản
-          {% elif c.status == 'draft' %}Bản nháp
-          {% elif c.status == 'archived' %}Lưu trữ
-          {% else %}Khác{% endif %}
-        </span>
+      <a href="/student/course/enrolled" class="btn btn-outline-primary rounded-pill">
+        <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
       </a>
+    </div>
 
-      <div class="card-body pb-1">
-        <h5 class="course-title text-truncate">{{ c.course_name }}</h5>
+    <form class="filter-card shadow-sm p-3 mb-4" method="get" action="/student/course">
+      <div class="row g-3 align-items-end">
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label fw-semibold">Tìm kiếm</label>
+          <input name="q"
+                 value="{{ search_query or '' }}"
+                 class="form-control rounded-pill"
+                 placeholder="Nhập tên khóa học, mã, ngành...">
+        </div>
 
-        <p class="text-muted small mb-2">
-          <i class="bi bi-hash"></i> {{ c.course_code or "—" }}
-          • <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 0 }} tín chỉ
-        </p>
+        <div class="col-lg-3 col-md-6">
+          <label class="form-label fw-semibold">Ngành học</label>
+          <select name="major_id" class="form-select rounded-pill">
+            <option value="">Tất cả ngành học</option>
+            {% for major in majors %}
+            <option value="{{ major.id }}" {% if selected_major_id == major.id %}selected{% endif %}>
+              {{ major.major_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
 
-        <p class="small" style="min-height: 40px;">
-          {{ c.description[:95] ~ ('...' if c.description and c.description|length > 95 else '') if c.description else "Chưa có mô tả cho khóa học này." }}
-        </p>
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Mức độ</label>
+          <select name="difficulty_level" class="form-select rounded-pill">
+            <option value="">Tất cả</option>
+            <option value="beginner" {% if selected_difficulty == 'beginner' %}selected{% endif %}>Cơ bản</option>
+            <option value="intermediate" {% if selected_difficulty == 'intermediate' %}selected{% endif %}>Trung bình</option>
+            <option value="advanced" {% if selected_difficulty == 'advanced' %}selected{% endif %}>Nâng cao</option>
+          </select>
+        </div>
 
-        <div class="mt-1 price-tag">
-          {% if c.final_price == 0 %}
-            <span class="price-free">Miễn phí</span>
-          {% elif c.discount_percent and c.discount_percent > 0 %}
-            <div class="price-final">{{ "{:,.0f}".format(c.final_price) }}₫</div>
-            <div class="text-muted small text-decoration-line-through">
-              {{ "{:,.0f}".format(c.price or 0) }}₫
-            </div>
-          {% else %}
-            <div class="price-final">{{ "{:,.0f}".format(c.final_price) }}₫</div>
-          {% endif %}
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Học phí</label>
+          <select name="price_filter" class="form-select rounded-pill">
+            <option value="">Tất cả</option>
+            <option value="free" {% if selected_price_filter == 'free' %}selected{% endif %}>Miễn phí</option>
+            <option value="paid" {% if selected_price_filter == 'paid' %}selected{% endif %}>Có phí</option>
+            <option value="discount" {% if selected_price_filter == 'discount' %}selected{% endif %}>Đang giảm giá</option>
+          </select>
+        </div>
+
+        <div class="col-lg-2 col-md-6">
+          <label class="form-label fw-semibold">Sắp xếp</label>
+          <select name="sort" class="form-select rounded-pill">
+            <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Mới nhất</option>
+            <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+            <option value="name_desc" {% if selected_sort == 'name_desc' %}selected{% endif %}>Tên Z-A</option>
+            <option value="price_asc" {% if selected_sort == 'price_asc' %}selected{% endif %}>Giá thấp đến cao</option>
+            <option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>Giá cao đến thấp</option>
+          </select>
+        </div>
+
+        <div class="col-12 d-flex gap-2 flex-wrap">
+          <button class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-funnel"></i> Lọc khóa học
+          </button>
+
+          <a href="/student/course" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="bi bi-arrow-counterclockwise"></i> Xóa lọc
+          </a>
         </div>
       </div>
+    </form>
 
-      <div class="card-footer bg-white border-0 pb-3 px-3">
-
-        {% if c.id in enrolled_course_ids or c.id in purchased_ids %}
-        <a href="{{ url_for('student_course_progress', course_id=c.id) }}"
-           class="btn btn-outline-primary btn-sm shadow-sm w-100 rounded-pill">
-          <i class="bi bi-play-circle"></i> Tiếp tục học
-        </a>
-
-        {% elif c.final_price == 0 %}
-        <form method="post" action="/student/course/enroll/{{ c.id }}">
-          <button type="submit" class="btn btn-primary btn-sm shadow-sm w-100 rounded-pill">
-            <i class="bi bi-plus-circle"></i> Đăng ký miễn phí
-          </button>
-        </form>
-
-        {% else %}
-        <button
-          type="button"
-          class="btn btn-success btn-sm shadow-sm w-100 rounded-pill add-to-cart-btn"
-          data-id="{{ c.id }}"
-          data-img="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
-        >
-          <i class="bi bi-cart-plus"></i> Thêm vào giỏ
-        </button>
-        {% endif %}
-
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+      <div class="text-muted">
+        Đang hiển thị các khóa học bạn chưa mua hoặc chưa đăng ký.
       </div>
-
     </div>
+
+    {% if courses %}
+    <div class="row g-4">
+      {% for c in courses %}
+      {% if c.id not in enrolled_course_ids and c.id not in purchased_ids %}
+      {% set level = (c.difficulty_level or "beginner")|lower %}
+      <div class="col-lg-4 col-md-6 col-sm-12">
+        <div class="course-card h-100 d-flex flex-column">
+
+          <a href="/student/course/detail/{{ c.id }}" class="card-img-wrapper text-decoration-none d-block">
+            <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
+                 onerror="this.onerror=null; this.src='/uploads/course_thumbnails/default-course.png'"
+                 class="card-img-top"
+                 alt="{{ c.course_name }}">
+
+            <div class="overlay">👁️ Xem chi tiết</div>
+
+            <span class="badge-status {{ c.status or 'published' }}">
+              {% if c.status == 'published' %}Đã xuất bản
+              {% elif c.status == 'draft' %}Bản nháp
+              {% elif c.status == 'archived' %}Lưu trữ
+              {% else %}Khác{% endif %}
+            </span>
+
+            {% if c.discount_percent and c.discount_percent > 0 %}
+            <span class="discount-badge">-{{ c.discount_percent }}%</span>
+            {% endif %}
+          </a>
+
+          <div class="card-body pb-2 flex-grow-1">
+            <h5 class="course-title text-truncate" title="{{ c.course_name }}">
+              {{ c.course_name }}
+            </h5>
+
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="major-chip">
+                <i class="bi bi-diagram-3"></i>
+                {{ c.major.major_name if c.major else 'Chưa phân ngành' }}
+              </span>
+
+              <span class="badge
+                {% if level == 'beginner' %}bg-success
+                {% elif level == 'intermediate' %}bg-warning text-dark
+                {% else %}bg-danger
+                {% endif %}">
+                {% if level == 'beginner' %}Cơ bản
+                {% elif level == 'intermediate' %}Trung bình
+                {% else %}Nâng cao{% endif %}
+              </span>
+            </div>
+
+            <p class="text-muted small mb-2">
+              <i class="bi bi-hash"></i> {{ c.course_code or "—" }}
+              • <i class="bi bi-mortarboard"></i> {{ c.credit_hours or 0 }} tín chỉ
+            </p>
+
+            <p class="small" style="min-height: 42px;">
+              {{ c.description[:95] ~ ('...' if c.description and c.description|length > 95 else '') if c.description else "Chưa có mô tả cho khóa học này." }}
+            </p>
+
+            <div class="mt-1 price-tag">
+              {% if c.final_price == 0 %}
+                <span class="price-free">Miễn phí</span>
+              {% elif c.discount_percent and c.discount_percent > 0 %}
+                <div class="price-final">{{ "{:,.0f}".format(c.final_price or 0) }}₫</div>
+                <div class="text-muted small text-decoration-line-through">
+                  {{ "{:,.0f}".format(c.price or 0) }}₫
+                </div>
+              {% else %}
+                <div class="price-final">{{ "{:,.0f}".format(c.final_price or 0) }}₫</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card-footer bg-white border-0 pb-3 px-3">
+            {% if c.id in enrolled_course_ids or c.id in purchased_ids %}
+            <a href="/student/course/progress/{{ c.id }}"
+               class="btn btn-outline-primary btn-sm shadow-sm w-100 rounded-pill">
+              <i class="bi bi-play-circle"></i> Tiếp tục học
+            </a>
+
+            {% elif c.final_price == 0 %}
+            <form action="/student/course/enroll/{{ c.id }}" method="post">
+              <button class="btn btn-primary btn-sm shadow-sm w-100 rounded-pill">
+                <i class="bi bi-plus-circle"></i> Đăng ký miễn phí
+              </button>
+            </form>
+
+            {% else %}
+            <div class="d-grid gap-2">
+              <a href="/student/cart/add/{{ c.id }}"
+                 class="btn btn-outline-primary btn-sm shadow-sm rounded-pill">
+                <i class="bi bi-cart-plus"></i> Thêm vào giỏ
+              </a>
+
+              <form action="/student/cart/buy-now/{{ c.id }}" method="post">
+                <button class="btn btn-success btn-sm shadow-sm w-100 rounded-pill">
+                  <i class="bi bi-credit-card"></i> Mua ngay
+                </button>
+              </form>
+            </div>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="alert alert-info text-center shadow-sm rounded-4">
+      <i class="bi bi-info-circle"></i>
+      Không có khóa học nào phù hợp với bộ lọc hiện tại.
+    </div>
+    {% endif %}
+
   </div>
-  {% endfor %}
-
 </div>
-{% else %}
-<div class="alert alert-info text-center shadow-sm mt-5">
-  <i class="bi bi-info-circle"></i> Chưa có khóa học nào được mở.
-</div>
-{% endif %}
-
-<script>
-function flyToCart(imgUrl, originElement) {
-  const cartIcon = document.getElementById("cartIcon");
-  if (!cartIcon || !originElement) return;
-
-  const flyingImg = document.createElement("img");
-  flyingImg.src = imgUrl;
-  flyingImg.className = "flying-img";
-
-  const rect = originElement.getBoundingClientRect();
-  flyingImg.style.left = rect.left + "px";
-  flyingImg.style.top = rect.top + "px";
-
-  document.body.appendChild(flyingImg);
-
-  const cartRect = cartIcon.getBoundingClientRect();
-
-  setTimeout(() => {
-    flyingImg.style.left = cartRect.left + "px";
-    flyingImg.style.top = cartRect.top + "px";
-    flyingImg.style.opacity = "0.2";
-    flyingImg.style.transform = "scale(0.2)";
-  }, 50);
-
-  setTimeout(() => flyingImg.remove(), 700);
-}
-
-function showToast(msg) {
-  const t = document.createElement("div");
-  t.className = "toast-add-cart";
-  t.textContent = msg;
-
-  document.body.appendChild(t);
-  setTimeout(() => t.classList.add("show"), 10);
-  setTimeout(() => t.classList.remove("show"), 1800);
-  setTimeout(() => t.remove(), 2600);
-}
-
-document.addEventListener("click", async function(e) {
-  const btn = e.target.closest(".add-to-cart-btn");
-  if (!btn) return;
-
-  e.preventDefault();
-
-  const courseId = btn.dataset.id;
-  const imgUrl = btn.dataset.img;
-  const imgElement = btn.closest(".course-card")?.querySelector("img");
-
-  btn.disabled = true;
-  flyToCart(imgUrl, imgElement);
-
-  try {
-    await fetch(`/student/cart/add/${courseId}`, { method: "GET", credentials: "same-origin" });
-    btn.innerHTML = '<i class="bi bi-check-circle"></i> Đã thêm vào giỏ';
-    btn.classList.remove("btn-success");
-    btn.classList.add("btn-outline-primary");
-    showToast("Đã thêm khóa học vào giỏ hàng!");
-  } catch (err) {
-    btn.disabled = false;
-    showToast("Không thể thêm vào giỏ hàng.");
-  }
-});
-</script>
 {% endblock %}

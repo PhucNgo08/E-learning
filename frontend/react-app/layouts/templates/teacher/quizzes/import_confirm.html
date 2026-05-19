@@ -1,73 +1,162 @@
 {% extends "layout_teacher.html" %}
-{% block title %}🎉 Nhập câu hỏi thành công – {{ quiz.title }}{% endblock %}
+
+{% block title %}Import thành công{% endblock %}
 
 {% block content %}
 
 <style>
-.confirm-wrapper {
-  max-width: 760px;
-  margin: auto;
-  padding-top: 40px;
-  padding-bottom: 60px;
-}
-.confirm-card {
-  padding: 2.2rem;
-  background: rgba(255,255,255,0.88);
-  border-radius: 22px;
-  border: 1px solid rgba(230,230,230,0.65);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.10);
-  text-align: center;
-  animation: fadeIn .45s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.icon-success {
-  font-size: 62px;
-  color: #22c55e;
-}
-
-body.dark-mode .confirm-card {
-  background: rgba(30,41,59,0.55);
-  border-color: rgba(255,255,255,0.1);
-}
+  .quiz-page {
+    padding: 24px 12px 42px;
+  }
+  .quiz-card {
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+  }
+  .quiz-title {
+    font-weight: 800;
+    color: #2563eb;
+  }
+  .quiz-muted {
+    color: #64748b;
+  }
+  .quiz-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .quiz-actions .btn {
+    border-radius: 12px;
+  }
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px 20px;
+  }
+  .info-item {
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #f8fafc;
+  }
+  .question-card {
+    border-radius: 18px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .question-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+  .option-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 15px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+  .option-item.correct {
+    background: #ecfdf5;
+    border-color: #22c55e;
+  }
+  .option-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid #cbd5e1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    background: #fff;
+    color: #334155;
+    flex-shrink: 0;
+  }
+  .option-item.correct .option-letter {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: #fff;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .quiz-table {
+    min-width: 880px;
+  }
+  @media (max-width: 768px) {
+    .quiz-page { padding: 16px 8px 30px; }
+    .quiz-card { border-radius: 16px; }
+    .info-grid { grid-template-columns: 1fr; }
+    .quiz-actions { width: 100%; }
+    .quiz-actions .btn { width: 100%; }
+    .question-card { padding: 14px; }
+  }
 </style>
 
-<div class="container confirm-wrapper fade-in">
+<div class="quiz-page">
+  <div class="container" style="max-width: 760px;">
+    <div class="quiz-card p-5 text-center">
+      <div class="display-4 text-success mb-3">
+        <i class="bi bi-check-circle-fill"></i>
+      </div>
 
-  <div class="confirm-card">
+      <h3 class="fw-bold text-success mb-3">
+        Import câu hỏi thành công
+      </h3>
 
-    <div class="icon-success mb-3">
-      <i class="bi bi-check-circle-fill"></i>
+      <p class="text-muted mb-4">
+        Quiz: <strong>{{ quiz.title }}</strong>
+      </p>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="border rounded-4 p-3">
+            <div class="fw-bold fs-3 text-primary">{{ total_rows or 0 }}</div>
+            <div class="small text-muted">Tổng dòng</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded-4 p-3">
+            <div class="fw-bold fs-3 text-success">{{ added_count or 0 }}</div>
+            <div class="small text-muted">Đã thêm</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="border rounded-4 p-3">
+            <div class="fw-bold fs-3 text-danger">{{ skipped_count or 0 }}</div>
+            <div class="small text-muted">Bỏ qua</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="quiz-actions justify-content-center">
+        <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-primary">
+          <i class="bi bi-eye"></i> Xem câu hỏi
+        </a>
+        <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-outline-success">
+          <i class="bi bi-upload"></i> Import tiếp
+        </a>
+        <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
+          Danh sách quiz
+        </a>
+      </div>
     </div>
-
-    <h2 class="fw-bold text-success mb-3">
-      Nhập câu hỏi thành công!
-    </h2>
-
-    <p class="text-muted">
-      Bạn đã nhập <strong>{{ total }}</strong> câu hỏi mới vào bài Quiz:
-    </p>
-
-    <h4 class="fw-semibold text-primary mt-2 mb-4">
-      {{ quiz.title }}
-    </h4>
-
-    <div class="d-flex justify-content-center gap-3 mt-4">
-
-      <a href="/teacher/quizzes/detail/{{ quiz.id }}" class="btn btn-success px-4">
-        <i class="bi bi-eye"></i> Xem bài Quiz
-      </a>
-
-      <a href="/teacher/quizzes/{{ quiz.id }}/import" class="btn btn-secondary px-4">
-        <i class="bi bi-arrow-repeat"></i> Nhập thêm câu hỏi
-      </a>
-
-    </div>
-
   </div>
-
 </div>
-
 {% endblock %}

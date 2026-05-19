@@ -2,53 +2,236 @@
 {% block title %}📤 Upload tài liệu{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="bg-white shadow-sm rounded p-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3 class="fw-bold text-primary">
-        <i class="bi bi-cloud-upload"></i> Tải lên tài liệu mới
-      </h3>
-      <a href="/teacher/materials/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
-      </a>
-    </div>
+<style>
+  :root {
+    --material-page-bg: #f5f8ff;
+    --material-card-bg: #ffffff;
+    --material-card-border: #e5e7eb;
+    --material-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 
-    <form method="post" action="/teacher/materials/upload" enctype="multipart/form-data">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label">📘 Khóa học</label>
-          <select name="course_id" class="form-select" required>
-            <option value="">-- Chọn khóa học --</option>
-            {% for c in courses %}
-              <option value="{{ c.id }}">{{ c.course_name }}</option>
-            {% endfor %}
-          </select>
-        </div>
+    --material-text-main: #1e293b;
+    --material-text-muted: #64748b;
+    --material-heading: #0d6efd;
+    --material-label: #003087;
 
-        <div class="col-md-6">
-          <label class="form-label">📝 Tiêu đề</label>
-          <input type="text" name="title" class="form-control" placeholder="VD: Slide Chương 1" required>
-        </div>
+    --material-input-bg: #ffffff;
+    --material-input-text: #1e293b;
+    --material-input-border: #cbd5e1;
+    --material-input-placeholder: #94a3b8;
+  }
 
-        <div class="col-12">
-          <label class="form-label">📄 Mô tả (tùy chọn)</label>
-          <textarea name="description" class="form-control" rows="3" placeholder="Mô tả ngắn gọn về tài liệu..."></textarea>
-        </div>
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --material-page-bg: #071226;
+    --material-card-bg: #0f1b33;
+    --material-card-border: rgba(255, 255, 255, 0.1);
+    --material-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
 
-        <div class="col-12">
-          <label class="form-label">📎 Chọn file</label>
-          <input type="file" name="file" class="form-control" required>
-          <div class="form-text text-muted">Hỗ trợ PDF, PPTX, DOCX, ZIP, MP4, ...</div>
-        </div>
+    --material-text-main: #e5edf8;
+    --material-text-muted: #9caec8;
+    --material-heading: #8ea6ff;
+    --material-label: #dbeafe;
 
-        <div class="col-12 text-end mt-3">
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-upload"></i> Tải lên
-          </button>
-          <a href="/teacher/materials/list" class="btn btn-light">Huỷ</a>
-        </div>
+    --material-input-bg: #101d36;
+    --material-input-text: #e5edf8;
+    --material-input-border: rgba(255, 255, 255, 0.16);
+    --material-input-placeholder: #8ea0bb;
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .material-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--material-page-bg);
+    color: var(--material-text-main);
+  }
+
+  .material-card {
+    background: var(--material-card-bg);
+    color: var(--material-text-main);
+    border: 1px solid var(--material-card-border);
+    border-radius: 18px;
+    box-shadow: var(--material-card-shadow);
+    padding: 28px;
+  }
+
+  .material-card h3,
+  .material-card .text-primary {
+    color: var(--material-heading) !important;
+  }
+
+  .material-card .text-muted,
+  .material-card .form-text {
+    color: var(--material-text-muted) !important;
+  }
+
+  .material-card .form-label {
+    color: var(--material-label);
+    font-weight: 600;
+  }
+
+  .material-card .form-control,
+  .material-card .form-select,
+  .material-card textarea {
+    background-color: var(--material-input-bg) !important;
+    color: var(--material-input-text) !important;
+    border-color: var(--material-input-border) !important;
+    border-radius: 12px;
+    box-shadow: none !important;
+  }
+
+  .material-card .form-control:focus,
+  .material-card .form-select:focus,
+  .material-card textarea:focus {
+    background-color: var(--material-input-bg) !important;
+    color: var(--material-input-text) !important;
+    border-color: #60a5fa !important;
+    box-shadow: 0 0 0 0.22rem rgba(96, 165, 250, 0.18) !important;
+  }
+
+  .material-card .form-control::placeholder,
+  .material-card textarea::placeholder {
+    color: var(--material-input-placeholder);
+  }
+
+  .material-card .form-select option {
+    background: var(--material-input-bg);
+    color: var(--material-input-text);
+  }
+
+  .material-card input[type="file"]::file-selector-button {
+    background: rgba(96, 165, 250, 0.12);
+    color: var(--material-label);
+    border: 0;
+    border-right: 1px solid var(--material-input-border);
+    padding: 0.45rem 0.9rem;
+    margin-right: 12px;
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary,
+  body.theme-dark .material-card .btn-outline-secondary,
+  html[data-theme="dark"] .material-card .btn-outline-secondary,
+  body[data-theme="dark"] .material-card .btn-outline-secondary,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary {
+    color: #dbeafe;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  body.dark-mode .material-card .btn-outline-secondary:hover,
+  body.theme-dark .material-card .btn-outline-secondary:hover,
+  html[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  body[data-theme="dark"] .material-card .btn-outline-secondary:hover,
+  [data-bs-theme="dark"] .material-card .btn-outline-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  body.dark-mode .material-card .btn-light,
+  body.theme-dark .material-card .btn-light,
+  html[data-theme="dark"] .material-card .btn-light,
+  body[data-theme="dark"] .material-card .btn-light,
+  [data-bs-theme="dark"] .material-card .btn-light {
+    background: rgba(148, 163, 184, 0.18);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #e5edf8;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding: 16px 8px 32px;
+    }
+
+    .material-card {
+      padding: 20px;
+    }
+
+    .material-card .col-12.text-end {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .material-card .col-12.text-end .btn {
+      width: 100%;
+    }
+  }
+</style>
+
+<div class="material-page">
+  <div class="container">
+    <div class="material-card">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="fw-bold text-primary mb-0">
+          <i class="bi bi-cloud-upload"></i> Tải lên tài liệu mới
+        </h3>
+        <a href="/teacher/materials/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách
+        </a>
       </div>
-    </form>
+
+      <form method="post" action="/teacher/materials/upload" enctype="multipart/form-data">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label">📘 Khóa học</label>
+            <select name="course_id" class="form-select" required>
+              <option value="">-- Chọn khóa học --</option>
+              {% for c in courses %}
+                <option value="{{ c.id }}">{{ c.course_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">📝 Tiêu đề</label>
+            <input type="text" name="title" class="form-control" placeholder="VD: Slide Chương 1" required>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">📄 Mô tả (tùy chọn)</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="Mô tả ngắn gọn về tài liệu..."></textarea>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">📎 Chọn file</label>
+            <input type="file" name="file" class="form-control" required>
+            <div class="form-text">Hỗ trợ PDF, PPTX, DOCX, ZIP, MP4, ...</div>
+          </div>
+
+          <div class="col-12 text-end mt-3">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-upload"></i> Tải lên
+            </button>
+            <a href="/teacher/materials/list" class="btn btn-light">Huỷ</a>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}

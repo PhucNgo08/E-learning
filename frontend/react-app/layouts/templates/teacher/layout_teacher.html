@@ -12,6 +12,11 @@
   <!-- 🎨 Custom CSS -->
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/teacher.css" />
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/teacher_dashboard.css" />
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/theme.css" />
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/theme-teacher.css" />
+
+  {% block head_extra %}{% endblock %}
+  {% block extra_css %}{% endblock %}
 </head>
 
 <body>
@@ -138,13 +143,49 @@
     const toggleSidebarBtn = document.getElementById("toggleSidebarBtn");
     const toggleModeBtn = document.getElementById("toggleModeBtn");
 
-    // Sidebar Toggle
-    toggleSidebarBtn.addEventListener("click", () => {
-      sidebar.classList.toggle("show");
-    });
-    overlay.addEventListener("click", () => {
+    const DESKTOP_WIDTH = 992;
+    const isTeacherDesktop = () => window.innerWidth >= DESKTOP_WIDTH;
+
+    function closeMobileSidebar() {
       sidebar.classList.remove("show");
+      overlay.classList.remove("show");
+    }
+
+    function syncTeacherSidebar() {
+      if (isTeacherDesktop()) {
+        overlay.classList.remove("show");
+
+        const collapsed = localStorage.getItem("teacherSidebarCollapsed") === "true";
+        document.body.classList.toggle("teacher-sidebar-collapsed", collapsed);
+        sidebar.classList.toggle("show", !collapsed);
+      } else {
+        document.body.classList.remove("teacher-sidebar-collapsed");
+        sidebar.classList.remove("show");
+        overlay.classList.remove("show");
+      }
+    }
+
+    toggleSidebarBtn.addEventListener("click", () => {
+      if (isTeacherDesktop()) {
+        const nextCollapsed = !document.body.classList.contains("teacher-sidebar-collapsed");
+        localStorage.setItem("teacherSidebarCollapsed", String(nextCollapsed));
+        syncTeacherSidebar();
+      } else {
+        sidebar.classList.toggle("show");
+        overlay.classList.toggle("show", sidebar.classList.contains("show"));
+      }
     });
+
+    overlay.addEventListener("click", closeMobileSidebar);
+
+    document.querySelectorAll(".sidebar-inner a").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (!isTeacherDesktop()) closeMobileSidebar();
+      });
+    });
+
+    syncTeacherSidebar();
+    window.addEventListener("resize", syncTeacherSidebar);
 
     // Dark mode
     const setDarkMode = (on) => {
@@ -152,18 +193,23 @@
       toggleModeBtn.innerHTML = on
         ? '<i class="bi bi-sun-fill"></i>'
         : '<i class="bi bi-moon-fill"></i>';
-      localStorage.setItem("darkMode", on);
+      localStorage.setItem("darkMode", String(on));
     };
-    toggleModeBtn.addEventListener("click", () =>
-      setDarkMode(!document.body.classList.contains("dark-mode"))
-    );
-    if (localStorage.getItem("darkMode") === "true") setDarkMode(true);
+
+    toggleModeBtn.addEventListener("click", () => {
+      setDarkMode(!document.body.classList.contains("dark-mode"));
+    });
+
+    if (localStorage.getItem("darkMode") === "true") {
+      setDarkMode(true);
+    }
 
     // Avatar upload
     document.addEventListener("DOMContentLoaded", () => {
       const avatarImg = document.getElementById("sidebarAvatarImg");
       const avatarInput = document.getElementById("sidebarAvatarInput");
       const form = document.getElementById("sidebarAvatarForm");
+
       if (avatarImg && avatarInput && form) {
         avatarImg.addEventListener("click", () => avatarInput.click());
         avatarInput.addEventListener("change", () => {
@@ -172,5 +218,8 @@
       }
     });
   </script>
+
+  {% block extra_js %}{% endblock %}
+
 </body>
 </html>

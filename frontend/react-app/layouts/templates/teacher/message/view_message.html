@@ -3,66 +3,170 @@
 
 {% block content %}
 <style>
+  :root {
+    --message-page-bg: #f5f8ff;
+    --message-card-bg: #ffffff;
+    --message-card-border: #e5e7eb;
+    --message-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+
+    --message-text-main: #1e293b;
+    --message-text-muted: #64748b;
+    --message-heading: #0d6efd;
+
+    --message-soft-bg: #f8fbff;
+    --message-soft-border: #cbd5e1;
+  }
+
+  body.dark-mode,
+  body.theme-dark,
+  html.dark-mode,
+  html[data-theme="dark"],
+  body[data-theme="dark"],
+  [data-bs-theme="dark"] {
+    --message-page-bg: #071226;
+    --message-card-bg: #0f1b33;
+    --message-card-border: rgba(255, 255, 255, 0.1);
+    --message-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+
+    --message-text-main: #e5edf8;
+    --message-text-muted: #9caec8;
+    --message-heading: #8ea6ff;
+
+    --message-soft-bg: #101d36;
+    --message-soft-border: rgba(255, 255, 255, 0.16);
+  }
+
+  body.dark-mode .teacher-content,
+  body.dark-mode .main-content,
+  body.dark-mode .content-wrapper,
+  body.dark-mode .page-content,
+  body.dark-mode main,
+  body.theme-dark .teacher-content,
+  body.theme-dark .main-content,
+  body.theme-dark .content-wrapper,
+  body.theme-dark .page-content,
+  body.theme-dark main,
+  html[data-theme="dark"] .teacher-content,
+  html[data-theme="dark"] .main-content,
+  html[data-theme="dark"] .content-wrapper,
+  html[data-theme="dark"] .page-content,
+  html[data-theme="dark"] main,
+  [data-bs-theme="dark"] .teacher-content,
+  [data-bs-theme="dark"] .main-content,
+  [data-bs-theme="dark"] .content-wrapper,
+  [data-bs-theme="dark"] .page-content,
+  [data-bs-theme="dark"] main {
+    background: #071226 !important;
+  }
+
+  .message-theme-page {
+    min-height: calc(100vh - 110px);
+    padding: 24px 16px 40px;
+    background: var(--message-page-bg);
+    color: var(--message-text-main);
+  }
+
   .message-container {
     max-width: 750px;
     margin: 0 auto;
-    background: #fff;
-    border-radius: 14px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    background: var(--message-card-bg);
+    color: var(--message-text-main);
+    border: 1px solid var(--message-card-border);
+    border-radius: 18px;
+    box-shadow: var(--message-card-shadow);
     padding: 2rem;
   }
+
+  .message-container h4,
+  .message-container .text-primary {
+    color: var(--message-heading) !important;
+  }
+
+  .message-container .text-muted {
+    color: var(--message-text-muted) !important;
+  }
+
+  .message-container hr {
+    border-color: var(--message-card-border);
+    opacity: 1;
+  }
+
   .attachment-box {
-    border: 1px dashed #d0d7de;
-    border-radius: 10px;
+    border: 1px dashed var(--message-soft-border);
+    border-radius: 14px;
     padding: 1rem;
-    background-color: #f8f9fa;
+    background: var(--message-soft-bg);
+    color: var(--message-text-main);
     margin-top: 1rem;
+  }
+
+  body.dark-mode .message-theme-page .btn-secondary,
+  body.theme-dark .message-theme-page .btn-secondary,
+  html[data-theme="dark"] .message-theme-page .btn-secondary,
+  body[data-theme="dark"] .message-theme-page .btn-secondary,
+  [data-bs-theme="dark"] .message-theme-page .btn-secondary {
+    background: rgba(148, 163, 184, 0.22);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5edf8;
+  }
+
+  @media (max-width: 768px) {
+    .message-theme-page {
+      padding: 16px 8px 32px;
+    }
+
+    .message-container {
+      padding: 1.4rem;
+    }
   }
 </style>
 
-<div class="container py-4">
-  <div class="message-container">
-    <h4 class="fw-bold text-primary mb-3">
-      <i class="bi bi-envelope-open"></i> Chi tiết tin nhắn
-    </h4>
+<div class="message-theme-page">
+  <div class="container">
+    <div class="message-container">
+      <h4 class="fw-bold text-primary mb-3">
+        <i class="bi bi-envelope-open"></i> Chi tiết tin nhắn
+      </h4>
 
-    <p>
-      <strong>👤 Người gửi:</strong>
-      {{ message.sender.full_name if message.sender and message.sender.full_name else (message.sender.username if message.sender else "Người gửi ẩn danh") }}
-    </p>
+      <p>
+        <strong>👤 Người gửi:</strong>
+        {{ message.sender.full_name if message.sender and message.sender.full_name else (message.sender.username if message.sender else "Người gửi ẩn danh") }}
+      </p>
 
-    <p>
-      <strong>🎯 Người nhận:</strong>
-      {{ message.receiver.full_name if message.receiver and message.receiver.full_name else (message.receiver.username if message.receiver else "Không xác định") }}
-    </p>
+      <p>
+        <strong>🎯 Người nhận:</strong>
+        {{ message.receiver.full_name if message.receiver and message.receiver.full_name else (message.receiver.username if message.receiver else "Không xác định") }}
+      </p>
 
-    <p class="text-muted small">
-      <i class="bi bi-clock"></i>
-      {{ message.sent_at.strftime("%d/%m/%Y %H:%M") if message.sent_at else "" }}
-    </p>
+      <p class="text-muted small">
+        <i class="bi bi-clock"></i>
+        {{ message.sent_at.strftime("%d/%m/%Y %H:%M") if message.sent_at else "" }}
+      </p>
 
-    <hr>
-    <div style="white-space: pre-wrap;">{{ message.content }}</div>
+      <hr>
 
-    {% if message.attachment_url %}
-    <div class="attachment-box mt-4">
-      <i class="bi bi-paperclip"></i>
-      <strong>{{ message.attachment_name }}</strong>
-      <small class="text-muted">({{ message.attachment_size }})</small>
+      <div style="white-space: pre-wrap;">{{ message.content }}</div>
 
-      <div class="mt-2">
-        <a href="{{ message.attachment_url }}" class="btn btn-sm btn-outline-primary" download>
-          <i class="bi bi-download"></i> Tải xuống
-        </a>
+      {% if message.attachment_url %}
+      <div class="attachment-box mt-4">
+        <i class="bi bi-paperclip"></i>
+        <strong>{{ message.attachment_name }}</strong>
+        <small class="text-muted">({{ message.attachment_size }})</small>
+
+        <div class="mt-2">
+          <a href="{{ message.attachment_url }}" class="btn btn-sm btn-outline-primary" download>
+            <i class="bi bi-download"></i> Tải xuống
+          </a>
+        </div>
       </div>
+      {% endif %}
     </div>
-    {% endif %}
-  </div>
 
-  <div class="text-center mt-4">
-    <a href="/teacher/message/inbox" class="btn btn-secondary">
-      <i class="bi bi-arrow-left"></i> Quay lại hộp thư đến
-    </a>
+    <div class="text-center mt-4">
+      <a href="/teacher/message/inbox" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại hộp thư đến
+      </a>
+    </div>
   </div>
 </div>
 {% endblock %}

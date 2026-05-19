@@ -3,56 +3,110 @@
 
 {% block content %}
 <style>
-  body {
-    background: linear-gradient(135deg,#dbe8ff,#f6faff);
+  :root {
+    --courses-card-bg: #ffffff;
+    --courses-card-border: #e5e7eb;
+    --courses-card-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    --courses-card-shadow-hover: 0 14px 32px rgba(0,0,0,0.12);
+    --courses-text-main: #1e293b;
+    --courses-text-muted: #64748b;
+    --courses-heading: #0d6efd;
+    --courses-hr: #e5e7eb;
+    --courses-status-bg: rgba(255,255,255,0.88);
+    --courses-status-border: rgba(0,0,0,0.06);
+    --courses-alert-bg: rgba(13,110,253,0.08);
+    --courses-alert-border: rgba(13,110,253,0.18);
+  }
+
+  body.dark-mode {
+    --courses-card-bg: #0f1b33;
+    --courses-card-border: rgba(255,255,255,0.08);
+    --courses-card-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    --courses-card-shadow-hover: 0 16px 38px rgba(0,0,0,0.45);
+    --courses-text-main: #e5edf8;
+    --courses-text-muted: #9caec8;
+    --courses-heading: #7aa2ff;
+    --courses-hr: rgba(255,255,255,0.12);
+    --courses-status-bg: rgba(15,27,51,0.92);
+    --courses-status-border: rgba(255,255,255,0.12);
+    --courses-alert-bg: rgba(37,99,235,0.14);
+    --courses-alert-border: rgba(96,165,250,0.25);
+  }
+
+  .courses-page {
+    max-width: 1200px;
+    margin: 24px auto 40px;
     font-family: "Inter", sans-serif;
-    padding-bottom: 80px;
+    color: var(--courses-text-main);
   }
-  .navbar-glass {
-    backdrop-filter: blur(16px);
-    background: rgba(255,255,255,0.22);
-    border-bottom: 1px solid rgba(255,255,255,0.35);
+
+  .courses-page h3,
+  .courses-page .text-primary {
+    color: var(--courses-heading) !important;
   }
-  .navbar-brand {
-    font-weight: 700;
-    color: #003087 !important;
+
+  .courses-page .text-muted {
+    color: var(--courses-text-muted) !important;
   }
+
   .course-card {
-    backdrop-filter: blur(18px);
-    background: rgba(255,255,255,0.28);
-    border: 1px solid rgba(255,255,255,0.35);
+    background: var(--courses-card-bg);
+    color: var(--courses-text-main);
+    border: 1px solid var(--courses-card-border);
     border-radius: 18px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-shadow: var(--courses-card-shadow);
     overflow: hidden;
     transition: all .25s ease;
     height: 100%;
     display: flex;
     flex-direction: column;
+    position: relative;
   }
+
   .course-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 14px 32px rgba(0,0,0,0.12);
+    box-shadow: var(--courses-card-shadow-hover);
   }
+
   .thumb {
     height: 160px;
     width: 100%;
     object-fit: cover;
     border-radius: 18px 18px 0 0;
+    cursor: pointer;
   }
+
+  .course-card h5 {
+    color: var(--courses-heading) !important;
+    font-weight: 700;
+  }
+
+  .course-card p,
+  .course-card .small {
+    color: var(--courses-text-muted) !important;
+  }
+
+  .course-card hr {
+    border-color: var(--courses-hr);
+    opacity: 1;
+  }
+
   .status-badge {
     position: absolute;
     top: 12px;
     right: 12px;
     padding: 4px 10px;
     font-size: 0.7rem;
+    background: var(--courses-status-bg);
+    border: 1px solid var(--courses-status-border);
     backdrop-filter: blur(8px);
-    background: rgba(255,255,255,0.75);
     border-radius: 10px;
-    font-weight: 600;
+    font-weight: 700;
   }
-  .published { color: #0a7f32; }
-  .draft { color: #c59e00; }
-  .archived { color: #444; }
+
+  .published { color: #22c55e; }
+  .draft { color: #facc15; }
+  .archived { color: #94a3b8; }
 
   .meta-badges span {
     font-size: 0.7rem;
@@ -60,44 +114,74 @@
     padding: 3px 9px;
   }
 
-  footer {
-    background: rgba(255,255,255,0.35);
-    backdrop-filter: blur(12px);
-    text-align: center;
-    padding: 12px 0;
-    color: #003087;
-    font-weight: 500;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
+  .courses-page .alert-info {
+    background: var(--courses-alert-bg);
+    border-color: var(--courses-alert-border);
+    color: var(--courses-text-main);
+  }
+
+  body.dark-mode .courses-page .badge.bg-dark-subtle {
+    background-color: rgba(148,163,184,0.16) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148,163,184,0.25) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-primary-subtle {
+    background-color: rgba(37,99,235,0.2) !important;
+    color: #93c5fd !important;
+    border-color: rgba(37,99,235,0.35) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-success-subtle {
+    background-color: rgba(34,197,94,0.16) !important;
+    color: #86efac !important;
+    border-color: rgba(34,197,94,0.28) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-warning-subtle {
+    background-color: rgba(250,204,21,0.16) !important;
+    color: #fde68a !important;
+    border-color: rgba(250,204,21,0.28) !important;
+  }
+
+  body.dark-mode .courses-page .badge.bg-secondary-subtle {
+    background-color: rgba(148,163,184,0.16) !important;
+    color: #cbd5e1 !important;
+    border-color: rgba(148,163,184,0.25) !important;
+  }
+
+  @media (max-width: 768px) {
+    .courses-page {
+      margin: 16px auto 32px;
+    }
   }
 </style>
 
-<nav class="navbar navbar-expand-lg navbar-glass py-3 shadow-sm">
-  <div class="container">
-    <a class="navbar-brand" href="/teacher/dashboard">
-      <i class="bi bi-mortarboard-fill"></i> E-Learning – Giáo viên
-    </a>
+<div class="courses-page">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-journal-bookmark"></i> Quản lý khóa học
+      </h3>
+      {% if teacher_name %}
+      <small class="text-muted">Giáo viên: {{ teacher_name }}</small>
+      {% endif %}
+    </div>
 
     <a href="/teacher/courses/create" class="btn btn-primary">
       <i class="bi bi-plus-circle"></i> Tạo khóa học
     </a>
   </div>
-</nav>
-
-<div class="container py-4">
-  <h3 class="fw-bold text-primary mb-4">
-    <i class="bi bi-journal-bookmark"></i> Quản lý khóa học
-  </h3>
 
   {% if courses %}
   <div class="row g-4">
     {% for c in courses %}
     <div class="col-lg-4 col-md-6 col-sm-12">
-      <div class="course-card position-relative">
+      <div class="course-card">
         <img src="{{ c.thumbnail_url or '/uploads/course_thumbnails/default-course.png' }}"
              onerror="this.src='/uploads/course_thumbnails/default-course.png'"
              class="thumb"
+             alt="{{ c.course_name }}"
              onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
 
         <span class="status-badge {{ c.status }}">
@@ -112,16 +196,16 @@
 
         <div class="p-3 d-flex flex-column flex-grow-1">
           <h5 class="fw-bold text-primary text-truncate"
+              style="cursor:pointer"
               onclick="window.location.href='/teacher/courses/detail/{{ c.id }}'">
             {{ c.course_name }}
           </h5>
 
-          <p class="text-muted small text-truncate">
-            {{ c.description or "Chưa có mô tả..." }}
-          </p>
+          <p class="text-muted small text-truncate">{{ c.description or "Chưa có mô tả..." }}</p>
 
           <div class="d-flex justify-content-between small text-muted mt-2">
-            <span><i class="bi bi-bar-chart"></i>
+            <span>
+              <i class="bi bi-bar-chart"></i>
               {% if c.difficulty_level == 'beginner' %} Dễ
               {% elif c.difficulty_level == 'intermediate' %} Trung bình
               {% elif c.difficulty_level == 'advanced' %} Khó
@@ -160,13 +244,11 @@
           <hr class="my-2">
 
           <div class="d-flex justify-content-between mt-auto">
-            <a href="/teacher/modules/list/{{ c.id }}"
-               class="btn btn-outline-primary btn-sm">
+            <a href="/teacher/modules/list/{{ c.id }}" class="btn btn-outline-primary btn-sm" title="Quản lý chương">
               <i class="bi bi-layers"></i>
             </a>
 
-            <a href="/teacher/courses/edit/{{ c.id }}"
-               class="btn btn-outline-success btn-sm">
+            <a href="/teacher/courses/edit/{{ c.id }}" class="btn btn-outline-success btn-sm" title="Sửa khóa học">
               <i class="bi bi-pencil"></i>
             </a>
 
@@ -189,8 +271,4 @@
     </div>
   {% endif %}
 </div>
-
-<footer>
-  © {{ now.year }} E-Learning | Giáo viên: {{ teacher.full_name }}
-</footer>
 {% endblock %}

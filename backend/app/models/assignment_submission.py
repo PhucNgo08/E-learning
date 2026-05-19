@@ -34,13 +34,20 @@ class AssignmentSubmission(Base):
     graded_by = Column(String(36), ForeignKey("users.id"))
     graded_at = Column(DateTime)
 
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
     # 🔗 Quan hệ
     assignment = relationship("Assignment", back_populates="submissions")
 
     student = relationship("User", foreign_keys=[student_id],
                            back_populates="assignment_submissions")
 
-    grader = relationship("User", foreign_keys=[graded_by])
+    grader = relationship(
+        "User",
+        foreign_keys=[graded_by],
+        back_populates="graded_assignment_submissions",
+    )
 
     files = relationship(
         "AssignmentFile",

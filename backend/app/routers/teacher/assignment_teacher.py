@@ -1,15 +1,17 @@
 from datetime import datetime
+from pathlib import Path
 import io
 import traceback
 
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi import APIRouter, Request, Depends, Form, HTTPException, UploadFile, File
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, FileResponse
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment
 from sqlalchemy.orm import Session
 
 from app.models.assignment import Assignment
 from app.models.assignment_submission import AssignmentSubmission
+from app.models.assignment_file import AssignmentFile
 from app.models.user import User
 from app.models.course import Course
 from app.models.module import Module
@@ -23,6 +25,69 @@ router = APIRouter(
     prefix="/teacher/assignments",
     tags=["Teacher - Assignments"]
 )
+
+BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
+async def read_assignment_text_file(file: UploadFile | None) -> str:
+    """
+    Đọc file văn bản đề bài tập (.txt/.md) và trả về nội dung.
+    Nội dung này được lưu vào assignments.description theo đúng schema e_learning.
+    """
+    if not file or not getattr(file, "filename", None):
+        return ""
+
+    filename = str(file.filename).strip()
+    if not filename:
+        return ""
+
+    name = filename.lower()
+    if not name.endswith((".txt", ".md")):
+        raise HTTPException(
+            status_code=400,
+            detail="Chỉ hỗ trợ file văn bản .txt hoặc .md để đọc đề bài tập.",
+        )
+
+    content = await file.read()
+    if not content:
+        return ""
+
+    return content.decode("utf-8-sig", errors="ignore").strip()
+
+
+def _is_remote_url(value: str) -> bool:
+    lower = (value or "").lower()
+    return lower.startswith("http://") or lower.startswith("https://")
+
+
+def _resolve_teacher_download_path(file_url: str) -> Path | None:
+    """
+    Hỗ trợ cả 2 kiểu đang có trong project:
+    - Đường dẫn tuyệt đối được lưu từ service nộp bài
+    - URL static /uploads/... được mount từ backend/app/uploads
+    """
+    raw = str(file_url or "").strip()
+    if not raw:
+        return None
+
+    candidate = Path(raw)
+    candidates: list[Path] = []
+
+    if candidate.is_absolute():
+        candidates.append(candidate)
+    else:
+        clean = raw.lstrip("/\\")
+        candidates.extend([
+            (BACKEND_DIR / clean),
+            (BACKEND_DIR / "app" / clean),
+        ])
+
+    for path in candidates:
+        resolved = path.resolve()
+        if resolved.exists() and resolved.is_file():
+            return resolved
+
+    return None
 
 
 @router.get("/", include_in_schema=False)
@@ -88,27 +153,40 @@ def create_form(
 
 
 @router.post("/create")
-def create_assignment(
+async def create_assignment(
     course_id: str = Form(...),
     module_id: str = Form(None),
     title: str = Form(...),
     description: str = Form(""),
     due_date: str = Form(...),
+    assignment_text_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher),
 ):
     try:
+        file_description = await read_assignment_text_file(assignment_text_file)
+
+        final_description = (description or "").strip()
+        if file_description:
+            final_description = (
+                f"{final_description}\n\n{file_description}"
+                if final_description
+                else file_description
+            )
+
         assignment_service.create_assignment(
             db=db,
             course_id=course_id,
             module_id=module_id or None,
             teacher_id=current_teacher.id,
             title=title,
-            description=description,
+            description=final_description,
             due_date=datetime.fromisoformat(due_date),
         )
         return RedirectResponse("/teacher/assignments/list", status_code=303)
 
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:
@@ -235,6 +313,7 @@ def grade_form(
         raise HTTPException(status_code=403, detail="Bạn không có quyền chấm bài này")
 
     student = db.query(User).filter(User.id == submission.student_id).first()
+    submission.files = assignment_service.get_submission_files(db, submission.id)
 
     templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
@@ -279,6 +358,41 @@ def submit_grade(
     except Exception:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Không thể chấm điểm bài nộp")
+
+
+@router.get("/download/{file_id}")
+def download_assignment_file(
+    file_id: str,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
+):
+    file_info = (
+        db.query(AssignmentFile)
+        .join(AssignmentSubmission, AssignmentSubmission.id == AssignmentFile.submission_id)
+        .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
+        .filter(
+            AssignmentFile.id == file_id,
+            Assignment.teacher_id == current_teacher.id,
+        )
+        .first()
+    )
+
+    if not file_info:
+        raise HTTPException(status_code=404, detail="Không tìm thấy file hoặc bạn không có quyền tải.")
+
+    file_url = str(file_info.file_url or "").strip()
+    if _is_remote_url(file_url):
+        return RedirectResponse(file_url, status_code=302)
+
+    file_path = _resolve_teacher_download_path(file_url)
+    if not file_path:
+        raise HTTPException(status_code=404, detail="File không tồn tại trên hệ thống.")
+
+    return FileResponse(
+        path=str(file_path),
+        filename=file_info.file_name or file_path.name,
+        media_type=file_info.file_type or "application/octet-stream",
+    )
 
 
 @router.get("/export/{assignment_id}")
