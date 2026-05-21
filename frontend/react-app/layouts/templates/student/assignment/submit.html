@@ -354,19 +354,244 @@
       padding-bottom: 10px !important;
     }
   }
+
+  .attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .attachment-card {
+    border: 1px solid var(--asg-line);
+    border-radius: 18px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .07);
+  }
+
+  .attachment-preview {
+    background: #f1f5f9;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .attachment-preview img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    cursor: zoom-in;
+  }
+
+  .attachment-preview iframe,
+  .attachment-preview video {
+    width: 100%;
+    height: 360px;
+    border: 0;
+    background: #fff;
+  }
+
+  .attachment-body {
+    padding: 12px 14px;
+  }
+
+  .attachment-name {
+    font-weight: 800;
+    color: var(--asg-text);
+    word-break: break-word;
+  }
+
+  .attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .image-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(2, 6, 23, .88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .image-modal.show {
+    display: flex;
+  }
+
+  .image-modal img {
+    max-width: 96vw;
+    max-height: 90vh;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  body.dark-mode .attachment-card {
+    background: rgba(15, 23, 42, .92);
+    border-color: rgba(148, 163, 184, .25);
+  }
+
+  body.dark-mode .attachment-preview {
+    background: rgba(30, 41, 59, .86);
+  }
+
+  body.dark-mode .attachment-name {
+    color: #e5e7eb;
+  }
+
 </style>
 
-<div class="assignment-page px-2 px-md-4 py-3 py-md-4" style="max-width:900px">
- <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3"><div><h3 class="a-title"><i class="bi bi-upload me-2"></i>{{ 'Nộp lại' if current_submission else 'Nộp bài' }}: {{ assignment.title }}</h3><p class="a-subtitle">Nhập nội dung hoặc tải file bài làm.</p></div><a href="/student/assignment/detail/{{ assignment.id }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a></div>
- <div class="a-card p-3 p-md-4">
-  {% if error_message %}<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ error_message }}</div>{% endif %}
-  {% if current_submission %}<div class="alert alert-info"><strong>Bạn đã nộp trước đó.</strong><br>Lần nộp gần nhất: {{ current_submission.submission_time.strftime('%d/%m/%Y %H:%M') if current_submission.submission_time else '—' }}. Nộp lại sẽ thay trạng thái về chờ chấm.</div>{% endif %}
-  <div class="info-grid mb-3"><div class="info-box"><strong>Hạn nộp:</strong><br>{{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else '—' }}</div><div class="info-box"><strong>Định dạng:</strong><br>{{ assignment.allowed_file_types or 'Không giới hạn' }}</div></div>
-  <form method="post" action="/student/assignment/submit/{{ assignment.id }}" enctype="multipart/form-data">
-    <div class="mb-3"><label class="form-label fw-semibold">Nội dung bài làm</label><textarea name="submission_text" rows="7" class="form-control" placeholder="Nhập câu trả lời hoặc ghi chú...">{{ submitted_text or (current_submission.submission_text if current_submission else '') or '' }}</textarea></div>
-    <div class="mb-3"><label class="form-label fw-semibold">File bài làm</label><input type="file" name="files" class="form-control" multiple><div class="form-text">Có thể nộp text, file hoặc cả hai.</div></div>
-    <div class="text-end"><button class="btn btn-primary px-4" onclick="this.disabled=true;this.form.submit();"><i class="bi bi-send"></i> Gửi bài</button></div>
-  </form>
- </div>
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4" style="max-width:1000px">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title"><i class="bi bi-upload me-2"></i>{{ 'Nộp lại' if current_submission else 'Nộp bài' }}: {{ assignment.title }}</h3>
+      <p class="a-subtitle">Xem đề bài bên dưới, sau đó nhập nội dung hoặc tải file bài làm.</p>
+    </div>
+    <a href="/student/assignment/detail/{{ assignment.id }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="a-card p-3 p-md-4 mb-3">
+    <h5 class="fw-bold text-primary">Đề bài</h5>
+    <div class="file-box text-pre-wrap mb-3">
+      {{ assignment_description_clean or assignment.description or 'Không có mô tả.' }}
+    </div>
+
+    {% if teacher_attachments %}
+    <h6 class="fw-bold text-primary">
+      <i class="bi bi-paperclip"></i> File đề bài
+    </h6>
+    <div class="attachment-grid">
+      {% for file in teacher_attachments %}
+      <div class="attachment-card">
+        <div class="attachment-preview">
+          {% if file.is_image %}
+            <img src="{{ file.url }}" alt="{{ file.name }}" class="preview-image" data-full="{{ file.url }}">
+          {% elif file.is_pdf %}
+            <iframe src="{{ file.url }}" title="{{ file.name }}"></iframe>
+          {% elif file.is_video %}
+            <video src="{{ file.url }}" controls></video>
+          {% else %}
+            <div class="text-center p-4">
+              <i class="bi bi-file-earmark-arrow-down display-5 text-primary"></i>
+              <div class="mt-2 text-muted">Bấm xem/tải để mở file</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="attachment-body">
+          <div class="attachment-name">{{ file.name }}</div>
+          <div class="text-muted small">Loại file: {{ file.ext|upper if file.ext else 'FILE' }}</div>
+          <div class="attachment-actions">
+            <a href="{{ file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i> Xem
+            </a>
+            <a href="{{ file.url }}" download class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-download"></i> Tải
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="a-card p-3 p-md-4">
+    {% if error_message %}
+      <div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> {{ error_message }}</div>
+    {% endif %}
+
+    {% if current_submission %}
+      <div class="alert alert-info">
+        <strong>Bạn đã nộp trước đó.</strong><br>
+        Lần nộp gần nhất: {{ current_submission.submission_time.strftime('%d/%m/%Y %H:%M') if current_submission.submission_time else '—' }}.
+        Nộp lại sẽ thay trạng thái về chờ chấm.
+      </div>
+    {% endif %}
+
+    <div class="info-grid mb-3">
+      <div class="info-box">
+        <strong>Hạn nộp:</strong><br>
+        {{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else '—' }}
+      </div>
+      <div class="info-box">
+        <strong>Định dạng bài nộp:</strong><br>
+        {{ assignment.allowed_file_types or 'Không giới hạn' }}<br>
+        <small>Tối đa {{ assignment.max_files or 5 }} file, {{ assignment.max_file_size_mb or 50 }}MB/file</small>
+      </div>
+    </div>
+
+    <form method="post" action="/student/assignment/submit/{{ assignment.id }}" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nội dung bài làm</label>
+        <textarea name="submission_text" rows="7" class="form-control" placeholder="Nhập câu trả lời hoặc ghi chú...">{{ submitted_text or (current_submission.submission_text if current_submission else '') or '' }}</textarea>
+      </div>
+
+      {% set allowed_exts = (assignment.allowed_file_types or '').split(',') %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">File bài làm</label>
+        <input type="file" name="files" id="assignmentFiles" class="form-control" multiple accept="{% for ext in allowed_exts %}{% set e = ext.strip().lstrip('.') %}{% if e %}.{{ e }}{% if not loop.last %},{% endif %}{% endif %}{% endfor %}">
+        <div class="form-text">Có thể nộp ảnh, PDF, Word, Excel, PowerPoint, ZIP/RAR, code... theo định dạng giáo viên cho phép.</div>
+        <div id="filePreview" class="small text-muted mt-2"></div>
+      </div>
+
+      <div class="text-end">
+        <button class="btn btn-primary px-4" id="submitBtn">
+          <i class="bi bi-send"></i> Gửi bài
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<div class="image-modal" id="imageModal">
+  <img src="" alt="Xem ảnh đề bài">
+</div>
+
+<script>
+document.querySelectorAll(".preview-image").forEach(img => {
+  img.addEventListener("click", () => {
+    const modal = document.getElementById("imageModal");
+    modal.querySelector("img").src = img.dataset.full || img.src;
+    modal.classList.add("show");
+  });
+});
+
+document.getElementById("imageModal")?.addEventListener("click", () => {
+  const modal = document.getElementById("imageModal");
+  modal.classList.remove("show");
+  modal.querySelector("img").src = "";
+});
+
+document.getElementById("assignmentFiles")?.addEventListener("change", function(){
+  const box = document.getElementById("filePreview");
+  if (!box) return;
+  if (!this.files || this.files.length === 0) {
+    box.textContent = "";
+    return;
+  }
+
+  const items = Array.from(this.files).map(file => {
+    const mb = (file.size / 1024 / 1024).toFixed(2);
+    return `• ${file.name} (${mb} MB)`;
+  });
+  box.innerHTML = items.join("<br>");
+});
+
+document.querySelector("form")?.addEventListener("submit", function(){
+  const btn = document.getElementById("submitBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Đang gửi...";
+  }
+});
+</script>
 {% endblock %}

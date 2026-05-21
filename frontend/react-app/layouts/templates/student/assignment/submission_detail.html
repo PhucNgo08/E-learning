@@ -354,7 +354,186 @@
       padding-bottom: 10px !important;
     }
   }
+
+  .attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .attachment-card {
+    border: 1px solid var(--asg-line);
+    border-radius: 18px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .07);
+  }
+
+  .attachment-preview {
+    background: #f1f5f9;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .attachment-preview img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    cursor: zoom-in;
+  }
+
+  .attachment-preview iframe,
+  .attachment-preview video {
+    width: 100%;
+    height: 360px;
+    border: 0;
+    background: #fff;
+  }
+
+  .attachment-body {
+    padding: 12px 14px;
+  }
+
+  .attachment-name {
+    font-weight: 800;
+    color: var(--asg-text);
+    word-break: break-word;
+  }
+
+  .attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .image-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(2, 6, 23, .88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .image-modal.show {
+    display: flex;
+  }
+
+  .image-modal img {
+    max-width: 96vw;
+    max-height: 90vh;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  body.dark-mode .attachment-card {
+    background: rgba(15, 23, 42, .92);
+    border-color: rgba(148, 163, 184, .25);
+  }
+
+  body.dark-mode .attachment-preview {
+    background: rgba(30, 41, 59, .86);
+  }
+
+  body.dark-mode .attachment-name {
+    color: #e5e7eb;
+  }
+
 </style>
 
-<div class="assignment-page px-2 px-md-4 py-3 py-md-4" style="max-width:900px"><div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3"><div><h3 class="a-title"><i class="bi bi-receipt me-2"></i>Chi tiết bài nộp</h3><p class="a-subtitle">{{ submission.assignment.title if submission.assignment else '' }}</p></div><a href="/student/assignment" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Quay lại</a></div><div class="a-card p-3 p-md-4"><div class="info-grid mb-3"><div class="info-box"><strong>Thời gian nộp:</strong><br>{{ submission.submission_time.strftime('%d/%m/%Y %H:%M') if submission.submission_time else '—' }}</div><div class="info-box"><strong>Điểm:</strong><br>{{ submission.grade if submission.grade is not none else 'Chưa chấm' }}</div><div class="info-box"><strong>Trạng thái:</strong><br>{% if submission.status=='graded' %}<span class="badge bg-success">Đã chấm</span>{% elif submission.status=='late' %}<span class="badge bg-warning text-dark">Nộp trễ</span>{% else %}<span class="badge bg-info text-dark">Đã nộp</span>{% endif %}</div><div class="info-box"><strong>Nhận xét:</strong><br>{{ submission.feedback or '—' }}</div></div>{% if submission.submission_text %}<h5 class="fw-bold text-primary">Nội dung</h5><div class="file-box text-pre-wrap mb-3">{{ submission.submission_text }}</div>{% endif %}<h5 class="fw-bold text-primary">File đã nộp</h5><div class="file-box">{% if submission.files %}{% for f in submission.files %}<div><i class="bi bi-file-earmark"></i> {{ f.file_name }}</div>{% endfor %}{% else %}<span class="text-muted">Không có file.</span>{% endif %}</div></div></div>
+
+{% set image_exts = ['jpg','jpeg','png','webp','gif','bmp','svg'] %}
+{% set pdf_exts = ['pdf'] %}
+{% set video_exts = ['mp4','webm','mov','mkv'] %}
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4" style="max-width:1000px">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title"><i class="bi bi-receipt me-2"></i>Chi tiết bài nộp</h3>
+      <p class="a-subtitle">{{ submission.assignment.title if submission.assignment else '' }}</p>
+    </div>
+    <a href="/student/assignment" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="a-card p-3 p-md-4">
+    <div class="info-grid mb-3">
+      <div class="info-box"><strong>Thời gian nộp:</strong><br>{{ submission.submission_time.strftime('%d/%m/%Y %H:%M') if submission.submission_time else '—' }}</div>
+      <div class="info-box"><strong>Điểm:</strong><br>{{ submission.grade if submission.grade is not none else 'Chưa chấm' }}</div>
+      <div class="info-box"><strong>Trạng thái:</strong><br>{% if submission.status=='graded' %}<span class="badge bg-success">Đã chấm</span>{% elif submission.status=='late' %}<span class="badge bg-warning text-dark">Nộp trễ</span>{% else %}<span class="badge bg-info text-dark">Đã nộp</span>{% endif %}</div>
+      <div class="info-box"><strong>Nhận xét:</strong><br>{{ submission.feedback or '—' }}</div>
+    </div>
+
+    {% if submission.submission_text %}
+      <h5 class="fw-bold text-primary">Nội dung</h5>
+      <div class="file-box text-pre-wrap mb-3">{{ submission.submission_text }}</div>
+    {% endif %}
+
+    <h5 class="fw-bold text-primary">File đã nộp</h5>
+    {% if submission.files %}
+    <div class="attachment-grid">
+      {% for f in submission.files %}
+        {% set ext = (f.file_name.rsplit('.', 1)[-1]|lower) if f.file_name and '.' in f.file_name else '' %}
+        {% set download_url = '/student/assignment/download/' ~ f.id %}
+        <div class="attachment-card">
+          <div class="attachment-preview">
+            {% if ext in image_exts %}
+              <img src="{{ download_url }}" alt="{{ f.file_name }}" class="preview-image" data-full="{{ download_url }}">
+            {% elif ext in pdf_exts %}
+              <iframe src="{{ download_url }}" title="{{ f.file_name }}"></iframe>
+            {% elif ext in video_exts %}
+              <video src="{{ download_url }}" controls></video>
+            {% else %}
+              <div class="text-center p-4">
+                <i class="bi bi-file-earmark display-5 text-primary"></i>
+                <div class="mt-2 text-muted">Không xem trước trực tiếp</div>
+              </div>
+            {% endif %}
+          </div>
+          <div class="attachment-body">
+            <div class="attachment-name">{{ f.file_name }}</div>
+            <div class="attachment-actions">
+              <a href="{{ download_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye"></i> Xem
+              </a>
+              <a href="{{ download_url }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-download"></i> Tải
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="file-box"><span class="text-muted">Không có file.</span></div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="image-modal" id="imageModal">
+  <img src="" alt="Xem ảnh">
+</div>
+
+<script>
+document.querySelectorAll(".preview-image").forEach(img => {
+  img.addEventListener("click", () => {
+    const modal = document.getElementById("imageModal");
+    modal.querySelector("img").src = img.dataset.full || img.src;
+    modal.classList.add("show");
+  });
+});
+
+document.getElementById("imageModal")?.addEventListener("click", () => {
+  const modal = document.getElementById("imageModal");
+  modal.classList.remove("show");
+  modal.querySelector("img").src = "";
+});
+</script>
 {% endblock %}

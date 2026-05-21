@@ -354,14 +354,211 @@
       padding-bottom: 10px !important;
     }
   }
+
+  .attachment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 14px;
+  }
+
+  .attachment-card {
+    border: 1px solid var(--asg-line);
+    border-radius: 18px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .07);
+  }
+
+  .attachment-preview {
+    background: #f1f5f9;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .attachment-preview img {
+    width: 100%;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    cursor: zoom-in;
+  }
+
+  .attachment-preview iframe,
+  .attachment-preview video {
+    width: 100%;
+    height: 360px;
+    border: 0;
+    background: #fff;
+  }
+
+  .attachment-body {
+    padding: 12px 14px;
+  }
+
+  .attachment-name {
+    font-weight: 800;
+    color: var(--asg-text);
+    word-break: break-word;
+  }
+
+  .attachment-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .image-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(2, 6, 23, .88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .image-modal.show {
+    display: flex;
+  }
+
+  .image-modal img {
+    max-width: 96vw;
+    max-height: 90vh;
+    border-radius: 14px;
+    background: #fff;
+  }
+
+  body.dark-mode .attachment-card {
+    background: rgba(15, 23, 42, .92);
+    border-color: rgba(148, 163, 184, .25);
+  }
+
+  body.dark-mode .attachment-preview {
+    background: rgba(30, 41, 59, .86);
+  }
+
+  body.dark-mode .attachment-name {
+    color: #e5e7eb;
+  }
+
 </style>
 
+
 <div class="assignment-page px-2 px-md-4 py-3 py-md-4">
- <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3"><div><h3 class="a-title"><i class="bi bi-file-text me-2"></i>{{ assignment.title }}</h3><p class="a-subtitle">{{ assignment.course.course_name if assignment.course else 'Bài tập' }}</p></div><div class="a-actions"><a href="/student/assignment/submit/{{ assignment.id }}" class="btn btn-primary"><i class="bi bi-upload"></i> {{ 'Nộp lại' if my_submission else 'Nộp bài' }}</a><a href="/student/assignment/list" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Danh sách</a></div></div>
- <div class="a-card p-3 p-md-4">
-  <div class="info-grid mb-3"><div class="info-box"><strong>Hạn nộp:</strong><br>{{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else '—' }}</div><div class="info-box"><strong>Trạng thái:</strong><br>{% if my_submission %}{% if my_submission.status=='graded' %}<span class="badge bg-success">Đã chấm</span>{% elif my_submission.status=='late' %}<span class="badge bg-warning text-dark">Nộp trễ</span>{% else %}<span class="badge bg-info text-dark">Đã nộp</span>{% endif %}{% elif assignment.due_date and now and assignment.due_date < now %}<span class="badge bg-danger">Đã quá hạn</span>{% else %}<span class="badge bg-secondary">Chưa nộp</span>{% endif %}</div></div>
-  <h5 class="fw-bold text-primary">Yêu cầu bài tập</h5><div class="file-box text-pre-wrap mb-3">{{ assignment.description or 'Không có mô tả.' }}</div>
-  {% if my_submission %}<h5 class="fw-bold text-success">Bài nộp của bạn</h5><div class="file-box mb-3"><div><strong>Thời gian:</strong> {{ my_submission.submission_time.strftime('%d/%m/%Y %H:%M') if my_submission.submission_time else '—' }}</div><div><strong>Điểm:</strong> {{ my_submission.grade if my_submission.grade is not none else 'Chưa chấm' }}</div><div><strong>Nhận xét:</strong> {{ my_submission.feedback or '—' }}</div></div>{% endif %}
- </div>
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title"><i class="bi bi-file-text me-2"></i>{{ assignment.title }}</h3>
+      <p class="a-subtitle">{{ assignment.course.course_name if assignment.course else 'Bài tập' }}</p>
+    </div>
+    <div class="a-actions">
+      <a href="/student/assignment/submit/{{ assignment.id }}" class="btn btn-primary">
+        <i class="bi bi-upload"></i> {{ 'Nộp lại' if my_submission else 'Nộp bài' }}
+      </a>
+      <a href="/student/assignment/list" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Danh sách
+      </a>
+    </div>
+  </div>
+
+  <div class="a-card p-3 p-md-4">
+    <div class="info-grid mb-3">
+      <div class="info-box">
+        <strong>Hạn nộp:</strong><br>
+        {{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else '—' }}
+      </div>
+      <div class="info-box">
+        <strong>Trạng thái:</strong><br>
+        {% if my_submission %}
+          {% if my_submission.status == 'graded' %}
+            <span class="badge bg-success">Đã chấm</span>
+          {% elif my_submission.status == 'late' %}
+            <span class="badge bg-warning text-dark">Nộp trễ</span>
+          {% else %}
+            <span class="badge bg-info text-dark">Đã nộp</span>
+          {% endif %}
+        {% elif assignment.due_date and now and assignment.due_date < now %}
+          <span class="badge bg-danger">Đã quá hạn</span>
+        {% else %}
+          <span class="badge bg-secondary">Chưa nộp</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <h5 class="fw-bold text-primary">Yêu cầu bài tập</h5>
+    <div class="file-box text-pre-wrap mb-3">
+      {{ assignment_description_clean or assignment.description or 'Không có mô tả.' }}
+    </div>
+
+    {% if teacher_attachments %}
+    <h5 class="fw-bold text-primary mt-4">
+      <i class="bi bi-paperclip"></i> File đề bài đính kèm
+    </h5>
+    <div class="attachment-grid mb-4">
+      {% for file in teacher_attachments %}
+      <div class="attachment-card">
+        <div class="attachment-preview">
+          {% if file.is_image %}
+            <img src="{{ file.url }}" alt="{{ file.name }}" class="preview-image" data-full="{{ file.url }}">
+          {% elif file.is_pdf %}
+            <iframe src="{{ file.url }}" title="{{ file.name }}"></iframe>
+          {% elif file.is_video %}
+            <video src="{{ file.url }}" controls></video>
+          {% else %}
+            <div class="text-center p-4">
+              <i class="bi bi-file-earmark-arrow-down display-5 text-primary"></i>
+              <div class="mt-2 text-muted">Không xem trước trực tiếp</div>
+            </div>
+          {% endif %}
+        </div>
+        <div class="attachment-body">
+          <div class="attachment-name">{{ file.name }}</div>
+          <div class="text-muted small">Loại file: {{ file.ext|upper if file.ext else 'FILE' }}</div>
+          <div class="attachment-actions">
+            <a href="{{ file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-eye"></i> Xem
+            </a>
+            <a href="{{ file.url }}" download class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-download"></i> Tải
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if my_submission %}
+    <h5 class="fw-bold text-success">Bài nộp của bạn</h5>
+    <div class="file-box mb-3">
+      <div><strong>Thời gian:</strong> {{ my_submission.submission_time.strftime('%d/%m/%Y %H:%M') if my_submission.submission_time else '—' }}</div>
+      <div><strong>Điểm:</strong> {{ my_submission.grade if my_submission.grade is not none else 'Chưa chấm' }}</div>
+      <div><strong>Nhận xét:</strong> {{ my_submission.feedback or '—' }}</div>
+    </div>
+    {% endif %}
+  </div>
 </div>
+
+<div class="image-modal" id="imageModal">
+  <img src="" alt="Xem ảnh đề bài">
+</div>
+
+<script>
+document.querySelectorAll(".preview-image").forEach(img => {
+  img.addEventListener("click", () => {
+    const modal = document.getElementById("imageModal");
+    modal.querySelector("img").src = img.dataset.full || img.src;
+    modal.classList.add("show");
+  });
+});
+
+document.getElementById("imageModal")?.addEventListener("click", () => {
+  const modal = document.getElementById("imageModal");
+  modal.classList.remove("show");
+  modal.querySelector("img").src = "";
+});
+</script>
 {% endblock %}

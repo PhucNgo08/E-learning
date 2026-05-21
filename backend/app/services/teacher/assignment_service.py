@@ -61,78 +61,67 @@ def create_assignment(
     module_id: str | None,
     teacher_id: str,
     title: str,
-    description: str | None,
-    due_date: datetime,
-    allowed_file_types: str = "pdf,docx,zip",
-    max_files: int = 3,
-    max_file_size_mb: int = 50,
+    description: str,
+    due_date,
     submission_type: str = "individual",
+    allowed_file_types: str = "jpg,jpeg,png,webp,gif,pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar,7z,txt,md,py,html,css,js,json,sql,mp4",
+    max_files: int = 5,
+    max_file_size_mb: int = 50,
     allow_late_submission: bool = False,
     late_penalty_percent: float = 0,
     total_points: float = 10,
-    grading_criteria: str | None = None,
+    grading_criteria: str = "",
 ):
-    title = _clean_text(title)
-    description = _clean_text(description)
-
-    if not title:
-        raise ValueError("Tiêu đề bài tập không được để trống.")
-    if not course_id:
-        raise ValueError("Khóa học không hợp lệ.")
-    if due_date is None:
-        raise ValueError("Hạn nộp không được để trống.")
-
-    submission_type = submission_type if submission_type in ("individual", "group") else "individual"
-    allowed_file_types = _clean_text(allowed_file_types) or "pdf,docx,zip"
-    max_files = max(1, int(max_files or 1))
-    max_file_size_mb = max(1, int(max_file_size_mb or 1))
-    late_penalty_percent = max(0, min(float(late_penalty_percent or 0), 100))
-    total_points = max(0.01, float(total_points or 10))
-    grading_criteria = _clean_text(grading_criteria)
-
     course = (
         db.query(Course)
         .filter(Course.id == course_id, Course.teacher_id == teacher_id)
         .first()
     )
     if not course:
-        raise ValueError("Khóa học không hợp lệ hoặc không thuộc giáo viên.")
+        raise ValueError("Bạn không có quyền tạo bài tập cho khóa học này.")
 
     if module_id:
-        module = db.query(Module).filter(Module.id == module_id).first()
+        module = (
+            db.query(Module)
+            .filter(Module.id == module_id, Module.course_id == course_id)
+            .first()
+        )
         if not module:
-            raise ValueError("Module không tồn tại.")
-        if module.course_id != course_id:
-            raise ValueError("Module không thuộc khóa học được chọn.")
+            raise ValueError("Module không thuộc khóa học đã chọn.")
 
-    now = datetime.utcnow()
+    title = _clean_text(title)
+    if not title:
+        raise ValueError("Tiêu đề bài tập không được để trống.")
 
-    new_assignment = Assignment(
+    if submission_type not in {"individual", "group"}:
+        submission_type = "individual"
+
+    assignment = Assignment(
         id=str(uuid.uuid4()),
         course_id=course_id,
-        module_id=module_id,
+        module_id=module_id or None,
         teacher_id=teacher_id,
         title=title,
-        description=description,
-        due_date=due_date,
-        allowed_file_types=allowed_file_types,
-        max_files=max_files,
-        max_file_size_mb=max_file_size_mb,
+        description=description or "",
         submission_type=submission_type,
-        allow_late_submission=bool(allow_late_submission),
-        late_penalty_percent=late_penalty_percent,
-        total_points=total_points,
-        grading_criteria=grading_criteria,
-        start_date=now,
-        created_at=now,
-        updated_at=now,
+        allowed_file_types=allowed_file_types or "jpg,jpeg,png,webp,gif,pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar,7z,txt,md,py,html,css,js,json,sql,mp4",
+        max_files=int(max_files or 5),
+        max_file_size_mb=int(max_file_size_mb or 50),
+        start_date=datetime.utcnow(),
+        due_date=due_date,
+        allow_late_submission=1 if allow_late_submission else 0,
+        late_penalty_percent=float(late_penalty_percent or 0),
+        total_points=float(total_points or 10),
+        grading_criteria=grading_criteria or "",
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow(),
     )
 
     try:
-        db.add(new_assignment)
+        db.add(assignment)
         db.commit()
-        db.refresh(new_assignment)
-        return new_assignment
+        db.refresh(assignment)
+        return assignment
     except SQLAlchemyError:
         db.rollback()
         raise
@@ -148,21 +137,45 @@ def update_assignment_by_teacher(
     title: str,
     description: str | None,
     due_date: datetime | None = None,
+    submission_type: str | None = None,
+    allowed_file_types: str | None = None,
+    max_files: int | None = None,
+    max_file_size_mb: int | None = None,
+    allow_late_submission: bool | None = None,
+    late_penalty_percent: float | None = None,
+    total_points: float | None = None,
+    grading_criteria: str | None = None,
 ):
     assignment = get_assignment_owned(db, assignment_id, teacher_id)
     if not assignment:
         return None
 
     title = _clean_text(title)
-    description = _clean_text(description)
-
     if not title:
         raise ValueError("Tiêu đề bài tập không được để trống.")
 
     assignment.title = title
-    assignment.description = description
+    assignment.description = description or ""
     if due_date is not None:
         assignment.due_date = due_date
+
+    if submission_type in {"individual", "group"}:
+        assignment.submission_type = submission_type
+    if allowed_file_types is not None:
+        assignment.allowed_file_types = allowed_file_types
+    if max_files is not None:
+        assignment.max_files = int(max_files or 5)
+    if max_file_size_mb is not None:
+        assignment.max_file_size_mb = int(max_file_size_mb or 50)
+    if allow_late_submission is not None:
+        assignment.allow_late_submission = 1 if allow_late_submission else 0
+    if late_penalty_percent is not None:
+        assignment.late_penalty_percent = float(late_penalty_percent or 0)
+    if total_points is not None:
+        assignment.total_points = float(total_points or 10)
+    if grading_criteria is not None:
+        assignment.grading_criteria = grading_criteria or ""
+
     assignment.updated_at = datetime.utcnow()
 
     try:

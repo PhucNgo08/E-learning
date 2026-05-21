@@ -144,6 +144,364 @@
       min-width: 280px;
     }
   }
+
+
+  /* =====================================================
+     Light / Dark mode compatibility
+     Dùng theo layout hiện tại: body.dark-mode
+  ===================================================== */
+  .users-management-page {
+    color: var(--text-main, #0f172a);
+  }
+
+  .admin-filter-card .form-label {
+    color: var(--text-muted, #64748b) !important;
+  }
+
+  .admin-filter-card .input-group-text,
+  .admin-filter-card .form-control,
+  .admin-filter-card .form-select {
+    background: var(--surface, #ffffff);
+    color: var(--text-main, #0f172a);
+    border-color: var(--border-color, #e2e8f0);
+  }
+
+  .admin-filter-card .form-control::placeholder {
+    color: var(--text-muted, #94a3b8);
+  }
+
+  .admin-table-card .table {
+    color: var(--text-main, #0f172a);
+  }
+
+  .admin-table-card .table tbody tr {
+    border-color: var(--border-color, #e2e8f0);
+  }
+
+  .admin-table-card .table tbody td {
+    color: var(--text-main, #0f172a);
+    border-color: var(--border-color, #e2e8f0);
+  }
+
+  .admin-table-card .text-muted {
+    color: var(--text-muted, #64748b) !important;
+  }
+
+  body.dark-mode .users-management-page {
+    --surface: rgba(15, 23, 42, 0.92);
+    --surface-soft: rgba(30, 41, 59, 0.96);
+    --border-color: rgba(148, 163, 184, 0.22);
+    --text-main: #e5e7eb;
+    --text-muted: #94a3b8;
+    --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 18px 44px rgba(0, 0, 0, 0.42);
+    --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.48);
+  }
+
+  body.dark-mode .admin-page-header {
+    background: linear-gradient(135deg, #0f172a, #1e3a8a 55%, #312e81);
+    border: 1px solid rgba(147, 197, 253, 0.18);
+  }
+
+  body.dark-mode .admin-filter-card,
+  body.dark-mode .admin-table-card {
+    background: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-main);
+  }
+
+  body.dark-mode .admin-filter-card .form-label,
+  body.dark-mode .admin-summary-info,
+  body.dark-mode .admin-page-footer,
+  body.dark-mode .admin-table-card .text-muted {
+    color: var(--text-muted) !important;
+  }
+
+  body.dark-mode .admin-filter-card .input-group-text,
+  body.dark-mode .admin-filter-card .form-control,
+  body.dark-mode .admin-filter-card .form-select {
+    background: rgba(15, 23, 42, 0.95);
+    color: var(--text-main);
+    border-color: var(--border-color);
+  }
+
+  body.dark-mode .admin-filter-card .form-control::placeholder {
+    color: #64748b;
+  }
+
+  body.dark-mode .admin-table-card .table,
+  body.dark-mode .admin-table-card .table tbody td,
+  body.dark-mode .admin-table-card .table thead th {
+    color: var(--text-main);
+    border-color: var(--border-color);
+  }
+
+  body.dark-mode .admin-table-card .table thead th {
+    background: rgba(30, 41, 59, 0.98);
+    color: #dbeafe;
+  }
+
+  body.dark-mode .admin-table-card .table-hover tbody tr:hover {
+    background: rgba(59, 130, 246, 0.14);
+  }
+
+  body.dark-mode .admin-action-group {
+    border-color: var(--border-color);
+    background: rgba(15, 23, 42, 0.45);
+  }
+
+  body.dark-mode .role-admin {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+  }
+
+  body.dark-mode .role-teacher {
+    background: rgba(129, 140, 248, 0.16);
+    color: #c4b5fd;
+  }
+
+  body.dark-mode .role-student,
+  body.dark-mode .status-active {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+  }
+
+  body.dark-mode .role-other,
+  body.dark-mode .status-inactive {
+    background: rgba(148, 163, 184, 0.16);
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+/* =====================================================
+   FIX TABLE LIGHT / DARK MODE - ADMIN LIST PAGES
+   Dán cuối file để override CSS cũ
+===================================================== */
+
+/* ---------- LIGHT MODE ---------- */
+.table-card,
+.admin-card,
+.data-card,
+.content-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  color: #0f172a !important;
+}
+
+.table,
+table {
+  --bs-table-bg: #ffffff;
+  --bs-table-color: #1e293b;
+  --bs-table-border-color: #e2e8f0;
+  --bs-table-hover-bg: #f8fafc;
+  color: #1e293b !important;
+}
+
+.table thead th,
+table thead th {
+  background: #eaf2ff !important;
+  color: #1e3a8a !important;
+  border-color: #bfdbfe !important;
+  font-weight: 800;
+}
+
+.table tbody tr,
+table tbody tr {
+  background: #ffffff !important;
+}
+
+.table tbody td,
+table tbody td {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.table tbody tr:hover td,
+table tbody tr:hover td {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Text phụ */
+.text-muted,
+.mini-muted,
+.sub-text {
+  color: #64748b !important;
+}
+
+/* ---------- DARK MODE ---------- */
+body.dark-mode .table-card,
+body.dark-mode .admin-card,
+body.dark-mode .data-card,
+body.dark-mode .content-card {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .table,
+body.dark-mode table {
+  --bs-table-bg: rgba(15, 23, 42, 0.92);
+  --bs-table-color: #e5e7eb;
+  --bs-table-border-color: rgba(148, 163, 184, 0.22);
+  --bs-table-hover-bg: rgba(30, 41, 59, 0.95);
+  color: #e5e7eb !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+}
+
+body.dark-mode .table thead th,
+body.dark-mode table thead th {
+  background: rgba(30, 41, 59, 0.98) !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+body.dark-mode .table tbody tr,
+body.dark-mode table tbody tr {
+  background: rgba(15, 23, 42, 0.90) !important;
+}
+
+body.dark-mode .table tbody tr:nth-child(even),
+body.dark-mode table tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.80) !important;
+}
+
+body.dark-mode .table tbody td,
+body.dark-mode table tbody td {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+body.dark-mode .table tbody tr:hover td,
+body.dark-mode table tbody tr:hover td {
+  background: rgba(51, 65, 85, 0.88) !important;
+  color: #ffffff !important;
+}
+
+/* Sửa chữ bị mờ trong dark mode */
+body.dark-mode .text-muted,
+body.dark-mode .mini-muted,
+body.dark-mode .sub-text,
+body.dark-mode .form-label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .text-dark {
+  color: #f8fafc !important;
+}
+
+/* Input / select trong dark mode */
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.30) !important;
+}
+
+body.dark-mode .form-control::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+  background: rgba(15, 23, 42, 1) !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22) !important;
+}
+
+/* Badge nhìn rõ hơn */
+body.dark-mode .badge.bg-success,
+body.dark-mode .status-active {
+  background: rgba(34, 197, 94, 0.18) !important;
+  color: #86efac !important;
+  border: 1px solid rgba(34, 197, 94, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-danger,
+body.dark-mode .status-inactive {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-warning {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-info {
+  background: rgba(14, 165, 233, 0.18) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(14, 165, 233, 0.28) !important;
+}
+
+/* Nút thao tác trong dark mode */
+body.dark-mode .btn-outline-warning {
+  color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+}
+
+body.dark-mode .btn-outline-danger {
+  color: #fb7185 !important;
+  border-color: #fb7185 !important;
+}
+
+body.dark-mode .btn-outline-info {
+  color: #38bdf8 !important;
+  border-color: #38bdf8 !important;
+}
+
+body.dark-mode .btn-outline-secondary {
+  color: #cbd5e1 !important;
+  border-color: #64748b !important;
+}
+
+body.dark-mode .btn-outline-warning:hover,
+body.dark-mode .btn-outline-danger:hover,
+body.dark-mode .btn-outline-info:hover,
+body.dark-mode .btn-outline-secondary:hover {
+  color: #0f172a !important;
+}
+
+/* Alert trong dark mode */
+body.dark-mode .alert-success {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #bbf7d0 !important;
+  border-color: rgba(34, 197, 94, 0.24) !important;
+}
+
+body.dark-mode .alert-danger {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.24) !important;
+}
+
+body.dark-mode .alert-info {
+  background: rgba(59, 130, 246, 0.14) !important;
+  color: #bfdbfe !important;
+  border-color: rgba(59, 130, 246, 0.24) !important;
+}
+
+/* Mobile table */
+@media (max-width: 768px) {
+  body.dark-mode .responsive-table tr {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+  }
+
+  body.dark-mode .responsive-table td::before {
+    color: #93c5fd !important;
+  }
+}
 </style>
 {% endblock %}
 
@@ -214,7 +572,7 @@
       <div class="col-12 col-lg-5">
         <label for="searchInput" class="form-label fw-semibold small text-muted">Tìm kiếm</label>
         <div class="input-group">
-          <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
           <input type="text" class="form-control" id="searchInput" placeholder="Tên, email hoặc username...">
         </div>
       </div>

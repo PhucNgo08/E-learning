@@ -3,94 +3,508 @@
 
 {% block content %}
 <style>
-  body {
-    background: linear-gradient(135deg, #eef2f7, #e3edff);
-    font-family: "Segoe UI", "Inter", sans-serif;
-    color: #333;
-  }
-
-  .container {
+  .academic-year-page {
+    --ay-primary: #2563eb;
+    --ay-primary-dark: #1d4ed8;
+    --ay-success: #16a34a;
+    --ay-danger: #dc2626;
+    --ay-warning: #f59e0b;
+    --ay-info: #0891b2;
+    --ay-surface: var(--surface, #ffffff);
+    --ay-surface-soft: var(--surface-soft, #f8fafc);
+    --ay-border: var(--border-color, #e2e8f0);
+    --ay-text: var(--text-main, #0f172a);
+    --ay-muted: var(--text-muted, #64748b);
+    --ay-shadow: var(--shadow-sm, 0 12px 32px rgba(15, 23, 42, 0.08));
     max-width: 1150px;
+    margin: 0 auto;
+    color: var(--ay-text);
   }
 
-  .card {
-    border: none;
-    border-radius: 15px;
+  .ay-hero {
+    border-radius: 22px;
+    padding: 24px 26px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #1e3a8a, #2563eb 56%, #7c3aed);
+    color: #ffffff;
+    box-shadow: 0 18px 45px rgba(37, 99, 235, 0.22);
+    position: relative;
     overflow: hidden;
   }
 
-  .card-header {
-    background: linear-gradient(90deg, #0066ff, #0048b5);
-    color: white;
-    padding: 20px 25px;
+  .ay-hero::after {
+    content: "";
+    position: absolute;
+    inset: auto -60px -90px auto;
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    pointer-events: none;
   }
 
-  .card-header h4 {
-    font-weight: 600;
-    letter-spacing: 0.5px;
+  .ay-title {
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
   }
 
-  .btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: 0.2s;
+  .ay-subtitle {
+    margin: 6px 0 0;
+    color: rgba(255, 255, 255, 0.86);
   }
 
-  .btn:hover {
+  .ay-card {
+    border: 1px solid var(--ay-border);
+    border-radius: 22px;
+    background: var(--ay-surface);
+    box-shadow: var(--ay-shadow);
+    overflow: hidden;
+  }
+
+  .ay-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 18px 20px;
+    background: var(--ay-surface-soft);
+    border-bottom: 1px solid var(--ay-border);
+  }
+
+  .ay-card-header h5 {
+    margin: 0;
+    font-weight: 800;
+    color: var(--ay-text);
+  }
+
+  .ay-card-body {
+    padding: 20px;
+  }
+
+  .ay-table {
+    margin: 0;
+    color: var(--ay-text);
+  }
+
+  .ay-table thead th {
+    background: var(--ay-surface-soft);
+    color: var(--ay-text);
+    border-color: var(--ay-border);
+    white-space: nowrap;
+    font-weight: 800;
+  }
+
+  .ay-table tbody td {
+    color: var(--ay-text);
+    border-color: var(--ay-border);
+    vertical-align: middle;
+  }
+
+  .ay-table.table-hover tbody tr:hover {
+    background: rgba(37, 99, 235, 0.06);
+  }
+
+  .ay-code {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.1);
+    color: var(--ay-primary-dark);
+    font-weight: 800;
+  }
+
+  .ay-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 7px 12px;
+    font-size: 0.86rem;
+    font-weight: 800;
+  }
+
+  .ay-status.active {
+    color: #15803d;
+    background: rgba(22, 163, 74, 0.12);
+  }
+
+  .ay-status.inactive {
+    color: #475569;
+    background: rgba(100, 116, 139, 0.14);
+  }
+
+  .ay-action-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .academic-year-page .btn {
+    border-radius: 12px;
+    font-weight: 700;
+  }
+
+  .academic-year-page .btn:hover {
     transform: translateY(-1px);
   }
 
-  .table-hover tbody tr:hover {
-    background-color: #f0f6ff;
-    transition: 0.2s;
-  }
-
-  .badge {
+  .ay-footer {
+    margin-top: 28px;
     font-size: 0.9rem;
-  }
-
-  footer {
-    margin-top: 40px;
-    font-size: 0.9rem;
-    color: #777;
+    color: var(--ay-muted);
     text-align: center;
   }
+
+  body.dark-mode .academic-year-page {
+    --ay-surface: rgba(15, 23, 42, 0.92);
+    --ay-surface-soft: rgba(30, 41, 59, 0.96);
+    --ay-border: rgba(148, 163, 184, 0.22);
+    --ay-text: #e5e7eb;
+    --ay-muted: #94a3b8;
+    --ay-shadow: 0 18px 46px rgba(0, 0, 0, 0.38);
+  }
+
+  body.dark-mode .ay-hero {
+    background: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+    border: 1px solid rgba(147, 197, 253, 0.18);
+    box-shadow: 0 22px 58px rgba(0, 0, 0, 0.45);
+  }
+
+  body.dark-mode .ay-card,
+  body.dark-mode .ay-card-header,
+  body.dark-mode .ay-table thead th,
+  body.dark-mode .ay-table tbody td {
+    border-color: var(--ay-border);
+  }
+
+  body.dark-mode .ay-table.table-hover tbody tr:hover {
+    background: rgba(59, 130, 246, 0.13);
+  }
+
+  body.dark-mode .ay-code {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+  }
+
+  body.dark-mode .ay-status.active {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.15);
+  }
+
+  body.dark-mode .ay-status.inactive {
+    color: #cbd5e1;
+    background: rgba(148, 163, 184, 0.16);
+  }
+
+  body.dark-mode .alert-success {
+    background: rgba(34, 197, 94, 0.14);
+    color: #bbf7d0;
+    border-color: rgba(74, 222, 128, 0.25);
+  }
+
+  body.dark-mode .alert-danger {
+    background: rgba(239, 68, 68, 0.14);
+    color: #fecaca;
+    border-color: rgba(248, 113, 113, 0.25);
+  }
+
+  body.dark-mode .alert-info {
+    background: rgba(59, 130, 246, 0.15);
+    color: #bfdbfe;
+    border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  @media (max-width: 768px) {
+    .ay-hero,
+    .ay-card-body {
+      padding: 18px;
+    }
+
+    .ay-card-header {
+      padding: 16px;
+    }
+
+    .ay-card-header .btn,
+    .ay-action-wrap .btn {
+      width: 100%;
+    }
+  }
+/* =====================================================
+   FIX TABLE LIGHT / DARK MODE - ADMIN LIST PAGES
+   Dán cuối file để override CSS cũ
+===================================================== */
+
+/* ---------- LIGHT MODE ---------- */
+.table-card,
+.admin-card,
+.data-card,
+.content-card {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border: 1px solid rgba(226, 232, 240, 0.95) !important;
+  color: #0f172a !important;
+}
+
+.table,
+table {
+  --bs-table-bg: #ffffff;
+  --bs-table-color: #1e293b;
+  --bs-table-border-color: #e2e8f0;
+  --bs-table-hover-bg: #f8fafc;
+  color: #1e293b !important;
+}
+
+.table thead th,
+table thead th {
+  background: #eaf2ff !important;
+  color: #1e3a8a !important;
+  border-color: #bfdbfe !important;
+  font-weight: 800;
+}
+
+.table tbody tr,
+table tbody tr {
+  background: #ffffff !important;
+}
+
+.table tbody td,
+table tbody td {
+  background: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.table tbody tr:hover td,
+table tbody tr:hover td {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+/* Text phụ */
+.text-muted,
+.mini-muted,
+.sub-text {
+  color: #64748b !important;
+}
+
+/* ---------- DARK MODE ---------- */
+body.dark-mode .table-card,
+body.dark-mode .admin-card,
+body.dark-mode .data-card,
+body.dark-mode .content-card {
+  background: rgba(15, 23, 42, 0.92) !important;
+  border: 1px solid rgba(148, 163, 184, 0.24) !important;
+  color: #e5e7eb !important;
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35) !important;
+}
+
+body.dark-mode .table,
+body.dark-mode table {
+  --bs-table-bg: rgba(15, 23, 42, 0.92);
+  --bs-table-color: #e5e7eb;
+  --bs-table-border-color: rgba(148, 163, 184, 0.22);
+  --bs-table-hover-bg: rgba(30, 41, 59, 0.95);
+  color: #e5e7eb !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+}
+
+body.dark-mode .table thead th,
+body.dark-mode table thead th {
+  background: rgba(30, 41, 59, 0.98) !important;
+  color: #f8fafc !important;
+  border-color: rgba(148, 163, 184, 0.28) !important;
+}
+
+body.dark-mode .table tbody tr,
+body.dark-mode table tbody tr {
+  background: rgba(15, 23, 42, 0.90) !important;
+}
+
+body.dark-mode .table tbody tr:nth-child(even),
+body.dark-mode table tbody tr:nth-child(even) {
+  background: rgba(30, 41, 59, 0.80) !important;
+}
+
+body.dark-mode .table tbody td,
+body.dark-mode table tbody td {
+  background: transparent !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.20) !important;
+}
+
+body.dark-mode .table tbody tr:hover td,
+body.dark-mode table tbody tr:hover td {
+  background: rgba(51, 65, 85, 0.88) !important;
+  color: #ffffff !important;
+}
+
+/* Sửa chữ bị mờ trong dark mode */
+body.dark-mode .text-muted,
+body.dark-mode .mini-muted,
+body.dark-mode .sub-text,
+body.dark-mode .form-label {
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .text-dark {
+  color: #f8fafc !important;
+}
+
+/* Input / select trong dark mode */
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+  background: rgba(15, 23, 42, 0.92) !important;
+  color: #e5e7eb !important;
+  border-color: rgba(148, 163, 184, 0.30) !important;
+}
+
+body.dark-mode .form-control::placeholder {
+  color: #94a3b8 !important;
+}
+
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+  background: rgba(15, 23, 42, 1) !important;
+  color: #ffffff !important;
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22) !important;
+}
+
+/* Badge nhìn rõ hơn */
+body.dark-mode .badge.bg-success,
+body.dark-mode .status-active {
+  background: rgba(34, 197, 94, 0.18) !important;
+  color: #86efac !important;
+  border: 1px solid rgba(34, 197, 94, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-danger,
+body.dark-mode .status-inactive {
+  background: rgba(239, 68, 68, 0.18) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-warning {
+  background: rgba(245, 158, 11, 0.18) !important;
+  color: #fcd34d !important;
+  border: 1px solid rgba(245, 158, 11, 0.28) !important;
+}
+
+body.dark-mode .badge.bg-info {
+  background: rgba(14, 165, 233, 0.18) !important;
+  color: #7dd3fc !important;
+  border: 1px solid rgba(14, 165, 233, 0.28) !important;
+}
+
+/* Nút thao tác trong dark mode */
+body.dark-mode .btn-outline-warning {
+  color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
+}
+
+body.dark-mode .btn-outline-danger {
+  color: #fb7185 !important;
+  border-color: #fb7185 !important;
+}
+
+body.dark-mode .btn-outline-info {
+  color: #38bdf8 !important;
+  border-color: #38bdf8 !important;
+}
+
+body.dark-mode .btn-outline-secondary {
+  color: #cbd5e1 !important;
+  border-color: #64748b !important;
+}
+
+body.dark-mode .btn-outline-warning:hover,
+body.dark-mode .btn-outline-danger:hover,
+body.dark-mode .btn-outline-info:hover,
+body.dark-mode .btn-outline-secondary:hover {
+  color: #0f172a !important;
+}
+
+/* Alert trong dark mode */
+body.dark-mode .alert-success {
+  background: rgba(34, 197, 94, 0.14) !important;
+  color: #bbf7d0 !important;
+  border-color: rgba(34, 197, 94, 0.24) !important;
+}
+
+body.dark-mode .alert-danger {
+  background: rgba(239, 68, 68, 0.14) !important;
+  color: #fecaca !important;
+  border-color: rgba(239, 68, 68, 0.24) !important;
+}
+
+body.dark-mode .alert-info {
+  background: rgba(59, 130, 246, 0.14) !important;
+  color: #bfdbfe !important;
+  border-color: rgba(59, 130, 246, 0.24) !important;
+}
+
+/* Mobile table */
+@media (max-width: 768px) {
+  body.dark-mode .responsive-table tr {
+    background: rgba(15, 23, 42, 0.92) !important;
+    border-color: rgba(148, 163, 184, 0.22) !important;
+  }
+
+  body.dark-mode .responsive-table td::before {
+    color: #93c5fd !important;
+  }
+}
+
 </style>
 
-<div class="container mt-4">
+<div class="academic-year-page px-2 px-md-3 py-3 py-md-4">
+  <div class="ay-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="ay-title">
+        <i class="bi bi-calendar3 me-2"></i>Danh sách năm học
+      </h3>
+      <p class="ay-subtitle">Quản lý niên khóa, thời gian bắt đầu/kết thúc và trạng thái hoạt động.</p>
+    </div>
+    <a href="/admin/academic_years/create" class="btn btn-light text-primary fw-semibold shadow-sm">
+      <i class="bi bi-plus-circle me-1"></i>Thêm năm học
+    </a>
+  </div>
+
   {% if success %}
-    <div class="alert alert-success shadow-sm">
-      <i class="bi bi-check-circle"></i> {{ success }}
+    <div class="alert alert-success shadow-sm rounded-4">
+      <i class="bi bi-check-circle me-1"></i> {{ success }}
     </div>
   {% endif %}
 
   {% if error %}
-    <div class="alert alert-danger shadow-sm">
-      <i class="bi bi-exclamation-triangle"></i> {{ error }}
+    <div class="alert alert-danger shadow-sm rounded-4">
+      <i class="bi bi-exclamation-triangle me-1"></i> {{ error }}
     </div>
   {% endif %}
 
-  <div class="card shadow-lg">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <h4 class="mb-0">
-        <i class="bi bi-calendar3"></i> Danh sách năm học
-      </h4>
-      <a href="/admin/academic_years/create" class="btn btn-light text-primary fw-semibold shadow-sm">
-        <i class="bi bi-plus-circle"></i> Thêm năm học
+  <div class="ay-card">
+    <div class="ay-card-header">
+      <h5><i class="bi bi-list-check me-2 text-primary"></i>Dữ liệu năm học</h5>
+      <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
       </a>
     </div>
 
-    <div class="card-body p-4">
+    <div class="ay-card-body">
       {% if years|length == 0 %}
-        <div class="alert alert-info text-center shadow-sm rounded-3">
+        <div class="alert alert-info text-center shadow-sm rounded-4 mb-0">
           <i class="bi bi-info-circle"></i>
           <span class="ms-1">Hiện chưa có năm học nào trong hệ thống.</span><br>
           <a href="/admin/academic_years/create" class="alert-link">Thêm mới ngay</a>.
         </div>
       {% else %}
         <div class="table-responsive">
-          <table class="table table-striped table-hover align-middle shadow-sm rounded">
-            <thead class="table-primary">
+          <table class="table table-hover align-middle ay-table">
+            <thead>
               <tr>
                 <th class="text-center">#</th>
                 <th>Mã</th>
@@ -104,25 +518,25 @@
             <tbody>
               {% for y in years %}
               <tr>
-                <td class="text-center fw-semibold">{{ loop.index }}</td>
-                <td><span class="fw-bold text-primary">{{ y.year_code }}</span></td>
-                <td>{{ y.year_name }}</td>
+                <td class="text-center fw-semibold text-muted">{{ loop.index }}</td>
+                <td><span class="ay-code">{{ y.year_code }}</span></td>
+                <td class="fw-semibold">{{ y.year_name }}</td>
                 <td class="text-center">{{ y.start_year }}</td>
                 <td class="text-center">{{ y.end_year }}</td>
                 <td class="text-center">
                   {% if y.is_active %}
-                    <span class="badge bg-success px-3 py-2 shadow-sm">
+                    <span class="ay-status active">
                       <i class="bi bi-check-circle"></i> Hoạt động
                     </span>
                   {% else %}
-                    <span class="badge bg-secondary px-3 py-2 shadow-sm">
+                    <span class="ay-status inactive">
                       <i class="bi bi-x-circle"></i> Ngưng
                     </span>
                   {% endif %}
                 </td>
                 <td class="text-center">
-                  <div class="d-flex justify-content-center gap-2 flex-wrap">
-                    <a href="/admin/academic_years/edit/{{ y.id }}" class="btn btn-sm btn-outline-warning shadow-sm">
+                  <div class="ay-action-wrap">
+                    <a href="/admin/academic_years/edit/{{ y.id }}" class="btn btn-sm btn-outline-warning">
                       <i class="bi bi-pencil-square"></i> Sửa
                     </a>
 
@@ -130,12 +544,12 @@
                           action="/admin/academic_years/delete/{{ y.id }}"
                           class="d-inline"
                           onsubmit="return confirm('Bạn có chắc muốn xóa năm học {{ y.year_name }}?')">
-                      <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm">
+                      <button type="submit" class="btn btn-sm btn-outline-danger">
                         <i class="bi bi-trash"></i> Xóa
                       </button>
                     </form>
 
-                    <a href="/admin/academic_years/{{ y.id }}/students" class="btn btn-sm btn-outline-info shadow-sm">
+                    <a href="/admin/academic_years/{{ y.id }}/students" class="btn btn-sm btn-outline-info">
                       <i class="bi bi-people"></i> Sinh viên
                     </a>
                   </div>
@@ -149,14 +563,8 @@
     </div>
   </div>
 
-  <div class="text-center mt-4">
-    <a href="/admin/dashboard" class="btn btn-outline-secondary px-4 shadow-sm">
-      <i class="bi bi-arrow-left"></i> Quay lại Bảng điều khiển
-    </a>
-  </div>
-
-  <footer class="mt-5">
-    <p>© {{ current_year }} E-Learning Admin Dashboard — Danh sách năm học</p>
+  <footer class="ay-footer">
+    <p class="mb-0">© {{ current_year }} E-Learning Admin Dashboard — Danh sách năm học</p>
   </footer>
 </div>
 {% endblock %}

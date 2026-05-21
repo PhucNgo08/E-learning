@@ -1,7 +1,11 @@
 from datetime import datetime
 from pathlib import Path
 import io
+import os
+import re
+import shutil
 import traceback
+import uuid
 
 from fastapi import APIRouter, Request, Depends, Form, HTTPException, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse, FileResponse
@@ -27,6 +31,155 @@ router = APIRouter(
 )
 
 BACKEND_DIR = Path(__file__).resolve().parents[3]
+
+
+DEFAULT_ALLOWED_FILE_TYPES = (
+    "jpg,jpeg,png,webp,gif,pdf,doc,docx,ppt,pptx,xls,xlsx,"
+    "zip,rar,7z,txt,md,py,html,css,js,json,sql,mp4"
+)
+TEACHER_ATTACHMENT_DIR = BACKEND_DIR / "app" / "uploads" / "assignments" / "teacher_attachments"
+MAX_TEACHER_ATTACHMENT_SIZE_MB = 100
+
+
+def _safe_filename(filename: str) -> str:
+    """Tạo tên file an toàn, tránh tiếng Việt/ký tự lạ làm lỗi URL."""
+    raw = os.path.basename(str(filename or "file")).strip()
+    stem, ext = os.path.splitext(raw)
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem).strip("._") or "file"
+    ext = re.sub(r"[^A-Za-z0-9.]+", "", ext.lower())
+    return f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{uuid.uuid4().hex[:8]}_{stem}{ext}"
+
+
+def _get_form_text(form, name: str, default: str = "") -> str:
+    value = form.get(name)
+    if value is None:
+        return default
+    return str(value).strip()
+
+
+def _get_form_int(form, name: str, default: int, minimum: int = 0, maximum: int | None = None) -> int:
+    try:
+        value = int(form.get(name) or default)
+    except Exception:
+        value = default
+    value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
+
+
+def _get_form_float(form, name: str, default: float, minimum: float = 0, maximum: float | None = None) -> float:
+    try:
+        value = float(form.get(name) or default)
+    except Exception:
+        value = default
+    value = max(minimum, value)
+    if maximum is not None:
+        value = min(maximum, value)
+    return value
+
+
+def _parse_datetime_local(value: str) -> datetime:
+    value = str(value or "").strip()
+    if not value:
+        raise ValueError("Vui lòng chọn hạn nộp.")
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("Hạn nộp không đúng định dạng.") from exc
+
+
+def _get_uploads(form, *field_names: str) -> list:
+    """Lấy file từ nhiều tên input để tránh lệch template gây lỗi."""
+    uploads = []
+    for name in field_names:
+        try:
+            values = form.getlist(name)
+        except Exception:
+            values = []
+        for item in values:
+            filename = getattr(item, "filename", None)
+            if filename and str(filename).strip():
+                uploads.append(item)
+    return uploads
+
+
+async def _read_text_uploads(files: list) -> str:
+    """Đọc nội dung file .txt/.md để ghép vào mô tả bài tập."""
+    parts = []
+    for file in files or []:
+        filename = str(getattr(file, "filename", "") or "")
+        if not filename.lower().endswith((".txt", ".md")):
+            raise HTTPException(status_code=400, detail="File đề dạng văn bản chỉ hỗ trợ .txt hoặc .md.")
+        content = await file.read()
+        if content:
+            parts.append(content.decode("utf-8-sig", errors="ignore").strip())
+    return "\n\n".join([p for p in parts if p])
+
+
+async def _save_teacher_attachments(files: list) -> list[dict]:
+    """
+    Lưu file đề bài giáo viên đính kèm mà không đổi database.
+    Link file sẽ được ghép vào assignments.description.
+    Không cho upload .exe/.bat/.cmd/.msi vì nguy hiểm khi chia sẻ.
+    """
+    saved = []
+    if not files:
+        return saved
+
+    TEACHER_ATTACHMENT_DIR.mkdir(parents=True, exist_ok=True)
+    blocked_exts = {"exe", "bat", "cmd", "com", "msi", "scr", "ps1", "vbs", "jar"}
+
+    for file in files:
+        filename = str(getattr(file, "filename", "") or "").strip()
+        if not filename:
+            continue
+
+        ext = Path(filename).suffix.lower().lstrip(".")
+        if ext in blocked_exts:
+            raise HTTPException(status_code=400, detail=f"Không cho phép upload file thực thi: .{ext}")
+
+        safe_name = _safe_filename(filename)
+        target = TEACHER_ATTACHMENT_DIR / safe_name
+
+        size = 0
+        with target.open("wb") as buffer:
+            while True:
+                chunk = await file.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_TEACHER_ATTACHMENT_SIZE_MB * 1024 * 1024:
+                    try:
+                        target.unlink(missing_ok=True)
+                    except Exception:
+                        pass
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"File {filename} vượt quá {MAX_TEACHER_ATTACHMENT_SIZE_MB}MB.",
+                    )
+                buffer.write(chunk)
+
+        saved.append({
+            "name": filename,
+            "url": f"/uploads/assignments/teacher_attachments/{safe_name}",
+            "size": size,
+        })
+
+    return saved
+
+
+def _append_attachment_links(description: str, attachments: list[dict]) -> str:
+    """Ghép danh sách link file vào mô tả, dùng lại cột description nên không đổi DB."""
+    description = (description or "").strip()
+    if not attachments:
+        return description
+
+    lines = ["", "---", "Tệp đề bài đính kèm:"]
+    for item in attachments:
+        size_mb = (int(item.get("size") or 0) / 1024 / 1024)
+        lines.append(f"- {item.get('name')}: {item.get('url')} ({size_mb:.2f} MB)")
+    return (description + "\n" + "\n".join(lines)).strip()
 
 
 async def read_assignment_text_file(file: UploadFile | None) -> str:
@@ -154,55 +307,72 @@ def create_form(
 
 @router.post("/create")
 async def create_assignment(
-    course_id: str = Form(...),
-    module_id: str = Form(None),
-    title: str = Form(...),
-    description: str = Form(""),
-    due_date: str = Form(...),
-    submission_type: str = Form("individual"),
-    allowed_file_types: str = Form("pdf,docx,zip"),
-    max_files: int = Form(5),
-    max_file_size_mb: int = Form(50),
-    allow_late_submission: str | None = Form(None),
-    late_penalty_percent: float = Form(0),
-    total_points: float = Form(10),
-    grading_criteria: str = Form(""),
-    assignment_text_file: UploadFile | None = File(None),
+    request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher),
 ):
+    """
+    FIX 422 + hỗ trợ giáo viên đính kèm nhiều file đề bài.
+    Đọc form thủ công để không bị lỗi FastAPI 422 nếu input file thiếu/lệch tên.
+    """
     try:
-        file_description = await read_assignment_text_file(assignment_text_file)
+        form = await request.form()
 
-        final_description = (description or "").strip()
-        if file_description:
-            final_description = (
-                f"{final_description}\n\n{file_description}"
-                if final_description
-                else file_description
-            )
+        course_id = _get_form_text(form, "course_id")
+        module_id = _get_form_text(form, "module_id") or None
+        title = _get_form_text(form, "title")
+        description = _get_form_text(form, "description")
+        due_date_raw = _get_form_text(form, "due_date")
 
-        assignment = assignment_service.create_assignment(
+        submission_type = _get_form_text(form, "submission_type", "individual") or "individual"
+        allowed_file_types = _get_form_text(form, "allowed_file_types", DEFAULT_ALLOWED_FILE_TYPES) or DEFAULT_ALLOWED_FILE_TYPES
+        max_files = _get_form_int(form, "max_files", 5, minimum=1, maximum=50)
+        max_file_size_mb = _get_form_int(form, "max_file_size_mb", 50, minimum=1, maximum=500)
+        allow_late_submission = form.get("allow_late_submission") is not None
+        late_penalty_percent = _get_form_float(form, "late_penalty_percent", 0, minimum=0, maximum=100)
+        total_points = _get_form_float(form, "total_points", 10, minimum=0, maximum=100)
+        grading_criteria = _get_form_text(form, "grading_criteria")
+
+        if not course_id:
+            raise HTTPException(status_code=400, detail="Vui lòng chọn khóa học.")
+        if not title:
+            raise HTTPException(status_code=400, detail="Vui lòng nhập tiêu đề bài tập.")
+
+        due_date = _parse_datetime_local(due_date_raw)
+
+        text_files = _get_uploads(form, "assignment_text_file", "assignment_text_files")
+        attachment_files = _get_uploads(
+            form,
+            "assignment_attachments",
+            "assignment_attachment",
+            "assignment_files",
+            "files",
+        )
+
+        text_from_files = await _read_text_uploads(text_files)
+        if text_from_files:
+            description = (description + "\n\n" + text_from_files) if description else text_from_files
+
+        saved_attachments = await _save_teacher_attachments(attachment_files)
+        final_description = _append_attachment_links(description, saved_attachments)
+
+        assignment_service.create_assignment(
             db=db,
             course_id=course_id,
-            module_id=module_id or None,
+            module_id=module_id,
             teacher_id=current_teacher.id,
             title=title,
             description=final_description,
-            due_date=datetime.fromisoformat(due_date),
-            allowed_file_types=(allowed_file_types or "pdf,docx,zip").strip(),
-            max_files=max(1, int(max_files or 1)),
-            max_file_size_mb=max(1, int(max_file_size_mb or 1)),
+            due_date=due_date,
+            submission_type=submission_type,
+            allowed_file_types=allowed_file_types,
+            max_files=max_files,
+            max_file_size_mb=max_file_size_mb,
+            allow_late_submission=allow_late_submission,
+            late_penalty_percent=late_penalty_percent,
+            total_points=total_points,
+            grading_criteria=grading_criteria,
         )
-
-        # Các cột này đã có trong schema assignments, không cần đổi database.
-        assignment.submission_type = "group" if submission_type == "group" else "individual"
-        assignment.allow_late_submission = 1 if allow_late_submission else 0
-        assignment.late_penalty_percent = max(0, float(late_penalty_percent or 0))
-        assignment.total_points = max(0, float(total_points or 10))
-        assignment.grading_criteria = (grading_criteria or "").strip() or None
-        assignment.updated_at = datetime.utcnow()
-        db.commit()
         return RedirectResponse("/teacher/assignments/list", status_code=303)
 
     except HTTPException:
@@ -237,22 +407,54 @@ def edit_assignment_form(
 
 
 @router.post("/edit/{assignment_id}")
-def update_assignment(
+async def update_assignment(
     assignment_id: str,
-    title: str = Form(...),
-    description: str = Form(""),
-    due_date: str = Form(...),
+    request: Request,
     db: Session = Depends(get_db),
     current_teacher=Depends(get_current_teacher),
 ):
+    """Cập nhật cả cấu hình nộp file và cho phép thêm file đề bài mới."""
     try:
+        form = await request.form()
+
+        title = _get_form_text(form, "title")
+        description = _get_form_text(form, "description")
+        due_date = _parse_datetime_local(_get_form_text(form, "due_date"))
+
+        submission_type = _get_form_text(form, "submission_type", "individual") or "individual"
+        allowed_file_types = _get_form_text(form, "allowed_file_types", DEFAULT_ALLOWED_FILE_TYPES) or DEFAULT_ALLOWED_FILE_TYPES
+        max_files = _get_form_int(form, "max_files", 5, minimum=1, maximum=50)
+        max_file_size_mb = _get_form_int(form, "max_file_size_mb", 50, minimum=1, maximum=500)
+        allow_late_submission = form.get("allow_late_submission") is not None
+        late_penalty_percent = _get_form_float(form, "late_penalty_percent", 0, minimum=0, maximum=100)
+        total_points = _get_form_float(form, "total_points", 10, minimum=0, maximum=100)
+        grading_criteria = _get_form_text(form, "grading_criteria")
+
+        attachment_files = _get_uploads(
+            form,
+            "assignment_attachments",
+            "assignment_attachment",
+            "assignment_files",
+            "files",
+        )
+        saved_attachments = await _save_teacher_attachments(attachment_files)
+        final_description = _append_attachment_links(description, saved_attachments)
+
         updated = assignment_service.update_assignment_by_teacher(
             db=db,
             assignment_id=assignment_id,
             teacher_id=current_teacher.id,
             title=title,
-            description=description,
-            due_date=datetime.fromisoformat(due_date),
+            description=final_description,
+            due_date=due_date,
+            submission_type=submission_type,
+            allowed_file_types=allowed_file_types,
+            max_files=max_files,
+            max_file_size_mb=max_file_size_mb,
+            allow_late_submission=allow_late_submission,
+            late_penalty_percent=late_penalty_percent,
+            total_points=total_points,
+            grading_criteria=grading_criteria,
         )
         if not updated:
             raise HTTPException(status_code=404, detail="Không tìm thấy bài tập")

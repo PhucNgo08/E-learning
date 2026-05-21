@@ -18,11 +18,18 @@ from app.models.course import Course
 from app.models.course_enrollment import CourseEnrollment
 from app.models.module import Module
 from app.services.student.notification_service import create_notification
+from app.config.paths import (
+    UPLOADS_BASE,
+    PUBLIC_PATH,
+    ensure_upload_dir,
+    resolve_upload_path_from_url,
+)
 
 
-BACKEND_DIR = Path(__file__).resolve().parents[3]
-UPLOAD_DIR = BACKEND_DIR / "uploads" / "assignments"
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+# backend/app. main.py đang mount /uploads vào app/uploads, nên file phải lưu ở đây.
+APP_DIR = Path(__file__).resolve().parents[2]
+BACKEND_DIR = APP_DIR.parent
+UPLOAD_DIR = ensure_upload_dir(UPLOADS_BASE / "assignments")
 
 ACTIVE_ENROLLMENT_STATUSES = ("approved", "active", "completed")
 
@@ -540,14 +547,17 @@ def resolve_file_response_target(file_info: AssignmentFile | None) -> dict:
     if _is_remote_path(file_url):
         return {"ok": True, "type": "remote", "url": file_url}
 
-    if file_url.startswith("/uploads/"):
-        file_path = (BACKEND_DIR / file_url.lstrip("/\\")).resolve()
+    if file_url.startswith(PUBLIC_PATH + "/"):
+        file_path = resolve_upload_path_from_url(file_url)
     else:
         file_path = Path(file_url)
         if not file_path.is_absolute():
-            file_path = (BACKEND_DIR / file_path).resolve()
+            # Hỗ trợ cả dữ liệu cũ: uploads/... hoặc đường dẫn tương đối backend/...
+            candidate_app = (APP_DIR / file_url.lstrip("/\\")).resolve()
+            candidate_backend = (BACKEND_DIR / file_url.lstrip("/\\")).resolve()
+            file_path = candidate_app if candidate_app.exists() else candidate_backend
 
-    if not file_path.exists():
+    if not file_path or not file_path.exists():
         return {"ok": False, "message": "File không tồn tại trên hệ thống."}
 
     return {"ok": True, "type": "local", "path": file_path}
