@@ -231,6 +231,53 @@ async def mark_lesson_complete(request: Request, lesson_id: str, db: Session = D
         return HTMLResponse("Lỗi đánh dấu hoàn thành.", status_code=500)
 
 
+@router.post("/progress/{lesson_id}", name="student_lesson_save_progress")
+async def save_lesson_progress(
+    request: Request,
+    lesson_id: str,
+    position_seconds: int = Form(0),
+    completion_percentage: int = Form(0),
+    duration_seconds: int = Form(0),
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return JSONResponse(
+            {"status": "error", "message": "Bạn chưa đăng nhập."},
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
+
+    try:
+        progress = lesson_service.save_lesson_progress(
+            db=db,
+            user_id=user_id,
+            lesson_id=lesson_id,
+            position_seconds=position_seconds,
+            completion_percentage=completion_percentage,
+            duration_seconds=duration_seconds,
+        )
+        if not progress:
+            return JSONResponse(
+                {"status": "error", "message": "Không thể lưu tiến độ bài học."},
+                status_code=400,
+            )
+
+        return JSONResponse(
+            {
+                "status": "ok",
+                "progress_status": progress.progress_status,
+                "completion_percentage": int(progress.completion_percentage or 0),
+                "position_seconds": int(progress.last_position_seconds or 0),
+            }
+        )
+    except Exception as e:
+        logger.exception("❌ [save_lesson_progress] Error: %s", e)
+        return JSONResponse(
+            {"status": "error", "message": "Lỗi lưu tiến độ."},
+            status_code=500,
+        )
+
+
 @router.get("/notes/add/{lesson_id}", response_class=HTMLResponse, name="student_lesson_add_note")
 async def add_lesson_note_form(request: Request, lesson_id: str, db: Session = Depends(get_db)):
     user_id = get_current_student_id(request)

@@ -549,7 +549,7 @@
       <label class="form-label">Giảng viên</label>
       <select name="teacher_id" class="form-select">
         <option value="">Tất cả</option>
-        {% for t in teachers %}
+        {% for t in teachers or [] %}
         <option value="{{ t.id }}" {% if (teacher_id|string) == (t.id|string) %}selected{% endif %}>
           {{ t.full_name }}
         </option>
@@ -561,7 +561,7 @@
       <label class="form-label">Ngành học</label>
       <select name="major_id" class="form-select">
         <option value="">Tất cả</option>
-        {% for m in majors %}
+        {% for m in majors or [] %}
         <option value="{{ m.id }}" {% if (major_id|string) == (m.id|string) %}selected{% endif %}>
           {{ m.major_name }}
         </option>
@@ -573,7 +573,7 @@
       <label class="form-label">Năm học</label>
       <select name="year_id" class="form-select">
         <option value="">Tất cả</option>
-        {% for y in years %}
+        {% for y in years or [] %}
         <option value="{{ y.id }}" {% if (year_id|string) == (y.id|string) %}selected{% endif %}>
           {{ y.year_name }}
         </option>
@@ -597,9 +597,9 @@
         <option value="">Tất cả</option>
         <option value="mandatory" {% if course_type == 'mandatory' %}selected{% endif %}>Bắt buộc</option>
         <option value="elective" {% if course_type == 'elective' %}selected{% endif %}>Tự chọn</option>
-        <option value="workshop" {% if course_type == 'workshop' %}selected{% endif %}>Workshop</option>
-        <option value="online" {% if course_type == 'online' %}selected{% endif %}>Online</option>
-        <option value="hybrid" {% if course_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
+        <option value="workshop" {% if course_type == 'workshop' %}selected{% endif %}>Chuyên đề</option>
+        <option value="online" {% if course_type == 'online' %}selected{% endif %}>Trực tuyến</option>
+        <option value="hybrid" {% if course_type == 'hybrid' %}selected{% endif %}>Kết hợp</option>
       </select>
     </div>
 
@@ -615,7 +615,7 @@
 
     <div class="col-12 d-flex justify-content-end gap-2 flex-wrap mt-2">
       <a href="/admin/Course/manage" class="btn btn-outline-secondary px-4">
-        <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Đặt lại
       </a>
 
       <button type="submit" class="btn btn-primary px-4">
@@ -629,8 +629,8 @@
       <table class="table table-hover align-middle">
         <thead>
           <tr>
-            <th style="width: 70px;">#</th>
-            <th style="width: 140px;">Mã</th>
+            <th style="width: 70px;">STT</th>
+            <th style="width: 140px;">Mã khóa học</th>
             <th>Tên khóa học</th>
             <th style="width: 190px;">Giảng viên</th>
             <th style="width: 100px;">Tín chỉ</th>
@@ -640,7 +640,7 @@
         </thead>
 
         <tbody>
-          {% for course in courses %}
+          {% for course in courses or [] %}
           <tr>
             <td class="text-center fw-semibold">{{ loop.index }}</td>
 
@@ -662,10 +662,10 @@
                   <i class="bi bi-tag"></i>
                   {% if course.course_type == 'mandatory' %}Bắt buộc
                   {% elif course.course_type == 'elective' %}Tự chọn
-                  {% elif course.course_type == 'workshop' %}Workshop
-                  {% elif course.course_type == 'online' %}Online
-                  {% elif course.course_type == 'hybrid' %}Hybrid
-                  {% else %}{{ course.course_type }}{% endif %}
+                  {% elif course.course_type == 'workshop' %}Chuyên đề
+                  {% elif course.course_type == 'online' %}Trực tuyến
+                  {% elif course.course_type == 'hybrid' %}Kết hợp
+                  {% else %}Không xác định{% endif %}
                 </span>
                 {% endif %}
 
@@ -675,7 +675,7 @@
                   {% if course.difficulty_level == 'beginner' %}Dễ
                   {% elif course.difficulty_level == 'intermediate' %}Trung bình
                   {% elif course.difficulty_level == 'advanced' %}Nâng cao
-                  {% else %}{{ course.difficulty_level }}{% endif %}
+                  {% else %}Không xác định{% endif %}
                 </span>
                 {% endif %}
               </div>
@@ -684,7 +684,7 @@
             <td class="text-center">
               {% if course.teacher %}
               <span class="teacher-badge">
-                <i class="bi bi-person-video3"></i>{{ course.teacher.full_name }}
+                <i class="bi bi-person-video3"></i>{{ course.teacher.full_name if course.teacher.full_name is defined and course.teacher.full_name else (course.teacher.username if course.teacher.username is defined and course.teacher.username else 'Không rõ giảng viên') }}
               </span>
               {% else %}
               <span class="teacher-badge teacher-empty">
@@ -755,10 +755,10 @@
     </div>
   </div>
 
-  {% if total_pages > 1 %}
+  {% if total_pages is defined and total_pages > 1 %}
   <nav class="mt-4" aria-label="Phân trang khóa học">
     <ul class="pagination justify-content-center flex-wrap">
-      {% for page_num in range(1, total_pages + 1) %}
+      {% for page_num in range(1, (total_pages if total_pages is defined else 1) + 1) %}
       <li class="page-item {% if page_num == current_page %}active{% endif %}">
         <a class="page-link"
            href="?page={{ page_num }}&q={{ q or '' }}&status={{ status or '' }}&teacher_id={{ teacher_id or '' }}&major_id={{ major_id or '' }}&year_id={{ year_id or '' }}&difficulty_level={{ difficulty_level or '' }}&course_type={{ course_type or '' }}&enrollment_mode={{ enrollment_mode or '' }}">

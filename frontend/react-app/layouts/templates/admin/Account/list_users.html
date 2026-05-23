@@ -4,508 +4,405 @@
 
 {% block extra_css %}
 <style>
-  .admin-page-header {
-    background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
-    color: #fff;
-    border-radius: var(--radius-xl, 18px);
+  .users-management-page {
+    --um-primary: #2563eb;
+    --um-primary-dark: #1e40af;
+    --um-surface: var(--surface, #ffffff);
+    --um-surface-soft: var(--surface-soft, #f8fafc);
+    --um-border: var(--border-color, #e2e8f0);
+    --um-text: var(--text-main, #0f172a);
+    --um-muted: var(--text-muted, #64748b);
+    --um-shadow-sm: var(--shadow-sm, 0 8px 24px rgba(15, 23, 42, 0.08));
+    --um-shadow-md: var(--shadow-md, 0 16px 38px rgba(15, 23, 42, 0.14));
+    max-width: 1220px;
+    margin: 0 auto;
+    color: var(--um-text);
+  }
+
+  .users-management-page .admin-page-header {
+    background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb 58%, #7c3aed));
+    color: #ffffff;
+    border-radius: var(--radius-xl, 20px);
     padding: 24px 28px;
-    box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
-  }
-
-  .admin-page-header .header-subtitle {
-    color: rgba(255, 255, 255, 0.86);
-  }
-
-  .admin-filter-card,
-  .admin-table-card {
-    background: var(--surface, #fff);
-    border: 1px solid var(--border-color, #e2e8f0);
-    border-radius: var(--radius-lg, 16px);
-    box-shadow: var(--shadow-sm, 0 4px 16px rgba(15, 23, 42, 0.06));
-  }
-
-  .admin-filter-card {
-    padding: 18px;
-  }
-
-  .admin-summary-info {
-    color: var(--text-muted, #64748b);
-    font-size: 0.95rem;
-  }
-
-  .admin-table-card {
+    box-shadow: var(--um-shadow-md);
+    position: relative;
     overflow: hidden;
   }
 
-  .admin-table-card .table {
+  .users-management-page .admin-page-header::after {
+    content: "";
+    position: absolute;
+    right: -60px;
+    bottom: -80px;
+    width: 210px;
+    height: 210px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    pointer-events: none;
+  }
+
+  .users-management-page .header-subtitle {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .users-management-page .admin-filter-card,
+  .users-management-page .admin-table-card {
+    background: var(--um-surface);
+    border: 1px solid var(--um-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--um-shadow-sm);
+  }
+
+  .users-management-page .admin-filter-card {
+    padding: 18px;
+  }
+
+  .users-management-page .admin-summary-info {
+    color: var(--um-muted);
+    font-size: 0.95rem;
+  }
+
+  .users-management-page .admin-table-card {
+    overflow: hidden;
+  }
+
+  .users-management-page .form-label,
+  .users-management-page .text-muted,
+  .users-management-page .admin-page-footer {
+    color: var(--um-muted) !important;
+  }
+
+  .users-management-page .input-group-text,
+  .users-management-page .form-control,
+  .users-management-page .form-select {
+    background: var(--um-surface);
+    color: var(--um-text);
+    border-color: var(--um-border);
+  }
+
+  .users-management-page .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  .users-management-page .form-control:focus,
+  .users-management-page .form-select:focus {
+    background: var(--um-surface);
+    color: var(--um-text);
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22);
+  }
+
+  .users-management-page .table {
+    --bs-table-bg: var(--um-surface);
+    --bs-table-color: var(--um-text);
+    --bs-table-border-color: var(--um-border);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+    --bs-table-hover-color: var(--um-text);
     margin-bottom: 0;
+    color: var(--um-text);
   }
 
-  .admin-table-card .table thead th {
-    background: var(--surface-soft, #f8fafc);
-    color: var(--text-main, #0f172a);
-    font-weight: 700;
-    border-bottom: 1px solid var(--border-color, #e2e8f0);
+  .users-management-page .table thead th {
+    background: var(--um-surface-soft) !important;
+    color: var(--um-text) !important;
+    font-weight: 800;
+    border-color: var(--um-border) !important;
     white-space: nowrap;
+    padding: 15px 14px;
   }
 
-  .admin-table-card .table tbody td {
+  .users-management-page .table tbody td {
+    background: transparent !important;
+    color: var(--um-text) !important;
+    border-color: var(--um-border) !important;
     vertical-align: middle;
+    padding: 14px;
   }
 
-  .admin-table-card .table-hover tbody tr:hover {
-    background: rgba(37, 99, 235, 0.055);
+  .users-management-page .table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
   }
 
-  .role-badge,
-  .status-badge {
+  .users-management-page .role-badge,
+  .users-management-page .status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     border-radius: 999px;
-    padding: 0.45rem 0.7rem;
-    font-weight: 700;
+    padding: 0.45rem 0.72rem;
+    font-weight: 800;
     font-size: 0.78rem;
+    white-space: nowrap;
+    border: 1px solid transparent;
   }
 
-  .role-admin {
+  .users-management-page .role-admin {
     background: rgba(220, 38, 38, 0.12);
     color: #b91c1c;
+    border-color: rgba(220, 38, 38, 0.18);
   }
 
-  .role-teacher {
-    background: rgba(79, 70, 229, 0.12);
-    color: #4338ca;
+  .users-management-page .role-teacher {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+    border-color: rgba(37, 99, 235, 0.18);
   }
 
-  .role-student {
+  .users-management-page .role-student {
     background: rgba(22, 163, 74, 0.12);
     color: #15803d;
+    border-color: rgba(22, 163, 74, 0.18);
   }
 
-  .role-other {
+  .users-management-page .role-teaching_assistant,
+  .users-management-page .role-other {
     background: rgba(100, 116, 139, 0.14);
     color: #475569;
+    border-color: rgba(100, 116, 139, 0.18);
   }
 
-  .status-active {
+  .users-management-page .status-active {
     background: rgba(22, 163, 74, 0.12);
     color: #15803d;
+    border-color: rgba(22, 163, 74, 0.18);
   }
 
-  .status-inactive {
+  .users-management-page .status-inactive,
+  .users-management-page .status-locked,
+  .users-management-page .status-deleted {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+    border-color: rgba(239, 68, 68, 0.2);
+  }
+
+  .users-management-page .status-pending,
+  .users-management-page .status-pending_enrollment {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.22);
+  }
+
+  .users-management-page .status-other {
     background: rgba(100, 116, 139, 0.14);
     color: #475569;
+    border-color: rgba(100, 116, 139, 0.18);
   }
 
-  .admin-action-group {
+  .users-management-page .admin-action-group {
     display: inline-flex;
     align-items: center;
     border-radius: 12px;
     overflow: hidden;
-    border: 1px solid var(--border-color, #e2e8f0);
+    border: 1px solid var(--um-border);
+    background: var(--um-surface);
   }
 
-  .admin-action-group form {
+  .users-management-page .admin-action-group form {
     margin: 0;
   }
 
-  .admin-action-group .btn {
+  .users-management-page .admin-action-group .btn {
     border-radius: 0;
     border: 0;
   }
 
-  .toast-container .toast {
+  .users-management-page .toast-container .toast {
     min-width: 320px;
     border-radius: var(--radius-lg, 16px);
     box-shadow: var(--shadow-lg, 0 20px 50px rgba(15, 23, 42, 0.18));
   }
 
-  .admin-page-footer {
-    color: var(--text-muted, #64748b);
+  .users-management-page .admin-page-footer {
     font-size: 0.9rem;
     text-align: center;
   }
 
-  @media (max-width: 768px) {
-    .admin-page-header {
-      padding: 20px;
-    }
-
-    .admin-page-header .header-actions {
-      width: 100%;
-    }
-
-    .admin-page-header .header-actions .btn {
-      flex: 1 1 100%;
-    }
-
-    .toast-container .toast {
-      min-width: 280px;
-    }
+  body.dark-mode .users-management-page,
+  html[data-bs-theme="dark"] .users-management-page {
+    --um-surface: rgba(15, 23, 42, 0.94);
+    --um-surface-soft: rgba(30, 41, 59, 0.98);
+    --um-border: rgba(148, 163, 184, 0.24);
+    --um-text: #e5e7eb;
+    --um-muted: #cbd5e1;
+    --um-shadow-sm: 0 12px 34px rgba(0, 0, 0, 0.34);
+    --um-shadow-md: 0 20px 52px rgba(0, 0, 0, 0.46);
   }
 
-
-  /* =====================================================
-     Light / Dark mode compatibility
-     Dùng theo layout hiện tại: body.dark-mode
-  ===================================================== */
-  .users-management-page {
-    color: var(--text-main, #0f172a);
-  }
-
-  .admin-filter-card .form-label {
-    color: var(--text-muted, #64748b) !important;
-  }
-
-  .admin-filter-card .input-group-text,
-  .admin-filter-card .form-control,
-  .admin-filter-card .form-select {
-    background: var(--surface, #ffffff);
-    color: var(--text-main, #0f172a);
-    border-color: var(--border-color, #e2e8f0);
-  }
-
-  .admin-filter-card .form-control::placeholder {
-    color: var(--text-muted, #94a3b8);
-  }
-
-  .admin-table-card .table {
-    color: var(--text-main, #0f172a);
-  }
-
-  .admin-table-card .table tbody tr {
-    border-color: var(--border-color, #e2e8f0);
-  }
-
-  .admin-table-card .table tbody td {
-    color: var(--text-main, #0f172a);
-    border-color: var(--border-color, #e2e8f0);
-  }
-
-  .admin-table-card .text-muted {
-    color: var(--text-muted, #64748b) !important;
-  }
-
-  body.dark-mode .users-management-page {
-    --surface: rgba(15, 23, 42, 0.92);
-    --surface-soft: rgba(30, 41, 59, 0.96);
-    --border-color: rgba(148, 163, 184, 0.22);
-    --text-main: #e5e7eb;
-    --text-muted: #94a3b8;
-    --shadow-sm: 0 10px 28px rgba(0, 0, 0, 0.35);
-    --shadow-md: 0 18px 44px rgba(0, 0, 0, 0.42);
-    --shadow-lg: 0 22px 60px rgba(0, 0, 0, 0.48);
-  }
-
-  body.dark-mode .admin-page-header {
-    background: linear-gradient(135deg, #0f172a, #1e3a8a 55%, #312e81);
+  body.dark-mode .users-management-page .admin-page-header,
+  html[data-bs-theme="dark"] .users-management-page .admin-page-header {
+    background: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
     border: 1px solid rgba(147, 197, 253, 0.18);
   }
 
-  body.dark-mode .admin-filter-card,
-  body.dark-mode .admin-table-card {
-    background: var(--surface);
-    border-color: var(--border-color);
-    color: var(--text-main);
+  body.dark-mode .users-management-page .table tbody tr:nth-child(even) td,
+  html[data-bs-theme="dark"] .users-management-page .table tbody tr:nth-child(even) td {
+    background: rgba(30, 41, 59, 0.36) !important;
   }
 
-  body.dark-mode .admin-filter-card .form-label,
-  body.dark-mode .admin-summary-info,
-  body.dark-mode .admin-page-footer,
-  body.dark-mode .admin-table-card .text-muted {
-    color: var(--text-muted) !important;
+  body.dark-mode .users-management-page .table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .users-management-page .table-hover tbody tr:hover td {
+    background: rgba(51, 65, 85, 0.88) !important;
+    color: #ffffff !important;
   }
 
-  body.dark-mode .admin-filter-card .input-group-text,
-  body.dark-mode .admin-filter-card .form-control,
-  body.dark-mode .admin-filter-card .form-select {
-    background: rgba(15, 23, 42, 0.95);
-    color: var(--text-main);
-    border-color: var(--border-color);
+  body.dark-mode .users-management-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .users-management-page .form-control::placeholder {
+    color: #94a3b8;
   }
 
-  body.dark-mode .admin-filter-card .form-control::placeholder {
-    color: #64748b;
-  }
-
-  body.dark-mode .admin-table-card .table,
-  body.dark-mode .admin-table-card .table tbody td,
-  body.dark-mode .admin-table-card .table thead th {
-    color: var(--text-main);
-    border-color: var(--border-color);
-  }
-
-  body.dark-mode .admin-table-card .table thead th {
-    background: rgba(30, 41, 59, 0.98);
-    color: #dbeafe;
-  }
-
-  body.dark-mode .admin-table-card .table-hover tbody tr:hover {
-    background: rgba(59, 130, 246, 0.14);
-  }
-
-  body.dark-mode .admin-action-group {
-    border-color: var(--border-color);
-    background: rgba(15, 23, 42, 0.45);
-  }
-
-  body.dark-mode .role-admin {
+  body.dark-mode .users-management-page .role-admin,
+  html[data-bs-theme="dark"] .users-management-page .role-admin {
     background: rgba(248, 113, 113, 0.16);
     color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.28);
   }
 
-  body.dark-mode .role-teacher {
-    background: rgba(129, 140, 248, 0.16);
-    color: #c4b5fd;
+  body.dark-mode .users-management-page .role-teacher,
+  html[data-bs-theme="dark"] .users-management-page .role-teacher {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+    border-color: rgba(96, 165, 250, 0.28);
   }
 
-  body.dark-mode .role-student,
-  body.dark-mode .status-active {
-    background: rgba(34, 197, 94, 0.15);
+  body.dark-mode .users-management-page .role-student,
+  html[data-bs-theme="dark"] .users-management-page .role-student,
+  body.dark-mode .users-management-page .status-active,
+  html[data-bs-theme="dark"] .users-management-page .status-active {
+    background: rgba(34, 197, 94, 0.16);
     color: #86efac;
+    border-color: rgba(34, 197, 94, 0.28);
   }
 
-  body.dark-mode .role-other,
-  body.dark-mode .status-inactive {
+  body.dark-mode .users-management-page .role-teaching_assistant,
+  body.dark-mode .users-management-page .role-other,
+  html[data-bs-theme="dark"] .users-management-page .role-teaching_assistant,
+  html[data-bs-theme="dark"] .users-management-page .role-other {
     background: rgba(148, 163, 184, 0.16);
     color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.28);
   }
 
-  body.dark-mode .alert-info {
-    background: rgba(59, 130, 246, 0.15);
+  body.dark-mode .users-management-page .status-inactive,
+  body.dark-mode .users-management-page .status-locked,
+  body.dark-mode .users-management-page .status-deleted,
+  html[data-bs-theme="dark"] .users-management-page .status-inactive,
+  html[data-bs-theme="dark"] .users-management-page .status-locked,
+  html[data-bs-theme="dark"] .users-management-page .status-deleted {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.28);
+  }
+
+  body.dark-mode .users-management-page .status-pending,
+  body.dark-mode .users-management-page .status-pending_enrollment,
+  html[data-bs-theme="dark"] .users-management-page .status-pending,
+  html[data-bs-theme="dark"] .users-management-page .status-pending_enrollment {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+
+  body.dark-mode .users-management-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  body.dark-mode .users-management-page .btn-outline-warning {
+    color: #fbbf24;
+    border-color: #fbbf24;
+  }
+
+  body.dark-mode .users-management-page .btn-outline-success {
+    color: #86efac;
+    border-color: #22c55e;
+  }
+
+  body.dark-mode .users-management-page .btn-outline-danger {
+    color: #fb7185;
+    border-color: #fb7185;
+  }
+
+  body.dark-mode .users-management-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .users-management-page .btn-outline-primary:hover,
+  body.dark-mode .users-management-page .btn-outline-warning:hover,
+  body.dark-mode .users-management-page .btn-outline-success:hover,
+  body.dark-mode .users-management-page .btn-outline-danger:hover,
+  body.dark-mode .users-management-page .btn-outline-secondary:hover {
+    color: #0f172a;
+  }
+
+  body.dark-mode .users-management-page .alert-info,
+  html[data-bs-theme="dark"] .users-management-page .alert-info {
+    background: rgba(59, 130, 246, 0.14);
     color: #bfdbfe;
     border-color: rgba(96, 165, 250, 0.25);
   }
-/* =====================================================
-   FIX TABLE LIGHT / DARK MODE - ADMIN LIST PAGES
-   Dán cuối file để override CSS cũ
-===================================================== */
 
-/* ---------- LIGHT MODE ---------- */
-.table-card,
-.admin-card,
-.data-card,
-.content-card {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid rgba(226, 232, 240, 0.95) !important;
-  color: #0f172a !important;
-}
+  @media (max-width: 768px) {
+    .users-management-page .admin-page-header {
+      padding: 20px;
+    }
 
-.table,
-table {
-  --bs-table-bg: #ffffff;
-  --bs-table-color: #1e293b;
-  --bs-table-border-color: #e2e8f0;
-  --bs-table-hover-bg: #f8fafc;
-  color: #1e293b !important;
-}
+    .users-management-page .header-actions {
+      width: 100%;
+    }
 
-.table thead th,
-table thead th {
-  background: #eaf2ff !important;
-  color: #1e3a8a !important;
-  border-color: #bfdbfe !important;
-  font-weight: 800;
-}
+    .users-management-page .header-actions .btn {
+      flex: 1 1 100%;
+    }
 
-.table tbody tr,
-table tbody tr {
-  background: #ffffff !important;
-}
+    .users-management-page .toast-container .toast {
+      min-width: 280px;
+    }
 
-.table tbody td,
-table tbody td {
-  background: #ffffff !important;
-  color: #334155 !important;
-  border-color: #e2e8f0 !important;
-}
-
-.table tbody tr:hover td,
-table tbody tr:hover td {
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
-}
-
-/* Text phụ */
-.text-muted,
-.mini-muted,
-.sub-text {
-  color: #64748b !important;
-}
-
-/* ---------- DARK MODE ---------- */
-body.dark-mode .table-card,
-body.dark-mode .admin-card,
-body.dark-mode .data-card,
-body.dark-mode .content-card {
-  background: rgba(15, 23, 42, 0.92) !important;
-  border: 1px solid rgba(148, 163, 184, 0.24) !important;
-  color: #e5e7eb !important;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35) !important;
-}
-
-body.dark-mode .table,
-body.dark-mode table {
-  --bs-table-bg: rgba(15, 23, 42, 0.92);
-  --bs-table-color: #e5e7eb;
-  --bs-table-border-color: rgba(148, 163, 184, 0.22);
-  --bs-table-hover-bg: rgba(30, 41, 59, 0.95);
-  color: #e5e7eb !important;
-  background: rgba(15, 23, 42, 0.92) !important;
-}
-
-body.dark-mode .table thead th,
-body.dark-mode table thead th {
-  background: rgba(30, 41, 59, 0.98) !important;
-  color: #f8fafc !important;
-  border-color: rgba(148, 163, 184, 0.28) !important;
-}
-
-body.dark-mode .table tbody tr,
-body.dark-mode table tbody tr {
-  background: rgba(15, 23, 42, 0.90) !important;
-}
-
-body.dark-mode .table tbody tr:nth-child(even),
-body.dark-mode table tbody tr:nth-child(even) {
-  background: rgba(30, 41, 59, 0.80) !important;
-}
-
-body.dark-mode .table tbody td,
-body.dark-mode table tbody td {
-  background: transparent !important;
-  color: #e5e7eb !important;
-  border-color: rgba(148, 163, 184, 0.20) !important;
-}
-
-body.dark-mode .table tbody tr:hover td,
-body.dark-mode table tbody tr:hover td {
-  background: rgba(51, 65, 85, 0.88) !important;
-  color: #ffffff !important;
-}
-
-/* Sửa chữ bị mờ trong dark mode */
-body.dark-mode .text-muted,
-body.dark-mode .mini-muted,
-body.dark-mode .sub-text,
-body.dark-mode .form-label {
-  color: #cbd5e1 !important;
-}
-
-body.dark-mode .text-dark {
-  color: #f8fafc !important;
-}
-
-/* Input / select trong dark mode */
-body.dark-mode .form-control,
-body.dark-mode .form-select {
-  background: rgba(15, 23, 42, 0.92) !important;
-  color: #e5e7eb !important;
-  border-color: rgba(148, 163, 184, 0.30) !important;
-}
-
-body.dark-mode .form-control::placeholder {
-  color: #94a3b8 !important;
-}
-
-body.dark-mode .form-control:focus,
-body.dark-mode .form-select:focus {
-  background: rgba(15, 23, 42, 1) !important;
-  color: #ffffff !important;
-  border-color: #60a5fa !important;
-  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22) !important;
-}
-
-/* Badge nhìn rõ hơn */
-body.dark-mode .badge.bg-success,
-body.dark-mode .status-active {
-  background: rgba(34, 197, 94, 0.18) !important;
-  color: #86efac !important;
-  border: 1px solid rgba(34, 197, 94, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-danger,
-body.dark-mode .status-inactive {
-  background: rgba(239, 68, 68, 0.18) !important;
-  color: #fca5a5 !important;
-  border: 1px solid rgba(239, 68, 68, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-warning {
-  background: rgba(245, 158, 11, 0.18) !important;
-  color: #fcd34d !important;
-  border: 1px solid rgba(245, 158, 11, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-info {
-  background: rgba(14, 165, 233, 0.18) !important;
-  color: #7dd3fc !important;
-  border: 1px solid rgba(14, 165, 233, 0.28) !important;
-}
-
-/* Nút thao tác trong dark mode */
-body.dark-mode .btn-outline-warning {
-  color: #fbbf24 !important;
-  border-color: #fbbf24 !important;
-}
-
-body.dark-mode .btn-outline-danger {
-  color: #fb7185 !important;
-  border-color: #fb7185 !important;
-}
-
-body.dark-mode .btn-outline-info {
-  color: #38bdf8 !important;
-  border-color: #38bdf8 !important;
-}
-
-body.dark-mode .btn-outline-secondary {
-  color: #cbd5e1 !important;
-  border-color: #64748b !important;
-}
-
-body.dark-mode .btn-outline-warning:hover,
-body.dark-mode .btn-outline-danger:hover,
-body.dark-mode .btn-outline-info:hover,
-body.dark-mode .btn-outline-secondary:hover {
-  color: #0f172a !important;
-}
-
-/* Alert trong dark mode */
-body.dark-mode .alert-success {
-  background: rgba(34, 197, 94, 0.14) !important;
-  color: #bbf7d0 !important;
-  border-color: rgba(34, 197, 94, 0.24) !important;
-}
-
-body.dark-mode .alert-danger {
-  background: rgba(239, 68, 68, 0.14) !important;
-  color: #fecaca !important;
-  border-color: rgba(239, 68, 68, 0.24) !important;
-}
-
-body.dark-mode .alert-info {
-  background: rgba(59, 130, 246, 0.14) !important;
-  color: #bfdbfe !important;
-  border-color: rgba(59, 130, 246, 0.24) !important;
-}
-
-/* Mobile table */
-@media (max-width: 768px) {
-  body.dark-mode .responsive-table tr {
-    background: rgba(15, 23, 42, 0.92) !important;
-    border-color: rgba(148, 163, 184, 0.22) !important;
+    .users-management-page .admin-action-group {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+    }
   }
-
-  body.dark-mode .responsive-table td::before {
-    color: #93c5fd !important;
-  }
-}
 </style>
 {% endblock %}
 
+{% macro role_badge(role_value) -%}
+  {% set rv = (role_value or 'other')|lower %}
+  {% if rv == 'admin' %}
+    <span class="role-badge role-admin"><i class="bi bi-shield-lock"></i>Quản trị viên</span>
+  {% elif rv == 'teacher' %}
+    <span class="role-badge role-teacher"><i class="bi bi-person-video3"></i>Giảng viên</span>
+  {% elif rv == 'student' %}
+    <span class="role-badge role-student"><i class="bi bi-mortarboard"></i>Sinh viên</span>
+  {% elif rv == 'teaching_assistant' %}
+    <span class="role-badge role-teaching_assistant"><i class="bi bi-person-workspace"></i>Trợ giảng</span>
+  {% else %}
+    <span class="role-badge role-other"><i class="bi bi-person"></i>Khác</span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro status_badge(status_value) -%}
+  {% set sv = (status_value or 'other')|lower %}
+  {% if sv == 'active' %}
+    <span class="status-badge status-active"><i class="bi bi-check-circle"></i>Hoạt động</span>
+  {% elif sv == 'inactive' %}
+    <span class="status-badge status-inactive"><i class="bi bi-slash-circle"></i>Vô hiệu hóa</span>
+  {% elif sv == 'locked' %}
+    <span class="status-badge status-locked"><i class="bi bi-lock"></i>Đã khóa</span>
+  {% elif sv == 'pending' or sv == 'pending_enrollment' %}
+    <span class="status-badge status-pending"><i class="bi bi-hourglass-split"></i>Chờ duyệt</span>
+  {% elif sv == 'deleted' %}
+    <span class="status-badge status-deleted"><i class="bi bi-trash"></i>Đã xóa</span>
+  {% else %}
+    <span class="status-badge status-other"><i class="bi bi-question-circle"></i>Không xác định</span>
+  {% endif %}
+{%- endmacro %}
+
 {% block content %}
+{% set user_list = users if users is defined and users else [] %}
+
 <div class="admin-page users-management-page">
 
   <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -570,29 +467,33 @@ body.dark-mode .alert-info {
   <div class="admin-filter-card mb-3">
     <form class="row gy-2 gx-2 align-items-center" onsubmit="return false;">
       <div class="col-12 col-lg-5">
-        <label for="searchInput" class="form-label fw-semibold small text-muted">Tìm kiếm</label>
+        <label for="searchInput" class="form-label fw-semibold small">Tìm kiếm</label>
         <div class="input-group">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
-          <input type="text" class="form-control" id="searchInput" placeholder="Tên, email hoặc username...">
+          <input type="text" class="form-control" id="searchInput" placeholder="Tên, thư điện tử hoặc tên đăng nhập...">
         </div>
       </div>
 
       <div class="col-12 col-md-6 col-lg-3">
-        <label for="roleFilter" class="form-label fw-semibold small text-muted">Vai trò</label>
+        <label for="roleFilter" class="form-label fw-semibold small">Vai trò</label>
         <select class="form-select" id="roleFilter">
           <option value="">Tất cả vai trò</option>
-          <option value="admin">Admin</option>
-          <option value="teacher">Giáo viên</option>
+          <option value="admin">Quản trị viên</option>
+          <option value="teacher">Giảng viên</option>
           <option value="student">Sinh viên</option>
+          <option value="teaching_assistant">Trợ giảng</option>
         </select>
       </div>
 
       <div class="col-12 col-md-6 col-lg-3">
-        <label for="statusFilter" class="form-label fw-semibold small text-muted">Trạng thái</label>
+        <label for="statusFilter" class="form-label fw-semibold small">Trạng thái</label>
         <select class="form-select" id="statusFilter">
           <option value="">Tất cả trạng thái</option>
           <option value="active">Hoạt động</option>
           <option value="inactive">Vô hiệu hóa</option>
+          <option value="locked">Đã khóa</option>
+          <option value="pending">Chờ duyệt</option>
+          <option value="deleted">Đã xóa</option>
         </select>
       </div>
     </form>
@@ -600,20 +501,20 @@ body.dark-mode .alert-info {
 
   <div class="admin-summary-info mb-2">
     <i class="bi bi-info-circle me-1"></i>
-    Hiển thị <span id="visibleCount">{{ users|length if users else 0 }}</span> /
-    <strong>{{ users|length if users else 0 }}</strong> người dùng.
+    Hiển thị <span id="visibleCount">{{ user_list|length }}</span> /
+    <strong>{{ user_list|length }}</strong> người dùng.
   </div>
 
-  {% if users %}
+  {% if user_list %}
   <div class="admin-table-card">
     <div class="table-responsive">
       <table class="table table-hover align-middle" id="userTable">
         <thead>
           <tr>
-            <th class="text-center">#</th>
+            <th class="text-center">STT</th>
             <th>Tên đăng nhập</th>
             <th>Họ và tên</th>
-            <th>Email</th>
+            <th>Thư điện tử</th>
             <th>Vai trò</th>
             <th>Trạng thái</th>
             <th>Ngày tạo</th>
@@ -621,38 +522,20 @@ body.dark-mode .alert-info {
           </tr>
         </thead>
         <tbody>
-          {% for user in users %}
-          <tr data-role="{{ user.role|lower }}" data-status="{{ user.status|lower }}">
+          {% for user in user_list %}
+          {% set role_value = (user.role if user.role is defined and user.role else 'other')|lower %}
+          {% set status_value = (user.status if user.status is defined and user.status else 'other')|lower %}
+          <tr data-role="{{ role_value }}" data-status="{{ status_value }}">
             <td class="text-center text-muted fw-semibold">{{ loop.index }}</td>
-            <td class="fw-semibold">{{ user.username }}</td>
-            <td>{{ user.full_name }}</td>
-            <td>{{ user.email }}</td>
+            <td class="fw-semibold">{{ user.username or '—' }}</td>
+            <td>{{ user.full_name or user.username or 'Không rõ' }}</td>
+            <td>{{ user.email or '—' }}</td>
 
-            <td>
-              {% if user.role == 'admin' %}
-                <span class="role-badge role-admin"><i class="bi bi-shield-lock"></i>Admin</span>
-              {% elif user.role == 'teacher' %}
-                <span class="role-badge role-teacher"><i class="bi bi-person-video3"></i>Giáo viên</span>
-              {% elif user.role == 'student' %}
-                <span class="role-badge role-student"><i class="bi bi-mortarboard"></i>Sinh viên</span>
-              {% else %}
-                <span class="role-badge role-other"><i class="bi bi-person"></i>Khác</span>
-              {% endif %}
-            </td>
+            <td>{{ role_badge(role_value) }}</td>
 
-            <td>
-              {% if user.status == 'active' %}
-                <span class="status-badge status-active">
-                  <i class="bi bi-check-circle"></i>Hoạt động
-                </span>
-              {% else %}
-                <span class="status-badge status-inactive">
-                  <i class="bi bi-slash-circle"></i>Vô hiệu hóa
-                </span>
-              {% endif %}
-            </td>
+            <td>{{ status_badge(status_value) }}</td>
 
-            <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '' }}</td>
+            <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '—' }}</td>
 
             <td class="text-center">
               <div class="admin-action-group" role="group" aria-label="Thao tác người dùng">
@@ -662,12 +545,12 @@ body.dark-mode .alert-info {
                   <i class="bi bi-pencil-square"></i>
                 </a>
 
-                {% if user.role != 'admin' %}
-                  {% if user.status == 'active' %}
+                {% if role_value != 'admin' %}
+                  {% if status_value == 'active' %}
                   <form method="post"
                         action="/admin/Account/deactivate/{{ user.id }}"
                         class="d-inline"
-                        onsubmit="return confirm('Vô hiệu hóa tài khoản này?')">
+                        onsubmit="return confirm('Bạn có chắc muốn vô hiệu hóa tài khoản này không?')">
                     <button type="submit"
                             class="btn btn-sm btn-outline-warning"
                             title="Vô hiệu hóa">
@@ -678,7 +561,7 @@ body.dark-mode .alert-info {
                   <form method="post"
                         action="/admin/Account/restore/{{ user.id }}"
                         class="d-inline"
-                        onsubmit="return confirm('Khôi phục tài khoản này?')">
+                        onsubmit="return confirm('Bạn có chắc muốn khôi phục tài khoản này không?')">
                     <button type="submit"
                             class="btn btn-sm btn-outline-success"
                             title="Khôi phục">
@@ -690,7 +573,7 @@ body.dark-mode .alert-info {
                   <form method="post"
                         action="/admin/Account/delete/{{ user.id }}"
                         class="d-inline"
-                        onsubmit="return confirm('Xóa tài khoản này? Nếu còn dữ liệu liên kết, hệ thống sẽ tự chuyển sang vô hiệu hóa.')">
+                        onsubmit="return confirm('Bạn có chắc muốn xóa tài khoản này không? Nếu còn dữ liệu liên kết, hệ thống sẽ tự chuyển sang vô hiệu hóa.')">
                     <button type="submit"
                             class="btn btn-sm btn-outline-danger"
                             title="Xóa tài khoản">
@@ -700,14 +583,14 @@ body.dark-mode .alert-info {
                 {% else %}
                   <button type="button"
                           class="btn btn-sm btn-outline-secondary"
-                          title="Không thể vô hiệu hóa admin"
+                          title="Không thể vô hiệu hóa quản trị viên"
                           disabled>
                     <i class="bi bi-lock"></i>
                   </button>
 
                   <button type="button"
                           class="btn btn-sm btn-outline-secondary"
-                          title="Không thể xóa admin"
+                          title="Không thể xóa quản trị viên"
                           disabled>
                     <i class="bi bi-trash"></i>
                   </button>
@@ -727,7 +610,7 @@ body.dark-mode .alert-info {
   {% endif %}
 
   <footer class="admin-page-footer mt-4">
-    <p class="mb-0">© {{ current_year }} Hệ thống E-Learning — Quản lý người dùng</p>
+    <p class="mb-0">© {{ current_year if current_year is defined and current_year else (now.year if now is defined else 2026) }} Hệ thống quản trị học tập — Quản lý người dùng</p>
   </footer>
 </div>
 {% endblock %}
@@ -744,6 +627,8 @@ body.dark-mode .alert-info {
 
     const toastEls = document.querySelectorAll(".auto-hide-toast");
     toastEls.forEach((toastEl) => {
+      if (!window.bootstrap || !bootstrap.Toast) return;
+
       const toast = new bootstrap.Toast(toastEl, {
         delay: 3000,
         autohide: true

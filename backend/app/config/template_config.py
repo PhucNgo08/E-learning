@@ -37,7 +37,7 @@ def log_template_config():
     print("=" * 80)
 
 
-if os.environ.get("TEMPLATE_DEBUG") == "1" and not os.environ.get("TEMPLATE_LOGGED"):
+if not os.environ.get("TEMPLATE_LOGGED"):
     os.environ["TEMPLATE_LOGGED"] = "1"
     log_template_config()
 
@@ -105,11 +105,85 @@ def todatetime(value):
             return value
 
 
+
+def vi_status_label(value):
+    if value is None:
+        return "Không rõ"
+    key = str(value).strip().lower()
+    labels = {
+        "active": "Đang hoạt động",
+        "inactive": "Không hoạt động",
+        "suspended": "Tạm khóa",
+        "pending": "Đang chờ",
+        "pending_approval": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "rejected": "Đã từ chối",
+        "cancelled": "Đã hủy",
+        "completed": "Đã hoàn thành",
+        "in_progress": "Đang thực hiện",
+        "not_started": "Chưa bắt đầu",
+        "submitted": "Đã nộp",
+        "graded": "Đã chấm",
+        "late": "Nộp muộn",
+        "resubmitted": "Đã nộp lại",
+        "published": "Đã đăng",
+        "draft": "Bản nháp",
+        "archived": "Đã lưu trữ",
+        "planning": "Đang lên kế hoạch",
+        "open_for_enrollment": "Mở ghi danh",
+        "paid": "Đã thanh toán",
+        "failed": "Thất bại",
+        "success": "Thành công",
+        "verified": "Đã xác minh",
+        "issued": "Đã cấp",
+        "manual": "Thủ công",
+        "purchase": "Mua khóa học",
+        "auto": "Tự động",
+        "approval": "Cần duyệt",
+        "individual": "Cá nhân",
+        "group": "Nhóm",
+        "mandatory": "Bắt buộc",
+        "elective": "Tự chọn",
+        "beginner": "Cơ bản",
+        "intermediate": "Trung cấp",
+        "advanced": "Nâng cao",
+        "easy": "Dễ",
+        "medium": "Trung bình",
+        "hard": "Khó",
+        "practice": "Luyện tập",
+        "graded_quiz": "Tính điểm",
+        "video": "Video",
+        "document": "Tài liệu",
+        "quiz": "Bài kiểm tra",
+        "assignment": "Bài tập",
+        "mixed": "Tổng hợp",
+    }
+    return labels.get(key, str(value).strip().replace("_", " ") or "Không rõ")
+
+
+def vi_role_label(value):
+    if value is None:
+        return "Không rõ"
+    key = str(value).strip().lower()
+    labels = {
+        "admin": "Quản trị viên",
+        "teacher": "Giảng viên",
+        "student": "Sinh viên",
+        "teaching_assistant": "Trợ giảng",
+        "prospective_student": "Học viên tiềm năng",
+    }
+    return labels.get(key, str(value).strip().replace("_", " ") or "Không rõ")
+
+
 for tpl in templates.values():
     tpl.env.filters["filesize"] = filesize_fmt
     tpl.env.filters["datetime"] = datetime_fmt
     tpl.env.filters["date_short"] = date_short
     tpl.env.filters["todatetime"] = todatetime
+    tpl.env.filters["vi_status"] = vi_status_label
+    tpl.env.filters["vi_role"] = vi_role_label
+    tpl.env.globals["vi_status"] = vi_status_label
+    tpl.env.globals["vi_role"] = vi_role_label
 
 
 # ==========================================================

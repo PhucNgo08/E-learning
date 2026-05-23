@@ -395,12 +395,24 @@ def edit_assignment_form(
     if not assignment:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài tập")
 
+    courses = db.query(Course).filter(Course.teacher_id == current_teacher.id).all()
+    course_ids = [c.id for c in courses]
+    modules = (
+        db.query(Module)
+        .filter(Module.course_id.in_(course_ids))
+        .order_by(Module.course_id, Module.module_number)
+        .all()
+        if course_ids else []
+    )
+
     templates = get_template_by_path(str(request.url.path))
     return templates.TemplateResponse(
         "assignments/edit.html",
         {
             "request": request,
             "assignment": assignment,
+            "courses": courses,
+            "modules": modules,
             "teacher_name": getattr(current_teacher, "full_name", None) or getattr(current_teacher, "username", ""),
         },
     )
@@ -577,6 +589,8 @@ def submit_grade(
         raise
     except PermissionError as e:
         raise HTTPException(status_code=403, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="Không thể chấm điểm bài nộp")

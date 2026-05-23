@@ -337,14 +337,32 @@ def get_course_detail(db: Session, course_id: str, role: str, user_id: str | Non
         if not can_access and not is_public_preview:
             return None
 
+    raw_modules = course.modules or []
+    if role == "student":
+        raw_modules = [
+            module for module in raw_modules
+            if module.deleted_at is None and int(getattr(module, "is_published", 0) or 0) == 1
+        ]
+    else:
+        raw_modules = [module for module in raw_modules if module.deleted_at is None]
+
     modules_sorted = sorted(
-        course.modules or [],
+        raw_modules,
         key=lambda m: (m.module_number or 0, m.created_at or datetime.min),
     )
 
     for module in modules_sorted:
+        raw_lessons = module.lessons or []
+        if role == "student":
+            raw_lessons = [
+                lesson for lesson in raw_lessons
+                if lesson.deleted_at is None and int(getattr(lesson, "is_published", 0) or 0) == 1
+            ]
+        else:
+            raw_lessons = [lesson for lesson in raw_lessons if lesson.deleted_at is None]
+
         module.lessons = sorted(
-            [lesson for lesson in (module.lessons or []) if lesson.deleted_at is None],
+            raw_lessons,
             key=lambda l: (l.lesson_number or 0, l.created_at or datetime.min),
         )
 
@@ -423,7 +441,9 @@ def get_enrolled_courses(
             .filter(
                 Module.course_id == enrollment.course_id,
                 Module.deleted_at.is_(None),
+                Module.is_published == 1,
                 Lesson.deleted_at.is_(None),
+                Lesson.is_published == 1,
             )
             .count()
         )
@@ -436,7 +456,9 @@ def get_enrolled_courses(
                 LessonProgress.user_id == user_id,
                 Module.course_id == enrollment.course_id,
                 Module.deleted_at.is_(None),
+                Module.is_published == 1,
                 Lesson.deleted_at.is_(None),
+                Lesson.is_published == 1,
                 LessonProgress.progress_status == "completed",
             )
             .count()
@@ -500,6 +522,7 @@ def get_course_progress(db: Session, course_id: str, user_id: str):
         .filter(
             Module.course_id == course_id,
             Module.deleted_at.is_(None),
+            Module.is_published == 1,
         )
         .order_by(Module.module_number.asc())
         .all()
@@ -514,7 +537,9 @@ def get_course_progress(db: Session, course_id: str, user_id: str):
             LessonProgress.user_id == user_id,
             Module.course_id == course_id,
             Module.deleted_at.is_(None),
+            Module.is_published == 1,
             Lesson.deleted_at.is_(None),
+            Lesson.is_published == 1,
             LessonProgress.progress_status == "completed",
         )
         .all()
@@ -526,7 +551,10 @@ def get_course_progress(db: Session, course_id: str, user_id: str):
 
     for module in modules:
         module.lessons = sorted(
-            [lesson for lesson in (module.lessons or []) if lesson.deleted_at is None],
+            [
+                lesson for lesson in (module.lessons or [])
+                if lesson.deleted_at is None and int(getattr(lesson, "is_published", 0) or 0) == 1
+            ],
             key=lambda l: (l.lesson_number or 0, l.created_at or datetime.min),
         )
 

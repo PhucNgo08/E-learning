@@ -2,8 +2,9 @@
 {% block title %}📊 Thống kê bài tập{% endblock %}
 {% block content %}
 
+
 <style>
-  :root {
+  .assignment-page {
     --asg-primary: #2563eb;
     --asg-primary-2: #7c3aed;
     --asg-success: #16a34a;
@@ -15,24 +16,26 @@
     --asg-soft: #f8fafc;
     --asg-card: rgba(255, 255, 255, 0.96);
     --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
-  }
-
-  .assignment-page {
     max-width: 1280px;
     margin: 0 auto;
+    color: var(--asg-text);
   }
 
-  .a-hero,
-  .a-card,
-  .table-card,
-  .stat-card,
-  .empty-state {
+  .assignment-page.assignment-page-narrow {
+    max-width: 920px;
+  }
+
+  .assignment-page .a-hero,
+  .assignment-page .a-card,
+  .assignment-page .table-card,
+  .assignment-page .stat-card,
+  .assignment-page .empty-state {
     border: 1px solid rgba(226, 232, 240, .95);
     background: var(--asg-card);
     box-shadow: var(--asg-shadow);
   }
 
-  .a-hero {
+  .assignment-page .a-hero {
     position: relative;
     overflow: hidden;
     border-radius: 28px;
@@ -40,7 +43,7 @@
     margin-bottom: 22px;
   }
 
-  .a-hero::before {
+  .assignment-page .a-hero::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -50,12 +53,12 @@
     pointer-events: none;
   }
 
-  .a-hero > * {
+  .assignment-page .a-hero > * {
     position: relative;
     z-index: 1;
   }
 
-  .a-title {
+  .assignment-page .a-title {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -67,15 +70,15 @@
     word-break: break-word;
   }
 
-  .a-subtitle {
+  .assignment-page .a-subtitle {
     color: var(--asg-muted);
     margin: 8px 0 0;
     line-height: 1.55;
   }
 
-  .a-actions,
-  .action-buttons,
-  .page-actions {
+  .assignment-page .a-actions,
+  .assignment-page .action-buttons,
+  .assignment-page .page-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -83,36 +86,36 @@
     align-items: center;
   }
 
-  .a-card {
+  .assignment-page .a-card {
     border-radius: 24px;
     padding: 22px;
   }
 
-  .stat-grid {
+  .assignment-page .stat-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 18px;
   }
 
-  .stat-card {
+  .assignment-page .stat-card {
     border-radius: 22px;
     padding: 17px 18px;
     transition: .18s ease;
   }
 
-  .stat-card:hover {
+  .assignment-page .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
   }
 
-  .stat-label {
+  .assignment-page .stat-label {
     color: var(--asg-muted);
     font-size: .88rem;
     font-weight: 700;
   }
 
-  .stat-value {
+  .assignment-page .stat-value {
     margin-top: 5px;
     font-size: 1.65rem;
     font-weight: 850;
@@ -120,7 +123,7 @@
     line-height: 1.15;
   }
 
-  .tool-row {
+  .assignment-page .tool-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -128,149 +131,244 @@
     align-items: center;
   }
 
-  .tool-row .form-control,
-  .tool-row .form-select {
-    max-width: 310px;
+  .assignment-page .tool-row .form-control,
+  .assignment-page .tool-row .form-select {
+    max-width: 340px;
     border-radius: 14px;
   }
 
-  .form-control,
-  .form-select {
+  .assignment-page .form-label {
+    color: var(--asg-text);
+  }
+
+  .assignment-page .form-control,
+  .assignment-page .form-select {
     border-radius: 14px;
     border-color: #dbe3ef;
+    color: var(--asg-text);
+    background-color: #ffffff;
   }
 
-  .form-control:focus,
-  .form-select:focus {
+  .assignment-page .form-control:focus,
+  .assignment-page .form-select:focus {
     border-color: #93c5fd;
     box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
   }
 
-  .btn {
+  .assignment-page .btn {
     border-radius: 13px;
     font-weight: 700;
   }
 
-  .table-card {
+  .assignment-page .table-card {
     border-radius: 24px;
     overflow: hidden;
   }
 
-  .table {
+  .assignment-page .table {
     margin-bottom: 0;
+    color: var(--asg-text);
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--asg-text);
+    --bs-table-border-color: var(--asg-line);
+    --bs-table-hover-bg: #f8fbff;
   }
 
-  .table thead th {
-    background: linear-gradient(180deg, #eff6ff, #e0edff);
-    color: #1e40af;
+  .assignment-page .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff) !important;
+    color: #1e40af !important;
     font-weight: 850;
     white-space: nowrap;
     border-bottom: 1px solid #bfdbfe;
     vertical-align: middle;
   }
 
-  .table tbody td {
+  .assignment-page .table tbody td {
     vertical-align: middle;
+    color: var(--asg-text);
+    border-color: var(--asg-line);
   }
 
-  .table-hover tbody tr:hover {
-    background: #f8fbff;
+  .assignment-page .table-hover tbody tr:hover td {
+    background: #f8fbff !important;
   }
 
-  .info-grid {
+  .assignment-page .info-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
 
-  .info-box,
-  .file-box {
+  .assignment-page .info-box,
+  .assignment-page .file-box {
     border-radius: 18px;
     background: var(--asg-soft);
     border: 1px solid var(--asg-line);
     padding: 14px 16px;
   }
 
-  .file-box {
+  .assignment-page .file-box {
     line-height: 1.65;
   }
 
-  .status-badge,
-  .badge {
+  .assignment-page .status-badge,
+  .assignment-page .badge {
     border-radius: 999px;
     padding: 6px 10px;
     font-weight: 750;
   }
 
-  .text-pre-wrap {
+  .assignment-page .text-pre-wrap {
     white-space: pre-wrap;
     word-break: break-word;
   }
 
-  .empty-state {
+  .assignment-page .empty-state {
     border-radius: 24px;
     padding: 34px 20px;
     text-align: center;
   }
 
-  .mini-muted {
-    color: var(--asg-muted);
-    font-size: .9rem;
+  .assignment-page .mini-muted,
+  .assignment-page .text-muted {
+    color: var(--asg-muted) !important;
   }
 
-  .progress-thin {
+  .assignment-page .progress-thin {
     height: 9px;
     border-radius: 999px;
     overflow: hidden;
   }
 
-  img,
-  video,
-  canvas {
+  .assignment-page img,
+  .assignment-page video,
+  .assignment-page canvas {
     max-width: 100%;
     height: auto;
   }
 
-  body.dark-mode .a-hero,
-  body.dark-mode .a-card,
-  body.dark-mode .table-card,
-  body.dark-mode .stat-card,
-  body.dark-mode .empty-state {
-    background: rgba(15, 23, 42, .90);
-    border-color: rgba(148, 163, 184, .22);
-    color: #e5e7eb;
+  body.dark-mode .assignment-page,
+  html[data-bs-theme="dark"] .assignment-page,
+  body[data-theme="dark"] .assignment-page {
+    --asg-text: #e5e7eb;
+    --asg-muted: #cbd5e1;
+    --asg-line: rgba(148, 163, 184, .25);
+    --asg-soft: rgba(30, 41, 59, .86);
+    --asg-card: rgba(15, 23, 42, .90);
+    --asg-shadow: 0 18px 45px rgba(0, 0, 0, .38);
   }
 
-  body.dark-mode .a-title,
-  body.dark-mode .stat-value {
+  body.dark-mode .assignment-page .a-hero,
+  body.dark-mode .assignment-page .a-card,
+  body.dark-mode .assignment-page .table-card,
+  body.dark-mode .assignment-page .stat-card,
+  body.dark-mode .assignment-page .empty-state,
+  html[data-bs-theme="dark"] .assignment-page .a-hero,
+  html[data-bs-theme="dark"] .assignment-page .a-card,
+  html[data-bs-theme="dark"] .assignment-page .table-card,
+  html[data-bs-theme="dark"] .assignment-page .stat-card,
+  html[data-bs-theme="dark"] .assignment-page .empty-state,
+  body[data-theme="dark"] .assignment-page .a-hero,
+  body[data-theme="dark"] .assignment-page .a-card,
+  body[data-theme="dark"] .assignment-page .table-card,
+  body[data-theme="dark"] .assignment-page .stat-card,
+  body[data-theme="dark"] .assignment-page .empty-state {
+    background: var(--asg-card);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  body.dark-mode .assignment-page .a-title,
+  body.dark-mode .assignment-page .stat-value,
+  html[data-bs-theme="dark"] .assignment-page .a-title,
+  html[data-bs-theme="dark"] .assignment-page .stat-value,
+  body[data-theme="dark"] .assignment-page .a-title,
+  body[data-theme="dark"] .assignment-page .stat-value {
     color: #93c5fd;
   }
 
-  body.dark-mode .a-subtitle,
-  body.dark-mode .stat-label,
-  body.dark-mode .mini-muted {
-    color: #94a3b8;
-  }
-
-  body.dark-mode .info-box,
-  body.dark-mode .file-box {
-    background: rgba(30, 41, 59, .86);
-    border-color: rgba(148, 163, 184, .25);
+  body.dark-mode .assignment-page .form-control,
+  body.dark-mode .assignment-page .form-select,
+  html[data-bs-theme="dark"] .assignment-page .form-control,
+  html[data-bs-theme="dark"] .assignment-page .form-select,
+  body[data-theme="dark"] .assignment-page .form-control,
+  body[data-theme="dark"] .assignment-page .form-select {
+    background: rgba(15, 23, 42, .98);
+    border-color: rgba(148, 163, 184, .32);
     color: #e5e7eb;
   }
 
-  body.dark-mode .table thead th {
-    background: rgba(30, 64, 175, .35);
-    color: #dbeafe;
+  body.dark-mode .assignment-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .assignment-page .form-control::placeholder,
+  body[data-theme="dark"] .assignment-page .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .assignment-page .info-box,
+  body.dark-mode .assignment-page .file-box,
+  html[data-bs-theme="dark"] .assignment-page .info-box,
+  html[data-bs-theme="dark"] .assignment-page .file-box,
+  body[data-theme="dark"] .assignment-page .info-box,
+  body[data-theme="dark"] .assignment-page .file-box {
+    background: var(--asg-soft);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  body.dark-mode .assignment-page .table thead th,
+  html[data-bs-theme="dark"] .assignment-page .table thead th,
+  body[data-theme="dark"] .assignment-page .table thead th {
+    background: rgba(30, 64, 175, .38) !important;
+    color: #dbeafe !important;
     border-color: rgba(147, 197, 253, .25);
   }
 
-  body.dark-mode .table-hover tbody tr:hover {
-    background: rgba(30, 41, 59, .65);
+  body.dark-mode .assignment-page .table tbody td,
+  html[data-bs-theme="dark"] .assignment-page .table tbody td,
+  body[data-theme="dark"] .assignment-page .table tbody td {
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, .22);
+    background: rgba(15, 23, 42, .34) !important;
+  }
+
+  body.dark-mode .assignment-page .table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .assignment-page .table-hover tbody tr:hover td,
+  body[data-theme="dark"] .assignment-page .table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, .78) !important;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-secondary,
+  body[data-theme="dark"] .assignment-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-primary,
+  body[data-theme="dark"] .assignment-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-warning,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-warning,
+  body[data-theme="dark"] .assignment-page .btn-outline-warning {
+    color: #fbbf24;
+    border-color: #fbbf24;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-danger,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-danger,
+  body[data-theme="dark"] .assignment-page .btn-outline-danger {
+    color: #fb7185;
+    border-color: #fb7185;
   }
 
   @media (max-width: 992px) {
-    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .assignment-page .stat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 768px) {
@@ -279,73 +377,73 @@
       padding-right: 10px !important;
     }
 
-    .a-hero,
-    .a-card {
+    .assignment-page .a-hero,
+    .assignment-page .a-card {
       padding: 18px;
       border-radius: 22px;
     }
 
-    .a-title {
+    .assignment-page .a-title {
       font-size: 1.25rem;
     }
 
-    .a-actions,
-    .action-buttons,
-    .page-actions {
+    .assignment-page .a-actions,
+    .assignment-page .action-buttons,
+    .assignment-page .page-actions {
       justify-content: flex-start;
       width: 100%;
     }
 
-    .a-actions .btn,
-    .action-buttons .btn,
-    .page-actions .btn {
+    .assignment-page .a-actions .btn,
+    .assignment-page .action-buttons .btn,
+    .assignment-page .page-actions .btn {
       width: 100%;
     }
 
-    .stat-grid,
-    .info-grid {
+    .assignment-page .stat-grid,
+    .assignment-page .info-grid {
       grid-template-columns: 1fr;
     }
 
-    .tool-row .form-control,
-    .tool-row .form-select {
+    .assignment-page .tool-row .form-control,
+    .assignment-page .tool-row .form-select {
       max-width: none;
       width: 100%;
     }
 
-    .responsive-table thead {
+    .assignment-page .responsive-table thead {
       display: none;
     }
 
-    .responsive-table tbody,
-    .responsive-table tr,
-    .responsive-table td {
+    .assignment-page .responsive-table tbody,
+    .assignment-page .responsive-table tr,
+    .assignment-page .responsive-table td {
       display: block;
       width: 100%;
     }
 
-    .responsive-table tr {
-      border-bottom: 1px solid #e5e7eb;
+    .assignment-page .responsive-table tr {
+      border-bottom: 1px solid var(--asg-line);
       padding: 10px;
     }
 
-    .responsive-table td {
+    .assignment-page .responsive-table td {
       border: 0 !important;
       padding: 7px 4px !important;
     }
 
-    .responsive-table td::before {
+    .assignment-page .responsive-table td::before {
       content: attr(data-label);
       display: block;
       font-weight: 850;
-      color: #475569;
+      color: var(--asg-muted);
       margin-bottom: 2px;
     }
   }
 
   @media (orientation: landscape) and (max-height: 540px) {
-    .a-hero,
-    .a-card {
+    .assignment-page .a-hero,
+    .assignment-page .a-card {
       padding: 14px;
     }
 
@@ -356,11 +454,13 @@
   }
 </style>
 
-{% set total_assignments = global_stats.total_assignments | default(0) %}
-{% set total_submissions = global_stats.total_submissions | default(0) %}
-{% set graded_submissions = global_stats.graded_submissions | default(0) %}
-{% set late_submissions = global_stats.late_submissions | default(0) %}
-{% set average_grade = global_stats.average_grade | default(0) %}
+
+{% set gs = global_stats if global_stats is defined and global_stats else {} %}
+{% set total_assignments = gs.total_assignments | default(0, true) %}
+{% set total_submissions = gs.total_submissions | default(0, true) %}
+{% set graded_submissions = gs.graded_submissions | default(0, true) %}
+{% set late_submissions = gs.late_submissions | default(0, true) %}
+{% set average_grade = gs.average_grade | default(0, true) %}
 {% set ungraded_submissions = total_submissions - graded_submissions - late_submissions %}
 {% if ungraded_submissions < 0 %}{% set ungraded_submissions = 0 %}{% endif %}
 
@@ -373,8 +473,8 @@
       </h3>
       <p class="a-subtitle">Tổng quan bài tập, bài nộp, trạng thái chấm điểm và tiến độ theo giảng viên/sinh viên.</p>
     </div>
-    <a href="/admin/assignment" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Quay lại
+    <a href="/admin/assignment/list" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Quay lại
     </a>
   </div>
 
@@ -392,52 +492,60 @@
       <div class="stat-value">{{ graded_submissions }}</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Điểm TB</div>
+      <div class="stat-label">Điểm trung bình</div>
       <div class="stat-value">{{ average_grade }}</div>
     </div>
   </div>
 
   <div class="a-card mb-3">
-    <h5 class="fw-bold mb-3">Biểu đồ trạng thái bài nộp</h5>
+    <h5 class="fw-bold mb-3">
+      <i class="bi bi-pie-chart me-1"></i>Biểu đồ trạng thái bài nộp
+    </h5>
     <canvas id="chartOverall" height="110"></canvas>
+    <noscript>
+      <p class="mini-muted mb-0">Trình duyệt cần bật JavaScript để hiển thị biểu đồ.</p>
+    </noscript>
   </div>
 
   <div class="table-card table-responsive mb-3">
     <table class="table table-hover align-middle mb-0 responsive-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th class="text-center">STT</th>
           <th>Giảng viên</th>
           <th>Khóa học</th>
           <th>Bài tập</th>
           <th>Bài nộp</th>
           <th>Nộp trễ</th>
-          <th>Điểm TB</th>
+          <th>Điểm trung bình</th>
         </tr>
       </thead>
       <tbody>
         {% for item in teacher_stats or [] %}
-          {% set teacher_name = item.teacher_name if item.teacher_name is defined else 'Không rõ' %}
+          {% set outer_index = loop.index %}
+          {% set teacher_name = item.teacher_name if item.teacher_name is defined and item.teacher_name else 'Không rõ' %}
           {% for row in item.data or [] %}
             <tr>
-              <td data-label="#">{{ loop.index }}</td>
+              <td data-label="STT" class="text-center fw-semibold text-muted">{{ outer_index }}.{{ loop.index }}</td>
               <td data-label="Giảng viên"><strong>{{ teacher_name }}</strong></td>
-              <td data-label="Khóa học">{{ row.course_name }}</td>
+              <td data-label="Khóa học">{{ row.course_name or '—' }}</td>
               <td data-label="Bài tập">{{ row.total_assignments or 0 }}</td>
               <td data-label="Bài nộp">{{ row.total_submissions or 0 }}</td>
               <td data-label="Nộp trễ">{{ row.late_submissions or 0 }}</td>
-              <td data-label="Điểm TB">{{ row.average_grade or 0 }}</td>
+              <td data-label="Điểm trung bình">{{ row.average_grade or 0 }}</td>
             </tr>
           {% else %}
             <tr>
-              <td data-label="#">{{ loop.index }}</td>
+              <td data-label="STT" class="text-center fw-semibold text-muted">{{ outer_index }}</td>
               <td data-label="Giảng viên"><strong>{{ teacher_name }}</strong></td>
-              <td colspan="5" class="text-muted">Chưa có dữ liệu.</td>
+              <td data-label="Ghi chú" colspan="5" class="text-muted">Chưa có dữ liệu.</td>
             </tr>
           {% endfor %}
         {% else %}
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu giảng viên.</td>
+            <td colspan="7" class="text-center text-muted py-4">
+              <i class="bi bi-info-circle me-1"></i>Chưa có dữ liệu giảng viên.
+            </td>
           </tr>
         {% endfor %}
       </tbody>
@@ -448,30 +556,32 @@
     <table class="table table-hover align-middle mb-0 responsive-table">
       <thead>
         <tr>
-          <th>#</th>
+          <th class="text-center">STT</th>
           <th>Sinh viên</th>
           <th>Đã giao</th>
           <th>Đã nộp</th>
           <th>Đã chấm</th>
           <th>Nộp trễ</th>
-          <th>Điểm TB</th>
+          <th>Điểm trung bình</th>
         </tr>
       </thead>
       <tbody>
         {% for item in student_stats or [] %}
           {% set d = item.data if item.data is defined and item.data else {} %}
           <tr>
-            <td data-label="#">{{ loop.index }}</td>
-            <td data-label="Sinh viên"><strong>{{ item.student_name }}</strong></td>
+            <td data-label="STT" class="text-center fw-semibold text-muted">{{ loop.index }}</td>
+            <td data-label="Sinh viên"><strong>{{ item.student_name or 'Không rõ' }}</strong></td>
             <td data-label="Đã giao">{{ d.total_assigned or 0 }}</td>
             <td data-label="Đã nộp">{{ d.total_submitted or 0 }}</td>
             <td data-label="Đã chấm">{{ d.graded or 0 }}</td>
             <td data-label="Nộp trễ">{{ d.late or 0 }}</td>
-            <td data-label="Điểm TB">{{ d.avg_grade or 0 }}</td>
+            <td data-label="Điểm trung bình">{{ d.avg_grade or 0 }}</td>
           </tr>
         {% else %}
           <tr>
-            <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu sinh viên.</td>
+            <td colspan="7" class="text-center text-muted py-4">
+              <i class="bi bi-info-circle me-1"></i>Chưa có dữ liệu sinh viên.
+            </td>
           </tr>
         {% endfor %}
       </tbody>
@@ -488,6 +598,10 @@
     var graded = Number("{{ graded_submissions }}") || 0;
     var late = Number("{{ late_submissions }}") || 0;
     var ungraded = Number("{{ ungraded_submissions }}") || 0;
+    var isDark =
+      document.body.classList.contains("dark-mode") ||
+      document.documentElement.getAttribute("data-bs-theme") === "dark" ||
+      document.body.getAttribute("data-theme") === "dark";
 
     new Chart(canvas, {
       type: "doughnut",
@@ -495,13 +609,20 @@
         labels: ["Đã chấm", "Nộp trễ", "Chưa chấm"],
         datasets: [{
           data: [graded, late, ungraded],
-          backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"]
+          backgroundColor: ["#36A2EB", "#FF6384", "#FFCE56"],
+          borderColor: isDark ? "#0f172a" : "#ffffff",
+          borderWidth: 2
         }]
       },
       options: {
         responsive: true,
         plugins: {
-          legend: { position: "bottom" }
+          legend: {
+            position: "bottom",
+            labels: {
+              color: isDark ? "#e5e7eb" : "#0f172a"
+            }
+          }
         }
       }
     });

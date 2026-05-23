@@ -1,5 +1,5 @@
 {% extends "layout_teacher.html" %}
-{% block title %}📆 Lịch giảng dạy tháng{% endblock %}
+{% block title %}Lịch giảng dạy tháng{% endblock %}
 
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
@@ -11,24 +11,19 @@
     --calendar-card-bg: #ffffff;
     --calendar-card-border: #e5e7eb;
     --calendar-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-
     --calendar-text-main: #1e293b;
     --calendar-text-muted: #64748b;
     --calendar-heading: #0d6efd;
-
     --calendar-grid-border: #e5e7eb;
     --calendar-day-bg: #ffffff;
     --calendar-day-hover: #f1f7ff;
     --calendar-today-bg: rgba(13, 110, 253, 0.08);
-
     --calendar-toolbar-btn-bg: #ffffff;
     --calendar-toolbar-btn-text: #1e293b;
     --calendar-toolbar-btn-border: #cbd5e1;
-
     --calendar-event-bg: #2563eb;
     --calendar-event-border: #2563eb;
     --calendar-event-text: #ffffff;
-
     --calendar-modal-bg: #ffffff;
     --calendar-modal-header-bg: #0d6efd;
     --calendar-modal-text: #1e293b;
@@ -37,6 +32,7 @@
 
   body.dark-mode,
   body.theme-dark,
+  html.dark,
   html.dark-mode,
   html[data-theme="dark"],
   body[data-theme="dark"],
@@ -45,51 +41,23 @@
     --calendar-card-bg: #0f1b33;
     --calendar-card-border: rgba(255, 255, 255, 0.1);
     --calendar-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
-
     --calendar-text-main: #e5edf8;
     --calendar-text-muted: #9caec8;
     --calendar-heading: #8ea6ff;
-
     --calendar-grid-border: rgba(255, 255, 255, 0.12);
     --calendar-day-bg: #0f1b33;
     --calendar-day-hover: #132445;
     --calendar-today-bg: rgba(96, 165, 250, 0.16);
-
     --calendar-toolbar-btn-bg: #101d36;
     --calendar-toolbar-btn-text: #e5edf8;
     --calendar-toolbar-btn-border: rgba(255, 255, 255, 0.16);
-
     --calendar-event-bg: #3b82f6;
     --calendar-event-border: #60a5fa;
     --calendar-event-text: #ffffff;
-
     --calendar-modal-bg: #0f1b33;
     --calendar-modal-header-bg: #172846;
     --calendar-modal-text: #e5edf8;
     --calendar-modal-border: rgba(255, 255, 255, 0.12);
-  }
-
-  body.dark-mode .teacher-content,
-  body.dark-mode .main-content,
-  body.dark-mode .content-wrapper,
-  body.dark-mode .page-content,
-  body.dark-mode main,
-  body.theme-dark .teacher-content,
-  body.theme-dark .main-content,
-  body.theme-dark .content-wrapper,
-  body.theme-dark .page-content,
-  body.theme-dark main,
-  html[data-theme="dark"] .teacher-content,
-  html[data-theme="dark"] .main-content,
-  html[data-theme="dark"] .content-wrapper,
-  html[data-theme="dark"] .page-content,
-  html[data-theme="dark"] main,
-  [data-bs-theme="dark"] .teacher-content,
-  [data-bs-theme="dark"] .main-content,
-  [data-bs-theme="dark"] .content-wrapper,
-  [data-bs-theme="dark"] .page-content,
-  [data-bs-theme="dark"] main {
-    background: #071226 !important;
   }
 
   .calendar-page {
@@ -203,14 +171,6 @@
     background: var(--calendar-today-bg) !important;
   }
 
-  .fc .fc-daygrid-day.fc-day-other {
-    background: transparent;
-  }
-
-  .fc .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
-    color: var(--calendar-text-muted);
-  }
-
   .fc-daygrid-event {
     border-radius: 8px !important;
     font-size: 0.85rem;
@@ -223,10 +183,6 @@
   .fc-event-title,
   .fc-event-time {
     color: var(--calendar-event-text) !important;
-  }
-
-  .fc-event-time {
-    font-weight: 700;
   }
 
   .modal-content {
@@ -252,24 +208,6 @@
     color: var(--calendar-heading);
   }
 
-  body.dark-mode .calendar-page .btn-outline-secondary,
-  body.theme-dark .calendar-page .btn-outline-secondary,
-  html[data-theme="dark"] .calendar-page .btn-outline-secondary,
-  body[data-theme="dark"] .calendar-page .btn-outline-secondary,
-  [data-bs-theme="dark"] .calendar-page .btn-outline-secondary {
-    color: #dbeafe;
-    border-color: rgba(255, 255, 255, 0.25);
-  }
-
-  body.dark-mode .calendar-page .btn-outline-secondary:hover,
-  body.theme-dark .calendar-page .btn-outline-secondary:hover,
-  html[data-theme="dark"] .calendar-page .btn-outline-secondary:hover,
-  body[data-theme="dark"] .calendar-page .btn-outline-secondary:hover,
-  [data-bs-theme="dark"] .calendar-page .btn-outline-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-  }
-
   @media (max-width: 768px) {
     .calendar-page {
       padding: 16px 8px 32px;
@@ -277,6 +215,10 @@
 
     .page-header {
       padding: 1rem;
+    }
+
+    .page-header .btn {
+      width: 100%;
     }
 
     #calendar {
@@ -322,21 +264,23 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="lessonModalLabel">Chi tiết buổi học</h5>
+        <h5 class="modal-title" id="lessonModalLabel">Chi tiết lịch dạy</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <p><strong>Môn học:</strong> <span id="lessonCourse"></span></p>
-        <p><strong>Module:</strong> <span id="lessonModule"></span></p>
-        <p><strong>Bài học:</strong> <span id="lessonTitle"></span></p>
+        <p><strong>Nội dung:</strong> <span id="lessonModule"></span></p>
+        <p><strong>Buổi học:</strong> <span id="lessonTitle"></span></p>
         <p><strong>Thời gian:</strong> <span id="lessonTime"></span></p>
+        <p><strong>Địa điểm:</strong> <span id="lessonLocation"></span></p>
+        <p><strong>Loại lịch:</strong> <span id="lessonType"></span></p>
       </div>
     </div>
   </div>
 </div>
 
 <script id="schedule-data" type="application/json">
-  {{ schedule_json | safe }}
+  {{ schedule_json | default('[]', true) | safe }}
 </script>
 
 <script>
@@ -344,29 +288,56 @@
     const calendarEl = document.getElementById("calendar");
     const scheduleDataEl = document.getElementById("schedule-data");
 
+    function formatTime(value) {
+      if (!value) return "—";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+
+      return date.toLocaleString("vi-VN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function typeLabel(type) {
+      if (type === "class_schedule") return "Lịch dạy định kỳ";
+      if (type === "lesson") return "Bài học";
+      return "Sự kiện";
+    }
+
     let lessons = [];
 
     try {
       lessons = JSON.parse(scheduleDataEl.textContent.trim() || "[]");
     } catch (error) {
       lessons = [];
-      console.error("Không đọc được schedule_json:", error);
+      console.error("Không đọc được dữ liệu lịch:", error);
     }
 
-    const events = lessons.map(item => ({
-      title: `${item.course_name || ""} - ${item.lesson_title || ""}`,
-      start: item.start_time,
-      end: item.end_time,
-      backgroundColor: "#2563eb",
-      borderColor: "#2563eb",
-      textColor: "#ffffff",
-      extendedProps: {
-        course: item.course_name || "—",
-        module: item.module_title || "—",
-        lesson: item.lesson_title || "—",
-        time: `${item.start_time || ""} → ${item.end_time || ""}`
-      }
-    }));
+    const events = lessons.map(function (item) {
+      const eventType = item.event_type || "lesson";
+      const eventColor = eventType === "class_schedule" ? "#2563eb" : "#16a34a";
+
+      return {
+        title: `${item.course_name || "Khóa học"} - ${item.lesson_title || "Buổi học"}`,
+        start: item.start_time,
+        end: item.end_time,
+        backgroundColor: eventColor,
+        borderColor: eventColor,
+        textColor: "#ffffff",
+        extendedProps: {
+          course: item.course_name || "—",
+          module: item.module_title || "—",
+          lesson: item.lesson_title || "—",
+          time: `${formatTime(item.start_time)} → ${formatTime(item.end_time)}`,
+          location: item.location || "Trực tuyến",
+          type: typeLabel(eventType)
+        }
+      };
+    });
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: "dayGridMonth",
@@ -391,6 +362,8 @@
         document.getElementById("lessonModule").innerText = event.module;
         document.getElementById("lessonTitle").innerText = event.lesson;
         document.getElementById("lessonTime").innerText = event.time;
+        document.getElementById("lessonLocation").innerText = event.location;
+        document.getElementById("lessonType").innerText = event.type;
 
         new bootstrap.Modal(document.getElementById("lessonModal")).show();
       }

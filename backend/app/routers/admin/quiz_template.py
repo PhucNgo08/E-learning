@@ -1,21 +1,15 @@
-"""
-==========================================================
-🧩 ROUTER: Admin - Quiz Template Management
-Quản lý mẫu quiz trong khu vực admin
-==========================================================
-"""
-from fastapi import APIRouter, Request, Depends, Form, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.database.connection import get_db
-from app.services.admin import quiz_template_service
 from app.config.template_config import get_template_by_path
+from app.database.connection import get_db
 from app.dependencies.auth import get_current_admin
+from app.services.admin import quiz_template_service
 
 router = APIRouter(
     prefix="/admin/quiz-template",
-    tags=["Admin - Quiz Template Management"]
+    tags=["Admin - Mẫu bài kiểm tra"],
 )
 
 
@@ -28,16 +22,13 @@ def render_template(
     tpl = get_template_by_path(request.url.path)
     base_context = {
         "request": request,
-        "page_title": "Quiz Template Management",
+        "page_title": "Mẫu bài kiểm tra",
         "active_page": "quiz_template",
     }
     base_context.update(context)
     return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
 
 
-# ============================================================
-# 📋 Danh sách Quiz Templates
-# ============================================================
 @router.get("/list", response_class=HTMLResponse)
 def list_templates(
     request: Request,
@@ -45,20 +36,16 @@ def list_templates(
     current_user=Depends(get_current_admin),
 ):
     templates = quiz_template_service.get_all_with_creator(db)
-
     return render_template(
         request,
         "quiz_template/list.html",
         {
             "templates": templates,
-            "page_title": "Danh sách Quiz Template",
-        }
+            "page_title": "Danh sách mẫu bài kiểm tra",
+        },
     )
 
 
-# ============================================================
-# ➕ Form tạo mới
-# ============================================================
 @router.get("/create", response_class=HTMLResponse)
 def create_form(
     request: Request,
@@ -74,14 +61,11 @@ def create_form(
                 "rules": "",
             },
             "error_message": None,
-            "page_title": "Tạo Quiz Template",
-        }
+            "page_title": "Tạo mẫu bài kiểm tra",
+        },
     )
 
 
-# ============================================================
-# ➕ Xử lý tạo template mới
-# ============================================================
 @router.post("/create", response_class=HTMLResponse)
 def create_template(
     request: Request,
@@ -107,8 +91,8 @@ def create_template(
             "quiz_template/create.html",
             {
                 "form_data": form_data,
-                "error_message": "Tên template không được để trống.",
-                "page_title": "Tạo Quiz Template",
+                "error_message": "Tên mẫu không được để trống.",
+                "page_title": "Tạo mẫu bài kiểm tra",
             },
             status_code=400,
         )
@@ -119,8 +103,8 @@ def create_template(
             "quiz_template/create.html",
             {
                 "form_data": form_data,
-                "error_message": "Rules không được để trống.",
-                "page_title": "Tạo Quiz Template",
+                "error_message": "Quy tắc sinh câu hỏi không được để trống.",
+                "page_title": "Tạo mẫu bài kiểm tra",
             },
             status_code=400,
         )
@@ -141,16 +125,13 @@ def create_template(
             "quiz_template/create.html",
             {
                 "form_data": form_data,
-                "error_message": f"Lỗi khi tạo template: {e}",
-                "page_title": "Tạo Quiz Template",
+                "error_message": f"Lỗi khi tạo mẫu bài kiểm tra: {e}",
+                "page_title": "Tạo mẫu bài kiểm tra",
             },
             status_code=500,
         )
 
 
-# ============================================================
-# ✏️ Form sửa Template
-# ============================================================
 @router.get("/edit/{template_id}", response_class=HTMLResponse)
 def edit_form(
     template_id: str,
@@ -160,7 +141,7 @@ def edit_form(
 ):
     template = quiz_template_service.get_by_id(db, template_id)
     if not template:
-        raise HTTPException(status_code=404, detail="Không tìm thấy template")
+        raise HTTPException(status_code=404, detail="Không tìm thấy mẫu bài kiểm tra.")
 
     return render_template(
         request,
@@ -168,14 +149,11 @@ def edit_form(
         {
             "template": template,
             "error_message": None,
-            "page_title": "Chỉnh sửa Quiz Template",
-        }
+            "page_title": "Chỉnh sửa mẫu bài kiểm tra",
+        },
     )
 
 
-# ============================================================
-# ✏️ Xử lý sửa Template
-# ============================================================
 @router.post("/edit/{template_id}", response_class=HTMLResponse)
 def update_template(
     template_id: str,
@@ -192,7 +170,7 @@ def update_template(
 
     template = quiz_template_service.get_by_id(db, template_id)
     if not template:
-        raise HTTPException(status_code=404, detail="Không tìm thấy template")
+        raise HTTPException(status_code=404, detail="Không tìm thấy mẫu bài kiểm tra.")
 
     if not name:
         template.name = name
@@ -203,8 +181,8 @@ def update_template(
             "quiz_template/edit.html",
             {
                 "template": template,
-                "error_message": "Tên template không được để trống.",
-                "page_title": "Chỉnh sửa Quiz Template",
+                "error_message": "Tên mẫu không được để trống.",
+                "page_title": "Chỉnh sửa mẫu bài kiểm tra",
             },
             status_code=400,
         )
@@ -218,8 +196,8 @@ def update_template(
             "quiz_template/edit.html",
             {
                 "template": template,
-                "error_message": "Rules không được để trống.",
-                "page_title": "Chỉnh sửa Quiz Template",
+                "error_message": "Quy tắc sinh câu hỏi không được để trống.",
+                "page_title": "Chỉnh sửa mẫu bài kiểm tra",
             },
             status_code=400,
         )
@@ -233,7 +211,7 @@ def update_template(
             rules=rules,
         )
         if not updated:
-            raise HTTPException(status_code=404, detail="Không tìm thấy template")
+            raise HTTPException(status_code=404, detail="Không tìm thấy mẫu bài kiểm tra.")
 
         return RedirectResponse("/admin/quiz-template/list", status_code=303)
 
@@ -248,16 +226,13 @@ def update_template(
             "quiz_template/edit.html",
             {
                 "template": template,
-                "error_message": f"Lỗi khi cập nhật template: {e}",
-                "page_title": "Chỉnh sửa Quiz Template",
+                "error_message": f"Lỗi khi cập nhật mẫu bài kiểm tra: {e}",
+                "page_title": "Chỉnh sửa mẫu bài kiểm tra",
             },
             status_code=500,
         )
 
 
-# ============================================================
-# 🗑️ Xác nhận xóa
-# ============================================================
 @router.get("/delete/{template_id}", response_class=HTMLResponse)
 def confirm_delete(
     template_id: str,
@@ -267,21 +242,18 @@ def confirm_delete(
 ):
     template = quiz_template_service.get_by_id(db, template_id)
     if not template:
-        raise HTTPException(status_code=404, detail="Không tìm thấy template")
+        raise HTTPException(status_code=404, detail="Không tìm thấy mẫu bài kiểm tra.")
 
     return render_template(
         request,
         "quiz_template/delete.html",
         {
             "template": template,
-            "page_title": "Xóa Quiz Template",
-        }
+            "page_title": "Xóa mẫu bài kiểm tra",
+        },
     )
 
 
-# ============================================================
-# 🗑️ Thực hiện xóa
-# ============================================================
 @router.post("/delete/{template_id}")
 def delete_template(
     template_id: str,
@@ -291,11 +263,10 @@ def delete_template(
     try:
         ok = quiz_template_service.delete(db, template_id)
         if not ok:
-            raise HTTPException(status_code=404, detail="Không tìm thấy template")
-
+            raise HTTPException(status_code=404, detail="Không tìm thấy mẫu bài kiểm tra.")
         return RedirectResponse("/admin/quiz-template/list", status_code=303)
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Lỗi khi xóa template: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi khi xóa mẫu bài kiểm tra: {e}")

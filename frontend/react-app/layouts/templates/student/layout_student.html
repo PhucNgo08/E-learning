@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi" data-bs-theme="light" class="student-light">
+<html lang="vi">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -13,34 +13,10 @@
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/student.css" />
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/wallet_system.css" />
 
-  <script>
-  (() => {
-    try {
-      const isDark = localStorage.getItem("student_dark_mode") === "1";
-      const html = document.documentElement;
-      html.classList.toggle("student-dark", isDark);
-      html.classList.toggle("student-light", !isDark);
-      html.setAttribute("data-bs-theme", isDark ? "dark" : "light");
-    } catch (e) {
-      document.documentElement.classList.add("student-light");
-    }
-  })();
-  </script>
-
   {% block head_extra %}{% endblock %}
 </head>
 
 <body>
-
-<script>
-(() => {
-  try {
-    if (localStorage.getItem("student_dark_mode") === "1") {
-      document.body.classList.add("dark-mode");
-    }
-  } catch (e) {}
-})();
-</script>
 {% set sg = student_globals(request) %}
 
 <div class="student-wrapper">
@@ -74,6 +50,7 @@
         ('course', 'journal-bookmark', 'Khóa học của tôi', '/student/course'),
         ('lesson', 'easel', 'Bài học', '/student/lesson'),
         ('assignment', 'journal-check', 'Bài tập', '/student/assignment'),
+        ('todo', 'list-check', 'Việc cần làm', '/student/todo'),
         ('quiz', 'question-circle', 'Trắc nghiệm', '/student/quiz'),
         ('material', 'folder2-open', 'Tài liệu', '/student/material'),
         ('discussion', 'chat-dots', 'Thảo luận', '/student/discussion'),
@@ -217,29 +194,27 @@
 
   if (!btn || !icon) return;
 
-  const setTheme = (isDark) => {
-    const html = document.documentElement;
-    body.classList.toggle("dark-mode", isDark);
-    html.classList.toggle("student-dark", isDark);
-    html.classList.toggle("student-light", !isDark);
-    html.setAttribute("data-bs-theme", isDark ? "dark" : "light");
-    icon.classList.toggle("bi-moon-fill", !isDark);
-    icon.classList.toggle("bi-brightness-low-fill", isDark);
-  };
-
-  setTheme(localStorage.student_dark_mode === "1");
+  if (localStorage.student_dark_mode === "1") {
+    body.classList.add("dark-mode");
+    icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
+  }
 
   btn.addEventListener("click", () => {
-    const isDark = !body.classList.contains("dark-mode");
-    setTheme(isDark);
-    localStorage.student_dark_mode = isDark ? "1" : "0";
+    body.classList.toggle("dark-mode");
+
+    if (body.classList.contains("dark-mode")) {
+      icon.classList.replace("bi-moon-fill", "bi-brightness-low-fill");
+      localStorage.student_dark_mode = "1";
+    } else {
+      icon.classList.replace("bi-brightness-low-fill", "bi-moon-fill");
+      localStorage.student_dark_mode = "0";
+    }
   });
 })();
 </script>
 
 <script>
 (() => {
-  const body = document.body;
   const sidebar = document.getElementById("sidebar");
   const overlay = document.getElementById("sidebar-overlay");
   const btn = document.getElementById("toggleSidebarBtn");
@@ -248,43 +223,24 @@
 
   const isMobile = () => window.innerWidth < 992;
 
-  const closeMobileSidebar = () => {
-    sidebar.classList.remove("mobile-show");
-    overlay.classList.remove("show");
-    body.classList.remove("sidebar-open");
-  };
-
-  const openMobileSidebar = () => {
-    sidebar.classList.remove("collapsed");
-    sidebar.classList.add("mobile-show");
-    overlay.classList.add("show");
-    body.classList.add("sidebar-open");
-  };
-
   btn.addEventListener("click", () => {
     if (isMobile()) {
-      if (sidebar.classList.contains("mobile-show")) {
-        closeMobileSidebar();
-      } else {
-        openMobileSidebar();
-      }
+      sidebar.classList.toggle("mobile-show");
+      overlay.classList.toggle("show");
     } else {
-      closeMobileSidebar();
       sidebar.classList.toggle("collapsed");
     }
   });
 
-  overlay.addEventListener("click", closeMobileSidebar);
-
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closeMobileSidebar();
+  overlay.addEventListener("click", () => {
+    sidebar.classList.remove("mobile-show");
+    overlay.classList.remove("show");
   });
 
   window.addEventListener("resize", () => {
-    if (isMobile()) {
-      sidebar.classList.remove("collapsed");
-    } else {
-      closeMobileSidebar();
+    if (!isMobile()) {
+      sidebar.classList.remove("mobile-show");
+      overlay.classList.remove("show");
     }
   });
 })();

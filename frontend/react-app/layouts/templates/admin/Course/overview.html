@@ -7,9 +7,10 @@
   .admin-course-overview-page {
     max-width: 1180px;
     margin: 0 auto;
+    color: var(--text-main, #0f172a);
   }
 
-  .admin-page-header {
+  .admin-course-overview-page .admin-page-header {
     background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
     color: #fff;
     border-radius: var(--radius-xl, 18px);
@@ -17,11 +18,11 @@
     box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
   }
 
-  .admin-page-header .header-subtitle {
+  .admin-course-overview-page .admin-page-header .header-subtitle {
     color: rgba(255, 255, 255, 0.86);
   }
 
-  .overview-card {
+  .admin-course-overview-page .overview-card {
     background: var(--surface, #fff);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: var(--radius-xl, 18px);
@@ -29,25 +30,26 @@
     padding: 24px;
   }
 
-  .course-title-card {
+  .admin-course-overview-page .course-title-card {
     background: linear-gradient(135deg, rgba(37, 99, 235, 0.08), rgba(14, 165, 233, 0.08));
     border: 1px solid rgba(37, 99, 235, 0.12);
     border-radius: var(--radius-lg, 16px);
     padding: 22px;
   }
 
-  .course-title-card .course-name {
+  .admin-course-overview-page .course-title-card .course-name {
     color: var(--text-main, #0f172a);
     font-weight: 800;
     letter-spacing: -0.02em;
   }
 
-  .course-title-card .course-code {
-    color: var(--text-muted, #64748b);
+  .admin-course-overview-page .course-title-card .course-code,
+  .admin-course-overview-page .text-muted {
+    color: var(--text-muted, #64748b) !important;
     font-weight: 700;
   }
 
-  .stat-box {
+  .admin-course-overview-page .stat-box {
     height: 100%;
     border-radius: var(--radius-lg, 16px);
     padding: 20px;
@@ -59,12 +61,12 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .stat-box:hover {
+  .admin-course-overview-page .stat-box:hover {
     transform: translateY(-3px);
     box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
   }
 
-  .stat-icon {
+  .admin-course-overview-page .stat-icon {
     width: 54px;
     height: 54px;
     border-radius: 16px;
@@ -76,50 +78,139 @@
     flex: 0 0 auto;
   }
 
-  .stat-value {
+  .admin-course-overview-page .stat-value {
     font-size: 1.65rem;
     font-weight: 800;
     line-height: 1.1;
   }
 
-  .stat-label {
+  .admin-course-overview-page .stat-label {
     font-size: 0.95rem;
     opacity: 0.92;
   }
 
-  .bg-lesson {
+  .admin-course-overview-page .bg-lesson {
     background: linear-gradient(135deg, #16a34a, #22c55e);
   }
 
-  .bg-quiz {
+  .admin-course-overview-page .bg-quiz {
     background: linear-gradient(135deg, #f59e0b, #fbbf24);
   }
 
-  .bg-assign {
+  .admin-course-overview-page .bg-assign {
     background: linear-gradient(135deg, #0891b2, #06b6d4);
   }
 
-  .bg-student {
+  .admin-course-overview-page .bg-student {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
   }
 
-  .bg-rating {
+  .admin-course-overview-page .bg-rating {
     background: linear-gradient(135deg, #ea580c, #f97316);
   }
 
-  .quick-actions {
+  .admin-course-overview-page .quick-actions {
     border-top: 1px solid var(--border-color, #e2e8f0);
     margin-top: 24px;
     padding-top: 20px;
   }
 
+  .admin-course-overview-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  body.dark-mode .admin-course-overview-page,
+  html[data-bs-theme="dark"] .admin-course-overview-page,
+  body[data-theme="dark"] .admin-course-overview-page {
+    --surface: rgba(15, 23, 42, 0.94);
+    --surface-soft: rgba(30, 41, 59, 0.86);
+    --border-color: rgba(148, 163, 184, 0.25);
+    --text-main: #e5e7eb;
+    --text-muted: #cbd5e1;
+    --role-primary: #60a5fa;
+    --role-gradient: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+    --shadow-sm: 0 18px 45px rgba(0, 0, 0, 0.34);
+    --shadow-md: 0 22px 58px rgba(0, 0, 0, 0.42);
+  }
+
+  body.dark-mode .admin-course-overview-page .overview-card,
+  html[data-bs-theme="dark"] .admin-course-overview-page .overview-card,
+  body[data-theme="dark"] .admin-course-overview-page .overview-card {
+    background: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-main);
+  }
+
+  body.dark-mode .admin-course-overview-page .course-title-card,
+  html[data-bs-theme="dark"] .admin-course-overview-page .course-title-card,
+  body[data-theme="dark"] .admin-course-overview-page .course-title-card {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.16), rgba(14, 165, 233, 0.12));
+    border-color: rgba(96, 165, 250, 0.24);
+  }
+
+  body.dark-mode .admin-course-overview-page .course-title-card .course-name,
+  html[data-bs-theme="dark"] .admin-course-overview-page .course-title-card .course-name,
+  body[data-theme="dark"] .admin-course-overview-page .course-title-card .course-name {
+    color: #f8fafc;
+  }
+
+  body.dark-mode .admin-course-overview-page .course-title-card .course-code,
+  body.dark-mode .admin-course-overview-page .text-muted,
+  html[data-bs-theme="dark"] .admin-course-overview-page .course-title-card .course-code,
+  html[data-bs-theme="dark"] .admin-course-overview-page .text-muted,
+  body[data-theme="dark"] .admin-course-overview-page .course-title-card .course-code,
+  body[data-theme="dark"] .admin-course-overview-page .text-muted {
+    color: #cbd5e1 !important;
+  }
+
+  body.dark-mode .admin-course-overview-page .quick-actions,
+  html[data-bs-theme="dark"] .admin-course-overview-page .quick-actions,
+  body[data-theme="dark"] .admin-course-overview-page .quick-actions {
+    border-color: var(--border-color);
+  }
+
+  body.dark-mode .admin-course-overview-page .stat-box,
+  html[data-bs-theme="dark"] .admin-course-overview-page .stat-box,
+  body[data-theme="dark"] .admin-course-overview-page .stat-box {
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.32);
+  }
+
+  body.dark-mode .admin-course-overview-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .admin-course-overview-page .btn-outline-secondary,
+  body[data-theme="dark"] .admin-course-overview-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .admin-course-overview-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .admin-course-overview-page .btn-outline-primary,
+  body[data-theme="dark"] .admin-course-overview-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  body.dark-mode .admin-course-overview-page .btn-outline-secondary:hover,
+  body.dark-mode .admin-course-overview-page .btn-outline-primary:hover,
+  html[data-bs-theme="dark"] .admin-course-overview-page .btn-outline-secondary:hover,
+  html[data-bs-theme="dark"] .admin-course-overview-page .btn-outline-primary:hover,
+  body[data-theme="dark"] .admin-course-overview-page .btn-outline-secondary:hover,
+  body[data-theme="dark"] .admin-course-overview-page .btn-outline-primary:hover {
+    color: #0f172a;
+  }
+
   @media (max-width: 768px) {
-    .admin-page-header,
-    .overview-card {
+    .admin-course-overview-page .admin-page-header,
+    .admin-course-overview-page .overview-card {
       padding: 18px;
     }
 
-    .quick-actions .btn {
+    .admin-course-overview-page .quick-actions .btn,
+    .admin-course-overview-page .quick-actions > div {
+      width: 100%;
+    }
+
+    .admin-course-overview-page .quick-actions > div .btn {
       width: 100%;
     }
   }
@@ -127,6 +218,13 @@
 {% endblock %}
 
 {% block content %}
+{% set current_course = course if course is defined and course else none %}
+{% set lessons_count = total_lessons if total_lessons is defined and total_lessons else 0 %}
+{% set quizzes_count = total_quizzes if total_quizzes is defined and total_quizzes else 0 %}
+{% set assignments_count = total_assignments if total_assignments is defined and total_assignments else 0 %}
+{% set students_count = total_students if total_students is defined and total_students else 0 %}
+{% set rating_value = avg_rating if avg_rating is defined and avg_rating else 0 %}
+
 <div class="admin-course-overview-page">
 
   <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -135,7 +233,7 @@
         <i class="bi bi-graph-up-arrow me-2"></i>Tổng quan khóa học
       </h3>
       <p class="header-subtitle mb-0">
-        Xem nhanh số bài học, quiz, bài tập, học viên và điểm đánh giá của khóa học.
+        Xem nhanh số bài học, bài kiểm tra, bài tập, sinh viên và điểm đánh giá của khóa học.
       </p>
     </div>
 
@@ -144,8 +242,8 @@
         <i class="bi bi-arrow-left-circle me-1"></i>Quản lý khóa học
       </a>
 
-      {% if course and course.id %}
-      <a href="/admin/Course/detail/{{ course.id }}" class="btn btn-outline-light fw-semibold">
+      {% if current_course and current_course.id %}
+      <a href="/admin/Course/detail/{{ current_course.id }}" class="btn btn-outline-light fw-semibold">
         <i class="bi bi-eye-fill me-1"></i>Chi tiết
       </a>
       {% endif %}
@@ -159,30 +257,34 @@
         <div>
           <div class="course-code mb-1">
             <i class="bi bi-journal-bookmark me-1"></i>
-            {{ course.course_code if course and course.course_code else "COURSE" }}
+            {{ current_course.course_code if current_course and current_course.course_code else "Mã khóa học" }}
           </div>
 
           <h3 class="course-name mb-1">
-            {{ course.course_name if course else "Khóa học" }}
+            {{ current_course.course_name if current_course else "Khóa học" }}
           </h3>
 
           <p class="text-muted mb-0">
-            {{ course.description if course and course.description else "Tổng hợp nhanh dữ liệu liên quan đến khóa học." }}
+            {{ current_course.description if current_course and current_course.description else "Tổng hợp nhanh dữ liệu liên quan đến khóa học." }}
           </p>
         </div>
 
-        {% if course and course.status %}
-          {% if course.status == 'published' %}
+        {% if current_course and current_course.status %}
+          {% if current_course.status == 'published' %}
           <span class="badge rounded-pill text-bg-success px-3 py-2">
             <i class="bi bi-check-circle me-1"></i>Công khai
           </span>
-          {% elif course.status == 'draft' %}
+          {% elif current_course.status == 'draft' %}
           <span class="badge rounded-pill text-bg-warning px-3 py-2">
             <i class="bi bi-pencil me-1"></i>Bản nháp
           </span>
-          {% else %}
+          {% elif current_course.status == 'archived' %}
           <span class="badge rounded-pill text-bg-secondary px-3 py-2">
             <i class="bi bi-archive me-1"></i>Lưu trữ
+          </span>
+          {% else %}
+          <span class="badge rounded-pill text-bg-secondary px-3 py-2">
+            <i class="bi bi-question-circle me-1"></i>Không xác định
           </span>
           {% endif %}
         {% endif %}
@@ -197,7 +299,7 @@
             <i class="bi bi-journal-bookmark"></i>
           </div>
           <div>
-            <div class="stat-value">{{ total_lessons or 0 }}</div>
+            <div class="stat-value">{{ lessons_count }}</div>
             <div class="stat-label">Tổng số bài học</div>
           </div>
         </div>
@@ -209,7 +311,7 @@
             <i class="bi bi-ui-checks-grid"></i>
           </div>
           <div>
-            <div class="stat-value">{{ total_quizzes or 0 }}</div>
+            <div class="stat-value">{{ quizzes_count }}</div>
             <div class="stat-label">Tổng số bài kiểm tra</div>
           </div>
         </div>
@@ -221,7 +323,7 @@
             <i class="bi bi-clipboard2-check"></i>
           </div>
           <div>
-            <div class="stat-value">{{ total_assignments or 0 }}</div>
+            <div class="stat-value">{{ assignments_count }}</div>
             <div class="stat-label">Tổng số bài tập</div>
           </div>
         </div>
@@ -233,8 +335,8 @@
             <i class="bi bi-people-fill"></i>
           </div>
           <div>
-            <div class="stat-value">{{ total_students or 0 }}</div>
-            <div class="stat-label">Học viên đã tham gia</div>
+            <div class="stat-value">{{ students_count }}</div>
+            <div class="stat-label">Sinh viên đã tham gia</div>
           </div>
         </div>
       </div>
@@ -245,7 +347,7 @@
             <i class="bi bi-star-fill"></i>
           </div>
           <div>
-            <div class="stat-value">{{ avg_rating or 0 }}/5</div>
+            <div class="stat-value">{{ rating_value }}/5</div>
             <div class="stat-label">Đánh giá trung bình</div>
           </div>
         </div>
@@ -259,12 +361,12 @@
       </a>
 
       <div class="d-flex flex-wrap gap-2">
-        {% if course and course.id %}
-        <a href="/admin/Course/detail/{{ course.id }}" class="btn btn-outline-primary px-4">
+        {% if current_course and current_course.id %}
+        <a href="/admin/Course/detail/{{ current_course.id }}" class="btn btn-outline-primary px-4">
           <i class="bi bi-eye-fill me-1"></i>Xem chi tiết
         </a>
 
-        <a href="/admin/Course/edit/{{ course.id }}" class="btn btn-primary px-4">
+        <a href="/admin/Course/edit/{{ current_course.id }}" class="btn btn-primary px-4">
           <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
         </a>
         {% endif %}

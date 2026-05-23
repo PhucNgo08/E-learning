@@ -1,5 +1,5 @@
 {% extends "layout_teacher.html" %}
-{% block title %}🗓️ Lịch dạy trong tuần{% endblock %}
+{% block title %}Lịch dạy trong tuần{% endblock %}
 
 {% block content %}
 <style>
@@ -8,15 +8,12 @@
     --schedule-card-bg: #ffffff;
     --schedule-card-border: #e5e7eb;
     --schedule-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
-
     --schedule-text-main: #1e293b;
     --schedule-text-muted: #64748b;
     --schedule-heading: #0d6efd;
-
     --schedule-item-bg: #f8fbff;
     --schedule-item-border: #e9eef7;
     --schedule-item-hover: #eef4ff;
-
     --schedule-time: #0d6efd;
     --schedule-alert-bg: rgba(13, 110, 253, 0.08);
     --schedule-alert-border: rgba(13, 110, 253, 0.22);
@@ -24,6 +21,7 @@
 
   body.dark-mode,
   body.theme-dark,
+  html.dark,
   html.dark-mode,
   html[data-theme="dark"],
   body[data-theme="dark"],
@@ -32,41 +30,15 @@
     --schedule-card-bg: #0f1b33;
     --schedule-card-border: rgba(255, 255, 255, 0.1);
     --schedule-card-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
-
     --schedule-text-main: #e5edf8;
     --schedule-text-muted: #9caec8;
     --schedule-heading: #8ea6ff;
-
     --schedule-item-bg: #101d36;
     --schedule-item-border: rgba(255, 255, 255, 0.12);
     --schedule-item-hover: #132445;
-
     --schedule-time: #93c5fd;
     --schedule-alert-bg: rgba(37, 99, 235, 0.16);
     --schedule-alert-border: rgba(96, 165, 250, 0.28);
-  }
-
-  body.dark-mode .teacher-content,
-  body.dark-mode .main-content,
-  body.dark-mode .content-wrapper,
-  body.dark-mode .page-content,
-  body.dark-mode main,
-  body.theme-dark .teacher-content,
-  body.theme-dark .main-content,
-  body.theme-dark .content-wrapper,
-  body.theme-dark .page-content,
-  body.theme-dark main,
-  html[data-theme="dark"] .teacher-content,
-  html[data-theme="dark"] .main-content,
-  html[data-theme="dark"] .content-wrapper,
-  html[data-theme="dark"] .page-content,
-  html[data-theme="dark"] main,
-  [data-bs-theme="dark"] .teacher-content,
-  [data-bs-theme="dark"] .main-content,
-  [data-bs-theme="dark"] .content-wrapper,
-  [data-bs-theme="dark"] .page-content,
-  [data-bs-theme="dark"] main {
-    background: #071226 !important;
   }
 
   .schedule-page {
@@ -137,10 +109,6 @@
     background: var(--schedule-item-hover);
   }
 
-  .lesson-item:last-child {
-    margin-bottom: 0;
-  }
-
   .lesson-time {
     font-weight: 700;
     color: var(--schedule-time);
@@ -157,40 +125,16 @@
     color: var(--schedule-text-main);
   }
 
-  body.dark-mode .schedule-page .btn-outline-secondary,
-  body.theme-dark .schedule-page .btn-outline-secondary,
-  html[data-theme="dark"] .schedule-page .btn-outline-secondary,
-  body[data-theme="dark"] .schedule-page .btn-outline-secondary,
-  [data-bs-theme="dark"] .schedule-page .btn-outline-secondary {
-    color: #dbeafe;
-    border-color: rgba(255, 255, 255, 0.25);
-  }
-
-  body.dark-mode .schedule-page .btn-outline-secondary:hover,
-  body.theme-dark .schedule-page .btn-outline-secondary:hover,
-  html[data-theme="dark"] .schedule-page .btn-outline-secondary:hover,
-  body[data-theme="dark"] .schedule-page .btn-outline-secondary:hover,
-  [data-bs-theme="dark"] .schedule-page .btn-outline-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #ffffff;
-  }
-
-  body.dark-mode .schedule-page .btn-outline-primary,
-  body.theme-dark .schedule-page .btn-outline-primary,
-  html[data-theme="dark"] .schedule-page .btn-outline-primary,
-  body[data-theme="dark"] .schedule-page .btn-outline-primary,
-  [data-bs-theme="dark"] .schedule-page .btn-outline-primary {
-    color: #93c5fd;
-    border-color: rgba(147, 197, 253, 0.45);
-  }
-
-  body.dark-mode .schedule-page .btn-outline-primary:hover,
-  body.theme-dark .schedule-page .btn-outline-primary:hover,
-  html[data-theme="dark"] .schedule-page .btn-outline-primary:hover,
-  body[data-theme="dark"] .schedule-page .btn-outline-primary:hover,
-  [data-bs-theme="dark"] .schedule-page .btn-outline-primary:hover {
-    background: rgba(37, 99, 235, 0.28);
-    color: #ffffff;
+  .event-type-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px 9px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--schedule-time);
+    margin-left: 6px;
   }
 
   @media (max-width: 768px) {
@@ -221,7 +165,7 @@
         <div class="text-muted small">
           Từ {{ week_start }} đến {{ week_end }}
           {% if teacher %}
-          — Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
+            — Giảng viên: {{ teacher.full_name if teacher.full_name else teacher.username }}
           {% endif %}
         </div>
       </div>
@@ -252,6 +196,12 @@
               {% if lesson.end_time %}
                 - {{ lesson.end_time.strftime('%H:%M') }}
               {% endif %}
+
+              {% if lesson.event_type == 'class_schedule' %}
+                <span class="event-type-badge">Định kỳ</span>
+              {% else %}
+                <span class="event-type-badge">Bài học</span>
+              {% endif %}
             </div>
 
             <div class="mt-1">
@@ -259,7 +209,11 @@
             </div>
 
             <div class="text-muted small">
-              Module: {{ lesson.module_title }} | Bài học: {{ lesson.lesson_title }}
+              Nội dung: {{ lesson.module_title }} | {{ lesson.lesson_title }}
+            </div>
+
+            <div class="text-muted small">
+              Địa điểm: {{ lesson.location or 'Trực tuyến' }}
             </div>
           </div>
           {% endfor %}
@@ -272,7 +226,7 @@
       {% endfor %}
     {% else %}
       <div class="alert alert-info text-center shadow-sm mt-3">
-        <i class="bi bi-emoji-frown"></i> Hiện chưa có lịch dạy trong tuần.
+        <i class="bi bi-info-circle"></i> Hiện chưa có lịch dạy trong tuần.
       </div>
     {% endif %}
   </div>

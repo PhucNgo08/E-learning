@@ -327,3 +327,24 @@ def manage_page(
             "now": datetime.now(),
         },
     )
+
+
+@router.get("/delete/{course_id}")
+def delete_course_by_teacher(
+    course_id: str,
+    db: Session = Depends(get_db),
+    current_teacher=Depends(get_current_teacher),
+):
+    """
+    Lưu trữ khóa học của chính giảng viên.
+    Route này khớp với các nút xóa đang có trong giao diện danh sách/quản lý khóa học.
+    """
+    ok = course_service.delete_course(
+        db=db,
+        user_id=current_teacher.id,
+        course_id=course_id,
+        role="teacher",
+    )
+    if not ok:
+        raise HTTPException(status_code=404, detail="Không tìm thấy khóa học hoặc không có quyền xóa.")
+    return RedirectResponse("/teacher/courses/list", status_code=303)

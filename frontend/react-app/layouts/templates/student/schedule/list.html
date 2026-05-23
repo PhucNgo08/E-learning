@@ -1,5 +1,5 @@
 {% extends "layout_student.html" %}
-{% block title %}📋 Lịch học & Kiểm tra{% endblock %}
+{% block title %}Lịch học và kiểm tra{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -9,7 +9,7 @@
   }
 
   .schedule-page-title {
-    color: var(--text);
+    color: var(--text, #0f172a);
   }
 
   .schedule-table-wrap {
@@ -86,9 +86,75 @@
     text-align: center;
   }
 
-  body.dark-mode .schedule-table thead th {
+  body.dark-mode .schedule-table-wrap,
+  body.theme-dark .schedule-table-wrap,
+  html.dark .schedule-table-wrap,
+  html.dark-mode .schedule-table-wrap,
+  html[data-theme="dark"] .schedule-table-wrap,
+  body[data-theme="dark"] .schedule-table-wrap,
+  [data-bs-theme="dark"] .schedule-table-wrap {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .schedule-table thead th,
+  body.theme-dark .schedule-table thead th,
+  html.dark .schedule-table thead th,
+  html[data-theme="dark"] .schedule-table thead th,
+  [data-bs-theme="dark"] .schedule-table thead th {
     background: rgba(96, 165, 250, 0.14);
-    color: var(--text, #f8fafc);
+    color: #f8fafc;
+  }
+
+  body.dark-mode .schedule-table tbody tr,
+  body.theme-dark .schedule-table tbody tr,
+  html.dark .schedule-table tbody tr,
+  html[data-theme="dark"] .schedule-table tbody tr,
+  [data-bs-theme="dark"] .schedule-table tbody tr {
+    background: #0f172a;
+  }
+
+  body.dark-mode .schedule-table td,
+  body.dark-mode .schedule-course-name,
+  body.dark-mode .schedule-time,
+  body.dark-mode .schedule-location,
+  body.dark-mode .schedule-index,
+  body.theme-dark .schedule-table td,
+  body.theme-dark .schedule-course-name,
+  body.theme-dark .schedule-time,
+  body.theme-dark .schedule-location,
+  body.theme-dark .schedule-index,
+  html.dark .schedule-table td,
+  html.dark .schedule-course-name,
+  html.dark .schedule-time,
+  html.dark .schedule-location,
+  html.dark .schedule-index,
+  html[data-theme="dark"] .schedule-table td,
+  html[data-theme="dark"] .schedule-course-name,
+  html[data-theme="dark"] .schedule-time,
+  html[data-theme="dark"] .schedule-location,
+  html[data-theme="dark"] .schedule-index,
+  [data-bs-theme="dark"] .schedule-table td,
+  [data-bs-theme="dark"] .schedule-course-name,
+  [data-bs-theme="dark"] .schedule-time,
+  [data-bs-theme="dark"] .schedule-location,
+  [data-bs-theme="dark"] .schedule-index {
+    color: #e5e7eb !important;
+  }
+
+  body.dark-mode .schedule-note,
+  body.dark-mode .schedule-empty,
+  body.theme-dark .schedule-note,
+  body.theme-dark .schedule-empty,
+  html.dark .schedule-note,
+  html.dark .schedule-empty,
+  html[data-theme="dark"] .schedule-note,
+  html[data-theme="dark"] .schedule-empty,
+  [data-bs-theme="dark"] .schedule-note,
+  [data-bs-theme="dark"] .schedule-empty {
+    background: #111827;
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.25);
   }
 
   @media (max-width: 768px) {
@@ -129,11 +195,6 @@
       padding: 0.85rem;
     }
 
-    .schedule-table.responsive-card-table tr:hover {
-      background: var(--surface-strong, #ffffff);
-      transform: translateY(-2px);
-    }
-
     .schedule-table.responsive-card-table td {
       border: 0;
       padding: 0.55rem 0;
@@ -149,19 +210,11 @@
       margin-bottom: 0.2rem;
     }
 
-    .schedule-index {
-      text-align: left !important;
-    }
-
+    .schedule-index,
     .schedule-date,
     .schedule-time,
     .schedule-location {
       text-align: left !important;
-    }
-
-    .lesson-badge {
-      font-size: 0.78rem;
-      line-height: 1.35;
     }
   }
 </style>
@@ -169,10 +222,9 @@
 
 {% block content %}
 <div class="container py-4 fade-in schedule-page">
-
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h4 class="fw-bold schedule-page-title mb-0">
-      <i class="bi bi-list-task text-primary"></i> Lịch học & Kiểm tra
+      <i class="bi bi-list-task text-primary"></i> Lịch học và kiểm tra
     </h4>
     <a href="/student/schedule/calendar" class="btn btn-outline-primary btn-sm rounded-pill px-3">
       <i class="bi bi-calendar3"></i> Xem dạng lịch
@@ -193,36 +245,37 @@
       </thead>
 
       <tbody>
-        {% for s in schedules %}
+        {% for item in schedules %}
         <tr>
-
           <td data-label="#" class="text-center fw-semibold schedule-index">{{ loop.index }}</td>
 
           <td data-label="Môn học">
-            <div class="fw-semibold schedule-course-name">{{ s.course_name }}</div>
+            <div class="fw-semibold schedule-course-name">{{ item.course_name }}</div>
 
-            {% if s.module_name %}
-            <small class="text-muted">{{ s.module_name }}</small><br>
+            {% if item.module_name %}
+            <small class="text-muted">{{ item.module_name }}</small><br>
             {% endif %}
 
-            <span class="badge lesson-badge"
-                  data-color="{{ s.color | default('#2563eb') }}">
-              {{ s.lesson_title }}
+            <span class="badge lesson-badge" data-color="{{ item.color | default('#2563eb') }}">
+              {{ item.lesson_title }}
             </span>
+
+            {% if item.type_label %}
+            <div class="small text-muted mt-1">{{ item.type_label }}</div>
+            {% endif %}
           </td>
 
           <td data-label="Ngày" class="text-center fw-semibold schedule-date">
-            {{ s.date_display or '-' }}
+            {{ item.date_display or '-' }}
           </td>
 
           <td data-label="Giờ" class="text-center schedule-time">
-            {{ s.time_display or '-' }}
+            {{ item.time_display or '-' }}
           </td>
 
           <td data-label="Địa điểm" class="text-center schedule-location">
-            {{ s.location or 'Trực tuyến' }}
+            {{ item.location or 'Trực tuyến' }}
           </td>
-
         </tr>
         {% endfor %}
       </tbody>
@@ -231,7 +284,7 @@
 
   <p class="schedule-note mt-3 small mb-0 p-2">
     <i class="bi bi-info-circle"></i>
-    Dữ liệu được đồng bộ tự động từ thời khóa biểu mới nhất.
+    Dữ liệu được đồng bộ từ thời khóa biểu, bài học, quiz và bài kiểm tra đã công bố.
   </p>
 
   {% else %}
@@ -243,8 +296,8 @@
 </div>
 
 <script>
-  document.querySelectorAll('.lesson-badge[data-color]').forEach(function (el) {
-    el.style.backgroundColor = el.dataset.color || '#2563eb';
+  document.querySelectorAll(".lesson-badge[data-color]").forEach(function (element) {
+    element.style.backgroundColor = element.dataset.color || "#2563eb";
   });
 </script>
 {% endblock %}

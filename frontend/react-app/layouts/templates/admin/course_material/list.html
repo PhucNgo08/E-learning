@@ -1,238 +1,590 @@
 {% extends "layout_admin.html" %}
-{% block title %}📚 Quản lý Tài liệu khóa học{% endblock %}
+{% block title %}📚 Quản lý tài liệu khóa học{% endblock %}
 
 {% block head_extra %}
+
 <style>
-  body { background-color: #f8f9fa; }
-  .btn { font-weight: 600; transition: 0.25s; }
-  .btn:hover { transform: translateY(-2px); }
-  .table-hover tbody tr:hover { background-color: #eef5ff !important; }
-  .table th { text-align: center; }
-  .file-icon { font-size: 1.3rem; }
-  .badge-format { padding: 6px 10px; border-radius: 6px; font-size: 0.75rem; }
-  .truncate { max-width: 260px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-  .private-row { opacity: 0.75; }
-  .expired { background-color: #ffe1e1 !important; }
+  .material-page {
+    --mat-primary: #2563eb;
+    --mat-success: #16a34a;
+    --mat-danger: #dc2626;
+    --mat-warning: #f59e0b;
+    --mat-info: #0891b2;
+    --mat-text: #0f172a;
+    --mat-muted: #64748b;
+    --mat-line: #e2e8f0;
+    --mat-soft: #f8fafc;
+    --mat-card: rgba(255, 255, 255, 0.96);
+    --mat-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--mat-text);
+  }
+
+  .material-page .mat-hero,
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    border: 1px solid var(--mat-line);
+    background: var(--mat-card);
+    box-shadow: var(--mat-shadow);
+    border-radius: 24px;
+  }
+
+  .material-page .mat-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .material-page .mat-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .material-page .mat-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .material-page .mat-title {
+    color: var(--mat-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .material-page .mat-subtitle,
+  .material-page .text-muted,
+  .material-page .file-hint,
+  .material-page .form-text {
+    color: var(--mat-muted) !important;
+  }
+
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    padding: 22px;
+  }
+
+  .material-page .form-control,
+  .material-page .form-select {
+    border-radius: 14px;
+    border-color: var(--mat-line);
+    color: var(--mat-text);
+    background: #fff;
+  }
+
+  .material-page .form-control:focus,
+  .material-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .material-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .material-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .material-page .badge,
+  .material-page .mat-badge {
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-weight: 750;
+  }
+
+  .material-page .mat-table {
+    color: var(--mat-text);
+    --bs-table-color: var(--mat-text);
+    --bs-table-border-color: var(--mat-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .material-page .mat-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table tbody td {
+    color: var(--mat-text);
+    vertical-align: middle;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .material-page .file-list-box,
+  .material-page .mat-file-box {
+    background: var(--mat-soft);
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--mat-line);
+  }
+
+  .material-page .file-list-box {
+    display: none;
+  }
+
+  .material-page .file-item,
+  .material-page .version-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .material-page .file-item:last-child,
+  .material-page .version-item:last-child {
+    border-bottom: none;
+  }
+
+  .material-page .file-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-word;
+  }
+
+  .material-page .file-size {
+    font-size: 0.85rem;
+    color: var(--mat-muted);
+    white-space: nowrap;
+  }
+
+  .material-page .truncate {
+    max-width: 260px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .material-page .private-row {
+    opacity: 0.76;
+  }
+
+  .material-page .expired td {
+    background: rgba(239, 68, 68, 0.10) !important;
+  }
+
+  .material-page img,
+  .material-page video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .material-page,
+  html[data-bs-theme="dark"] .material-page,
+  body[data-theme="dark"] .material-page {
+    --mat-text: #e5e7eb;
+    --mat-muted: #cbd5e1;
+    --mat-line: rgba(148, 163, 184, 0.25);
+    --mat-soft: rgba(30, 41, 59, 0.86);
+    --mat-card: rgba(15, 23, 42, 0.92);
+    --mat-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  }
+
+  body.dark-mode .material-page .mat-title,
+  html[data-bs-theme="dark"] .material-page .mat-title,
+  body[data-theme="dark"] .material-page .mat-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .material-page .mat-card,
+  body.dark-mode .material-page .mat-info-box,
+  body.dark-mode .material-page .mat-file-box,
+  body.dark-mode .material-page .mat-version-box,
+  body.dark-mode .material-page .file-list-box,
+  html[data-bs-theme="dark"] .material-page .mat-card,
+  html[data-bs-theme="dark"] .material-page .mat-info-box,
+  html[data-bs-theme="dark"] .material-page .mat-file-box,
+  html[data-bs-theme="dark"] .material-page .mat-version-box,
+  html[data-bs-theme="dark"] .material-page .file-list-box,
+  body[data-theme="dark"] .material-page .mat-card,
+  body[data-theme="dark"] .material-page .mat-info-box,
+  body[data-theme="dark"] .material-page .mat-file-box,
+  body[data-theme="dark"] .material-page .mat-version-box,
+  body[data-theme="dark"] .material-page .file-list-box {
+    background: var(--mat-card);
+    border-color: var(--mat-line);
+    color: var(--mat-text);
+  }
+
+  body.dark-mode .material-page .form-control,
+  body.dark-mode .material-page .form-select,
+  body.dark-mode .material-page textarea,
+  html[data-bs-theme="dark"] .material-page .form-control,
+  html[data-bs-theme="dark"] .material-page .form-select,
+  html[data-bs-theme="dark"] .material-page textarea,
+  body[data-theme="dark"] .material-page .form-control,
+  body[data-theme="dark"] .material-page .form-select,
+  body[data-theme="dark"] .material-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .material-page .form-control::placeholder,
+  body.dark-mode .material-page textarea::placeholder,
+  html[data-bs-theme="dark"] .material-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .material-page textarea::placeholder,
+  body[data-theme="dark"] .material-page .form-control::placeholder,
+  body[data-theme="dark"] .material-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .material-page .mat-table thead th,
+  html[data-bs-theme="dark"] .material-page .mat-table thead th,
+  body[data-theme="dark"] .material-page .mat-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .material-page .mat-table tbody td,
+  html[data-bs-theme="dark"] .material-page .mat-table tbody td,
+  body[data-theme="dark"] .material-page .mat-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .material-page .mat-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .material-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-secondary,
+  body[data-theme="dark"] .material-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .material-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-primary,
+  body[data-theme="dark"] .material-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .material-page .mat-hero,
+    .material-page .mat-card,
+    .material-page .mat-info-box,
+    .material-page .mat-file-box,
+    .material-page .mat-version-box {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .material-page .mat-actions,
+    .material-page .mat-actions .btn,
+    .material-page .mat-hero .btn {
+      width: 100%;
+    }
+
+    .material-page .responsive-table thead {
+      display: none;
+    }
+
+    .material-page .responsive-table tbody,
+    .material-page .responsive-table tr,
+    .material-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .material-page .responsive-table tr {
+      border-bottom: 1px solid var(--mat-line);
+      padding: 10px;
+    }
+
+    .material-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .material-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--mat-muted);
+      margin-bottom: 2px;
+    }
+
+    .material-page .truncate {
+      max-width: none;
+      white-space: normal;
+    }
+  }
 </style>
+
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+{% set material_type_labels = {
+  "lecture": "Bài giảng",
+  "document": "Tài liệu",
+  "assignment": "Bài tập",
+  "quiz": "Bài kiểm tra",
+  "reference": "Tài liệu tham khảo",
+  "syllabus": "Đề cương",
+  "video": "Video",
+  "audio": "Âm thanh",
+  "image": "Hình ảnh",
+  "other": "Khác"
+} %}
+{% macro file_format_label(ext) -%}
+  {%- set e = (ext or '')|lower -%}
+  {%- if e == 'pdf' -%}PDF
+  {%- elif e in ['png','jpg','jpeg','gif','webp'] -%}Hình ảnh
+  {%- elif e in ['doc','docx'] -%}Văn bản
+  {%- elif e in ['ppt','pptx'] -%}Trình chiếu
+  {%- elif e in ['xlsx','csv','xls'] -%}Bảng tính
+  {%- elif e == 'mp4' -%}Video
+  {%- elif e in ['zip','rar'] -%}Tệp nén
+  {%- elif e == 'txt' -%}Văn bản
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+<div class="material-page px-2 px-md-4 py-3 py-md-4">
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary fw-bold">
-      <i class="bi bi-folder2-open"></i> Quản lý Tài liệu khóa học
-    </h3>
-
+  <div class="mat-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
+      <h3 class="mat-title"><i class="bi bi-folder2-open me-2"></i>Quản lý tài liệu khóa học</h3>
+      <p class="mat-subtitle mb-0 mt-2">Theo dõi tài liệu, phiên bản, lượt tải và trạng thái hiển thị theo khóa học.</p>
+    </div>
+
+    <div class="mat-actions d-flex flex-wrap gap-2">
       <a href="/admin/course-material/create" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Thêm tài liệu
+        <i class="bi bi-plus-circle me-1"></i>Thêm tài liệu
       </a>
-      <a href="/admin/dashboard" class="btn btn-outline-secondary ms-2">
-        <i class="bi bi-arrow-left"></i> Quay lại
+      <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
       </a>
     </div>
   </div>
 
   {% if success %}
-  <div class="alert alert-success">
-    <i class="bi bi-check-circle"></i> {{ success }}
+  <div class="alert alert-success rounded-4">
+    <i class="bi bi-check-circle me-1"></i>{{ success }}
   </div>
   {% endif %}
 
   {% if error %}
-  <div class="alert alert-danger">
-    <i class="bi bi-exclamation-triangle"></i> {{ error }}
+  <div class="alert alert-danger rounded-4">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
   </div>
   {% endif %}
 
-  <div class="card mb-4 shadow-sm">
-    <div class="card-header bg-primary text-white fw-semibold">
-      <i class="bi bi-collection"></i> Danh sách tài liệu chi tiết
-    </div>
+  <div class="mat-card mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-collection me-1"></i>Danh sách tài liệu chi tiết</h5>
 
-    <div class="card-body">
-      {% if materials %}
-      <div class="table-responsive">
-        <table class="table table-bordered table-hover align-middle mb-0">
-          <thead class="table-primary text-center align-middle">
-            <tr>
-              <th>#</th>
-              <th>Tài liệu</th>
-              <th>Khóa học</th>
-              <th>Loại</th>
-              <th>Phiên bản</th>
-              <th>Định dạng</th>
-              <th>Dung lượng</th>
-              <th>Ngày tạo</th>
-              <th>Tải xuống</th>
-              <th>Thao tác</th>
-            </tr>
-          </thead>
+    {% if materials %}
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover align-middle mb-0 mat-table responsive-table">
+        <thead class="text-center align-middle">
+          <tr>
+            <th>STT</th>
+            <th>Tài liệu</th>
+            <th>Khóa học</th>
+            <th>Loại</th>
+            <th>Phiên bản</th>
+            <th>Định dạng</th>
+            <th>Dung lượng</th>
+            <th>Ngày tạo</th>
+            <th>Tải xuống</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
 
-          <tbody>
-            {% for m in materials %}
-            {% set ext = (m.file_format or '').lower() %}
-            {% set expired = m.available_to and m.available_to < now %}
+        <tbody>
+          {% for m in materials or [] %}
+          {% set ext = (m.file_format or '')|lower %}
+          {% set expired = m.available_to and now is defined and m.available_to < now %}
 
-            <tr class="{% if not m.is_public %}private-row{% endif %} {% if expired %}expired{% endif %}">
-              <td class="text-center">{{ loop.index }}</td>
+          <tr class="{% if not m.is_public %}private-row{% endif %} {% if expired %}expired{% endif %}">
+            <td data-label="STT" class="text-center">{{ loop.index }}</td>
 
-              <td class="text-start fw-semibold truncate" title="{{ m.title }}">
-                {% if ext == 'pdf' %}
-                  <i class="bi bi-file-earmark-pdf text-danger file-icon"></i>
-                {% elif ext in ['png','jpg','jpeg'] %}
-                  <i class="bi bi-file-earmark-image text-info file-icon"></i>
-                {% elif ext in ['doc','docx'] %}
-                  <i class="bi bi-file-earmark-word text-primary file-icon"></i>
-                {% elif ext in ['ppt','pptx'] %}
-                  <i class="bi bi-file-earmark-ppt text-warning file-icon"></i>
-                {% elif ext == 'mp4' %}
-                  <i class="bi bi-file-earmark-play text-dark file-icon"></i>
-                {% elif ext in ['xlsx','csv','xls'] %}
-                  <i class="bi bi-file-earmark-spreadsheet text-success file-icon"></i>
-                {% else %}
-                  <i class="bi bi-file-earmark text-secondary file-icon"></i>
-                {% endif %}
+            <td data-label="Tài liệu" class="text-start fw-semibold truncate" title="{{ m.title or '' }}">
+              {% if ext == 'pdf' %}
+                <i class="bi bi-file-earmark-pdf text-danger file-icon"></i>
+              {% elif ext in ['png','jpg','jpeg'] %}
+                <i class="bi bi-file-earmark-image text-info file-icon"></i>
+              {% elif ext in ['doc','docx'] %}
+                <i class="bi bi-file-earmark-word text-primary file-icon"></i>
+              {% elif ext in ['ppt','pptx'] %}
+                <i class="bi bi-file-earmark-ppt text-warning file-icon"></i>
+              {% elif ext == 'mp4' %}
+                <i class="bi bi-file-earmark-play text-dark file-icon"></i>
+              {% elif ext in ['xlsx','csv','xls'] %}
+                <i class="bi bi-file-earmark-spreadsheet text-success file-icon"></i>
+              {% else %}
+                <i class="bi bi-file-earmark text-secondary file-icon"></i>
+              {% endif %}
 
-                {{ m.title }}
+              {{ m.title or "Không có tiêu đề" }}
 
-                {% if expired %}
-                  <span class="badge bg-danger ms-2">Hết hạn</span>
-                {% endif %}
-              </td>
+              {% if expired %}
+                <span class="badge bg-danger ms-2">Hết hạn</span>
+              {% endif %}
+            </td>
 
-              <td class="text-center">
-                {{ m.course.course_name if m.course else "—" }}
-              </td>
+            <td data-label="Khóa học" class="text-center">
+              {{ m.course.course_name if m.course else "—" }}
+            </td>
 
-              <td class="text-center">
-                <span class="badge bg-info text-dark">{{ m.material_type }}</span>
-              </td>
+            <td data-label="Loại" class="text-center">
+              <span class="badge bg-info text-dark">{{ material_type_labels.get((m.material_type or '')|lower, "Khác") }}</span>
+            </td>
 
-              <td class="text-center">
-                <span class="badge bg-dark">v{{ m.version }}</span>
-              </td>
+            <td data-label="Phiên bản" class="text-center">
+              <span class="badge bg-dark">v{{ m.version or 1 }}</span>
+            </td>
 
-              <td class="text-center">
-                {% if ext == 'pdf' %}
-                  <span class="badge bg-danger badge-format">PDF</span>
-                {% elif ext in ['png','jpg','jpeg'] %}
-                  <span class="badge bg-info text-dark badge-format">Hình ảnh</span>
-                {% elif ext in ['doc','docx'] %}
-                  <span class="badge bg-primary badge-format">Word</span>
-                {% elif ext in ['ppt','pptx'] %}
-                  <span class="badge bg-warning text-dark badge-format">PPT</span>
-                {% elif ext in ['xlsx','csv','xls'] %}
-                  <span class="badge bg-success badge-format">Excel</span>
-                {% elif ext == 'mp4' %}
-                  <span class="badge bg-dark badge-format">Video</span>
-                {% else %}
-                  <span class="badge bg-secondary badge-format">{{ ext|upper }}</span>
-                {% endif %}
-              </td>
+            <td data-label="Định dạng" class="text-center">
+              {% if ext == 'pdf' %}
+                <span class="badge bg-danger mat-badge">PDF</span>
+              {% elif ext in ['png','jpg','jpeg'] %}
+                <span class="badge bg-info text-dark mat-badge">Hình ảnh</span>
+              {% elif ext in ['doc','docx'] %}
+                <span class="badge bg-primary mat-badge">Văn bản</span>
+              {% elif ext in ['ppt','pptx'] %}
+                <span class="badge bg-warning text-dark mat-badge">Trình chiếu</span>
+              {% elif ext in ['xlsx','csv','xls'] %}
+                <span class="badge bg-success mat-badge">Bảng tính</span>
+              {% elif ext == 'mp4' %}
+                <span class="badge bg-dark mat-badge">Video</span>
+              {% elif ext in ['zip','rar'] %}
+                <span class="badge bg-secondary mat-badge">Tệp nén</span>
+              {% else %}
+                <span class="badge bg-secondary mat-badge">Không xác định</span>
+              {% endif %}
+            </td>
 
-              <td class="text-center">
-                {{ (m.file_size / 1024 / 1024)|round(2) }} MB
-                {% if m.file_size > 50 * 1024 * 1024 %}
-                  <span class="badge bg-warning text-dark">Lớn</span>
-                {% endif %}
-              </td>
+            <td data-label="Dung lượng" class="text-center">
+              {{ ((m.file_size or 0) / 1024 / 1024)|round(2) }} MB
+              {% if (m.file_size or 0) > 50 * 1024 * 1024 %}
+                <span class="badge bg-warning text-dark">Lớn</span>
+              {% endif %}
+            </td>
 
-              <td class="text-center">{{ m.created_at.strftime("%d/%m/%Y") }}</td>
+            <td data-label="Ngày tạo" class="text-center">{{ m.created_at.strftime("%d/%m/%Y") if m.created_at else "—" }}</td>
 
-              <td class="text-center">
-                <a href="/admin/course-material/download/{{ m.id }}"
-                   class="btn btn-sm btn-outline-secondary"
-                   title="Tải xuống">
-                  <i class="bi bi-download"></i>
+            <td data-label="Tải xuống" class="text-center">
+              <a href="/admin/course-material/download/{{ m.id }}"
+                 class="btn btn-sm btn-outline-secondary"
+                 title="Tải xuống">
+                <i class="bi bi-download"></i>
+              </a>
+            </td>
+
+            <td data-label="Thao tác" class="text-center">
+              <div class="btn-group btn-group-sm">
+                <a href="/admin/course-material/detail/{{ m.id }}"
+                   class="btn btn-outline-info"
+                   title="Chi tiết">
+                  <i class="bi bi-eye"></i>
                 </a>
-              </td>
 
-              <td class="text-center">
-                <div class="btn-group btn-group-sm">
-                  <a href="/admin/course-material/detail/{{ m.id }}"
-                     class="btn btn-outline-info"
-                     title="Chi tiết">
-                    <i class="bi bi-eye"></i>
-                  </a>
+                <a href="/admin/course-material/edit/{{ m.id }}"
+                   class="btn btn-outline-primary"
+                   title="Chỉnh sửa">
+                  <i class="bi bi-pencil"></i>
+                </a>
 
-                  <a href="/admin/course-material/edit/{{ m.id }}"
-                     class="btn btn-outline-primary"
-                     title="Chỉnh sửa">
-                    <i class="bi bi-pencil"></i>
-                  </a>
-
-                  <a href="/admin/course-material/delete/{{ m.id }}"
-                     class="btn btn-outline-danger"
-                     title="Xóa">
-                    <i class="bi bi-trash"></i>
-                  </a>
-                </div>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      {% else %}
-      <div class="text-center text-muted py-4">
-        <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-        Không có tài liệu nào.
-      </div>
-      {% endif %}
+                <a href="/admin/course-material/delete/{{ m.id }}"
+                   class="btn btn-outline-danger"
+                   title="Xóa">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+      Không có tài liệu nào.
+    </div>
+    {% endif %}
   </div>
 
-  <div class="card shadow-sm">
-    <div class="card-header bg-info text-white fw-semibold">
-      <i class="bi bi-bar-chart-line"></i> Thống kê tài liệu
+  <div class="mat-card">
+    <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-line me-1"></i>Thống kê tài liệu</h5>
+
+    {% if materials %}
+    <div class="table-responsive">
+      <table class="table table-hover table-striped align-middle mb-0 mat-table responsive-table">
+        <thead class="text-center">
+          <tr>
+            <th>Tên tài liệu</th>
+            <th>Lượt tải</th>
+            <th>Phiên bản</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for m in materials or [] %}
+          <tr class="text-center">
+            <td data-label="Tên tài liệu">{{ m.title or "Không có tiêu đề" }}</td>
+            <td data-label="Lượt tải">{{ m.download_count or 0 }}</td>
+            <td data-label="Phiên bản">v{{ m.version or 1 }}</td>
+            <td data-label="Trạng thái">
+              {% if m.is_public %}
+                <span class="badge bg-success">
+                  <i class="bi bi-unlock me-1"></i>Công khai
+                </span>
+              {% else %}
+                <span class="badge bg-secondary">
+                  <i class="bi bi-lock me-1"></i>Riêng tư
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-
-    <div class="card-body">
-      {% if materials %}
-      <div class="table-responsive">
-        <table class="table table-hover table-striped align-middle mb-0">
-          <thead class="table-info text-center">
-            <tr>
-              <th>Tên tài liệu</th>
-              <th>Lượt tải</th>
-              <th>Phiên bản</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {% for m in materials %}
-            <tr class="text-center">
-              <td>{{ m.title }}</td>
-              <td>{{ m.download_count or 0 }}</td>
-              <td>v{{ m.version }}</td>
-              <td>
-                {% if m.is_public %}
-                  <span class="badge bg-success">
-                    <i class="bi bi-unlock"></i> Công khai
-                  </span>
-                {% else %}
-                  <span class="badge bg-secondary">
-                    <i class="bi bi-lock"></i> Riêng tư
-                  </span>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-
-        </table>
-      </div>
-      {% else %}
-      <div class="text-center text-muted py-4">
-        <i class="bi bi-bar-chart-line fs-3 d-block mb-2"></i>
-        Không có dữ liệu thống kê.
-      </div>
-      {% endif %}
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="bi bi-bar-chart-line fs-3 d-block mb-2"></i>
+      Không có dữ liệu thống kê.
     </div>
+    {% endif %}
   </div>
 
 </div>

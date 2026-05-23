@@ -1,0 +1,295 @@
+{% extends "layout_admin.html" %}
+{% block title %}Tổng tiến độ học tập{% endblock %}
+{% block page_title %}Tổng tiến độ học tập{% endblock %}
+{% block page_subtitle %}Theo dõi toàn bộ quá trình học, nộp bài và làm quiz của hệ thống{% endblock %}
+{% block nav_statistics %}active{% endblock %}
+{% block page_banner %}{% endblock %}
+{% block stats_overview %}{% endblock %}
+
+{% block content %}
+<style>
+/* =====================================================
+   LEARNING PROGRESS - LIGHT / DARK MODE FIX
+   Chỉ áp dụng cho trang /admin/statistics/learning-progress
+===================================================== */
+.learning-progress-page {
+  --lp-card-bg: rgba(255, 255, 255, 0.96);
+  --lp-card-border: rgba(226, 232, 240, 0.95);
+  --lp-header-bg: rgba(248, 250, 252, 0.98);
+  --lp-table-head-bg: #eef5ff;
+  --lp-table-row-bg: #ffffff;
+  --lp-table-row-alt-bg: #fbfdff;
+  --lp-table-hover-bg: #f1f5f9;
+  --lp-main-text: #0f172a;
+  --lp-body-text: #334155;
+  --lp-muted-text: #64748b;
+  --lp-border: #e2e8f0;
+  --lp-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
+}
+
+body.dark-mode .learning-progress-page,
+body.theme-dark .learning-progress-page,
+body[data-theme="dark"] .learning-progress-page,
+html[data-theme="dark"] .learning-progress-page,
+[data-bs-theme="dark"] .learning-progress-page {
+  --lp-card-bg: rgba(15, 23, 42, 0.92);
+  --lp-card-border: rgba(148, 163, 184, 0.22);
+  --lp-header-bg: rgba(30, 41, 59, 0.96);
+  --lp-table-head-bg: rgba(30, 41, 59, 0.98);
+  --lp-table-row-bg: rgba(15, 23, 42, 0.90);
+  --lp-table-row-alt-bg: rgba(30, 41, 59, 0.72);
+  --lp-table-hover-bg: rgba(51, 65, 85, 0.88);
+  --lp-main-text: #f8fafc;
+  --lp-body-text: #e5e7eb;
+  --lp-muted-text: #cbd5e1;
+  --lp-border: rgba(148, 163, 184, 0.22);
+  --lp-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+}
+
+.learning-progress-page .lp-card {
+  background: var(--lp-card-bg) !important;
+  border: 1px solid var(--lp-card-border) !important;
+  color: var(--lp-main-text) !important;
+  box-shadow: var(--lp-shadow) !important;
+  overflow: hidden;
+}
+
+.learning-progress-page .lp-card-header {
+  background: var(--lp-header-bg) !important;
+  color: var(--lp-main-text) !important;
+  border-bottom: 1px solid var(--lp-border) !important;
+  font-weight: 800;
+  padding: 0.95rem 1.1rem;
+}
+
+.learning-progress-page .lp-label,
+.learning-progress-page .text-muted,
+.learning-progress-page .small.text-muted {
+  color: var(--lp-muted-text) !important;
+}
+
+.learning-progress-page .lp-value,
+.learning-progress-page .fw-semibold,
+.learning-progress-page .fw-bold,
+.learning-progress-page td,
+.learning-progress-page th {
+  color: var(--lp-main-text) !important;
+}
+
+.learning-progress-page .lp-stat-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 110, 253, 0.10);
+  color: #0d6efd;
+}
+
+body.dark-mode .learning-progress-page .lp-stat-icon,
+body.theme-dark .learning-progress-page .lp-stat-icon,
+body[data-theme="dark"] .learning-progress-page .lp-stat-icon,
+html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
+[data-bs-theme="dark"] .learning-progress-page .lp-stat-icon {
+  background: rgba(96, 165, 250, 0.16);
+  color: #93c5fd;
+}
+
+.learning-progress-page .table-responsive {
+  background: var(--lp-card-bg) !important;
+}
+
+.learning-progress-page .table,
+.learning-progress-page table {
+  --bs-table-bg: var(--lp-table-row-bg) !important;
+  --bs-table-color: var(--lp-body-text) !important;
+  --bs-table-border-color: var(--lp-border) !important;
+  --bs-table-hover-bg: var(--lp-table-hover-bg) !important;
+  color: var(--lp-body-text) !important;
+  background: var(--lp-card-bg) !important;
+  margin-bottom: 0;
+}
+
+.learning-progress-page .table thead,
+.learning-progress-page .table-light,
+.learning-progress-page thead.table-light {
+  --bs-table-bg: var(--lp-table-head-bg) !important;
+  --bs-table-color: var(--lp-main-text) !important;
+  --bs-table-border-color: var(--lp-border) !important;
+  background: var(--lp-table-head-bg) !important;
+  color: var(--lp-main-text) !important;
+}
+
+.learning-progress-page .table thead th,
+.learning-progress-page table thead th {
+  background: var(--lp-table-head-bg) !important;
+  color: var(--lp-main-text) !important;
+  border-color: var(--lp-border) !important;
+  font-weight: 800;
+}
+
+.learning-progress-page .table tbody tr,
+.learning-progress-page table tbody tr {
+  background: var(--lp-table-row-bg) !important;
+}
+
+.learning-progress-page .table tbody tr:nth-child(even),
+.learning-progress-page table tbody tr:nth-child(even) {
+  background: var(--lp-table-row-alt-bg) !important;
+}
+
+.learning-progress-page .table tbody td,
+.learning-progress-page table tbody td {
+  background: transparent !important;
+  color: var(--lp-body-text) !important;
+  border-color: var(--lp-border) !important;
+}
+
+.learning-progress-page .table tbody tr:hover td,
+.learning-progress-page table tbody tr:hover td {
+  background: var(--lp-table-hover-bg) !important;
+  color: var(--lp-main-text) !important;
+}
+
+.learning-progress-page .lp-empty {
+  color: var(--lp-muted-text) !important;
+  background: transparent !important;
+}
+
+@media (max-width: 768px) {
+  .learning-progress-page .lp-stat-card .card-body {
+    padding: 1rem !important;
+  }
+
+  .learning-progress-page .lp-value {
+    font-size: 1.55rem !important;
+  }
+}
+</style>
+
+<div class="learning-progress-page">
+  <div class="row g-3 mb-4">
+    {% set cards = [
+      ('Sinh viên', summary.total_students, 'bi-people-fill'),
+      ('Giảng viên', summary.total_teachers, 'bi-person-workspace'),
+      ('Khóa học', summary.total_courses, 'bi-book-half'),
+      ('Ghi danh', summary.total_enrollments, 'bi-person-check'),
+      ('Bài học hoàn thành', summary.completed_lessons ~ '/' ~ summary.total_lessons, 'bi-easel'),
+      ('Bài tập đã nộp', summary.total_submissions ~ '/' ~ summary.total_assignments, 'bi-journal-check'),
+      ('Quiz đã làm', summary.quiz_attempts ~ '/' ~ summary.total_quizzes, 'bi-question-circle'),
+      ('Khóa published', summary.published_courses, 'bi-broadcast')
+    ] %}
+
+    {% for label, value, icon in cards %}
+    <div class="col-sm-6 col-xl-3">
+      <div class="card lp-card lp-stat-card border-0 rounded-4 h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start gap-3">
+            <div>
+              <div class="lp-label small mb-1">{{ label }}</div>
+              <div class="lp-value fs-3 fw-bold">{{ value }}</div>
+            </div>
+            <span class="lp-stat-icon">
+              <i class="bi {{ icon }} fs-4"></i>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card lp-card border-0 rounded-4 h-100">
+        <div class="lp-card-header">Top khóa học nhiều học viên</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Khóa học</th>
+                <th class="text-end">Học viên</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for c in top_courses %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ c.course_name }}</div>
+                  <div class="small text-muted">{{ c.course_code }}</div>
+                </td>
+                <td class="text-end fw-bold">{{ c.student_count }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="2" class="text-center lp-empty py-4">Chưa có dữ liệu.</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card lp-card border-0 rounded-4 h-100">
+        <div class="lp-card-header">Top sinh viên hoàn thành nhiều bài học</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Sinh viên</th>
+                <th class="text-end">Bài hoàn thành</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for s in top_students %}
+              <tr>
+                <td>
+                  <div class="fw-semibold">{{ s.full_name or s.username }}</div>
+                  <div class="small text-muted">{{ s.email }}</div>
+                </td>
+                <td class="text-end fw-bold">{{ s.completed_count }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="2" class="text-center lp-empty py-4">Chưa có dữ liệu.</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="card lp-card border-0 rounded-4">
+        <div class="lp-card-header">Sinh viên chưa bắt đầu học</div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Họ tên</th>
+                <th>Email/Tài khoản</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for user, profile in inactive_students %}
+              <tr>
+                <td>{{ profile.full_name if profile else user.username }}</td>
+                <td>{{ user.email }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="2" class="text-center lp-empty py-4">Không có sinh viên cần cảnh báo.</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

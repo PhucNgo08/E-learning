@@ -8,7 +8,6 @@
     --ay-primary-dark: #1d4ed8;
     --ay-success: #16a34a;
     --ay-danger: #dc2626;
-    --ay-warning: #f59e0b;
     --ay-info: #0891b2;
     --ay-surface: var(--surface, #ffffff);
     --ay-surface-soft: var(--surface-soft, #f8fafc);
@@ -35,7 +34,8 @@
   .ay-hero::after {
     content: "";
     position: absolute;
-    inset: auto -60px -90px auto;
+    right: -60px;
+    bottom: -90px;
     width: 220px;
     height: 220px;
     border-radius: 999px;
@@ -51,7 +51,7 @@
 
   .ay-subtitle {
     margin: 6px 0 0;
-    color: rgba(255, 255, 255, 0.86);
+    color: rgba(255, 255, 255, 0.88);
   }
 
   .ay-card {
@@ -83,27 +83,42 @@
     padding: 20px;
   }
 
+  .academic-year-page .btn {
+    border-radius: 12px;
+    font-weight: 700;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+  }
+
+  .academic-year-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
   .ay-table {
     margin: 0;
     color: var(--ay-text);
+    --bs-table-bg: var(--ay-surface);
+    --bs-table-color: var(--ay-text);
+    --bs-table-border-color: var(--ay-border);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
   }
 
   .ay-table thead th {
-    background: var(--ay-surface-soft);
-    color: var(--ay-text);
-    border-color: var(--ay-border);
+    background: var(--ay-surface-soft) !important;
+    color: var(--ay-text) !important;
+    border-color: var(--ay-border) !important;
     white-space: nowrap;
     font-weight: 800;
   }
 
   .ay-table tbody td {
-    color: var(--ay-text);
-    border-color: var(--ay-border);
+    background: transparent !important;
+    color: var(--ay-text) !important;
+    border-color: var(--ay-border) !important;
     vertical-align: middle;
   }
 
-  .ay-table.table-hover tbody tr:hover {
-    background: rgba(37, 99, 235, 0.06);
+  .ay-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
   }
 
   .ay-code {
@@ -124,16 +139,19 @@
     padding: 7px 12px;
     font-size: 0.86rem;
     font-weight: 800;
+    white-space: nowrap;
   }
 
   .ay-status.active {
     color: #15803d;
     background: rgba(22, 163, 74, 0.12);
+    border: 1px solid rgba(22, 163, 74, 0.22);
   }
 
   .ay-status.inactive {
     color: #475569;
     background: rgba(100, 116, 139, 0.14);
+    border: 1px solid rgba(100, 116, 139, 0.22);
   }
 
   .ay-action-wrap {
@@ -143,15 +161,6 @@
     flex-wrap: wrap;
   }
 
-  .academic-year-page .btn {
-    border-radius: 12px;
-    font-weight: 700;
-  }
-
-  .academic-year-page .btn:hover {
-    transform: translateY(-1px);
-  }
-
   .ay-footer {
     margin-top: 28px;
     font-size: 0.9rem;
@@ -159,12 +168,20 @@
     text-align: center;
   }
 
+  .academic-year-page .text-muted {
+    color: var(--ay-muted) !important;
+  }
+
+  .academic-year-page .alert {
+    border-radius: 18px;
+  }
+
   body.dark-mode .academic-year-page {
     --ay-surface: rgba(15, 23, 42, 0.92);
     --ay-surface-soft: rgba(30, 41, 59, 0.96);
-    --ay-border: rgba(148, 163, 184, 0.22);
+    --ay-border: rgba(148, 163, 184, 0.24);
     --ay-text: #e5e7eb;
-    --ay-muted: #94a3b8;
+    --ay-muted: #cbd5e1;
     --ay-shadow: 0 18px 46px rgba(0, 0, 0, 0.38);
   }
 
@@ -174,48 +191,89 @@
     box-shadow: 0 22px 58px rgba(0, 0, 0, 0.45);
   }
 
-  body.dark-mode .ay-card,
-  body.dark-mode .ay-card-header,
-  body.dark-mode .ay-table thead th,
-  body.dark-mode .ay-table tbody td {
-    border-color: var(--ay-border);
+  body.dark-mode .ay-table {
+    --bs-table-bg: rgba(15, 23, 42, 0.92);
+    --bs-table-color: #e5e7eb;
+    --bs-table-border-color: rgba(148, 163, 184, 0.24);
+    --bs-table-hover-bg: rgba(51, 65, 85, 0.72);
   }
 
-  body.dark-mode .ay-table.table-hover tbody tr:hover {
-    background: rgba(59, 130, 246, 0.13);
+  body.dark-mode .ay-table thead th {
+    background: rgba(30, 41, 59, 0.98) !important;
+    color: #f8fafc !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+  }
+
+  body.dark-mode .ay-table tbody tr:nth-child(even) td {
+    background: rgba(30, 41, 59, 0.36) !important;
+  }
+
+  body.dark-mode .ay-table.table-hover tbody tr:hover td {
+    background: rgba(51, 65, 85, 0.88) !important;
+    color: #ffffff !important;
   }
 
   body.dark-mode .ay-code {
     background: rgba(96, 165, 250, 0.16);
     color: #93c5fd;
+    border: 1px solid rgba(96, 165, 250, 0.24);
   }
 
   body.dark-mode .ay-status.active {
     color: #86efac;
     background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.28);
   }
 
   body.dark-mode .ay-status.inactive {
     color: #cbd5e1;
     background: rgba(148, 163, 184, 0.16);
+    border-color: rgba(148, 163, 184, 0.28);
   }
 
-  body.dark-mode .alert-success {
+  body.dark-mode .academic-year-page .alert-success {
     background: rgba(34, 197, 94, 0.14);
     color: #bbf7d0;
     border-color: rgba(74, 222, 128, 0.25);
   }
 
-  body.dark-mode .alert-danger {
+  body.dark-mode .academic-year-page .alert-danger {
     background: rgba(239, 68, 68, 0.14);
     color: #fecaca;
     border-color: rgba(248, 113, 113, 0.25);
   }
 
-  body.dark-mode .alert-info {
+  body.dark-mode .academic-year-page .alert-info {
     background: rgba(59, 130, 246, 0.15);
     color: #bfdbfe;
     border-color: rgba(96, 165, 250, 0.25);
+  }
+
+  body.dark-mode .academic-year-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .academic-year-page .btn-outline-warning {
+    color: #fbbf24;
+    border-color: #fbbf24;
+  }
+
+  body.dark-mode .academic-year-page .btn-outline-danger {
+    color: #fb7185;
+    border-color: #fb7185;
+  }
+
+  body.dark-mode .academic-year-page .btn-outline-info {
+    color: #38bdf8;
+    border-color: #38bdf8;
+  }
+
+  body.dark-mode .academic-year-page .btn-outline-secondary:hover,
+  body.dark-mode .academic-year-page .btn-outline-warning:hover,
+  body.dark-mode .academic-year-page .btn-outline-danger:hover,
+  body.dark-mode .academic-year-page .btn-outline-info:hover {
+    color: #0f172a;
   }
 
   @media (max-width: 768px) {
@@ -232,233 +290,11 @@
     .ay-action-wrap .btn {
       width: 100%;
     }
+
+    .ay-action-wrap {
+      justify-content: stretch;
+    }
   }
-/* =====================================================
-   FIX TABLE LIGHT / DARK MODE - ADMIN LIST PAGES
-   Dán cuối file để override CSS cũ
-===================================================== */
-
-/* ---------- LIGHT MODE ---------- */
-.table-card,
-.admin-card,
-.data-card,
-.content-card {
-  background: rgba(255, 255, 255, 0.96) !important;
-  border: 1px solid rgba(226, 232, 240, 0.95) !important;
-  color: #0f172a !important;
-}
-
-.table,
-table {
-  --bs-table-bg: #ffffff;
-  --bs-table-color: #1e293b;
-  --bs-table-border-color: #e2e8f0;
-  --bs-table-hover-bg: #f8fafc;
-  color: #1e293b !important;
-}
-
-.table thead th,
-table thead th {
-  background: #eaf2ff !important;
-  color: #1e3a8a !important;
-  border-color: #bfdbfe !important;
-  font-weight: 800;
-}
-
-.table tbody tr,
-table tbody tr {
-  background: #ffffff !important;
-}
-
-.table tbody td,
-table tbody td {
-  background: #ffffff !important;
-  color: #334155 !important;
-  border-color: #e2e8f0 !important;
-}
-
-.table tbody tr:hover td,
-table tbody tr:hover td {
-  background: #f1f5f9 !important;
-  color: #0f172a !important;
-}
-
-/* Text phụ */
-.text-muted,
-.mini-muted,
-.sub-text {
-  color: #64748b !important;
-}
-
-/* ---------- DARK MODE ---------- */
-body.dark-mode .table-card,
-body.dark-mode .admin-card,
-body.dark-mode .data-card,
-body.dark-mode .content-card {
-  background: rgba(15, 23, 42, 0.92) !important;
-  border: 1px solid rgba(148, 163, 184, 0.24) !important;
-  color: #e5e7eb !important;
-  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.35) !important;
-}
-
-body.dark-mode .table,
-body.dark-mode table {
-  --bs-table-bg: rgba(15, 23, 42, 0.92);
-  --bs-table-color: #e5e7eb;
-  --bs-table-border-color: rgba(148, 163, 184, 0.22);
-  --bs-table-hover-bg: rgba(30, 41, 59, 0.95);
-  color: #e5e7eb !important;
-  background: rgba(15, 23, 42, 0.92) !important;
-}
-
-body.dark-mode .table thead th,
-body.dark-mode table thead th {
-  background: rgba(30, 41, 59, 0.98) !important;
-  color: #f8fafc !important;
-  border-color: rgba(148, 163, 184, 0.28) !important;
-}
-
-body.dark-mode .table tbody tr,
-body.dark-mode table tbody tr {
-  background: rgba(15, 23, 42, 0.90) !important;
-}
-
-body.dark-mode .table tbody tr:nth-child(even),
-body.dark-mode table tbody tr:nth-child(even) {
-  background: rgba(30, 41, 59, 0.80) !important;
-}
-
-body.dark-mode .table tbody td,
-body.dark-mode table tbody td {
-  background: transparent !important;
-  color: #e5e7eb !important;
-  border-color: rgba(148, 163, 184, 0.20) !important;
-}
-
-body.dark-mode .table tbody tr:hover td,
-body.dark-mode table tbody tr:hover td {
-  background: rgba(51, 65, 85, 0.88) !important;
-  color: #ffffff !important;
-}
-
-/* Sửa chữ bị mờ trong dark mode */
-body.dark-mode .text-muted,
-body.dark-mode .mini-muted,
-body.dark-mode .sub-text,
-body.dark-mode .form-label {
-  color: #cbd5e1 !important;
-}
-
-body.dark-mode .text-dark {
-  color: #f8fafc !important;
-}
-
-/* Input / select trong dark mode */
-body.dark-mode .form-control,
-body.dark-mode .form-select {
-  background: rgba(15, 23, 42, 0.92) !important;
-  color: #e5e7eb !important;
-  border-color: rgba(148, 163, 184, 0.30) !important;
-}
-
-body.dark-mode .form-control::placeholder {
-  color: #94a3b8 !important;
-}
-
-body.dark-mode .form-control:focus,
-body.dark-mode .form-select:focus {
-  background: rgba(15, 23, 42, 1) !important;
-  color: #ffffff !important;
-  border-color: #60a5fa !important;
-  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22) !important;
-}
-
-/* Badge nhìn rõ hơn */
-body.dark-mode .badge.bg-success,
-body.dark-mode .status-active {
-  background: rgba(34, 197, 94, 0.18) !important;
-  color: #86efac !important;
-  border: 1px solid rgba(34, 197, 94, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-danger,
-body.dark-mode .status-inactive {
-  background: rgba(239, 68, 68, 0.18) !important;
-  color: #fca5a5 !important;
-  border: 1px solid rgba(239, 68, 68, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-warning {
-  background: rgba(245, 158, 11, 0.18) !important;
-  color: #fcd34d !important;
-  border: 1px solid rgba(245, 158, 11, 0.28) !important;
-}
-
-body.dark-mode .badge.bg-info {
-  background: rgba(14, 165, 233, 0.18) !important;
-  color: #7dd3fc !important;
-  border: 1px solid rgba(14, 165, 233, 0.28) !important;
-}
-
-/* Nút thao tác trong dark mode */
-body.dark-mode .btn-outline-warning {
-  color: #fbbf24 !important;
-  border-color: #fbbf24 !important;
-}
-
-body.dark-mode .btn-outline-danger {
-  color: #fb7185 !important;
-  border-color: #fb7185 !important;
-}
-
-body.dark-mode .btn-outline-info {
-  color: #38bdf8 !important;
-  border-color: #38bdf8 !important;
-}
-
-body.dark-mode .btn-outline-secondary {
-  color: #cbd5e1 !important;
-  border-color: #64748b !important;
-}
-
-body.dark-mode .btn-outline-warning:hover,
-body.dark-mode .btn-outline-danger:hover,
-body.dark-mode .btn-outline-info:hover,
-body.dark-mode .btn-outline-secondary:hover {
-  color: #0f172a !important;
-}
-
-/* Alert trong dark mode */
-body.dark-mode .alert-success {
-  background: rgba(34, 197, 94, 0.14) !important;
-  color: #bbf7d0 !important;
-  border-color: rgba(34, 197, 94, 0.24) !important;
-}
-
-body.dark-mode .alert-danger {
-  background: rgba(239, 68, 68, 0.14) !important;
-  color: #fecaca !important;
-  border-color: rgba(239, 68, 68, 0.24) !important;
-}
-
-body.dark-mode .alert-info {
-  background: rgba(59, 130, 246, 0.14) !important;
-  color: #bfdbfe !important;
-  border-color: rgba(59, 130, 246, 0.24) !important;
-}
-
-/* Mobile table */
-@media (max-width: 768px) {
-  body.dark-mode .responsive-table tr {
-    background: rgba(15, 23, 42, 0.92) !important;
-    border-color: rgba(148, 163, 184, 0.22) !important;
-  }
-
-  body.dark-mode .responsive-table td::before {
-    color: #93c5fd !important;
-  }
-}
-
 </style>
 
 <div class="academic-year-page px-2 px-md-3 py-3 py-md-4">
@@ -467,7 +303,7 @@ body.dark-mode .alert-info {
       <h3 class="ay-title">
         <i class="bi bi-calendar3 me-2"></i>Danh sách năm học
       </h3>
-      <p class="ay-subtitle">Quản lý niên khóa, thời gian bắt đầu/kết thúc và trạng thái hoạt động.</p>
+      <p class="ay-subtitle">Quản lý niên khóa, thời gian bắt đầu, thời gian kết thúc và trạng thái hoạt động.</p>
     </div>
     <a href="/admin/academic_years/create" class="btn btn-light text-primary fw-semibold shadow-sm">
       <i class="bi bi-plus-circle me-1"></i>Thêm năm học
@@ -475,14 +311,14 @@ body.dark-mode .alert-info {
   </div>
 
   {% if success %}
-    <div class="alert alert-success shadow-sm rounded-4">
-      <i class="bi bi-check-circle me-1"></i> {{ success }}
+    <div class="alert alert-success shadow-sm">
+      <i class="bi bi-check-circle me-1"></i>{{ success }}
     </div>
   {% endif %}
 
   {% if error %}
-    <div class="alert alert-danger shadow-sm rounded-4">
-      <i class="bi bi-exclamation-triangle me-1"></i> {{ error }}
+    <div class="alert alert-danger shadow-sm">
+      <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
     </div>
   {% endif %}
 
@@ -495,8 +331,8 @@ body.dark-mode .alert-info {
     </div>
 
     <div class="ay-card-body">
-      {% if years|length == 0 %}
-        <div class="alert alert-info text-center shadow-sm rounded-4 mb-0">
+      {% if not years %}
+        <div class="alert alert-info text-center shadow-sm mb-0">
           <i class="bi bi-info-circle"></i>
           <span class="ms-1">Hiện chưa có năm học nào trong hệ thống.</span><br>
           <a href="/admin/academic_years/create" class="alert-link">Thêm mới ngay</a>.
@@ -506,11 +342,11 @@ body.dark-mode .alert-info {
           <table class="table table-hover align-middle ay-table">
             <thead>
               <tr>
-                <th class="text-center">#</th>
-                <th>Mã</th>
+                <th class="text-center">STT</th>
+                <th>Mã năm học</th>
                 <th>Tên năm học</th>
-                <th class="text-center">Bắt đầu</th>
-                <th class="text-center">Kết thúc</th>
+                <th class="text-center">Năm bắt đầu</th>
+                <th class="text-center">Năm kết thúc</th>
                 <th class="text-center">Trạng thái</th>
                 <th class="text-center">Thao tác</th>
               </tr>
@@ -526,31 +362,31 @@ body.dark-mode .alert-info {
                 <td class="text-center">
                   {% if y.is_active %}
                     <span class="ay-status active">
-                      <i class="bi bi-check-circle"></i> Hoạt động
+                      <i class="bi bi-check-circle"></i>Hoạt động
                     </span>
                   {% else %}
                     <span class="ay-status inactive">
-                      <i class="bi bi-x-circle"></i> Ngưng
+                      <i class="bi bi-x-circle"></i>Tạm ngưng
                     </span>
                   {% endif %}
                 </td>
                 <td class="text-center">
                   <div class="ay-action-wrap">
                     <a href="/admin/academic_years/edit/{{ y.id }}" class="btn btn-sm btn-outline-warning">
-                      <i class="bi bi-pencil-square"></i> Sửa
+                      <i class="bi bi-pencil-square"></i>Sửa
                     </a>
 
                     <form method="post"
                           action="/admin/academic_years/delete/{{ y.id }}"
                           class="d-inline"
-                          onsubmit="return confirm('Bạn có chắc muốn xóa năm học {{ y.year_name }}?')">
+                          onsubmit="return confirm('Bạn có chắc muốn xóa năm học {{ y.year_name }} không?')">
                       <button type="submit" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-trash"></i> Xóa
+                        <i class="bi bi-trash"></i>Xóa
                       </button>
                     </form>
 
                     <a href="/admin/academic_years/{{ y.id }}/students" class="btn btn-sm btn-outline-info">
-                      <i class="bi bi-people"></i> Sinh viên
+                      <i class="bi bi-people"></i>Sinh viên
                     </a>
                   </div>
                 </td>
@@ -564,7 +400,7 @@ body.dark-mode .alert-info {
   </div>
 
   <footer class="ay-footer">
-    <p class="mb-0">© {{ current_year }} E-Learning Admin Dashboard — Danh sách năm học</p>
+    <p class="mb-0">© {{ current_year if current_year is defined and current_year else now.year }} Hệ thống quản trị học tập — Danh sách năm học</p>
   </footer>
 </div>
 {% endblock %}

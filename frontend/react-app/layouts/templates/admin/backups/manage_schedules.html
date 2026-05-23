@@ -1,5 +1,5 @@
 {% extends "layout_admin.html" %}
-{% block title %}⏱️ Quản lý lịch backup{% endblock %}
+{% block title %}⏱️ Quản lý lịch sao lưu{% endblock %}
 
 {% block content %}
 <style>
@@ -44,7 +44,7 @@
         <tr>
           <th>#</th>
           <th>Tên lịch</th>
-          <th>Loại backup</th>
+          <th>Loại sao lưu</th>
           <th>Tần suất</th>
           <th>Giữ lại (ngày)</th>
           <th>Ngày tạo</th>
@@ -88,7 +88,7 @@
 
           <td class="text-center">
             <form method="post" action="/admin/backups/schedule/delete/{{ s.id }}"
-                  onsubmit="return confirm('Bạn có chắc muốn xóa lịch backup {{ s.schedule_name }}?')">
+                  onsubmit="return confirm('Bạn có chắc muốn xóa lịch sao lưu {{ s.schedule_name }}?')">
               <button type="submit" class="btn btn-sm btn-danger">
                 <i class="bi bi-trash"></i>
               </button>
@@ -100,7 +100,7 @@
         <tr>
           <td colspan="7" class="text-center py-4 text-muted">
             <i class="bi bi-inbox fs-2 d-block"></i>
-            Chưa có lịch backup nào.
+            Chưa có lịch sao lưu nào.
           </td>
         </tr>
         {% endfor %}
@@ -109,7 +109,7 @@
 
     <div class="text-end mt-4">
       <a href="/admin/backups/manage" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách backup
+        <i class="bi bi-arrow-left-circle"></i> Quay lại danh sách sao lưu
       </a>
     </div>
   </div>

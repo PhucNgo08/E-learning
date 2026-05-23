@@ -150,6 +150,35 @@ async def update_profile(
     return RedirectResponse(url="/teacher/profile?msg=updated", status_code=303)
 
 
+
+@router.post("/profile/upload-avatar")
+async def upload_teacher_avatar(
+    request: Request,
+    db: Session = Depends(get_db),
+    avatar_file: UploadFile = File(None),
+):
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+
+    if not user_id or role != "teacher":
+        return RedirectResponse(url="/auth/login", status_code=303)
+
+    teacher = db.query(User).filter(User.id == user_id).first()
+    if not teacher:
+        return HTMLResponse("<h3>Không tìm thấy thông tin giáo viên.</h3>", status_code=404)
+
+    ensure_teacher_related_rows(teacher)
+    old_avatar = teacher.profile.avatar_url if teacher.profile else None
+    avatar_url = save_avatar_file(avatar_file, old_avatar)
+    teacher.profile.avatar_url = avatar_url
+    teacher.updated_at = datetime.utcnow()
+
+    request.session["user_avatar"] = avatar_url
+    db.commit()
+
+    return RedirectResponse(url="/teacher/dashboard", status_code=303)
+
+
 @router.get("/profile/change-password", response_class=HTMLResponse)
 async def change_password_form(request: Request):
     user_id = request.session.get("user_id")

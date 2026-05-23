@@ -2,99 +2,430 @@
 {% block title %}➕ Thêm tài liệu mới{% endblock %}
 
 {% block head_extra %}
+
 <style>
-  .file-hint { font-size: 0.85rem; color: #6c757d; }
-  .file-list-box {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 12px;
-    border: 1px solid #e0e0e0;
+  .material-page {
+    --mat-primary: #2563eb;
+    --mat-success: #16a34a;
+    --mat-danger: #dc2626;
+    --mat-warning: #f59e0b;
+    --mat-info: #0891b2;
+    --mat-text: #0f172a;
+    --mat-muted: #64748b;
+    --mat-line: #e2e8f0;
+    --mat-soft: #f8fafc;
+    --mat-card: rgba(255, 255, 255, 0.96);
+    --mat-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--mat-text);
+  }
+
+  .material-page .mat-hero,
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    border: 1px solid var(--mat-line);
+    background: var(--mat-card);
+    box-shadow: var(--mat-shadow);
+    border-radius: 24px;
+  }
+
+  .material-page .mat-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .material-page .mat-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .material-page .mat-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .material-page .mat-title {
+    color: var(--mat-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .material-page .mat-subtitle,
+  .material-page .text-muted,
+  .material-page .file-hint,
+  .material-page .form-text {
+    color: var(--mat-muted) !important;
+  }
+
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    padding: 22px;
+  }
+
+  .material-page .form-control,
+  .material-page .form-select {
+    border-radius: 14px;
+    border-color: var(--mat-line);
+    color: var(--mat-text);
+    background: #fff;
+  }
+
+  .material-page .form-control:focus,
+  .material-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .material-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .material-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .material-page .badge,
+  .material-page .mat-badge {
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-weight: 750;
+  }
+
+  .material-page .mat-table {
+    color: var(--mat-text);
+    --bs-table-color: var(--mat-text);
+    --bs-table-border-color: var(--mat-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .material-page .mat-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table tbody td {
+    color: var(--mat-text);
+    vertical-align: middle;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .material-page .file-list-box,
+  .material-page .mat-file-box {
+    background: var(--mat-soft);
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--mat-line);
+  }
+
+  .material-page .file-list-box {
     display: none;
   }
-  .file-item {
-    padding: 6px 0;
-    border-bottom: 1px solid #e9ecef;
-    display:flex;
-    align-items:center;
+
+  .material-page .file-item,
+  .material-page .version-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-line);
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    gap: 12px;
   }
-  .file-item:last-child { border-bottom: none; }
-  .file-name { display:flex; align-items:center; gap:6px; }
-  .file-size { font-size: 0.85rem; color:#555; }
+
+  .material-page .file-item:last-child,
+  .material-page .version-item:last-child {
+    border-bottom: none;
+  }
+
+  .material-page .file-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-word;
+  }
+
+  .material-page .file-size {
+    font-size: 0.85rem;
+    color: var(--mat-muted);
+    white-space: nowrap;
+  }
+
+  .material-page .truncate {
+    max-width: 260px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .material-page .private-row {
+    opacity: 0.76;
+  }
+
+  .material-page .expired td {
+    background: rgba(239, 68, 68, 0.10) !important;
+  }
+
+  .material-page img,
+  .material-page video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .material-page,
+  html[data-bs-theme="dark"] .material-page,
+  body[data-theme="dark"] .material-page {
+    --mat-text: #e5e7eb;
+    --mat-muted: #cbd5e1;
+    --mat-line: rgba(148, 163, 184, 0.25);
+    --mat-soft: rgba(30, 41, 59, 0.86);
+    --mat-card: rgba(15, 23, 42, 0.92);
+    --mat-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  }
+
+  body.dark-mode .material-page .mat-title,
+  html[data-bs-theme="dark"] .material-page .mat-title,
+  body[data-theme="dark"] .material-page .mat-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .material-page .mat-card,
+  body.dark-mode .material-page .mat-info-box,
+  body.dark-mode .material-page .mat-file-box,
+  body.dark-mode .material-page .mat-version-box,
+  body.dark-mode .material-page .file-list-box,
+  html[data-bs-theme="dark"] .material-page .mat-card,
+  html[data-bs-theme="dark"] .material-page .mat-info-box,
+  html[data-bs-theme="dark"] .material-page .mat-file-box,
+  html[data-bs-theme="dark"] .material-page .mat-version-box,
+  html[data-bs-theme="dark"] .material-page .file-list-box,
+  body[data-theme="dark"] .material-page .mat-card,
+  body[data-theme="dark"] .material-page .mat-info-box,
+  body[data-theme="dark"] .material-page .mat-file-box,
+  body[data-theme="dark"] .material-page .mat-version-box,
+  body[data-theme="dark"] .material-page .file-list-box {
+    background: var(--mat-card);
+    border-color: var(--mat-line);
+    color: var(--mat-text);
+  }
+
+  body.dark-mode .material-page .form-control,
+  body.dark-mode .material-page .form-select,
+  body.dark-mode .material-page textarea,
+  html[data-bs-theme="dark"] .material-page .form-control,
+  html[data-bs-theme="dark"] .material-page .form-select,
+  html[data-bs-theme="dark"] .material-page textarea,
+  body[data-theme="dark"] .material-page .form-control,
+  body[data-theme="dark"] .material-page .form-select,
+  body[data-theme="dark"] .material-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .material-page .form-control::placeholder,
+  body.dark-mode .material-page textarea::placeholder,
+  html[data-bs-theme="dark"] .material-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .material-page textarea::placeholder,
+  body[data-theme="dark"] .material-page .form-control::placeholder,
+  body[data-theme="dark"] .material-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .material-page .mat-table thead th,
+  html[data-bs-theme="dark"] .material-page .mat-table thead th,
+  body[data-theme="dark"] .material-page .mat-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .material-page .mat-table tbody td,
+  html[data-bs-theme="dark"] .material-page .mat-table tbody td,
+  body[data-theme="dark"] .material-page .mat-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .material-page .mat-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .material-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-secondary,
+  body[data-theme="dark"] .material-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .material-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-primary,
+  body[data-theme="dark"] .material-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .material-page .mat-hero,
+    .material-page .mat-card,
+    .material-page .mat-info-box,
+    .material-page .mat-file-box,
+    .material-page .mat-version-box {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .material-page .mat-actions,
+    .material-page .mat-actions .btn,
+    .material-page .mat-hero .btn {
+      width: 100%;
+    }
+
+    .material-page .responsive-table thead {
+      display: none;
+    }
+
+    .material-page .responsive-table tbody,
+    .material-page .responsive-table tr,
+    .material-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .material-page .responsive-table tr {
+      border-bottom: 1px solid var(--mat-line);
+      padding: 10px;
+    }
+
+    .material-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .material-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--mat-muted);
+      margin-bottom: 2px;
+    }
+
+    .material-page .truncate {
+      max-width: none;
+      white-space: normal;
+    }
+  }
 </style>
+
 {% endblock %}
 
 {% block content %}
-<div class="container py-5">
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white">
-      <i class="bi bi-upload"></i> Thêm tài liệu mới
+{% set f = form_data if form_data is defined and form_data else {} %}
+<div class="material-page px-2 px-md-4 py-3 py-md-4">
+  <div class="mat-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="mat-title"><i class="bi bi-upload me-2"></i>Thêm tài liệu mới</h3>
+      <p class="mat-subtitle mb-0 mt-2">Tải tài liệu lên khóa học và cho phép quản trị viên theo dõi phiên bản.</p>
     </div>
-    <div class="card-body">
+    <a href="/admin/course-material/list" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Quay lại
+    </a>
+  </div>
 
-      {% if error %}
-      <div class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle"></i> {{ error }}
+  <div class="mat-card">
+    {% if error %}
+    <div class="alert alert-danger rounded-4">
+      <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="/admin/course-material/create">
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="title">Tiêu đề tài liệu</label>
+        <input id="title" type="text" name="title" class="form-control"
+               value="{{ f.get('title', '') }}" required>
       </div>
-      {% endif %}
 
-      <form method="post" enctype="multipart/form-data" action="/admin/course-material/create">
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Tiêu đề tài liệu</label>
-          <input type="text" name="title" class="form-control"
-                 value="{{ form_data.title if form_data else '' }}" required>
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="description">Mô tả</label>
+        <textarea id="description" name="description" class="form-control" rows="3">{{ f.get('description', '') }}</textarea>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="course_id">Thuộc khóa học</label>
+        <select id="course_id" name="course_id" class="form-select" required>
+          <option value="">-- Chọn khóa học --</option>
+          {% for course in courses or [] %}
+          <option value="{{ course.id }}" {% if f.get('course_id') == course.id %}selected{% endif %}>
+            {{ course.course_name or "Không rõ tên khóa học" }}
+          </option>
+          {% else %}
+          <option value="" disabled>Chưa có khóa học</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="fileInput">Chọn tệp tài liệu (có thể chọn nhiều)</label>
+
+        <input type="file"
+               id="fileInput"
+               name="files"
+               class="form-control"
+               multiple
+               accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.mp4"
+               required>
+
+        <div class="file-hint mt-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Hỗ trợ: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR, TXT, XLSX, XLS, CSV, PNG, JPG, MP4
+          <br>
+          Dung lượng tối đa: <b>100MB mỗi tệp</b>
         </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Mô tả</label>
-          <textarea name="description" class="form-control" rows="3">{{ form_data.description if form_data else '' }}</textarea>
-        </div>
+        <div id="fileList" class="file-list-box mt-3"></div>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Thuộc khóa học</label>
-          <select name="course_id" class="form-select" required>
-            <option value="">-- Chọn khóa học --</option>
-            {% for course in courses %}
-            <option value="{{ course.id }}" {% if form_data and form_data.course_id == course.id %}selected{% endif %}>
-              {{ course.course_name }}
-            </option>
-            {% endfor %}
-          </select>
-        </div>
+      <div class="mat-actions d-flex justify-content-between flex-wrap gap-2 mt-4">
+        <a href="/admin/course-material/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
 
-        <div class="mb-3">
-          <label class="form-label fw-semibold">Chọn tệp tài liệu (có thể chọn nhiều)</label>
-
-          <input type="file"
-                 id="fileInput"
-                 name="files"
-                 class="form-control"
-                 multiple
-                 accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.xlsx,.xls,.csv,.png,.jpg,.jpeg,.mp4"
-                 required>
-
-          <div class="file-hint mt-2">
-            <i class="bi bi-info-circle"></i>
-            Hỗ trợ: PDF, DOC, DOCX, PPT, PPTX, ZIP, RAR, TXT, XLSX, XLS, CSV, PNG, JPG, MP4
-            <br>
-            Dung lượng tối đa: <b>100MB mỗi file</b>
-          </div>
-
-          <div id="fileList" class="file-list-box mt-3"></div>
-        </div>
-
-        <div class="d-flex justify-content-between mt-4">
-          <a href="/admin/course-material/list" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Quay lại
-          </a>
-
-          <button type="submit" class="btn btn-primary">
-            <i class="bi bi-cloud-arrow-up"></i> Tải lên tài liệu
-          </button>
-        </div>
-      </form>
-
-    </div>
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-cloud-arrow-up me-1"></i>Tải tài liệu lên
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 
@@ -117,46 +448,52 @@
     mp4: "bi-file-earmark-play text-dark"
   };
 
-  document.getElementById("fileInput").addEventListener("change", function () {
+  document.addEventListener("DOMContentLoaded", function () {
+    const fileInput = document.getElementById("fileInput");
     const fileListBox = document.getElementById("fileList");
-    fileListBox.innerHTML = "";
-    const files = Array.from(this.files);
 
-    if (files.length === 0) {
-      fileListBox.style.display = "none";
-      return;
-    }
+    if (!fileInput || !fileListBox) return;
 
-    let tooLarge = false;
-
-    files.forEach(f => {
-      if (f.size > 100 * 1024 * 1024) tooLarge = true;
-
-      const ext = f.name.split(".").pop().toLowerCase();
-      const icon = iconMap[ext] || "bi-file-earmark";
-      const sizeMB = (f.size / (1024 * 1024)).toFixed(2);
-
-      const item = document.createElement("div");
-      item.classList.add("file-item");
-      item.innerHTML = `
-        <div class="file-name">
-          <i class="bi ${icon}"></i>
-          ${f.name}
-        </div>
-        <span class="file-size">${sizeMB} MB</span>
-      `;
-      fileListBox.appendChild(item);
-    });
-
-    if (tooLarge) {
-      alert("Một hoặc nhiều file vượt quá dung lượng tối đa 100MB.");
-      this.value = "";
-      fileListBox.style.display = "none";
+    fileInput.addEventListener("change", function () {
       fileListBox.innerHTML = "";
-      return;
-    }
+      const files = Array.from(this.files || []);
 
-    fileListBox.style.display = "block";
+      if (files.length === 0) {
+        fileListBox.style.display = "none";
+        return;
+      }
+
+      let tooLarge = false;
+
+      files.forEach(function (file) {
+        if (file.size > 100 * 1024 * 1024) tooLarge = true;
+
+        const ext = file.name.split(".").pop().toLowerCase();
+        const icon = iconMap[ext] || "bi-file-earmark";
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+
+        const item = document.createElement("div");
+        item.classList.add("file-item");
+        item.innerHTML = `
+          <div class="file-name">
+            <i class="bi ${icon}"></i>
+            ${file.name}
+          </div>
+          <span class="file-size">${sizeMB} MB</span>
+        `;
+        fileListBox.appendChild(item);
+      });
+
+      if (tooLarge) {
+        alert("Một hoặc nhiều tệp vượt quá dung lượng tối đa 100MB.");
+        this.value = "";
+        fileListBox.style.display = "none";
+        fileListBox.innerHTML = "";
+        return;
+      }
+
+      fileListBox.style.display = "block";
+    });
   });
 </script>
 {% endblock %}

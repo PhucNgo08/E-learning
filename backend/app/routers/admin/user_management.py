@@ -1,10 +1,12 @@
 from datetime import datetime
+import csv
+import io
 from typing import Optional
 from urllib.parse import quote
 import logging
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -367,6 +369,88 @@ def restore_user(user_id: str, db: Session = Depends(get_db)):
 
 # ============================================================
 # 7. USER STATISTICS
+# ============================================================
+@user_router.get("/statistics", response_class=HTMLResponse)
+def user_statistics(request: Request, db: Session = Depends(get_db)):
+    try:
+        stats = get_user_statistics(db)
+        return render_template(
+            request,
+            "Account/statistics.html",
+            {
+                "stats": stats,
+                "page_title": "📈 Thống kê người dùng",
+            },
+        )
+    except Exception as exc:
+        error_title, error_message = get_friendly_error(exc)
+        logger.exception("Lỗi khi lấy thống kê người dùng: %s", exc)
+        return render_template(
+            request,
+            "Account/statistics.html",
+            {
+                "stats": {},
+                "page_title": "📈 Thống kê người dùng",
+                "error_title": error_title,
+                "error_message": error_message,
+            },
+            status_code=500,
+        )
+
+
+# ============================================================
+# 5. EXPORT USERS
+# ============================================================
+@user_router.get("/export-users")
+def export_users(db: Session = Depends(get_db)):
+    """
+    Xuất danh sách người dùng dạng CSV để tải về.
+    Giữ route cũ /admin/Account/export-users đang được nút trên giao diện gọi.
+    """
+    users = user_service.get_all_users(db)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Tên đăng nhập",
+        "Email",
+        "Họ và tên",
+        "Vai trò",
+        "Trạng thái",
+        "Ngày tạo",
+    ])
+
+    for user in users:
+        profile = getattr(user, "profile", None)
+        full_name = getattr(profile, "full_name", "") if profile else getattr(user, "full_name", "")
+        created_at = getattr(user, "created_at", "")
+        if hasattr(created_at, "strftime"):
+            created_at = created_at.strftime("%d/%m/%Y %H:%M")
+
+        writer.writerow([
+            getattr(user, "username", ""),
+            getattr(user, "email", ""),
+            full_name or "",
+            _role_value(user),
+            getattr(user, "status", ""),
+            created_at or "",
+        ])
+
+    output.seek(0)
+    filename = f"danh_sach_nguoi_dung_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    headers = {
+        "Content-Disposition": f"attachment; filename={filename}",
+        "Content-Type": "text/csv; charset=utf-8-sig",
+    }
+    return StreamingResponse(
+        iter(["\ufeff" + output.getvalue()]),
+        media_type="text/csv",
+        headers=headers,
+    )
+
+
+# ============================================================
+# 6. USER STATISTICS
 # ============================================================
 @user_router.get("/statistics", response_class=HTMLResponse)
 def user_statistics(request: Request, db: Session = Depends(get_db)):

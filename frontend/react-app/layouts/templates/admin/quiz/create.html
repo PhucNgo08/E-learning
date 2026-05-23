@@ -1,86 +1,537 @@
 {% extends "layout_admin.html" %}
-{% block title %}➕ Tạo Quiz{% endblock %}
+{% block title %}➕ Tạo kỳ thi{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-primary mb-0">➕ Tạo Quiz / Bài thi</h3>
-    <a href="/admin/quiz/list" class="btn btn-outline-secondary">← Danh sách</a>
+
+<style>
+  .quiz-admin-page {
+    --qz-primary: #2563eb;
+    --qz-success: #16a34a;
+    --qz-danger: #dc2626;
+    --qz-warning: #f59e0b;
+    --qz-info: #0891b2;
+    --qz-text: #0f172a;
+    --qz-muted: #64748b;
+    --qz-line: #e2e8f0;
+    --qz-soft: #f8fafc;
+    --qz-card: rgba(255, 255, 255, 0.96);
+    --qz-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--qz-text);
+  }
+
+  .quiz-admin-page.quiz-page-narrow {
+    max-width: 860px;
+  }
+
+  .quiz-admin-page .qz-hero,
+  .quiz-admin-page .qz-card,
+  .quiz-admin-page .qz-info-box,
+  .quiz-admin-page .qz-question-card,
+  .quiz-admin-page .qz-chart-card {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-card);
+    box-shadow: var(--qz-shadow);
+    border-radius: 24px;
+  }
+
+  .quiz-admin-page .qz-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-admin-page .qz-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .quiz-admin-page .qz-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .quiz-admin-page .qz-title {
+    color: var(--qz-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .quiz-admin-page .qz-subtitle,
+  .quiz-admin-page .text-muted,
+  .quiz-admin-page .form-text,
+  .quiz-admin-page .field-hint {
+    color: var(--qz-muted) !important;
+  }
+
+  .quiz-admin-page .qz-card,
+  .quiz-admin-page .qz-info-box,
+  .quiz-admin-page .qz-question-card,
+  .quiz-admin-page .qz-chart-card {
+    padding: 22px;
+  }
+
+  .quiz-admin-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .quiz-admin-page .form-control,
+  .quiz-admin-page .form-select,
+  .quiz-admin-page textarea {
+    border-radius: 14px;
+    border-color: var(--qz-line);
+    color: var(--qz-text);
+    background: #fff;
+  }
+
+  .quiz-admin-page .form-control:focus,
+  .quiz-admin-page .form-select:focus,
+  .quiz-admin-page textarea:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .quiz-admin-page .form-control::placeholder,
+  .quiz-admin-page textarea::placeholder {
+    color: var(--qz-muted);
+  }
+
+  .quiz-admin-page .badge,
+  .quiz-admin-page .qz-badge {
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-weight: 750;
+  }
+
+  .quiz-admin-page .qz-table {
+    margin-bottom: 0;
+    color: var(--qz-text);
+    --bs-table-color: var(--qz-text);
+    --bs-table-border-color: var(--qz-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .quiz-admin-page .qz-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-color: var(--qz-line);
+  }
+
+  .quiz-admin-page .qz-table tbody td {
+    color: var(--qz-text);
+    vertical-align: middle;
+    border-color: var(--qz-line);
+  }
+
+  .quiz-admin-page .qz-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .quiz-admin-page .qz-option {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-soft);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .quiz-admin-page .qz-option.correct {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(22, 163, 74, 0.10);
+  }
+
+  .quiz-admin-page .qz-option.selected-wrong {
+    border-color: rgba(220, 38, 38, 0.35);
+    background: rgba(220, 38, 38, 0.10);
+  }
+
+  .quiz-admin-page .qz-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .quiz-admin-page .qz-meta-item {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-soft);
+    border-radius: 16px;
+    padding: 12px 14px;
+  }
+
+  .quiz-admin-page .qz-meta-label {
+    color: var(--qz-muted);
+    font-size: 0.86rem;
+    font-weight: 750;
+  }
+
+  .quiz-admin-page .qz-meta-value {
+    color: var(--qz-text);
+    font-weight: 850;
+    margin-top: 3px;
+  }
+
+  body.dark-mode .quiz-admin-page,
+  html[data-bs-theme="dark"] .quiz-admin-page,
+  body[data-theme="dark"] .quiz-admin-page {
+    --qz-text: #e5e7eb;
+    --qz-muted: #cbd5e1;
+    --qz-line: rgba(148, 163, 184, 0.25);
+    --qz-soft: rgba(30, 41, 59, 0.86);
+    --qz-card: rgba(15, 23, 42, 0.92);
+    --qz-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --qz-primary: #93c5fd;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-hero,
+  body.dark-mode .quiz-admin-page .qz-card,
+  body.dark-mode .quiz-admin-page .qz-info-box,
+  body.dark-mode .quiz-admin-page .qz-question-card,
+  body.dark-mode .quiz-admin-page .qz-chart-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-hero,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-info-box,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-question-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-chart-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-hero,
+  body[data-theme="dark"] .quiz-admin-page .qz-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-info-box,
+  body[data-theme="dark"] .quiz-admin-page .qz-question-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-chart-card {
+    background: var(--qz-card);
+    border-color: var(--qz-line);
+    color: var(--qz-text);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-title,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-title,
+  body[data-theme="dark"] .quiz-admin-page .qz-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .quiz-admin-page .form-control,
+  body.dark-mode .quiz-admin-page .form-select,
+  body.dark-mode .quiz-admin-page textarea,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-control,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-select,
+  html[data-bs-theme="dark"] .quiz-admin-page textarea,
+  body[data-theme="dark"] .quiz-admin-page .form-control,
+  body[data-theme="dark"] .quiz-admin-page .form-select,
+  body[data-theme="dark"] .quiz-admin-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .quiz-admin-page .form-control::placeholder,
+  body.dark-mode .quiz-admin-page textarea::placeholder,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .quiz-admin-page textarea::placeholder,
+  body[data-theme="dark"] .quiz-admin-page .form-control::placeholder,
+  body[data-theme="dark"] .quiz-admin-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table thead th,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table thead th,
+  body[data-theme="dark"] .quiz-admin-page .qz-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table tbody td,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table tbody td,
+  body[data-theme="dark"] .quiz-admin-page .qz-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .quiz-admin-page .qz-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option,
+  body.dark-mode .quiz-admin-page .qz-meta-item,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-meta-item,
+  body[data-theme="dark"] .quiz-admin-page .qz-option,
+  body[data-theme="dark"] .quiz-admin-page .qz-meta-item {
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option.correct,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option.correct,
+  body[data-theme="dark"] .quiz-admin-page .qz-option.correct {
+    background: rgba(22, 163, 74, 0.16);
+    border-color: rgba(34, 197, 94, 0.30);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option.selected-wrong,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option.selected-wrong,
+  body[data-theme="dark"] .quiz-admin-page .qz-option.selected-wrong {
+    background: rgba(220, 38, 38, 0.16);
+    border-color: rgba(248, 113, 113, 0.30);
+  }
+
+  body.dark-mode .quiz-admin-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .quiz-admin-page .btn-outline-secondary,
+  body[data-theme="dark"] .quiz-admin-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .quiz-admin-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .quiz-admin-page .btn-outline-primary,
+  body[data-theme="dark"] .quiz-admin-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 992px) {
+    .quiz-admin-page .qz-meta-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .quiz-admin-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .quiz-admin-page .qz-hero,
+    .quiz-admin-page .qz-card,
+    .quiz-admin-page .qz-info-box,
+    .quiz-admin-page .qz-question-card,
+    .quiz-admin-page .qz-chart-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .quiz-admin-page .qz-actions,
+    .quiz-admin-page .qz-actions .btn,
+    .quiz-admin-page .qz-hero .btn {
+      width: 100%;
+    }
+
+    .quiz-admin-page .qz-meta-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .quiz-admin-page .responsive-table thead {
+      display: none;
+    }
+
+    .quiz-admin-page .responsive-table tbody,
+    .quiz-admin-page .responsive-table tr,
+    .quiz-admin-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .quiz-admin-page .responsive-table tr {
+      border-bottom: 1px solid var(--qz-line);
+      padding: 10px;
+    }
+
+    .quiz-admin-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .quiz-admin-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--qz-muted);
+      margin-bottom: 2px;
+    }
+  }
+</style>
+
+{% macro quiz_type_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'practice' -%}Luyện tập
+  {%- elif v == 'graded' -%}Chấm điểm
+  {%- elif v == 'survey' -%}Khảo sát
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro difficulty_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'easy' -%}Dễ
+  {%- elif v == 'medium' -%}Trung bình
+  {%- elif v == 'hard' -%}Khó
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro status_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'draft' -%}Bản nháp
+  {%- elif v == 'published' -%}Đang mở
+  {%- elif v == 'archived' -%}Lưu trữ
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro attempt_status_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'in_progress' -%}Đang làm
+  {%- elif v == 'submitted' -%}Đã nộp
+  {%- elif v == 'graded' -%}Đã chấm
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% set is_edit = false %}
+{% set f = form_data if form_data is defined and form_data else {} %}
+{% set current_quiz = quiz if quiz is defined and quiz else none %}
+{% set action_url = "/admin/quiz/create" if not is_edit else "/admin/quiz/edit/" ~ current_quiz.id %}
+{% set selected_course = f.get("course_id", current_quiz.course_id if current_quiz else "") %}
+{% set selected_type = f.get("quiz_type", current_quiz.quiz_type if current_quiz else "practice") %}
+{% set selected_diff = f.get("difficulty_level", current_quiz.difficulty_level if current_quiz else "medium") %}
+{% set selected_status = f.get("status", current_quiz.status if current_quiz else "published") %}
+
+<div class="quiz-admin-page quiz-page-narrow px-2 px-md-4 py-3 py-md-4">
+  <div class="qz-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="qz-title">
+        <i class="bi {{ 'bi-plus-circle' if not is_edit else 'bi-pencil-square' }} me-2"></i>
+        {{ "Tạo kỳ thi" if not is_edit else "Sửa kỳ thi" }}
+      </h3>
+      <p class="qz-subtitle mb-0 mt-2">Thiết lập thông tin kỳ thi, thời gian làm bài, số lần làm và trạng thái hiển thị.</p>
+    </div>
+    <a href="{{ '/admin/quiz/list' if not is_edit else '/admin/quiz/detail/' ~ current_quiz.id }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>{{ "Danh sách" if not is_edit else "Chi tiết" }}
+    </a>
   </div>
 
-  {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+  {% if error %}
+  <div class="alert alert-danger rounded-4">
+    <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+  </div>
+  {% endif %}
 
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-body p-4">
-      <form method="post" action="/admin/quiz/create">
-        <div class="row g-3">
-          <div class="col-md-8">
-            <label class="form-label fw-semibold">Tiêu đề</label>
-            <input name="title" class="form-control" value="{{ form_data.title if form_data else '' }}" required>
-          </div>
-          <div class="col-md-4">
-            <label class="form-label fw-semibold">Khóa học</label>
-            <select name="course_id" class="form-select" required>
-              <option value="">-- Chọn khóa học --</option>
-              {% for c in courses %}
-                <option value="{{ c.id }}" {% if form_data and form_data.course_id == c.id %}selected{% endif %}>{{ c.course_code }} - {{ c.course_name }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="col-12">
-            <label class="form-label fw-semibold">Mô tả</label>
-            <textarea name="description" rows="3" class="form-control">{{ form_data.description if form_data else '' }}</textarea>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Loại</label>
-            <select name="quiz_type" class="form-select">
-              <option value="practice">Practice</option>
-              <option value="graded">Graded / Bài thi</option>
-              <option value="survey">Survey</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Độ khó</label>
-            <select name="difficulty_level" class="form-select">
-              <option value="easy">Dễ</option>
-              <option value="medium" selected>Trung bình</option>
-              <option value="hard">Khó</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Trạng thái</label>
-            <select name="status" class="form-select">
-              <option value="published" selected>Published</option>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="archived">Archived</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Điểm đạt (%)</label>
-            <input type="number" name="passing_score" min="0" max="100" step="0.1" value="60" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Thời lượng phút</label>
-            <input type="number" name="time_limit_minutes" min="0" value="30" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Số lần làm tối đa</label>
-            <input type="number" name="max_attempts" min="1" value="1" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Mở từ</label>
-            <input type="datetime-local" name="available_from" class="form-control">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label fw-semibold">Đóng lúc</label>
-            <input type="datetime-local" name="available_to" class="form-control">
-          </div>
+  <div class="qz-card">
+    <form method="post" action="{{ action_url }}">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label fw-semibold">Tiêu đề kỳ thi</label>
+          <input name="title" class="form-control"
+                 value="{{ f.get('title', current_quiz.title if current_quiz else '') }}"
+                 required>
         </div>
-        <div class="text-end mt-4">
-          <button class="btn btn-primary px-4">Lưu Quiz</button>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Khóa học</label>
+          <select name="course_id" class="form-select" required>
+            <option value="">-- Chọn khóa học --</option>
+            {% for c in courses or [] %}
+            <option value="{{ c.id }}" {% if (selected_course|string) == (c.id|string) %}selected{% endif %}>
+              {{ c.course_name or "Không rõ tên khóa học" }}
+            </option>
+            {% else %}
+            <option value="" disabled>Chưa có khóa học</option>
+            {% endfor %}
+          </select>
         </div>
-      </form>
-    </div>
+
+        <div class="col-12">
+          <label class="form-label fw-semibold">Mô tả</label>
+          <textarea name="description" class="form-control" rows="3">{{ f.get('description', current_quiz.description if current_quiz else '') }}</textarea>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Loại kỳ thi</label>
+          <select name="quiz_type" class="form-select">
+            <option value="practice" {% if selected_type == 'practice' %}selected{% endif %}>Luyện tập</option>
+            <option value="graded" {% if selected_type == 'graded' %}selected{% endif %}>Chấm điểm</option>
+            <option value="survey" {% if selected_type == 'survey' %}selected{% endif %}>Khảo sát</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Độ khó</label>
+          <select name="difficulty_level" class="form-select">
+            <option value="easy" {% if selected_diff == 'easy' %}selected{% endif %}>Dễ</option>
+            <option value="medium" {% if selected_diff == 'medium' %}selected{% endif %}>Trung bình</option>
+            <option value="hard" {% if selected_diff == 'hard' %}selected{% endif %}>Khó</option>
+          </select>
+        </div>
+
+        <div class="col-md-4">
+          <label class="form-label fw-semibold">Trạng thái</label>
+          <select name="status" class="form-select">
+            <option value="draft" {% if selected_status == 'draft' %}selected{% endif %}>Bản nháp</option>
+            <option value="published" {% if selected_status == 'published' %}selected{% endif %}>Đang mở</option>
+            <option value="archived" {% if selected_status == 'archived' %}selected{% endif %}>Lưu trữ</option>
+          </select>
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Thời lượng (phút)</label>
+          <input type="number" name="time_limit_minutes" min="1" class="form-control"
+                 value="{{ f.get('time_limit_minutes', current_quiz.time_limit_minutes if current_quiz else 30) }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Số lần làm</label>
+          <input type="number" name="max_attempts" min="1" class="form-control"
+                 value="{{ f.get('max_attempts', current_quiz.max_attempts if current_quiz else 1) }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Điểm đạt (%)</label>
+          <input type="number" name="passing_score" min="0" max="100" step="0.1" class="form-control"
+                 value="{{ f.get('passing_score', current_quiz.passing_score if current_quiz else 60) }}">
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">Số câu hiện có</label>
+          <input class="form-control" value="{{ current_quiz.total_questions if current_quiz else 0 }}" readonly>
+          <div class="form-text">Số câu được cập nhật khi thêm/xóa câu hỏi.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Mở từ</label>
+          <input type="datetime-local" name="available_from" class="form-control"
+                 value="{{ f.get('available_from', current_quiz.available_from.strftime('%Y-%m-%dT%H:%M') if current_quiz and current_quiz.available_from else '') }}">
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Đóng vào</label>
+          <input type="datetime-local" name="available_to" class="form-control"
+                 value="{{ f.get('available_to', current_quiz.available_to.strftime('%Y-%m-%dT%H:%M') if current_quiz and current_quiz.available_to else '') }}">
+        </div>
+      </div>
+
+      <div class="qz-actions d-flex justify-content-between flex-wrap gap-2 mt-4">
+        <a href="{{ '/admin/quiz/list' if not is_edit else '/admin/quiz/detail/' ~ current_quiz.id }}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
+        <button class="btn btn-primary" type="submit">
+          <i class="bi bi-save me-1"></i>{{ "Lưu kỳ thi" if not is_edit else "Cập nhật kỳ thi" }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}

@@ -6,6 +6,20 @@
 <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin_dashboard.css">
 
 <style>
+  .dashboard-page {
+    --dash-card-bg: rgba(255, 255, 255, .92);
+    --dash-card-border: rgba(15, 23, 42, .08);
+    --dash-muted: #64748b;
+  }
+
+  [data-bs-theme="dark"] .dashboard-page,
+  body.dark-mode .dashboard-page,
+  body.theme-dark .dashboard-page {
+    --dash-card-bg: rgba(15, 23, 42, .82);
+    --dash-card-border: rgba(148, 163, 184, .22);
+    --dash-muted: #cbd5e1;
+  }
+
   .fade-in-up {
     opacity: 0;
     transform: translateY(20px);
@@ -18,70 +32,191 @@
       transform: translateY(0);
     }
   }
+
+  .dashboard-header {
+    background: var(--dash-card-bg);
+    border: 1px solid var(--dash-card-border);
+    border-radius: 24px;
+    padding: 28px 20px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, .08);
+  }
+
+  .dashboard-header .text-muted,
+  .dashboard-page .text-muted {
+    color: var(--dash-muted) !important;
+  }
+
+  .quick-btn {
+    border-radius: 999px;
+    font-weight: 600;
+  }
+
+  .dashboard-section-title {
+    font-size: .95rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--dash-muted);
+    margin: 24px 0 14px;
+  }
+
+  .dashboard-page .card {
+    border: 1px solid var(--dash-card-border);
+    border-radius: 22px;
+    background: var(--dash-card-bg);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .08);
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+    overflow: hidden;
+  }
+
+  .dashboard-page .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 44px rgba(15, 23, 42, .14);
+    border-color: rgba(13, 110, 253, .35);
+  }
+
+  .dashboard-page .card-body {
+    padding: 22px;
+  }
+
+  .icon-box {
+    width: 62px;
+    height: 62px;
+    border-radius: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.55rem;
+    margin-bottom: 14px;
+  }
+
+  .bg-light-primary { background: rgba(13, 110, 253, .12); color: #0d6efd; }
+  .bg-light-success { background: rgba(25, 135, 84, .12); color: #198754; }
+  .bg-light-info { background: rgba(13, 202, 240, .14); color: #0aa2c0; }
+  .bg-light-warning { background: rgba(255, 193, 7, .16); color: #b58100; }
+  .bg-light-danger { background: rgba(220, 53, 69, .12); color: #dc3545; }
+  .bg-light-secondary { background: rgba(108, 117, 125, .13); color: #6c757d; }
+  .bg-light-dark { background: rgba(33, 37, 41, .12); color: #212529; }
+
+  [data-bs-theme="dark"] .bg-light-dark,
+  body.dark-mode .bg-light-dark,
+  body.theme-dark .bg-light-dark {
+    color: #f8fafc;
+  }
+
+  @media (max-width: 576px) {
+    .dashboard-header {
+      padding: 22px 14px;
+    }
+
+    .dashboard-header h2 {
+      font-size: 1.35rem;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container mt-4 dashboard-page">
 
   <div class="dashboard-header text-center fade-in-up">
     <h2>👋 Xin chào, <span class="text-primary">{{ username or "Quản trị viên" }}</span>!</h2>
-    <p class="text-muted">
+    <p class="text-muted mb-0">
       Hệ thống quản trị E-Learning chuyên nghiệp.<br>
       Chọn một danh mục bên dưới để bắt đầu quản lý.
     </p>
   </div>
 
-  <div class="d-flex justify-content-center gap-3 flex-wrap mb-5 fade-in-up" style="animation-delay: 0.15s;">
+  <div class="d-flex justify-content-center gap-3 flex-wrap my-4 fade-in-up" style="animation-delay: 0.15s;">
     <a href="/admin/file-storage/list" class="btn btn-outline-primary quick-btn px-4 py-2">
       <i class="fa-solid fa-folder-open me-2"></i> Quản lý tệp
     </a>
-    <a href="/admin/discussion/list" class="btn btn-outline-success quick-btn px-4 py-2">
-      <i class="fa-solid fa-comments me-2"></i> Thảo luận
+    <a href="/admin/statistics/dashboard" class="btn btn-outline-info quick-btn px-4 py-2">
+      <i class="fa-solid fa-chart-line me-2"></i> Thống kê học tập
+    </a>
+    <a href="/admin/wallets/topup-requests" class="btn btn-outline-success quick-btn px-4 py-2">
+      <i class="fa-solid fa-money-check-dollar me-2"></i> Duyệt nạp ví
     </a>
     <a href="/admin/notification/list" class="btn btn-outline-warning quick-btn px-4 py-2">
-      <i class="fa-solid fa-bell me-2"></i> Thông báo
+      <i class="fa-solid fa-bell me-2"></i> Quản lí thông báo
     </a>
   </div>
 
-  <div class="row g-4">
+  {% set groups = [
+    {
+      "title": "Quản lý đào tạo",
+      "items": [
+        {"icon": "fa-user-shield", "color": "success", "bg": "bg-light-success", "title": "Tài khoản", "desc": "Quản lý người dùng và phân quyền.", "link": "/admin/Account/manage-users"},
+        {"icon": "fa-chalkboard-user", "color": "info", "bg": "bg-light-info", "title": "Giảng viên", "desc": "Quản lý hồ sơ và phân công giảng viên.", "link": "/admin/teachers/list"},
+        {"icon": "fa-graduation-cap", "color": "danger", "bg": "bg-light-danger", "title": "Ngành học", "desc": "Quản lý các chuyên ngành đào tạo.", "link": "/admin/majors/list"},
+        {"icon": "fa-calendar-days", "color": "secondary", "bg": "bg-light-secondary", "title": "Năm học", "desc": "Thiết lập niên khóa đào tạo.", "link": "/admin/academic_years/list"},
+        {"icon": "fa-school", "color": "warning", "bg": "bg-light-warning", "title": "Lớp học", "desc": "Quản lý lớp hành chính và danh sách sinh viên.", "link": "/admin/Class/manage"},
+        {"icon": "fa-clipboard-check", "color": "info", "bg": "bg-light-info", "title": "Ghi danh", "desc": "Thêm, duyệt, từ chối hoặc xóa ghi danh.", "link": "/admin/enrollments/manage"}
+      ]
+    },
+    {
+      "title": "Khóa học và nội dung học",
+      "items": [
+        {"icon": "fa-layer-group", "color": "info", "bg": "bg-light-info", "title": "Khoa / Danh mục", "desc": "Quản lý danh mục khóa học.", "link": "/admin/CourseCategory/manage"},
+        {"icon": "fa-book-open", "color": "primary", "bg": "bg-light-primary", "title": "Khóa học", "desc": "Tổ chức và quản lý nội dung giảng dạy.", "link": "/admin/Course/manage"},
+        {"icon": "fa-diagram-project", "color": "secondary", "bg": "bg-light-secondary", "title": "Tổng quan khóa học", "desc": "Xem tổng quan khóa học, học viên và nội dung.", "link": "/admin/Course/overview"},
+        {"icon": "fa-people-roof", "color": "success", "bg": "bg-light-success", "title": "Lớp học phần", "desc": "Quản lý section, lịch học và phòng học.", "link": "/admin/sections/manage"},
+        {"icon": "fa-arrow-up-wide-short", "color": "warning", "bg": "bg-light-warning", "title": "Sắp xếp module", "desc": "Sắp xếp lại thứ tự module của khóa học.", "link": "/admin/modules/reorder"},
+        {"icon": "fa-cloud-arrow-up", "color": "success", "bg": "bg-light-success", "title": "Tài liệu học tập", "desc": "Kho tài liệu học tập dùng chung.", "link": "/admin/course-material/list"}
+      ]
+    },
+    {
+    "title": "Bài tập, kỳ thi và tương tác",
+      "items": [
+        {"icon": "fa-list-check", "color": "primary", "bg": "bg-light-primary", "title": "Bài tập", "desc": "Quản lý bài tập, bài nộp và chấm điểm.", "link": "/admin/assignment/list"},
+        {"icon": "fa-square-poll-vertical", "color": "info", "bg": "bg-light-info", "title": "Thống kê bài tập", "desc": "Xem thống kê bài tập và tình trạng nộp bài.", "link": "/admin/assignment/stats"},
+        {"icon": "fa-file-circle-question", "color": "primary", "bg": "bg-light-primary", "title": "Quản lý kỳ thi", "desc": "Quản lý danh sách kỳ thi, câu hỏi và bài làm trong hệ thống.", "link": "/admin/quiz/list"},
+        {"icon": "fa-brain", "color": "warning", "bg": "bg-light-warning", "title": "Mẫu bài kiểm tra", "desc": "Ngân hàng mẫu câu hỏi trắc nghiệm.", "link": "/admin/quiz-template/list"},
+        {"icon": "fa-comments", "color": "success", "bg": "bg-light-success", "title": "Thảo luận", "desc": "Quản lý thảo luận trong khóa học.", "link": "/admin/discussion/list"},
+        {"icon": "fa-star", "color": "warning", "bg": "bg-light-warning", "title": "Đánh giá", "desc": "Quản lý phản hồi từ sinh viên.", "link": "/admin/reviews/manage"}
+    ]
+    },
+    {
+      "title": "Hệ thống, ví và báo cáo",
+      "items": [
+        {"icon": "fa-chart-pie", "color": "secondary", "bg": "bg-light-secondary", "title": "Báo cáo", "desc": "Thống kê dữ liệu hệ thống.", "link": "/admin/reports/manage"},
+        {"icon": "fa-chart-line", "color": "info", "bg": "bg-light-info", "title": "Thống kê học tập", "desc": "Xem thống kê người dùng, khóa học và đánh giá.", "link": "/admin/statistics/dashboard"},
+        {"icon": "fa-folder-open", "color": "primary", "bg": "bg-light-primary", "title": "Kho tệp", "desc": "Quản lý các file đã upload trong hệ thống.", "link": "/admin/file-storage/list"},
+        {"icon": "fa-file-circle-plus", "color": "success", "bg": "bg-light-success", "title": "Tải tệp lên", "desc": "Upload thêm tệp dùng cho khóa học/hệ thống.", "link": "/admin/file-storage/upload"},
+        {"icon": "fa-wallet", "color": "success", "bg": "bg-light-success", "title": "Ví học viên", "desc": "Quản lý ví, nạp tiền, hoàn tiền và điều chỉnh số dư.", "link": "/admin/wallets/manage"},
+        {"icon": "fa-money-check-dollar", "color": "warning", "bg": "bg-light-warning", "title": "Yêu cầu nạp ví", "desc": "Duyệt hoặc từ chối yêu cầu nạp tiền.", "link": "/admin/wallets/topup-requests"},
+        {"icon": "fa-bell", "color": "warning", "bg": "bg-light-warning", "title": "Thông báo", "desc": "Gửi và quản lý thông báo hệ thống.", "link": "/admin/notification/list"},
+   
+      ]
+    }
+  ] %}
 
-    {% set items = [
-      {"icon": "fa-user-shield", "color": "success", "bg": "bg-light-success", "title": "Tài khoản", "desc": "Quản lý người dùng và phân quyền.", "link": "/admin/Account/manage-users"},
-      {"icon": "fa-layer-group", "color": "info", "bg": "bg-light-info", "title": "Khoa / Viện", "desc": "Quản lý danh sách khoa, viện.", "link": "/admin/CourseCategory/manage"},
-      {"icon": "fa-book-open", "color": "primary", "bg": "bg-light-primary", "title": "Khóa học", "desc": "Tổ chức và quản lý nội dung giảng dạy.", "link": "/admin/Course/manage"},
-      {"icon": "fa-graduation-cap", "color": "danger", "bg": "bg-light-danger", "title": "Ngành học", "desc": "Quản lý các chuyên ngành đào tạo.", "link": "/admin/majors/list"},
-      {"icon": "fa-chalkboard-user", "color": "info", "bg": "bg-light-info", "title": "Giảng viên", "desc": "Quản lý hồ sơ và phân công giảng viên.", "link": "/admin/teachers/list"},
-      {"icon": "fa-calendar-days", "color": "secondary", "bg": "bg-light-secondary", "title": "Năm học", "desc": "Thiết lập niên khóa đào tạo.", "link": "/admin/academic_years/list"},
-      {"icon": "fa-school", "color": "warning", "bg": "bg-light-warning", "title": "Lớp học", "desc": "Quản lý lớp hành chính.", "link": "/admin/Class/manage"},
-      {"icon": "fa-clipboard-check", "color": "info", "bg": "bg-light-info", "title": "Ghi danh", "desc": "Duyệt đơn đăng ký học.", "link": "/admin/enrollments/manage"},
-      {"icon": "fa-chart-pie", "color": "secondary", "bg": "bg-light-secondary", "title": "Báo cáo", "desc": "Thống kê dữ liệu hệ thống.", "link": "/admin/reports/manage"},
-      {"icon": "fa-list-check", "color": "primary", "bg": "bg-light-primary", "title": "Bài tập", "desc": "Quản lý bài tập và chấm điểm.", "link": "/admin/assignment/list"},
-      {"icon": "fa-cloud-arrow-up", "color": "success", "bg": "bg-light-success", "title": "Tài liệu", "desc": "Kho tài liệu học tập dùng chung.", "link": "/admin/course-material/list"},
-      {"icon": "fa-brain", "color": "warning", "bg": "bg-light-warning", "title": "Mẫu quiz", "desc": "Ngân hàng câu hỏi trắc nghiệm.", "link": "/admin/quiz-template/list"},
-      {"icon": "fa-star", "color": "warning", "bg": "bg-light-warning", "title": "Đánh giá", "desc": "Phản hồi từ học viên.", "link": "/admin/reviews/manage"},
-      {"icon": "fa-database", "color": "dark", "bg": "bg-light-dark", "title": "Sao lưu", "desc": "Sao lưu dữ liệu an toàn.", "link": "/admin/backups/manage"}
-    ] %}
+  {% for group in groups %}
+    <div class="dashboard-section-title fade-in-up" data-delay="{{ (loop.index * 0.05 + 0.2) ~ 's' }}">
+      {{ group.title }}
+    </div>
 
-    {% for item in items %}
-      <div class="col-md-4 col-sm-6 col-12 fade-in-up" data-delay="{{ (loop.index * 0.05) ~ 's' }}">
-        <div class="card h-100" data-tilt data-tilt-max="8" data-tilt-speed="450">
-          <div class="card-body text-center">
-            <div class="icon-box {{ item.bg }}">
-              <i class="fa-solid {{ item.icon }}"></i>
+    <div class="row g-4 mb-2">
+      {% for item in group["items"] %}
+        <div class="col-xl-3 col-lg-4 col-md-6 col-12 fade-in-up" data-delay="{{ ((loop.index + loop.depth0) * 0.04 + 0.25) ~ 's' }}">
+          <div class="card h-100" data-tilt data-tilt-max="8" data-tilt-speed="450">
+            <div class="card-body text-center d-flex flex-column">
+              <div class="icon-box {{ item.bg }} mx-auto">
+                <i class="fa-solid {{ item.icon }}"></i>
+              </div>
+
+              <h5 class="card-title fw-bold">{{ item.title }}</h5>
+              <p class="text-muted flex-grow-1">{{ item.desc }}</p>
+
+              <a href="{{ item.link }}" class="btn btn-sm btn-outline-{{ item.color }} w-100 rounded-pill">
+                Truy cập <i class="fa-solid fa-arrow-right ms-1"></i>
+              </a>
             </div>
-
-            <h5 class="card-title">{{ item.title }}</h5>
-            <p class="text-muted">{{ item.desc }}</p>
-
-            <a href="{{ item.link }}" class="btn btn-sm btn-outline-{{ item.color }} w-100">
-              Truy cập <i class="fa-solid fa-arrow-right ms-1"></i>
-            </a>
           </div>
         </div>
-      </div>
-    {% endfor %}
-  </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
 </div>
 {% endblock %}
 

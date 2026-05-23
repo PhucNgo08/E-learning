@@ -1,70 +1,427 @@
 {% extends "layout_admin.html" %}
-{% block title %}🔁 Sắp xếp module / bài học{% endblock %}
+{% block title %}🔁 Sắp xếp mô-đun / bài học{% endblock %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+<style>
+  .module-reorder-page {
+    --mr-primary: #2563eb;
+    --mr-success: #16a34a;
+    --mr-danger: #dc2626;
+    --mr-text: #0f172a;
+    --mr-muted: #64748b;
+    --mr-line: #e2e8f0;
+    --mr-soft: #f8fafc;
+    --mr-card: rgba(255, 255, 255, 0.96);
+    --mr-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1100px;
+    margin: 0 auto;
+    color: var(--mr-text);
+  }
+
+  .module-reorder-page .mr-hero,
+  .module-reorder-page .mr-card {
+    border: 1px solid var(--mr-line);
+    background: var(--mr-card);
+    box-shadow: var(--mr-shadow);
+    border-radius: 24px;
+  }
+
+  .module-reorder-page .mr-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module-reorder-page .mr-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .module-reorder-page .mr-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .module-reorder-page .mr-title {
+    color: var(--mr-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .module-reorder-page .mr-subtitle,
+  .module-reorder-page .text-muted,
+  .module-reorder-page .form-text {
+    color: var(--mr-muted) !important;
+  }
+
+  .module-reorder-page .mr-card {
+    padding: 22px;
+  }
+
+  .module-reorder-page .form-select {
+    border-radius: 14px;
+    border-color: var(--mr-line);
+    color: var(--mr-text);
+    background: #fff;
+  }
+
+  .module-reorder-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 0.22rem rgba(37, 99, 235, 0.14);
+  }
+
+  .module-reorder-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .module-reorder-page .module-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .module-reorder-page .module-item {
+    border: 1px solid var(--mr-line);
+    background: var(--mr-soft);
+    border-radius: 18px;
+    padding: 14px 16px;
+    cursor: grab;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  }
+
+  .module-reorder-page .module-item:hover {
+    border-color: rgba(37, 99, 235, 0.36);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  .module-reorder-page .module-item:active {
+    cursor: grabbing;
+  }
+
+  .module-reorder-page .module-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--mr-primary);
+    font-weight: 850;
+  }
+
+  .module-reorder-page .module-title {
+    font-weight: 800;
+    color: var(--mr-text);
+    word-break: break-word;
+  }
+
+  .module-reorder-page .module-meta {
+    font-size: 0.86rem;
+    color: var(--mr-muted);
+  }
+
+  .module-reorder-page .sortable-ghost {
+    opacity: 0.55;
+    background: rgba(37, 99, 235, 0.12) !important;
+  }
+
+  .module-reorder-page .save-status {
+    display: none;
+    border-radius: 16px;
+    padding: 12px 14px;
+    margin-top: 14px;
+    font-weight: 700;
+  }
+
+  .module-reorder-page .save-status.success {
+    display: block;
+    background: rgba(22, 163, 74, 0.12);
+    color: #15803d;
+    border: 1px solid rgba(22, 163, 74, 0.25);
+  }
+
+  .module-reorder-page .save-status.error {
+    display: block;
+    background: rgba(220, 38, 38, 0.12);
+    color: #b91c1c;
+    border: 1px solid rgba(220, 38, 38, 0.25);
+  }
+
+  body.dark-mode .module-reorder-page,
+  html[data-bs-theme="dark"] .module-reorder-page,
+  body[data-theme="dark"] .module-reorder-page {
+    --mr-text: #e5e7eb;
+    --mr-muted: #cbd5e1;
+    --mr-line: rgba(148, 163, 184, 0.25);
+    --mr-soft: rgba(30, 41, 59, 0.86);
+    --mr-card: rgba(15, 23, 42, 0.92);
+    --mr-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --mr-primary: #93c5fd;
+  }
+
+  body.dark-mode .module-reorder-page .mr-card,
+  body.dark-mode .module-reorder-page .mr-hero,
+  html[data-bs-theme="dark"] .module-reorder-page .mr-card,
+  html[data-bs-theme="dark"] .module-reorder-page .mr-hero,
+  body[data-theme="dark"] .module-reorder-page .mr-card,
+  body[data-theme="dark"] .module-reorder-page .mr-hero {
+    background: var(--mr-card);
+    border-color: var(--mr-line);
+    color: var(--mr-text);
+  }
+
+  body.dark-mode .module-reorder-page .mr-title,
+  html[data-bs-theme="dark"] .module-reorder-page .mr-title,
+  body[data-theme="dark"] .module-reorder-page .mr-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .module-reorder-page .form-select,
+  html[data-bs-theme="dark"] .module-reorder-page .form-select,
+  body[data-theme="dark"] .module-reorder-page .form-select {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .module-reorder-page .module-item,
+  html[data-bs-theme="dark"] .module-reorder-page .module-item,
+  body[data-theme="dark"] .module-reorder-page .module-item {
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .module-reorder-page .module-title,
+  html[data-bs-theme="dark"] .module-reorder-page .module-title,
+  body[data-theme="dark"] .module-reorder-page .module-title {
+    color: #f8fafc;
+  }
+
+  body.dark-mode .module-reorder-page .module-number,
+  html[data-bs-theme="dark"] .module-reorder-page .module-number,
+  body[data-theme="dark"] .module-reorder-page .module-number {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+  }
+
+  body.dark-mode .module-reorder-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .module-reorder-page .btn-outline-secondary,
+  body[data-theme="dark"] .module-reorder-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .module-reorder-page .save-status.success,
+  html[data-bs-theme="dark"] .module-reorder-page .save-status.success,
+  body[data-theme="dark"] .module-reorder-page .save-status.success {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.28);
+  }
+
+  body.dark-mode .module-reorder-page .save-status.error,
+  html[data-bs-theme="dark"] .module-reorder-page .save-status.error,
+  body[data-theme="dark"] .module-reorder-page .save-status.error {
+    color: #fecaca;
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.28);
+  }
+
+  @media (max-width: 768px) {
+    .module-reorder-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .module-reorder-page .mr-hero,
+    .module-reorder-page .mr-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .module-reorder-page .mr-actions,
+    .module-reorder-page .mr-actions .btn,
+    .module-reorder-page .mr-hero .btn {
+      width: 100%;
+    }
+
+    .module-reorder-page .module-item {
+      align-items: flex-start !important;
+    }
+  }
+</style>
+
+<div class="module-reorder-page px-2 px-md-4 py-3 py-md-4">
+  <div class="mr-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-      <h4 class="text-primary m-0"><i class="bi bi-list-ol"></i> Sắp xếp module / bài học</h4>
-      <p class="text-muted mb-0">Kéo thả để thay đổi thứ tự module.</p>
+      <h4 class="mr-title">
+        <i class="bi bi-list-ol me-2"></i>Sắp xếp mô-đun / bài học
+      </h4>
+      <p class="mr-subtitle mb-0 mt-2">Chọn khóa học, kéo thả mô-đun để thay đổi thứ tự hiển thị.</p>
     </div>
-    <a href="/admin/dashboard" class="btn btn-outline-secondary btn-sm shadow-sm">
-      <i class="bi bi-arrow-left"></i> Quay lại
+
+    <a href="/admin/dashboard" class="btn btn-outline-secondary shadow-sm">
+      <i class="bi bi-arrow-left me-1"></i>Quay lại
     </a>
   </div>
 
-  <div class="card shadow-sm border-0">
-    <div class="card-body">
-      {% if courses %}
-      <div class="mb-4">
-        <label class="form-label fw-semibold">Chọn khóa học</label>
-        <select class="form-select" disabled>
-          <option>Hiện router mới chỉ nạp danh sách khóa học. Cần truyền thêm modules để sắp xếp.</option>
-          {% for c in courses %}
-          <option>{{ c.course_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      {% endif %}
-
-      {% if modules is defined and modules %}
-      <ul id="moduleList" class="list-group shadow-sm">
-        {% for m in modules %}
-        <li class="list-group-item d-flex align-items-center justify-content-between" data-id="{{ m.id }}">
-          <div>
-            <i class="bi bi-arrows-move me-2 text-secondary"></i>
-            {{ m.module_number }}. {{ m.title }}
-          </div>
-          <span class="text-muted small">ID: {{ m.id }}</span>
-        </li>
+  <div class="mr-card">
+    {% if courses %}
+    <div class="mb-4">
+      <label class="form-label fw-semibold" for="courseSelect">Chọn khóa học</label>
+      <select id="courseSelect" class="form-select">
+        {% for c in courses or [] %}
+        <option value="{{ c.id }}" {% if selected_course_id and (selected_course_id|string) == (c.id|string) %}selected{% endif %}>
+          {{ c.course_code ~ " - " if c.course_code is defined and c.course_code else "" }}{{ c.course_name or "Không rõ tên khóa học" }}
+        </option>
         {% endfor %}
-      </ul>
-
-      <button class="btn btn-success mt-4 w-100 shadow-sm" type="button" onclick="saveOrder()">
-        <i class="bi bi-save"></i> Lưu thứ tự mới
-      </button>
-      {% else %}
-      <div class="alert alert-info mb-0">
-        Chưa có danh sách module để sắp xếp. Hãy cập nhật router để truyền thêm biến <code>modules</code>.
-      </div>
-      {% endif %}
+      </select>
+      <div class="form-text mt-2">Sau khi đổi khóa học, trang sẽ tự tải danh sách mô-đun tương ứng.</div>
     </div>
+    {% else %}
+    <div class="alert alert-warning rounded-4">
+      <i class="bi bi-exclamation-triangle me-1"></i>Chưa có khóa học để sắp xếp mô-đun.
+    </div>
+    {% endif %}
+
+    {% if modules is defined and modules %}
+    <div id="moduleList" class="module-list">
+      {% for m in modules or [] %}
+      <div class="module-item d-flex align-items-center justify-content-between gap-3" data-id="{{ m.id }}">
+        <div class="d-flex align-items-center gap-3">
+          <span class="module-number">{{ loop.index }}</span>
+          <div>
+            <div class="module-title">
+              <i class="bi bi-arrows-move me-1 text-secondary"></i>
+              {{ m.title or "Không rõ tên mô-đun" }}
+            </div>
+            <div class="module-meta">
+              Thứ tự hiện tại: {{ m.module_number or loop.index }} · Mã mô-đun: {{ m.id }}
+            </div>
+          </div>
+        </div>
+        <span class="badge bg-primary rounded-pill">Kéo thả</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div id="saveStatus" class="save-status"></div>
+
+    <div class="mr-actions d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+      <a href="/admin/dashboard" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left-circle me-1"></i>Quay lại
+      </a>
+
+      <button class="btn btn-success" type="button" id="saveOrderBtn">
+        <i class="bi bi-save me-1"></i>Lưu thứ tự mới
+      </button>
+    </div>
+    {% else %}
+    <div class="alert alert-info mb-0 rounded-4">
+      <i class="bi bi-info-circle me-1"></i>
+      Khóa học này chưa có mô-đun để sắp xếp.
+    </div>
+    {% endif %}
   </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script>
-const moduleList = document.getElementById("moduleList");
-if (moduleList) {
-  new Sortable(moduleList, {
-    animation: 150,
-    ghostClass: "bg-light"
-  });
-}
+document.addEventListener("DOMContentLoaded", function () {
+  const moduleList = document.getElementById("moduleList");
+  const courseSelect = document.getElementById("courseSelect");
+  const saveButton = document.getElementById("saveOrderBtn");
+  const saveStatus = document.getElementById("saveStatus");
 
-function saveOrder() {
-  const items = [...document.querySelectorAll("#moduleList li")].map(li => li.dataset.id);
-  alert("Thứ tự mới: " + items.join(", "));
-}
+  function showStatus(message, type) {
+    if (!saveStatus) return;
+    saveStatus.textContent = message;
+    saveStatus.className = "save-status " + (type || "success");
+  }
+
+  function refreshNumbers() {
+    if (!moduleList) return;
+    Array.from(moduleList.querySelectorAll(".module-item")).forEach(function (item, index) {
+      const number = item.querySelector(".module-number");
+      if (number) number.textContent = String(index + 1);
+    });
+  }
+
+  if (courseSelect) {
+    courseSelect.addEventListener("change", function () {
+      const courseId = this.value;
+      if (courseId) {
+        window.location.href = "/admin/modules/reorder?course_id=" + encodeURIComponent(courseId);
+      }
+    });
+  }
+
+  if (moduleList && window.Sortable) {
+    new Sortable(moduleList, {
+      animation: 150,
+      ghostClass: "sortable-ghost",
+      onEnd: refreshNumbers
+    });
+  }
+
+  if (saveButton) {
+    saveButton.addEventListener("click", async function () {
+      if (!moduleList || !courseSelect) return;
+
+      const order = Array.from(moduleList.querySelectorAll(".module-item")).map(function (item) {
+        return item.dataset.id;
+      });
+
+      if (!order.length) {
+        showStatus("Không có mô-đun để lưu.", "error");
+        return;
+      }
+
+      saveButton.disabled = true;
+      saveButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang lưu...';
+
+      try {
+        const response = await fetch("/admin/modules/reorder", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Requested-With": "XMLHttpRequest"
+          },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            course_id: courseSelect.value,
+            order: order
+          })
+        });
+
+        const data = await response.json().catch(function () {
+          return {};
+        });
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.detail || data.message || "Không thể lưu thứ tự mô-đun.");
+        }
+
+        showStatus(data.message || "Đã lưu thứ tự mô-đun thành công.", "success");
+        refreshNumbers();
+      } catch (error) {
+        showStatus(error.message || "Có lỗi xảy ra khi lưu thứ tự.", "error");
+      } finally {
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="bi bi-save me-1"></i>Lưu thứ tự mới';
+      }
+    });
+  }
+});
 </script>
 {% endblock %}

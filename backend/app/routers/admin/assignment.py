@@ -56,6 +56,28 @@ def _display_name(user):
     return getattr(user, "username", None) or getattr(user, "email", None) or "Không rõ"
 
 
+def _parse_due_date_or_400(value: str) -> datetime:
+    value = str(value or "").strip()
+    if not value:
+        raise HTTPException(status_code=400, detail="Vui lòng chọn hạn nộp bài tập.")
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail="Hạn nộp không đúng định dạng.") from exc
+
+
+def _modules_for_courses(db: Session, courses: list[Course]):
+    course_ids = [c.id for c in courses]
+    if not course_ids:
+        return []
+    return (
+        db.query(Module)
+        .filter(Module.course_id.in_(course_ids))
+        .order_by(Module.course_id, Module.module_number)
+        .all()
+    )
+
+
 # =========================================================
 # 1) Danh sách bài tập
 # =========================================================
@@ -178,7 +200,7 @@ def grade_submit(
 def create_assignment_form(request: Request, db: Session = Depends(get_db)):
     teachers = filter_users_by_role(db.query(User), "teacher").all()
     courses = db.query(Course).filter(Course.status == "published").all()
-    modules = db.query(Module).all()
+    modules = _modules_for_courses(db, courses)
 
     return render_template(
         request,
@@ -217,10 +239,10 @@ def create_assignment_route(
 
     teachers = filter_users_by_role(db.query(User), "teacher").all()
     courses = db.query(Course).filter(Course.status == "published").all()
-    modules = db.query(Module).all()
+    modules = _modules_for_courses(db, courses)
 
     try:
-        parsed_due_date = datetime.fromisoformat(due_date) if due_date else None
+        parsed_due_date = _parse_due_date_or_400(due_date)
 
         create_assignment(
             db,
@@ -261,7 +283,7 @@ def edit_assignment_form(assignment_id: str, request: Request, db: Session = Dep
 
     teachers = filter_users_by_role(db.query(User), "teacher").all()
     courses = db.query(Course).filter(Course.status == "published").all()
-    modules = db.query(Module).all()
+    modules = _modules_for_courses(db, courses)
 
     return render_template(
         request,
@@ -293,10 +315,10 @@ def edit_assignment_route(
 
     teachers = filter_users_by_role(db.query(User), "teacher").all()
     courses = db.query(Course).filter(Course.status == "published").all()
-    modules = db.query(Module).all()
+    modules = _modules_for_courses(db, courses)
 
     try:
-        parsed_due_date = datetime.fromisoformat(due_date) if due_date else None
+        parsed_due_date = _parse_due_date_or_400(due_date)
 
         update_assignment(
             db=db,

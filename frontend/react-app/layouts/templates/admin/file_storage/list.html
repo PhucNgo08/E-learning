@@ -1,159 +1,458 @@
 {% extends "layout_admin.html" %}
-{% block title %}📦 Quản lý File lưu trữ{% endblock %}
+{% block title %}📦 Quản lý tệp lưu trữ{% endblock %}
 
 {% block content %}
+
 <style>
-.file-header {
-  background: linear-gradient(90deg, #0061ff, #60efff);
-  color: white;
-  border-radius: 12px;
-  padding: 1rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 15px rgba(0, 97, 255, 0.2);
-}
+  .file-storage-page {
+    --fs-primary: #2563eb;
+    --fs-success: #16a34a;
+    --fs-danger: #dc2626;
+    --fs-warning: #f59e0b;
+    --fs-info: #0891b2;
+    --fs-text: #0f172a;
+    --fs-muted: #64748b;
+    --fs-line: #e2e8f0;
+    --fs-soft: #f8fafc;
+    --fs-card: rgba(255, 255, 255, 0.96);
+    --fs-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--fs-text);
+  }
 
-.file-header .btn {
-  border-radius: 10px;
-  transition: all 0.3s ease;
-}
+  .file-storage-page.file-storage-narrow {
+    max-width: 760px;
+  }
 
-.file-header .btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-}
+  .file-storage-page .fs-hero,
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    box-shadow: var(--fs-shadow);
+    border-radius: 24px;
+  }
 
-.table-card {
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 15px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-}
+  .file-storage-page .fs-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
 
-.table th {
-  font-weight: 600;
-  background: rgba(240, 243, 255, 0.9);
-}
+  .file-storage-page .fs-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 38%);
+    pointer-events: none;
+  }
 
-.table td {
-  vertical-align: middle;
-}
+  .file-storage-page .fs-hero > * {
+    position: relative;
+    z-index: 1;
+  }
 
-.badge {
-  font-size: 0.85rem;
-  padding: 0.45em 0.7em;
-  border-radius: 10px;
-}
+  .file-storage-page .fs-title {
+    color: var(--fs-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .file-storage-page .fs-subtitle,
+  .file-storage-page .text-muted,
+  .file-storage-page .form-text {
+    color: var(--fs-muted) !important;
+  }
+
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    padding: 22px;
+  }
+
+  .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.28);
+    box-shadow: none;
+  }
+
+  .file-storage-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .file-storage-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .file-storage-page .badge {
+    font-size: 0.85rem;
+    padding: 0.45em 0.7em;
+    border-radius: 999px;
+    font-weight: 750;
+  }
+
+  .file-storage-page .fs-table {
+    margin-bottom: 0;
+    color: var(--fs-text);
+    --bs-table-color: var(--fs-text);
+    --bs-table-border-color: var(--fs-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .file-storage-page .fs-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table tbody td {
+    color: var(--fs-text);
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .file-storage-page .file-link {
+    color: var(--fs-primary);
+    text-decoration: none;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .file-storage-page .file-link:hover {
+    text-decoration: underline;
+  }
+
+  .file-storage-page .stat-card {
+    height: 100%;
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 22px;
+    box-shadow: var(--fs-shadow);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .file-storage-page .stat-label {
+    color: var(--fs-muted);
+    font-weight: 750;
+    margin-bottom: 6px;
+  }
+
+  .file-storage-page .stat-value {
+    color: var(--fs-primary);
+    font-size: 1.7rem;
+    font-weight: 850;
+    margin: 0;
+  }
+
+  .file-storage-page .form-control,
+  .file-storage-page .form-select {
+    border-radius: 14px;
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+    background: #fff;
+  }
+
+  .file-storage-page .form-control:focus,
+  .file-storage-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .file-storage-page .chart-card {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 24px;
+    box-shadow: var(--fs-shadow);
+    padding: 22px;
+  }
+
+  body.dark-mode .file-storage-page,
+  html[data-bs-theme="dark"] .file-storage-page,
+  body[data-theme="dark"] .file-storage-page {
+    --fs-text: #e5e7eb;
+    --fs-muted: #cbd5e1;
+    --fs-line: rgba(148, 163, 184, 0.25);
+    --fs-soft: rgba(30, 41, 59, 0.86);
+    --fs-card: rgba(15, 23, 42, 0.92);
+    --fs-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --fs-primary: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-card,
+  body.dark-mode .file-storage-page .fs-hero,
+  body.dark-mode .file-storage-page .stat-card,
+  body.dark-mode .file-storage-page .chart-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-hero,
+  html[data-bs-theme="dark"] .file-storage-page .stat-card,
+  html[data-bs-theme="dark"] .file-storage-page .chart-card,
+  body[data-theme="dark"] .file-storage-page .fs-card,
+  body[data-theme="dark"] .file-storage-page .fs-hero,
+  body[data-theme="dark"] .file-storage-page .stat-card,
+  body[data-theme="dark"] .file-storage-page .chart-card {
+    background: var(--fs-card);
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+  }
+
+  body.dark-mode .file-storage-page .fs-title,
+  body.dark-mode .file-storage-page .stat-value,
+  html[data-bs-theme="dark"] .file-storage-page .fs-title,
+  html[data-bs-theme="dark"] .file-storage-page .stat-value,
+  body[data-theme="dark"] .file-storage-page .fs-title,
+  body[data-theme="dark"] .file-storage-page .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-warning-box,
+  html[data-bs-theme="dark"] .file-storage-page .fs-warning-box,
+  body[data-theme="dark"] .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(251, 191, 36, 0.28);
+    color: #fde68a;
+  }
+
+  body.dark-mode .file-storage-page .fs-table thead th,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table thead th,
+  body[data-theme="dark"] .file-storage-page .fs-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .file-storage-page .fs-table tbody td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table tbody td,
+  body[data-theme="dark"] .file-storage-page .fs-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .file-storage-page .file-link,
+  html[data-bs-theme="dark"] .file-storage-page .file-link,
+  body[data-theme="dark"] .file-storage-page .file-link {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .form-control,
+  body.dark-mode .file-storage-page .form-select,
+  html[data-bs-theme="dark"] .file-storage-page .form-control,
+  html[data-bs-theme="dark"] .file-storage-page .form-select,
+  body[data-theme="dark"] .file-storage-page .form-control,
+  body[data-theme="dark"] .file-storage-page .form-select {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-secondary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-primary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .file-storage-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .file-storage-page .fs-hero,
+    .file-storage-page .fs-card,
+    .file-storage-page .fs-warning-box,
+    .file-storage-page .chart-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .file-storage-page .fs-actions,
+    .file-storage-page .fs-actions .btn,
+    .file-storage-page .fs-hero .btn {
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table thead {
+      display: none;
+    }
+
+    .file-storage-page .responsive-table tbody,
+    .file-storage-page .responsive-table tr,
+    .file-storage-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table tr {
+      border-bottom: 1px solid var(--fs-line);
+      padding: 10px;
+    }
+
+    .file-storage-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .file-storage-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--fs-muted);
+      margin-bottom: 2px;
+    }
+  }
 </style>
 
-<div class="container mt-4 mb-5">
-  <div class="file-header mb-4">
+
+<div class="file-storage-page px-2 px-md-4 py-3 py-md-4">
+  <div class="fs-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-      <h4 class="fw-bold mb-0">
-        <i class="bi bi-folder2-open me-2"></i> Danh sách File
+      <h4 class="fs-title">
+        <i class="bi bi-folder2-open me-2"></i>Danh sách tệp
       </h4>
-      <small class="opacity-75">Tổng số file: {{ total }}</small>
+      <p class="fs-subtitle mb-0 mt-2">Tổng số tệp: {{ total if total is defined else (files|length if files is defined else 0) }}</p>
     </div>
-    <div>
-      <a href="/admin/file-storage/upload" class="btn btn-light text-primary me-2">
-        <i class="bi bi-upload"></i> Upload File
+    <div class="fs-actions d-flex flex-wrap gap-2">
+      <a href="/admin/file-storage/upload" class="btn btn-primary">
+        <i class="bi bi-upload me-1"></i>Tải tệp lên
       </a>
-      <a href="/admin/file-storage/stats" class="btn btn-outline-light border-light">
-        <i class="bi bi-bar-chart"></i> Thống kê
+      <a href="/admin/file-storage/stats" class="btn btn-outline-primary">
+        <i class="bi bi-bar-chart me-1"></i>Thống kê
       </a>
     </div>
   </div>
 
   {% if success %}
-    <div class="alert alert-success">{{ success }}</div>
+    <div class="alert alert-success rounded-4">{{ success }}</div>
   {% endif %}
   {% if error %}
-    <div class="alert alert-danger">{{ error }}</div>
+    <div class="alert alert-danger rounded-4">{{ error }}</div>
   {% endif %}
 
-  <div class="table-card p-3">
-    <table class="table table-hover align-middle mb-0">
-      <thead class="table-light">
-        <tr>
-          <th style="width:5%">#</th>
-          <th style="width:25%">Tên File</th>
-          <th style="width:15%">Kích thước</th>
-          <th style="width:10%">Loại</th>
-          <th style="width:10%">Public</th>
-          <th style="width:15%">CDN Cache</th>
-          <th style="width:20%">Thao tác</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in files %}
-        <tr class="fade-in">
-          <td>{{ loop.index }}</td>
-          <td>
-            <i class="bi bi-file-earmark-text text-primary me-1"></i>
-            <a href="{{ f.file_url }}" target="_blank" class="fw-semibold text-decoration-none text-dark">
-              {{ f.original_name or f.file_name }}
-            </a>
-          </td>
-          <td>{{ (f.file_size / 1024) | round(2) }} KB</td>
-          <td>
-            <span class="badge bg-primary text-white">
-              {{ f.storage_provider }}
-            </span>
-          </td>
-          <td>
-            {% if f.is_public %}
-              <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
-            {% else %}
-              <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
-            {% endif %}
-          </td>
-          <td>
-            {% set cdn = cdn_data.get(f.id) %}
-            {% if cdn %}
-              <span class="badge bg-info text-dark">
-                <i class="bi bi-check2-circle"></i> {{ cdn.cache_status }}
-              </span><br>
-              <small class="text-muted"><i class="bi bi-cloud me-1"></i>{{ cdn.cdn_provider }}</small>
-            {% else %}
-              <form method="post" action="/admin/file-storage/cdn/cache" class="d-inline">
-                <input type="hidden" name="file_id" value="{{ f.id }}">
-                <button class="btn btn-sm btn-outline-info rounded-pill" type="submit">
-                  <i class="bi bi-cloud-plus"></i> Cache
-                </button>
-              </form>
-            {% endif %}
-          </td>
-          <td>
-            <a href="/admin/file-storage/delete/{{ f.id }}"
-               class="btn btn-sm btn-outline-danger rounded-pill">
-              <i class="bi bi-trash"></i> Xóa
-            </a>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="7" class="text-center text-muted py-4">
-            <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-            <span>Chưa có file nào được tải lên.</span>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="fs-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 fs-table responsive-table">
+        <thead>
+          <tr>
+            <th style="width:5%">STT</th>
+            <th style="width:25%">Tên tệp</th>
+            <th style="width:15%">Kích thước</th>
+            <th style="width:10%">Nơi lưu trữ</th>
+            <th style="width:10%">Quyền truy cập</th>
+            <th style="width:15%">Bộ nhớ đệm CDN</th>
+            <th style="width:20%">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files or [] %}
+          <tr class="fade-in">
+            <td data-label="STT">{{ loop.index }}</td>
+            <td data-label="Tên tệp">
+              <i class="bi bi-file-earmark-text text-primary me-1"></i>
+              <a href="{{ f.file_url }}" target="_blank" class="file-link">
+                {{ f.original_name or f.file_name or "Không rõ tên tệp" }}
+              </a>
+            </td>
+            <td data-label="Kích thước">{{ ((f.file_size or 0) / 1024) | round(2) }} KB</td>
+            <td data-label="Nơi lưu trữ">
+              {% set provider = (f.storage_provider or '')|lower %}
+              {% if provider == 'local' %}
+                <span class="badge bg-primary text-white">Máy chủ nội bộ</span>
+              {% elif provider == 's3' %}
+                <span class="badge bg-info text-dark">S3</span>
+              {% elif provider == 'cdn' %}
+                <span class="badge bg-success">CDN</span>
+              {% else %}
+                <span class="badge bg-secondary">Không xác định</span>
+              {% endif %}
+            </td>
+            <td data-label="Quyền truy cập">
+              {% if f.is_public %}
+                <span class="badge bg-success"><i class="bi bi-unlock me-1"></i>Công khai</span>
+              {% else %}
+                <span class="badge bg-secondary"><i class="bi bi-lock me-1"></i>Riêng tư</span>
+              {% endif %}
+            </td>
+            <td data-label="Bộ nhớ đệm CDN">
+              {% set cdn = cdn_data.get(f.id) if cdn_data is defined and cdn_data else none %}
+              {% if cdn %}
+                {% set cache_status = (cdn.cache_status or '')|lower %}
+                <span class="badge bg-info text-dark">
+                  <i class="bi bi-check2-circle me-1"></i>
+                  {% if cache_status == 'cached' %}Đã lưu đệm
+                  {% elif cache_status == 'pending' %}Đang xử lý
+                  {% elif cache_status == 'failed' %}Thất bại
+                  {% else %}Không xác định{% endif %}
+                </span><br>
+                <small class="text-muted"><i class="bi bi-cloud me-1"></i>{{ cdn.cdn_provider or "CDN" }}</small>
+              {% else %}
+                <form method="post" action="/admin/file-storage/cdn/cache" class="d-inline">
+                  <input type="hidden" name="file_id" value="{{ f.id }}">
+                  <button class="btn btn-sm btn-outline-info rounded-pill" type="submit">
+                    <i class="bi bi-cloud-plus me-1"></i>Tạo bộ nhớ đệm
+                  </button>
+                </form>
+              {% endif %}
+            </td>
+            <td data-label="Thao tác">
+              <a href="/admin/file-storage/delete/{{ f.id }}"
+                 class="btn btn-sm btn-outline-danger rounded-pill">
+                <i class="bi bi-trash me-1"></i>Xóa
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-4">
+              <i class="bi bi-inbox fs-3 d-block mb-2"></i>
+              <span>Chưa có tệp nào được tải lên.</span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <script>
-document.querySelectorAll(".fade-in").forEach((el, i) => {
-  el.style.opacity = 0;
-  el.style.transform = "translateY(10px)";
-  setTimeout(() => {
-    el.style.transition = "all 0.4s ease";
-    el.style.opacity = 1;
-    el.style.transform = "translateY(0)";
-  }, 100 * i);
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".fade-in").forEach(function (el, i) {
+    el.style.opacity = 0;
+    el.style.transform = "translateY(10px)";
+    setTimeout(function () {
+      el.style.transition = "all 0.4s ease";
+      el.style.opacity = 1;
+      el.style.transform = "translateY(0)";
+    }, 100 * i);
+  });
 });
 </script>
 {% endblock %}

@@ -2,171 +2,469 @@
 {% block title %}📄 Chi tiết tài liệu{% endblock %}
 
 {% block head_extra %}
+
 <style>
-  .info-box {
-    background: #f8f9fa;
-    padding: 15px;
-    border-left: 4px solid #0d6efd;
-    border-radius: 8px;
+  .material-page {
+    --mat-primary: #2563eb;
+    --mat-success: #16a34a;
+    --mat-danger: #dc2626;
+    --mat-warning: #f59e0b;
+    --mat-info: #0891b2;
+    --mat-text: #0f172a;
+    --mat-muted: #64748b;
+    --mat-line: #e2e8f0;
+    --mat-soft: #f8fafc;
+    --mat-card: rgba(255, 255, 255, 0.96);
+    --mat-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--mat-text);
   }
-  .file-preview {
+
+  .material-page .mat-hero,
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    border: 1px solid var(--mat-line);
+    background: var(--mat-card);
+    box-shadow: var(--mat-shadow);
+    border-radius: 24px;
+  }
+
+  .material-page .mat-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .material-page .mat-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .material-page .mat-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .material-page .mat-title {
+    color: var(--mat-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .material-page .mat-subtitle,
+  .material-page .text-muted,
+  .material-page .file-hint,
+  .material-page .form-text {
+    color: var(--mat-muted) !important;
+  }
+
+  .material-page .mat-card,
+  .material-page .mat-info-box,
+  .material-page .mat-file-box,
+  .material-page .mat-version-box {
+    padding: 22px;
+  }
+
+  .material-page .form-control,
+  .material-page .form-select {
+    border-radius: 14px;
+    border-color: var(--mat-line);
+    color: var(--mat-text);
     background: #fff;
-    border: 1px solid #ddd;
-    padding: 15px;
-    border-radius: 8px;
   }
-  .version-item {
-    border-bottom: 1px solid #e9ecef;
-    padding: 10px 0;
+
+  .material-page .form-control:focus,
+  .material-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
   }
-  .version-item:last-child {
+
+  .material-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .material-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .material-page .badge,
+  .material-page .mat-badge {
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-weight: 750;
+  }
+
+  .material-page .mat-table {
+    color: var(--mat-text);
+    --bs-table-color: var(--mat-text);
+    --bs-table-border-color: var(--mat-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .material-page .mat-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    text-align: center;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table tbody td {
+    color: var(--mat-text);
+    vertical-align: middle;
+    border-color: var(--mat-line);
+  }
+
+  .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .material-page .file-list-box,
+  .material-page .mat-file-box {
+    background: var(--mat-soft);
+    border-radius: 18px;
+    padding: 14px 16px;
+    border: 1px solid var(--mat-line);
+  }
+
+  .material-page .file-list-box {
+    display: none;
+  }
+
+  .material-page .file-item,
+  .material-page .version-item {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-line);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .material-page .file-item:last-child,
+  .material-page .version-item:last-child {
     border-bottom: none;
   }
+
+  .material-page .file-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    word-break: break-word;
+  }
+
+  .material-page .file-size {
+    font-size: 0.85rem;
+    color: var(--mat-muted);
+    white-space: nowrap;
+  }
+
+  .material-page .truncate {
+    max-width: 260px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .material-page .private-row {
+    opacity: 0.76;
+  }
+
+  .material-page .expired td {
+    background: rgba(239, 68, 68, 0.10) !important;
+  }
+
+  .material-page img,
+  .material-page video {
+    max-width: 100%;
+    height: auto;
+  }
+
+  body.dark-mode .material-page,
+  html[data-bs-theme="dark"] .material-page,
+  body[data-theme="dark"] .material-page {
+    --mat-text: #e5e7eb;
+    --mat-muted: #cbd5e1;
+    --mat-line: rgba(148, 163, 184, 0.25);
+    --mat-soft: rgba(30, 41, 59, 0.86);
+    --mat-card: rgba(15, 23, 42, 0.92);
+    --mat-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  }
+
+  body.dark-mode .material-page .mat-title,
+  html[data-bs-theme="dark"] .material-page .mat-title,
+  body[data-theme="dark"] .material-page .mat-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .material-page .mat-card,
+  body.dark-mode .material-page .mat-info-box,
+  body.dark-mode .material-page .mat-file-box,
+  body.dark-mode .material-page .mat-version-box,
+  body.dark-mode .material-page .file-list-box,
+  html[data-bs-theme="dark"] .material-page .mat-card,
+  html[data-bs-theme="dark"] .material-page .mat-info-box,
+  html[data-bs-theme="dark"] .material-page .mat-file-box,
+  html[data-bs-theme="dark"] .material-page .mat-version-box,
+  html[data-bs-theme="dark"] .material-page .file-list-box,
+  body[data-theme="dark"] .material-page .mat-card,
+  body[data-theme="dark"] .material-page .mat-info-box,
+  body[data-theme="dark"] .material-page .mat-file-box,
+  body[data-theme="dark"] .material-page .mat-version-box,
+  body[data-theme="dark"] .material-page .file-list-box {
+    background: var(--mat-card);
+    border-color: var(--mat-line);
+    color: var(--mat-text);
+  }
+
+  body.dark-mode .material-page .form-control,
+  body.dark-mode .material-page .form-select,
+  body.dark-mode .material-page textarea,
+  html[data-bs-theme="dark"] .material-page .form-control,
+  html[data-bs-theme="dark"] .material-page .form-select,
+  html[data-bs-theme="dark"] .material-page textarea,
+  body[data-theme="dark"] .material-page .form-control,
+  body[data-theme="dark"] .material-page .form-select,
+  body[data-theme="dark"] .material-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .material-page .form-control::placeholder,
+  body.dark-mode .material-page textarea::placeholder,
+  html[data-bs-theme="dark"] .material-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .material-page textarea::placeholder,
+  body[data-theme="dark"] .material-page .form-control::placeholder,
+  body[data-theme="dark"] .material-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .material-page .mat-table thead th,
+  html[data-bs-theme="dark"] .material-page .mat-table thead th,
+  body[data-theme="dark"] .material-page .mat-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .material-page .mat-table tbody td,
+  html[data-bs-theme="dark"] .material-page .mat-table tbody td,
+  body[data-theme="dark"] .material-page .mat-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .material-page .mat-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .material-page .mat-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .material-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-secondary,
+  body[data-theme="dark"] .material-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .material-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .material-page .btn-outline-primary,
+  body[data-theme="dark"] .material-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .material-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .material-page .mat-hero,
+    .material-page .mat-card,
+    .material-page .mat-info-box,
+    .material-page .mat-file-box,
+    .material-page .mat-version-box {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .material-page .mat-actions,
+    .material-page .mat-actions .btn,
+    .material-page .mat-hero .btn {
+      width: 100%;
+    }
+
+    .material-page .responsive-table thead {
+      display: none;
+    }
+
+    .material-page .responsive-table tbody,
+    .material-page .responsive-table tr,
+    .material-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .material-page .responsive-table tr {
+      border-bottom: 1px solid var(--mat-line);
+      padding: 10px;
+    }
+
+    .material-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .material-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--mat-muted);
+      margin-bottom: 2px;
+    }
+
+    .material-page .truncate {
+      max-width: none;
+      white-space: normal;
+    }
+  }
 </style>
+
 {% endblock %}
 
 {% block content %}
-<div class="container py-4">
-
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="text-primary mb-0">
-      <i class="bi bi-file-earmark-text"></i> Chi tiết tài liệu
-    </h3>
-
+{% set material_type_labels = {
+  "lecture": "Bài giảng",
+  "document": "Tài liệu",
+  "assignment": "Bài tập",
+  "quiz": "Bài kiểm tra",
+  "reference": "Tài liệu tham khảo",
+  "syllabus": "Đề cương",
+  "video": "Video",
+  "audio": "Âm thanh",
+  "image": "Hình ảnh",
+  "other": "Khác"
+} %}
+<div class="material-page px-2 px-md-4 py-3 py-md-4">
+  <div class="mat-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
+      <h3 class="mat-title"><i class="bi bi-file-earmark-text me-2"></i>Chi tiết tài liệu</h3>
+      <p class="mat-subtitle mb-0 mt-2">Xem thông tin tài liệu, tệp đính kèm và lịch sử phiên bản.</p>
+    </div>
+
+    <div class="mat-actions d-flex flex-wrap gap-2">
       <a href="/admin/course-material/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Quay lại
+        <i class="bi bi-arrow-left me-1"></i>Quay lại
       </a>
-      <a href="/admin/course-material/edit/{{ material.id }}" class="btn btn-primary ms-2">
-        <i class="bi bi-pencil-square"></i> Chỉnh sửa
+      <a href="/admin/course-material/edit/{{ material.id }}" class="btn btn-primary">
+        <i class="bi bi-pencil-square me-1"></i>Chỉnh sửa
       </a>
     </div>
   </div>
 
-  <!-- ================== THÔNG TIN CHUNG ================== -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-primary text-white fw-semibold">
-      <i class="bi bi-info-circle"></i> Thông tin tài liệu
-    </div>
-    <div class="card-body">
+  <div class="mat-card mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-info-circle me-1"></i>Thông tin tài liệu</h5>
 
-      <div class="info-box mb-4">
-        <ul class="list-unstyled small mb-0">
-
-          <li><strong>📚 Thuộc khóa học:</strong>
-            {{ material.course.course_name if material.course else "Không xác định" }}
-          </li>
-
-          <li><strong>🏷 Tiêu đề:</strong> {{ material.title }}</li>
-
-          <li><strong>📘 Mô tả:</strong> {{ material.description or "Không có" }}</li>
-
-          <li><strong>📁 Định dạng:</strong> {{ material.file_format }}</li>
-
-          <li><strong>📦 Dung lượng:</strong>
-            {{ (material.file_size / 1024 / 1024) | round(2) }} MB
-          </li>
-
-          <li><strong>🗂 Loại tài liệu:</strong> {{ material.material_type }}</li>
-
-          <li><strong>🔢 Phiên bản mới nhất:</strong> {{ material.version }}</li>
-
-          <li><strong>📥 Lượt tải:</strong> {{ material.download_count }}</li>
-
-          <li><strong>🔐 Quyền truy cập:</strong>
-            {% if material.is_public %}
-              <span class="badge bg-success"><i class="bi bi-unlock"></i> Công khai</span>
-            {% else %}
-              <span class="badge bg-secondary"><i class="bi bi-lock"></i> Riêng tư</span>
-            {% endif %}
-          </li>
-
-          <li><strong>📆 Tải lên:</strong>
-            {{ material.created_at.strftime("%d/%m/%Y %H:%M") }}
-          </li>
-
-          <li><strong>⏱ Cập nhật cuối:</strong>
-            {{ material.updated_at.strftime("%d/%m/%Y %H:%M") }}
-          </li>
-
-          {% if material.available_from %}
-          <li><strong>📅 Hiển thị từ:</strong> {{ material.available_from.strftime("%d/%m/%Y") }}</li>
+    <div class="mat-info-box mb-4">
+      <ul class="list-unstyled small mb-0">
+        <li><strong>📚 Thuộc khóa học:</strong>
+          {{ material.course.course_name if material.course else "Không xác định" }}
+        </li>
+        <li><strong>🏷 Tiêu đề:</strong> {{ material.title or "Không có tiêu đề" }}</li>
+        <li><strong>📘 Mô tả:</strong> {{ material.description or "Không có" }}</li>
+        <li><strong>📁 Định dạng:</strong> {{ material.file_format or "Không xác định" }}</li>
+        <li><strong>📦 Dung lượng:</strong>
+          {{ ((material.file_size or 0) / 1024 / 1024) | round(2) }} MB
+        </li>
+        <li><strong>🗂 Loại tài liệu:</strong> {{ material_type_labels.get((material.material_type or '')|lower, "Khác") }}</li>
+        <li><strong>🔢 Phiên bản mới nhất:</strong> {{ material.version or 1 }}</li>
+        <li><strong>📥 Lượt tải:</strong> {{ material.download_count or 0 }}</li>
+        <li><strong>🔐 Quyền truy cập:</strong>
+          {% if material.is_public %}
+            <span class="badge bg-success"><i class="bi bi-unlock me-1"></i>Công khai</span>
+          {% else %}
+            <span class="badge bg-secondary"><i class="bi bi-lock me-1"></i>Riêng tư</span>
           {% endif %}
-
-          {% if material.available_to %}
-          <li><strong>📅 Hiển thị đến:</strong> {{ material.available_to.strftime("%d/%m/%Y") }}</li>
-          {% endif %}
-
-        </ul>
-      </div>
-
-      <!-- PREVIEW FILE -->
-      <div class="file-preview mb-3">
-
-        {% set ext = (material.file_format or '').lower() %}
-
-        {% if ext == 'pdf' %}
-          📄 <a href="{{ material.file_url }}" target="_blank">Xem PDF</a>
-
-        {% elif ext in ['png','jpg','jpeg'] %}
-          <img src="{{ material.file_url }}" class="img-fluid rounded" style="max-height: 240px;">
-
-        {% elif ext == 'mp4' %}
-          🎬 <video src="{{ material.file_url }}" controls style="max-width: 100%; border-radius: 8px;"></video>
-
-        {% else %}
-          <a href="{{ material.file_url }}" target="_blank">
-            <i class="bi bi-file-earmark"></i> {{ material.file_name }}
-          </a>
+        </li>
+        <li><strong>📆 Tải lên:</strong>
+          {{ material.created_at.strftime("%d/%m/%Y %H:%M") if material.created_at else "—" }}
+        </li>
+        <li><strong>⏱ Cập nhật cuối:</strong>
+          {{ material.updated_at.strftime("%d/%m/%Y %H:%M") if material.updated_at else "—" }}
+        </li>
+        {% if material.available_from %}
+        <li><strong>📅 Hiển thị từ:</strong> {{ material.available_from.strftime("%d/%m/%Y") }}</li>
         {% endif %}
-
-      </div>
-
-      <a href="/admin/course-material/download/{{ material.id }}" class="btn btn-success">
-        <i class="bi bi-download"></i> Tải bản mới nhất
-      </a>
-
-    </div>
-  </div>
-
-  <!-- ================== DANH SÁCH PHIÊN BẢN ================== -->
-  <div class="card shadow-sm">
-    <div class="card-header bg-info text-white fw-semibold">
-      <i class="bi bi-layers"></i> Các phiên bản tài liệu
+        {% if material.available_to %}
+        <li><strong>📅 Hiển thị đến:</strong> {{ material.available_to.strftime("%d/%m/%Y") }}</li>
+        {% endif %}
+      </ul>
     </div>
 
-    <div class="card-body">
+    <div class="mat-file-box mb-3">
+      {% set ext = (material.file_format or '')|lower %}
+      {% set file_url = material.file_url or '' %}
 
-      {% if versions %}
-      <div class="list-group">
-
-        {% for v in versions %}
-        <div class="version-item d-flex justify-content-between align-items-center">
-
-          <div>
-            <strong>Phiên bản v{{ v.version }}</strong>
-            <div class="text-muted small">
-              {{ (v.file_size / 1024 / 1024) | round(2) }} MB — {{ v.created_at.strftime("%d/%m/%Y %H:%M") }}
-            </div>
-          </div>
-
-          <a href="/admin/course-material/download/{{ material.id }}/version/{{ v.version }}"
-             class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-download"></i> Tải
-          </a>
-
-        </div>
-        {% endfor %}
-
-      </div>
+      {% if ext == 'pdf' %}
+        📄 <a href="{{ file_url }}" target="_blank">Xem PDF</a>
+      {% elif ext in ['png','jpg','jpeg'] %}
+        <img src="{{ file_url }}" class="img-fluid rounded" style="max-height: 240px;" alt="Tệp hình ảnh">
+      {% elif ext == 'mp4' %}
+        🎬 <video src="{{ file_url }}" controls style="max-width: 100%; border-radius: 8px;"></video>
       {% else %}
-      <p class="text-muted text-center py-3">
-        <i class="bi bi-inbox"></i> Không có phiên bản nào.
-      </p>
+        <a href="{{ file_url }}" target="_blank">
+          <i class="bi bi-file-earmark me-1"></i>{{ material.file_name or "Tệp tài liệu" }}
+        </a>
       {% endif %}
-
     </div>
+
+    <a href="/admin/course-material/download/{{ material.id }}" class="btn btn-success">
+      <i class="bi bi-download me-1"></i>Tải bản mới nhất
+    </a>
   </div>
 
+  <div class="mat-card">
+    <h5 class="fw-bold mb-3"><i class="bi bi-layers me-1"></i>Các phiên bản tài liệu</h5>
+
+    {% if versions %}
+    <div class="list-group">
+      {% for v in versions or [] %}
+      <div class="version-item">
+        <div>
+          <strong>Phiên bản v{{ v.version }}</strong>
+          <div class="text-muted small">
+            {{ ((v.file_size or 0) / 1024 / 1024) | round(2) }} MB — {{ v.created_at.strftime("%d/%m/%Y %H:%M") if v.created_at else "—" }}
+          </div>
+        </div>
+
+        <a href="/admin/course-material/download/{{ material.id }}/version/{{ v.version }}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Tải
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3 mb-0">
+      <i class="bi bi-inbox me-1"></i>Không có phiên bản nào.
+    </p>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

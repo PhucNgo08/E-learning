@@ -1,9 +1,3 @@
-"""
-==========================================================
-📘 SERVICE: Quiz Template Management
-CRUD cho mẫu đề quiz
-==========================================================
-"""
 from datetime import datetime
 import uuid
 
@@ -24,7 +18,6 @@ def get_all(db: Session) -> list[QuizTemplate]:
 def get_all_with_creator(db: Session) -> list[QuizTemplate]:
     query = db.query(QuizTemplate)
 
-    # Nếu model có relationship "creator" thì preload luôn
     if hasattr(QuizTemplate, "creator"):
         query = query.options(joinedload(QuizTemplate.creator))
 
@@ -50,6 +43,12 @@ def create(
     name = (name or "").strip()
     description = (description or "").strip() or None
     rules = (rules or "").strip()
+
+    if not name:
+        raise ValueError("Tên mẫu không được để trống.")
+
+    if not rules:
+        raise ValueError("Quy tắc sinh câu hỏi không được để trống.")
 
     qt = QuizTemplate(
         id=str(uuid.uuid4()),
@@ -83,9 +82,19 @@ def update(
     if not qt:
         return None
 
-    qt.name = (name or "").strip()
-    qt.description = (description or "").strip() or None
-    qt.rules = (rules or "").strip()
+    name = (name or "").strip()
+    description = (description or "").strip() or None
+    rules = (rules or "").strip()
+
+    if not name:
+        raise ValueError("Tên mẫu không được để trống.")
+
+    if not rules:
+        raise ValueError("Quy tắc sinh câu hỏi không được để trống.")
+
+    qt.name = name
+    qt.description = description
+    qt.rules = rules
     qt.updated_at = datetime.utcnow()
 
     try:

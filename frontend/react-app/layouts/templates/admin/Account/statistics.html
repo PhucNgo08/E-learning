@@ -5,34 +5,55 @@
 {% block extra_css %}
 <style>
   .user-stats-page {
+    --us-primary: #2563eb;
+    --us-surface: var(--surface, #ffffff);
+    --us-surface-soft: var(--surface-soft, #f8fafc);
+    --us-border: var(--border-color, #e2e8f0);
+    --us-text: var(--text-main, #0f172a);
+    --us-muted: var(--text-muted, #64748b);
+    --us-shadow: var(--shadow-sm, 0 12px 30px rgba(15, 23, 42, 0.1));
     max-width: 1180px;
     margin: 0 auto;
-    color: #0f172a;
+    color: var(--us-text);
   }
 
-  .stats-page-header {
-    background: linear-gradient(135deg, #1e3a8a, #2563eb);
-    color: #fff;
-    border-radius: 18px;
+  .user-stats-page .stats-page-header {
+    background: linear-gradient(135deg, #1e3a8a, #2563eb 58%, #7c3aed);
+    color: #ffffff;
+    border-radius: 20px;
     padding: 24px 28px;
     box-shadow: 0 14px 34px rgba(37, 99, 235, 0.18);
     border: 1px solid rgba(37, 99, 235, 0.18);
+    position: relative;
+    overflow: hidden;
   }
 
-  .stats-page-header .header-subtitle {
+  .user-stats-page .stats-page-header::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    bottom: -90px;
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.13);
+    pointer-events: none;
+  }
+
+  .user-stats-page .header-subtitle {
     color: rgba(255, 255, 255, 0.88);
   }
 
-  .summary-card,
-  .chart-card,
-  .stats-table-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.1);
+  .user-stats-page .summary-card,
+  .user-stats-page .chart-card,
+  .user-stats-page .stats-table-card {
+    background: var(--us-surface);
+    border: 1px solid var(--us-border);
+    border-radius: 20px;
+    box-shadow: var(--us-shadow);
   }
 
-  .summary-card {
+  .user-stats-page .summary-card {
     height: 100%;
     padding: 22px;
     display: flex;
@@ -41,12 +62,12 @@
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .summary-card:hover {
+  .user-stats-page .summary-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 16px 36px rgba(15, 23, 42, 0.14);
   }
 
-  .summary-icon {
+  .user-stats-page .summary-icon {
     width: 56px;
     height: 56px;
     border-radius: 18px;
@@ -57,47 +78,52 @@
     flex: 0 0 auto;
   }
 
-  .summary-icon.total {
-    background: #dbeafe;
+  .user-stats-page .summary-icon.total {
+    background: rgba(37, 99, 235, 0.14);
     color: #2563eb;
   }
 
-  .summary-icon.active {
-    background: #dcfce7;
+  .user-stats-page .summary-icon.active {
+    background: rgba(22, 163, 74, 0.14);
     color: #16a34a;
   }
 
-  .summary-icon.locked {
-    background: #fee2e2;
+  .user-stats-page .summary-icon.locked {
+    background: rgba(220, 38, 38, 0.14);
     color: #dc2626;
   }
 
-  .summary-icon.role {
-    background: #eef2ff;
+  .user-stats-page .summary-icon.role {
+    background: rgba(79, 70, 229, 0.14);
     color: #4f46e5;
   }
 
-  .summary-value {
+  .user-stats-page .summary-value {
     font-size: 1.9rem;
     font-weight: 900;
-    color: #0f172a;
+    color: var(--us-text);
     line-height: 1.1;
     margin-bottom: 4px;
   }
 
-  .summary-label {
-    color: #64748b;
+  .user-stats-page .summary-label,
+  .user-stats-page .empty-state,
+  .user-stats-page .text-muted {
+    color: var(--us-muted) !important;
+  }
+
+  .user-stats-page .summary-label {
     font-weight: 700;
     margin-bottom: 0;
   }
 
-  .chart-card {
+  .user-stats-page .chart-card {
     height: 100%;
     padding: 24px;
   }
 
-  .chart-title {
-    color: #0f172a;
+  .user-stats-page .chart-title {
+    color: var(--us-text);
     font-weight: 900;
     margin-bottom: 18px;
     display: flex;
@@ -105,32 +131,32 @@
     gap: 8px;
   }
 
-  .chart-title i {
-    color: #2563eb;
+  .user-stats-page .chart-title i {
+    color: var(--us-primary);
   }
 
-  .chart-wrap {
+  .user-stats-page .chart-wrap {
     position: relative;
     min-height: 300px;
   }
 
-  .stats-table-card {
+  .user-stats-page .stats-table-card {
     overflow: hidden;
   }
 
-  .stats-table-card .table {
-    --bs-table-bg: #ffffff;
-    --bs-table-color: #0f172a;
-    --bs-table-border-color: #e2e8f0;
-    --bs-table-hover-bg: #f1f5ff;
-    --bs-table-hover-color: #0f172a;
+  .user-stats-page .table {
+    --bs-table-bg: var(--us-surface);
+    --bs-table-color: var(--us-text);
+    --bs-table-border-color: var(--us-border);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+    --bs-table-hover-color: var(--us-text);
     margin-bottom: 0;
   }
 
-  .stats-table-card .table thead th {
-    background: #eaf1ff;
-    color: #1e293b;
-    border-bottom: 1px solid #dbe3ef;
+  .user-stats-page .table thead th {
+    background: var(--us-surface-soft) !important;
+    color: var(--us-text) !important;
+    border-color: var(--us-border) !important;
     text-align: center;
     vertical-align: middle;
     white-space: nowrap;
@@ -138,32 +164,25 @@
     padding: 16px 14px;
   }
 
-  .stats-table-card .table tbody tr {
-    background: #ffffff;
-  }
-
-  .stats-table-card .table tbody tr:nth-child(even) {
-    background: #f8fafc;
-  }
-
-  .stats-table-card .table tbody tr:hover {
-    background: #eef6ff;
-  }
-
-  .stats-table-card .table tbody td {
-    color: #0f172a;
-    border-color: #e2e8f0;
+  .user-stats-page .table tbody td {
+    background: transparent !important;
+    color: var(--us-text) !important;
+    border-color: var(--us-border) !important;
     vertical-align: middle;
     padding: 15px 14px;
   }
 
-  .user-avatar {
+  .user-stats-page .table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .user-stats-page .user-avatar {
     width: 38px;
     height: 38px;
     border-radius: 999px;
-    background: #e8f0ff;
+    background: rgba(37, 99, 235, 0.12);
     color: #1d4ed8;
-    border: 1px solid #bfdbfe;
+    border: 1px solid rgba(37, 99, 235, 0.2);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -171,8 +190,8 @@
     margin-right: 8px;
   }
 
-  .role-badge,
-  .status-badge {
+  .user-stats-page .role-badge,
+  .user-stats-page .status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -181,143 +200,212 @@
     font-size: 0.82rem;
     font-weight: 800;
     white-space: nowrap;
+    border: 1px solid transparent;
   }
 
-  .role-admin {
-    background: #fee2e2;
+  .user-stats-page .role-admin {
+    background: rgba(220, 38, 38, 0.12);
     color: #b91c1c;
-    border: 1px solid #fecaca;
+    border-color: rgba(220, 38, 38, 0.2);
   }
 
-  .role-teacher {
-    background: #e0f2fe;
+  .user-stats-page .role-teacher {
+    background: rgba(14, 165, 233, 0.14);
     color: #0369a1;
-    border: 1px solid #bae6fd;
+    border-color: rgba(14, 165, 233, 0.24);
   }
 
-  .role-student {
-    background: #dcfce7;
+  .user-stats-page .role-student {
+    background: rgba(22, 163, 74, 0.14);
     color: #15803d;
-    border: 1px solid #bbf7d0;
+    border-color: rgba(22, 163, 74, 0.24);
   }
 
-  .status-active {
-    background: #dcfce7;
+  .user-stats-page .role-teaching_assistant,
+  .user-stats-page .role-other {
+    background: rgba(100, 116, 139, 0.14);
+    color: #475569;
+    border-color: rgba(100, 116, 139, 0.2);
+  }
+
+  .user-stats-page .status-active {
+    background: rgba(22, 163, 74, 0.14);
     color: #15803d;
-    border: 1px solid #bbf7d0;
+    border-color: rgba(22, 163, 74, 0.24);
   }
 
-  .status-locked,
-  .status-inactive {
-    background: #fee2e2;
+  .user-stats-page .status-locked,
+  .user-stats-page .status-inactive,
+  .user-stats-page .status-deleted {
+    background: rgba(239, 68, 68, 0.12);
     color: #b91c1c;
-    border: 1px solid #fecaca;
+    border-color: rgba(239, 68, 68, 0.22);
   }
 
-  .empty-state {
+  .user-stats-page .status-pending,
+  .user-stats-page .status-pending_enrollment {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+    border-color: rgba(245, 158, 11, 0.24);
+  }
+
+  .user-stats-page .status-other {
+    background: rgba(100, 116, 139, 0.14);
+    color: #475569;
+    border-color: rgba(100, 116, 139, 0.2);
+  }
+
+  .user-stats-page .empty-state {
     text-align: center;
-    color: #64748b;
     padding: 46px 20px;
   }
 
-  .empty-state i {
+  .user-stats-page .empty-state i {
     display: block;
     font-size: 2.4rem;
-    color: #2563eb;
+    color: var(--us-primary);
     margin-bottom: 10px;
   }
 
   body.dark-mode .user-stats-page,
   html[data-bs-theme="dark"] .user-stats-page {
-    color: #e5e7eb;
+    --us-surface: rgba(15, 23, 42, 0.96);
+    --us-surface-soft: rgba(30, 41, 59, 0.98);
+    --us-border: rgba(148, 163, 184, 0.28);
+    --us-text: #e5e7eb;
+    --us-muted: #cbd5e1;
+    --us-shadow: 0 18px 44px rgba(0, 0, 0, 0.34);
   }
 
-  body.dark-mode .summary-card,
-  body.dark-mode .chart-card,
-  body.dark-mode .stats-table-card,
-  html[data-bs-theme="dark"] .summary-card,
-  html[data-bs-theme="dark"] .chart-card,
-  html[data-bs-theme="dark"] .stats-table-card {
-    background: rgba(15, 23, 42, 0.96);
-    border-color: rgba(148, 163, 184, 0.35);
-    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
+  body.dark-mode .user-stats-page .stats-page-header,
+  html[data-bs-theme="dark"] .user-stats-page .stats-page-header {
+    background: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+    border-color: rgba(147, 197, 253, 0.18);
+    box-shadow: 0 22px 58px rgba(0, 0, 0, 0.45);
   }
 
-  body.dark-mode .summary-value,
-  body.dark-mode .chart-title,
-  html[data-bs-theme="dark"] .summary-value,
-  html[data-bs-theme="dark"] .chart-title {
-    color: #ffffff;
+  body.dark-mode .user-stats-page .summary-card:hover,
+  html[data-bs-theme="dark"] .user-stats-page .summary-card:hover {
+    box-shadow: 0 22px 52px rgba(0, 0, 0, 0.45);
   }
 
-  body.dark-mode .summary-label,
-  html[data-bs-theme="dark"] .summary-label {
+  body.dark-mode .user-stats-page .table tbody tr:nth-child(even) td,
+  html[data-bs-theme="dark"] .user-stats-page .table tbody tr:nth-child(even) td {
+    background: rgba(30, 41, 59, 0.36) !important;
+  }
+
+  body.dark-mode .user-stats-page .table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .user-stats-page .table-hover tbody tr:hover td {
+    background: rgba(51, 65, 85, 0.88) !important;
+    color: #ffffff !important;
+  }
+
+  body.dark-mode .user-stats-page .user-avatar,
+  html[data-bs-theme="dark"] .user-stats-page .user-avatar {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+    border-color: rgba(96, 165, 250, 0.28);
+  }
+
+  body.dark-mode .user-stats-page .role-admin,
+  html[data-bs-theme="dark"] .user-stats-page .role-admin {
+    background: rgba(248, 113, 113, 0.16);
+    color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.28);
+  }
+
+  body.dark-mode .user-stats-page .role-teacher,
+  html[data-bs-theme="dark"] .user-stats-page .role-teacher {
+    background: rgba(14, 165, 233, 0.18);
+    color: #7dd3fc;
+    border-color: rgba(14, 165, 233, 0.3);
+  }
+
+  body.dark-mode .user-stats-page .role-student,
+  body.dark-mode .user-stats-page .status-active,
+  html[data-bs-theme="dark"] .user-stats-page .role-student,
+  html[data-bs-theme="dark"] .user-stats-page .status-active {
+    background: rgba(34, 197, 94, 0.16);
+    color: #86efac;
+    border-color: rgba(34, 197, 94, 0.28);
+  }
+
+  body.dark-mode .user-stats-page .role-teaching_assistant,
+  body.dark-mode .user-stats-page .role-other,
+  html[data-bs-theme="dark"] .user-stats-page .role-teaching_assistant,
+  html[data-bs-theme="dark"] .user-stats-page .role-other {
+    background: rgba(148, 163, 184, 0.16);
     color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.28);
   }
 
-  body.dark-mode .stats-table-card .table,
-  html[data-bs-theme="dark"] .stats-table-card .table {
-    --bs-table-bg: transparent;
-    --bs-table-color: #e5e7eb;
-    --bs-table-border-color: rgba(148, 163, 184, 0.2);
-    --bs-table-hover-bg: rgba(56, 189, 248, 0.08);
-    --bs-table-hover-color: #ffffff;
-    color: #e5e7eb;
+  body.dark-mode .user-stats-page .status-locked,
+  body.dark-mode .user-stats-page .status-inactive,
+  body.dark-mode .user-stats-page .status-deleted,
+  html[data-bs-theme="dark"] .user-stats-page .status-locked,
+  html[data-bs-theme="dark"] .user-stats-page .status-inactive,
+  html[data-bs-theme="dark"] .user-stats-page .status-deleted {
+    background: rgba(239, 68, 68, 0.16);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.28);
   }
 
-  body.dark-mode .stats-table-card .table thead th,
-  html[data-bs-theme="dark"] .stats-table-card .table thead th {
-    background: #172033;
-    color: #f8fafc;
-    border-bottom-color: rgba(148, 163, 184, 0.28);
-  }
-
-  body.dark-mode .stats-table-card .table tbody tr,
-  html[data-bs-theme="dark"] .stats-table-card .table tbody tr {
-    background: rgba(15, 23, 42, 0.88);
-  }
-
-  body.dark-mode .stats-table-card .table tbody tr:nth-child(even),
-  html[data-bs-theme="dark"] .stats-table-card .table tbody tr:nth-child(even) {
-    background: rgba(30, 41, 59, 0.78);
-  }
-
-  body.dark-mode .stats-table-card .table tbody tr:hover,
-  html[data-bs-theme="dark"] .stats-table-card .table tbody tr:hover {
-    background: rgba(56, 189, 248, 0.1);
-  }
-
-  body.dark-mode .stats-table-card .table tbody td,
-  html[data-bs-theme="dark"] .stats-table-card .table tbody td {
-    color: #e5e7eb;
-    border-color: rgba(148, 163, 184, 0.16);
-  }
-
-  body.dark-mode .user-avatar,
-  html[data-bs-theme="dark"] .user-avatar {
-    background: rgba(59, 130, 246, 0.2);
-    color: #bfdbfe;
-    border-color: rgba(96, 165, 250, 0.25);
-  }
-
-  body.dark-mode .empty-state,
-  html[data-bs-theme="dark"] .empty-state {
-    color: #cbd5e1;
+  body.dark-mode .user-stats-page .status-pending,
+  body.dark-mode .user-stats-page .status-pending_enrollment,
+  html[data-bs-theme="dark"] .user-stats-page .status-pending,
+  html[data-bs-theme="dark"] .user-stats-page .status-pending_enrollment {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.3);
   }
 
   @media (max-width: 768px) {
-    .stats-page-header,
-    .summary-card,
-    .chart-card {
-      padding: 18px;
+    .user-stats-page .stats-page-header {
+      padding: 20px;
     }
 
-    .stats-page-header .btn {
+    .user-stats-page .stats-page-header .btn {
       width: 100%;
+    }
+
+    .user-stats-page .chart-card {
+      padding: 18px;
     }
   }
 </style>
 {% endblock %}
+
+{% macro role_badge(role_value) -%}
+  {% set rv = (role_value or 'student')|lower %}
+  {% if rv == 'admin' %}
+    <span class="role-badge role-admin"><i class="bi bi-shield-lock-fill"></i>Quản trị viên</span>
+  {% elif rv == 'teacher' %}
+    <span class="role-badge role-teacher"><i class="bi bi-person-video3"></i>Giảng viên</span>
+  {% elif rv == 'teaching_assistant' %}
+    <span class="role-badge role-teaching_assistant"><i class="bi bi-person-workspace"></i>Trợ giảng</span>
+  {% elif rv == 'student' %}
+    <span class="role-badge role-student"><i class="bi bi-mortarboard-fill"></i>Sinh viên</span>
+  {% else %}
+    <span class="role-badge role-other"><i class="bi bi-person"></i>Khác</span>
+  {% endif %}
+{%- endmacro %}
+
+{% macro status_badge(status_value) -%}
+  {% set sv = (status_value or 'active')|lower %}
+  {% if sv == 'active' %}
+    <span class="status-badge status-active"><i class="bi bi-check-circle"></i>Hoạt động</span>
+  {% elif sv == 'inactive' %}
+    <span class="status-badge status-inactive"><i class="bi bi-slash-circle"></i>Vô hiệu hóa</span>
+  {% elif sv == 'locked' %}
+    <span class="status-badge status-locked"><i class="bi bi-lock"></i>Đã khóa</span>
+  {% elif sv == 'pending' or sv == 'pending_enrollment' %}
+    <span class="status-badge status-pending"><i class="bi bi-hourglass-split"></i>Chờ duyệt</span>
+  {% elif sv == 'deleted' %}
+    <span class="status-badge status-deleted"><i class="bi bi-trash"></i>Đã xóa</span>
+  {% else %}
+    <span class="status-badge status-other"><i class="bi bi-question-circle"></i>Không xác định</span>
+  {% endif %}
+{%- endmacro %}
 
 {% block content %}
 <div class="user-stats-page">
@@ -327,7 +415,7 @@
   {% set by_status_data = by_status if by_status is defined else (st.by_status if st.by_status is defined else {}) %}
   {% set total_count = total_users if total_users is defined else (st.total_users if st.total_users is defined else 0) %}
   {% set active_count = by_status_data.get('active', 0) %}
-  {% set locked_count = (total_count or 0) - (active_count or 0) %}
+  {% set inactive_count = (total_count or 0) - (active_count or 0) %}
   {% set table_users = users if users is defined else (recent_users if recent_users is defined else []) %}
 
   <div class="stats-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
@@ -346,7 +434,7 @@
       </a>
 
       <a href="/admin/dashboard" class="btn btn-outline-light fw-semibold">
-        <i class="bi bi-house-door-fill me-1"></i>Trang chủ
+        <i class="bi bi-house-door-fill me-1"></i>Trang chính
       </a>
     </div>
   </div>
@@ -382,7 +470,7 @@
           <i class="bi bi-lock-fill"></i>
         </div>
         <div>
-          <div class="summary-value">{{ locked_count if locked_count > 0 else 0 }}</div>
+          <div class="summary-value">{{ inactive_count if inactive_count > 0 else 0 }}</div>
           <p class="summary-label">Bị khóa / không hoạt động</p>
         </div>
       </div>
@@ -430,17 +518,19 @@
       <table class="table table-hover align-middle">
         <thead>
           <tr>
-            <th style="width: 70px;">#</th>
+            <th style="width: 70px;">STT</th>
             <th>Người dùng</th>
-            <th>Email</th>
-            <th style="width: 150px;">Vai trò</th>
-            <th style="width: 160px;">Trạng thái</th>
+            <th>Thư điện tử</th>
+            <th style="width: 160px;">Vai trò</th>
+            <th style="width: 170px;">Trạng thái</th>
             <th style="width: 170px;">Ngày tạo</th>
           </tr>
         </thead>
 
         <tbody>
           {% for user in table_users %}
+          {% set role_value = user.resolved_role if user.resolved_role is defined and user.resolved_role else (user.role if user.role is defined and user.role else 'student') %}
+          {% set status_value = user.status if user.status is defined and user.status else 'active' %}
           <tr>
             <td class="text-center fw-semibold">{{ loop.index }}</td>
 
@@ -453,37 +543,9 @@
 
             <td>{{ user.email or '—' }}</td>
 
-            <td class="text-center">
-              {% set role_value = user.resolved_role if user.resolved_role is defined and user.resolved_role else (user.role if user.role is defined else 'student') %}
+            <td class="text-center">{{ role_badge(role_value) }}</td>
 
-              {% if role_value == 'admin' %}
-              <span class="role-badge role-admin">
-                <i class="bi bi-shield-lock-fill"></i>Admin
-              </span>
-              {% elif role_value == 'teacher' %}
-              <span class="role-badge role-teacher">
-                <i class="bi bi-person-video3"></i>Teacher
-              </span>
-              {% else %}
-              <span class="role-badge role-student">
-                <i class="bi bi-mortarboard-fill"></i>Student
-              </span>
-              {% endif %}
-            </td>
-
-            <td class="text-center">
-              {% set status_value = user.status if user.status is defined and user.status else 'active' %}
-
-              {% if status_value == 'active' %}
-              <span class="status-badge status-active">
-                <i class="bi bi-check-circle"></i>Active
-              </span>
-              {% else %}
-              <span class="status-badge status-locked">
-                <i class="bi bi-lock"></i>Locked
-              </span>
-              {% endif %}
-            </td>
+            <td class="text-center">{{ status_badge(status_value) }}</td>
 
             <td class="text-center">
               {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '—' }}
@@ -514,6 +576,22 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+  const roleLabelMap = {
+    admin: "Quản trị viên",
+    teacher: "Giảng viên",
+    student: "Sinh viên",
+    teaching_assistant: "Trợ giảng"
+  };
+
+  const statusLabelMap = {
+    active: "Hoạt động",
+    inactive: "Vô hiệu hóa",
+    locked: "Đã khóa",
+    pending: "Chờ duyệt",
+    pending_enrollment: "Chờ duyệt",
+    deleted: "Đã xóa"
+  };
+
   function readJsonFromElement(id, fallbackValue) {
     const el = document.getElementById(id);
 
@@ -527,6 +605,10 @@
       console.warn("Không thể đọc dữ liệu biểu đồ:", id, error);
       return fallbackValue;
     }
+  }
+
+  function translateLabels(keys, labelMap) {
+    return keys.map((key) => labelMap[key] || "Không xác định");
   }
 
   const roleData = readJsonFromElement("roleStatsJson", {});
@@ -550,13 +632,13 @@
       return;
     }
 
-    const labels = Object.keys(roleData || {});
+    const keys = Object.keys(roleData || {});
     const values = Object.values(roleData || {});
 
     new Chart(canvas, {
       type: "doughnut",
       data: {
-        labels: labels.length ? labels : ["Chưa có dữ liệu"],
+        labels: keys.length ? translateLabels(keys, roleLabelMap) : ["Chưa có dữ liệu"],
         datasets: [{
           data: values.length ? values : [1],
           backgroundColor: ["#2563eb", "#0ea5e9", "#22c55e", "#f59e0b", "#ef4444"],
@@ -589,14 +671,14 @@
       return;
     }
 
-    const labels = Object.keys(statusData || {});
+    const keys = Object.keys(statusData || {});
     const values = Object.values(statusData || {});
     const theme = getThemeColors();
 
     new Chart(canvas, {
       type: "bar",
       data: {
-        labels: labels.length ? labels : ["Chưa có dữ liệu"],
+        labels: keys.length ? translateLabels(keys, statusLabelMap) : ["Chưa có dữ liệu"],
         datasets: [{
           label: "Số tài khoản",
           data: values.length ? values : [0],

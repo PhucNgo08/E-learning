@@ -42,20 +42,20 @@
 
       <div class="mb-3">
         <label class="form-label fw-semibold">
-          Loại backup
+          Loại sao lưu
           <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip"
-             title="Full: sao lưu toàn bộ. Incremental: sao lưu phần thay đổi."></i>
+             title="Sao lưu toàn bộ: lưu toàn bộ dữ liệu. Sao lưu phần thay đổi: chỉ lưu phần dữ liệu thay đổi."></i>
         </label>
         <select class="form-select" name="backup_type">
-          <option value="full" {% if not form_data or form_data.backup_type == 'full' %}selected{% endif %}>🔵 Full Backup</option>
-          <option value="incremental" {% if form_data and form_data.backup_type == 'incremental' %}selected{% endif %}>🟡 Incremental Backup</option>
+          <option value="full" {% if not form_data or form_data.backup_type == 'full' %}selected{% endif %}>🔵 Sao lưu toàn bộ</option>
+          <option value="incremental" {% if form_data and form_data.backup_type == 'incremental' %}selected{% endif %}>🟡 Sao lưu phần thay đổi</option>
         </select>
       </div>
 
       <div class="mb-3">
         <label class="form-label fw-semibold">Ghi chú (không bắt buộc)</label>
         <textarea class="form-control" name="note" rows="3"
-                  placeholder="VD: Backup trước khi cập nhật hệ thống...">{{ form_data.note if form_data else '' }}</textarea>
+                  placeholder="VD: Sao lưu trước khi cập nhật hệ thống...">{{ form_data.note if form_data else '' }}</textarea>
       </div>
 
       <div class="text-end mt-4">
@@ -64,7 +64,7 @@
         </a>
 
         <button type="submit" class="btn btn-success">
-          <i class="bi bi-cloud-arrow-up"></i> Tạo backup
+          <i class="bi bi-cloud-arrow-up"></i> Tạo bản sao lưu
         </button>
       </div>
     </form>

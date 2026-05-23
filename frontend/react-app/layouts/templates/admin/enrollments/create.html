@@ -1,121 +1,25 @@
 {% extends "layout_admin.html" %}
-{% block title %}➕ Ghi danh học viên{% endblock %}
-
+{% block title %}➕ Ghi danh sinh viên{% endblock %}
 {% block content %}
 <style>
-  body {
-    background: linear-gradient(135deg, #e8f0ff, #d9e5ff);
-    font-family: "Inter", "Segoe UI", sans-serif;
-  }
-  .card {
-    border-radius: 18px;
-    background: rgba(255, 255, 255, 0.95);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    padding: 2rem;
-    backdrop-filter: blur(6px);
-  }
-  h3 {
-    font-weight: 700;
-    color: #0d47a1;
-  }
-  .search-box {
-    border-radius: 10px;
-    padding: 8px 14px;
-    border: 1px solid #c5d3f5;
-    margin-bottom: 8px;
-  }
+  .enrollment-page{--enr-primary:#2563eb;--enr-text:#0f172a;--enr-muted:#64748b;--enr-line:#e2e8f0;--enr-card:rgba(255,255,255,.96);--enr-shadow:0 18px 45px rgba(15,23,42,.09);color:var(--enr-text)}
+  .enrollment-page.enrollment-page-narrow{max-width:820px;margin:0 auto}.enrollment-page .enr-hero,.enrollment-page .enr-card{border:1px solid var(--enr-line);background:var(--enr-card);box-shadow:var(--enr-shadow);border-radius:24px}.enrollment-page .enr-hero{padding:24px;margin-bottom:18px;position:relative;overflow:hidden}.enrollment-page .enr-hero:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at top left,rgba(37,99,235,.14),transparent 34%),radial-gradient(circle at bottom right,rgba(22,163,74,.12),transparent 36%);pointer-events:none}.enrollment-page .enr-hero>*{position:relative;z-index:1}.enrollment-page .enr-title{color:var(--enr-primary);font-weight:850;margin:0;letter-spacing:-.02em}.enrollment-page .enr-subtitle,.enrollment-page .text-muted,.enrollment-page .mini-muted{color:var(--enr-muted)!important}.enrollment-page .enr-card{padding:22px}.enrollment-page .form-control,.enrollment-page .form-select{border-radius:14px;border-color:var(--enr-line);color:var(--enr-text);background-color:#fff}.enrollment-page .form-control:focus,.enrollment-page .form-select:focus{border-color:#93c5fd;box-shadow:0 0 0 .22rem rgba(37,99,235,.14)}.enrollment-page .btn{border-radius:13px;font-weight:700}.enrollment-page .enr-table{color:var(--enr-text);--bs-table-color:var(--enr-text);--bs-table-border-color:var(--enr-line);--bs-table-hover-bg:rgba(37,99,235,.06)}.enrollment-page .enr-table thead th{background:#eaf1ff!important;color:#1e40af!important;font-weight:800;white-space:nowrap;vertical-align:middle}.enrollment-page .enr-table tbody td{color:var(--enr-text);vertical-align:middle}.enrollment-page .badge-status{border-radius:999px;padding:7px 11px;font-weight:750}.enrollment-page .enr-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}.enrollment-page .enr-danger-box{border-radius:20px;background:rgba(220,38,38,.08);border:1px solid rgba(220,38,38,.20);padding:18px}
+  body.dark-mode .enrollment-page,html[data-bs-theme="dark"] .enrollment-page,body[data-theme="dark"] .enrollment-page{--enr-text:#e5e7eb;--enr-muted:#cbd5e1;--enr-line:rgba(148,163,184,.25);--enr-card:rgba(15,23,42,.92);--enr-shadow:0 18px 45px rgba(0,0,0,.38)}body.dark-mode .enrollment-page .enr-title,html[data-bs-theme="dark"] .enrollment-page .enr-title,body[data-theme="dark"] .enrollment-page .enr-title{color:#93c5fd}body.dark-mode .enrollment-page .form-control,body.dark-mode .enrollment-page .form-select,html[data-bs-theme="dark"] .enrollment-page .form-control,html[data-bs-theme="dark"] .enrollment-page .form-select,body[data-theme="dark"] .enrollment-page .form-control,body[data-theme="dark"] .enrollment-page .form-select{background:rgba(15,23,42,.98);border-color:rgba(148,163,184,.32);color:#e5e7eb}body.dark-mode .enrollment-page .enr-table thead th,html[data-bs-theme="dark"] .enrollment-page .enr-table thead th,body[data-theme="dark"] .enrollment-page .enr-table thead th{background:rgba(30,64,175,.38)!important;color:#dbeafe!important;border-color:rgba(147,197,253,.25)}body.dark-mode .enrollment-page .enr-table tbody td,html[data-bs-theme="dark"] .enrollment-page .enr-table tbody td,body[data-theme="dark"] .enrollment-page .enr-table tbody td{background:rgba(15,23,42,.34)!important;color:#e5e7eb;border-color:rgba(148,163,184,.22)}body.dark-mode .enrollment-page .enr-table.table-hover tbody tr:hover td,html[data-bs-theme="dark"] .enrollment-page .enr-table.table-hover tbody tr:hover td,body[data-theme="dark"] .enrollment-page .enr-table.table-hover tbody tr:hover td{background:rgba(30,41,59,.78)!important}
+  @media(max-width:768px){.enrollment-page .enr-hero,.enrollment-page .enr-card{padding:18px;border-radius:20px}.enrollment-page .enr-actions,.enrollment-page .enr-actions .btn{width:100%}.enrollment-page .responsive-table thead{display:none}.enrollment-page .responsive-table tbody,.enrollment-page .responsive-table tr,.enrollment-page .responsive-table td{display:block;width:100%}.enrollment-page .responsive-table tr{border-bottom:1px solid var(--enr-line);padding:10px}.enrollment-page .responsive-table td{border:0!important;padding:7px 4px!important}.enrollment-page .responsive-table td:before{content:attr(data-label);display:block;font-weight:850;color:var(--enr-muted);margin-bottom:2px}}
 </style>
-
-<div class="container d-flex align-items-center justify-content-center min-vh-100">
-  <div class="card" style="max-width:750px;width:100%;">
-    <div class="text-center mb-4">
-      <h3>➕ Ghi danh học viên vào lớp</h3>
-      <p class="text-muted">Chọn học viên và lớp học cần ghi danh.</p>
-    </div>
-
-    {% if error %}
-      <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-
+<div class="enrollment-page enrollment-page-narrow px-2 px-md-4 py-3 py-md-4">
+  <div class="enr-hero text-center"><h3 class="enr-title"><i class="bi bi-person-plus me-2"></i>Ghi danh sinh viên vào lớp</h3><p class="enr-subtitle mb-0 mt-2">Chọn sinh viên, lớp học và loại ghi danh cần thêm.</p></div>
+  <div class="enr-card">
+    {% if error %}<div class="alert alert-danger rounded-4">{{ error }}</div>{% endif %}
+    {% if not students %}<div class="alert alert-warning rounded-4">Chưa có tài khoản sinh viên để ghi danh.</div>{% endif %}
+    {% if not classes %}<div class="alert alert-warning rounded-4">Chưa có lớp học để ghi danh.</div>{% endif %}
     <form method="post" action="/admin/enrollments/create">
-      <div class="mb-3">
-        <label class="form-label fw-semibold">👤 Tìm kiếm học viên</label>
-        <input type="text" id="studentSearch" class="search-box form-control" placeholder="Nhập tên, MSSV hoặc email...">
-
-        <select name="user_id" id="studentSelect" class="form-select" required size="5">
-          {% for u in students %}
-          <option value="{{ u.id }}" {% if form_data and form_data.user_id == u.id %}selected{% endif %}>
-            {{ u.full_name }}
-            {% if u.mssv %} ({{ u.mssv }}) {% endif %}
-            – {{ u.email }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label fw-semibold">🏫 Tìm kiếm lớp học</label>
-        <input type="text" id="classSearch" class="search-box form-control" placeholder="Nhập tên lớp hoặc mã lớp...">
-
-        <select name="class_id" id="classSelect" class="form-select" required size="6">
-          {% for c in classes %}
-          <option
-            value="{{ c.id }}"
-            data-search="{{ c.class_name }} {{ c.class_code }}"
-            {% if form_data and form_data.class_id == c.id %}selected{% endif %}
-            {% if (c.current_students or 0) >= (c.max_students or 0) %}disabled{% endif %}
-          >
-            {{ c.class_name }} ({{ c.class_code }})
-            – {{ c.current_students or 0 }}/{{ c.max_students or 0 }}
-            {% if (c.current_students or 0) >= (c.max_students or 0) %}
-              🔒 [Đã đầy]
-            {% else %}
-              🟢 [Còn chỗ]
-            {% endif %}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label fw-semibold">📝 Loại ghi danh</label>
-        <select name="enrollment_type" class="form-select">
-          <option value="official" {% if not form_data or form_data.enrollment_type == 'official' %}selected{% endif %}>Chính thức</option>
-          <option value="elective" {% if form_data and form_data.enrollment_type == 'elective' %}selected{% endif %}>Tự chọn</option>
-          <option value="audit" {% if form_data and form_data.enrollment_type == 'audit' %}selected{% endif %}>Dự thính</option>
-          <option value="temporary" {% if form_data and form_data.enrollment_type == 'temporary' %}selected{% endif %}>Tạm thời</option>
-        </select>
-      </div>
-
-      <div class="text-end mt-4">
-        <a href="/admin/enrollments/manage" class="btn btn-secondary">
-          <i class="bi bi-arrow-left-circle"></i> Quay lại
-        </a>
-
-        <button type="submit" class="btn btn-success">
-          <i class="bi bi-save2"></i> Ghi danh
-        </button>
-      </div>
+      <div class="mb-3"><label class="form-label fw-semibold" for="studentSearch">Tìm kiếm sinh viên</label><input type="text" id="studentSearch" class="form-control mb-2" placeholder="Nhập tên, mã sinh viên hoặc thư điện tử..."><select name="user_id" id="studentSelect" class="form-select" required size="5">{% for u in students or [] %}{% set student_code = get_student_code(u) if get_student_code is defined else "" %}<option value="{{ u.id }}" {% if form_data and form_data.user_id == u.id %}selected{% endif %}>{{ get_user_display_name(u) if get_user_display_name is defined else (u.username or "Không rõ") }} {% if student_code %}({{ student_code }}){% endif %}{% if u.email %} — {{ u.email }}{% endif %}</option>{% endfor %}</select></div>
+      <div class="mb-3"><label class="form-label fw-semibold" for="classSearch">Tìm kiếm lớp học</label><input type="text" id="classSearch" class="form-control mb-2" placeholder="Nhập tên lớp hoặc mã lớp..."><select name="class_id" id="classSelect" class="form-select" required size="6">{% for c in classes or [] %}{% set full_class = (c.current_students or 0) >= (c.max_students or 0) and (c.max_students or 0) > 0 %}<option value="{{ c.id }}" data-search="{{ c.class_name }} {{ c.class_code }}" {% if form_data and form_data.class_id == c.id %}selected{% endif %} {% if full_class %}disabled{% endif %}>{{ c.class_name or "Không rõ tên lớp" }} ({{ c.class_code or "Không rõ mã lớp" }}) — {{ c.current_students or 0 }}/{{ c.max_students or 0 }} {% if full_class %}[Đã đầy]{% else %}[Còn chỗ]{% endif %}</option>{% endfor %}</select></div>
+      <div class="mb-3"><label class="form-label fw-semibold" for="enrollment_type">Loại ghi danh</label><select id="enrollment_type" name="enrollment_type" class="form-select"><option value="official" {% if not form_data or form_data.enrollment_type == 'official' %}selected{% endif %}>Chính thức</option><option value="elective" {% if form_data and form_data.enrollment_type == 'elective' %}selected{% endif %}>Tự chọn</option><option value="audit" {% if form_data and form_data.enrollment_type == 'audit' %}selected{% endif %}>Dự thính</option><option value="temporary" {% if form_data and form_data.enrollment_type == 'temporary' %}selected{% endif %}>Tạm thời</option></select></div>
+      <div class="enr-actions mt-4"><a href="/admin/enrollments/manage" class="btn btn-outline-secondary"><i class="bi bi-arrow-left-circle me-1"></i>Quay lại</a><button type="submit" class="btn btn-success" {% if not students or not classes %}disabled{% endif %}><i class="bi bi-save2 me-1"></i>Ghi danh</button></div>
     </form>
   </div>
 </div>
-
-<script>
-  document.getElementById("studentSearch").addEventListener("input", function () {
-    const q = this.value.toLowerCase();
-    const options = document.querySelectorAll("#studentSelect option");
-    options.forEach(o => {
-      o.style.display = o.textContent.toLowerCase().includes(q) ? "" : "none";
-    });
-  });
-
-  document.getElementById("classSearch").addEventListener("input", function () {
-    const q = this.value.toLowerCase();
-    const options = document.querySelectorAll("#classSelect option");
-    options.forEach(o => {
-      const searchable = (o.getAttribute("data-search") || "").toLowerCase();
-      o.style.display = searchable.includes(q) ? "" : "none";
-    });
-  });
-</script>
+<script>document.addEventListener("DOMContentLoaded",function(){function f(i,s,a){var input=document.getElementById(i),select=document.getElementById(s);if(!input||!select)return;input.addEventListener("input",function(){var q=input.value.trim().toLowerCase();Array.prototype.forEach.call(select.options,function(o){var t=a?(o.getAttribute(a)||o.textContent):o.textContent;o.style.display=t.toLowerCase().includes(q)?"":"none";});});}f("studentSearch","studentSelect");f("classSearch","classSelect","data-search");});</script>
 {% endblock %}

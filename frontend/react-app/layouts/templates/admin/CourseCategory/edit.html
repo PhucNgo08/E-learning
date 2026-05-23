@@ -5,11 +5,20 @@
 {% block extra_css %}
 <style>
   .category-form-page {
+    --cat-primary: #2563eb;
+    --cat-danger: #dc2626;
+    --cat-text: #0f172a;
+    --cat-muted: #64748b;
+    --cat-line: #e2e8f0;
+    --cat-soft: #f8fafc;
+    --cat-card: rgba(255, 255, 255, 0.96);
+    --cat-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
     max-width: 760px;
     margin: 0 auto;
+    color: var(--cat-text);
   }
 
-  .admin-page-header {
+  .category-form-page .admin-page-header {
     background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
     color: #fff;
     border-radius: var(--radius-xl, 18px);
@@ -17,57 +26,155 @@
     box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
   }
 
-  .admin-page-header .header-subtitle {
+  .category-form-page .admin-page-header .header-subtitle {
     color: rgba(255, 255, 255, 0.86);
   }
 
-  .form-card {
-    background: var(--surface, #fff);
-    border: 1px solid var(--border-color, #e2e8f0);
+  .category-form-page .form-card {
+    background: var(--cat-card);
+    border: 1px solid var(--cat-line);
     border-radius: var(--radius-xl, 18px);
-    box-shadow: var(--shadow-sm, 0 4px 16px rgba(15, 23, 42, 0.06));
+    box-shadow: var(--cat-shadow);
     padding: 24px;
   }
 
-  .meta-badge {
+  .category-form-page .meta-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
     border-radius: 999px;
     background: rgba(37, 99, 235, 0.1);
-    color: var(--role-primary, #2563eb);
+    color: var(--cat-primary);
     font-size: 0.85rem;
     font-weight: 700;
     padding: 0.45rem 0.75rem;
   }
 
-  .form-label {
-    color: var(--text-main, #0f172a);
+  .category-form-page .form-label {
+    color: var(--cat-text);
     font-weight: 700;
   }
 
-  .required-mark {
-    color: var(--danger, #dc2626);
+  .category-form-page .required-mark {
+    color: var(--cat-danger);
   }
 
-  .form-hint {
-    color: var(--text-muted, #64748b);
+  .category-form-page .form-hint,
+  .category-form-page .text-muted {
+    color: var(--cat-muted) !important;
     font-size: 0.9rem;
   }
 
-  .form-actions {
-    border-top: 1px solid var(--border-color, #e2e8f0);
+  .category-form-page .form-control {
+    border-radius: 14px;
+    border-color: var(--cat-line);
+    background: #fff;
+    color: var(--cat-text);
+  }
+
+  .category-form-page .form-control:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 0.22rem rgba(37, 99, 235, 0.14);
+  }
+
+  .category-form-page .form-control::placeholder,
+  .category-form-page textarea::placeholder {
+    color: var(--cat-muted);
+  }
+
+  .category-form-page .form-actions {
+    border-top: 1px solid var(--cat-line);
     margin-top: 22px;
     padding-top: 18px;
   }
 
+  .category-form-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  body.dark-mode .category-form-page,
+  html[data-bs-theme="dark"] .category-form-page,
+  body[data-theme="dark"] .category-form-page {
+    --cat-text: #e5e7eb;
+    --cat-muted: #cbd5e1;
+    --cat-line: rgba(148, 163, 184, 0.25);
+    --cat-soft: rgba(30, 41, 59, 0.86);
+    --cat-card: rgba(15, 23, 42, 0.92);
+    --cat-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --cat-primary: #93c5fd;
+    --role-gradient: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+  }
+
+  body.dark-mode .category-form-page .form-card,
+  html[data-bs-theme="dark"] .category-form-page .form-card,
+  body[data-theme="dark"] .category-form-page .form-card {
+    background: var(--cat-card);
+    border-color: var(--cat-line);
+    color: var(--cat-text);
+  }
+
+  body.dark-mode .category-form-page .meta-badge,
+  html[data-bs-theme="dark"] .category-form-page .meta-badge,
+  body[data-theme="dark"] .category-form-page .meta-badge {
+    background: rgba(96, 165, 250, 0.16);
+    color: #93c5fd;
+    border: 1px solid rgba(96, 165, 250, 0.24);
+  }
+
+  body.dark-mode .category-form-page .form-control,
+  body.dark-mode .category-form-page textarea,
+  html[data-bs-theme="dark"] .category-form-page .form-control,
+  html[data-bs-theme="dark"] .category-form-page textarea,
+  body[data-theme="dark"] .category-form-page .form-control,
+  body[data-theme="dark"] .category-form-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .category-form-page .form-control::placeholder,
+  body.dark-mode .category-form-page textarea::placeholder,
+  html[data-bs-theme="dark"] .category-form-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .category-form-page textarea::placeholder,
+  body[data-theme="dark"] .category-form-page .form-control::placeholder,
+  body[data-theme="dark"] .category-form-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .category-form-page .form-actions,
+  html[data-bs-theme="dark"] .category-form-page .form-actions,
+  body[data-theme="dark"] .category-form-page .form-actions {
+    border-color: var(--cat-line);
+  }
+
+  body.dark-mode .category-form-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .category-form-page .btn-outline-secondary,
+  body[data-theme="dark"] .category-form-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .category-form-page .btn-outline-light,
+  html[data-bs-theme="dark"] .category-form-page .btn-outline-light,
+  body[data-theme="dark"] .category-form-page .btn-outline-light {
+    color: #f8fafc;
+    border-color: rgba(248, 250, 252, 0.65);
+  }
+
   @media (max-width: 768px) {
-    .admin-page-header,
-    .form-card {
+    .category-form-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .category-form-page .admin-page-header,
+    .category-form-page .form-card {
       padding: 18px;
     }
 
-    .form-actions .btn {
+    .category-form-page .form-actions .btn,
+    .category-form-page .admin-page-header .btn {
       width: 100%;
     }
   }
@@ -75,7 +182,9 @@
 {% endblock %}
 
 {% block content %}
-<div class="category-form-page">
+{% set c = category if category is defined and category else none %}
+
+<div class="category-form-page px-2 px-md-0 py-3 py-md-4">
 
   <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
@@ -100,49 +209,52 @@
   <div class="form-card">
     <div class="mb-4">
       <span class="meta-badge">
-        <i class="bi bi-fingerprint"></i>ID: {{ category.id }}
+        <i class="bi bi-fingerprint"></i>Mã danh mục: {{ c.id if c else "Không xác định" }}
       </span>
     </div>
 
     {% if error %}
-    <div class="alert alert-danger d-flex align-items-center" role="alert">
+    <div class="alert alert-danger d-flex align-items-center rounded-4" role="alert">
       <i class="bi bi-exclamation-triangle-fill me-2"></i>
       <div>{{ error }}</div>
     </div>
     {% endif %}
 
     {% if success %}
-    <div class="alert alert-success d-flex align-items-center" role="alert">
+    <div class="alert alert-success d-flex align-items-center rounded-4" role="alert">
       <i class="bi bi-check-circle-fill me-2"></i>
       <div>{{ success }}</div>
     </div>
     {% endif %}
 
-    <form method="post" action="/admin/CourseCategory/edit/{{ category.id }}">
+    {% if c %}
+    <form method="post" action="/admin/CourseCategory/edit/{{ c.id }}">
       <div class="mb-3">
-        <label class="form-label">
+        <label class="form-label" for="category_name">
           Tên danh mục <span class="required-mark">*</span>
         </label>
         <input
+          id="category_name"
           type="text"
           name="category_name"
           class="form-control"
           required
           placeholder="VD: Lập trình, Thiết kế, Tin học..."
-          value="{{ category.category_name or '' }}"
+          value="{{ c.category_name or '' }}"
         >
       </div>
 
       <div class="mb-3">
-        <label class="form-label">Mô tả</label>
+        <label class="form-label" for="description">Mô tả</label>
         <textarea
+          id="description"
           name="description"
           class="form-control"
           rows="4"
           placeholder="Nhập mô tả ngắn gọn về danh mục..."
-        >{{ category.description or '' }}</textarea>
+        >{{ c.description or '' }}</textarea>
         <div class="form-hint mt-1">
-          Mô tả giúp người học hiểu danh mục này dùng cho nhóm khóa học nào.
+          Mô tả giúp sinh viên hiểu danh mục này dùng cho nhóm khóa học nào.
         </div>
       </div>
 
@@ -156,6 +268,12 @@
         </button>
       </div>
     </form>
+    {% else %}
+    <div class="alert alert-warning rounded-4 mb-0">
+      <i class="bi bi-exclamation-triangle me-1"></i>
+      Không tìm thấy danh mục cần chỉnh sửa.
+    </div>
+    {% endif %}
   </div>
 
 </div>

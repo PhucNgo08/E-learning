@@ -3,6 +3,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
 from app.config.template_config import get_template_by_path
@@ -15,25 +16,74 @@ from app.models.question_option import QuestionOption
 from app.models.quiz import Quiz
 from app.models.quiz_attempt import QuizAttempt
 from app.models.user import User
-from app.models.user_profile import UserProfile
 
 router = APIRouter(
     prefix="/admin/quiz",
-    tags=["Admin - Quiz Management"],
+    tags=["Admin - Quản lý kỳ thi"],
 )
-
 
 VALID_QUIZ_TYPES = {"practice", "graded", "survey"}
 VALID_DIFFICULTIES = {"easy", "medium", "hard"}
-VALID_STATUSES = {"draft", "pending", "published", "rejected", "archived"}
+
+# Quan trọng: app.models.quiz.Quiz.status đang khai báo Enum chỉ gồm 3 giá trị này.
+VALID_STATUSES = {"draft", "published", "archived"}
+
+
+def vi_quiz_type(value: str | None) -> str:
+    return {
+        "practice": "Luyện tập",
+        "graded": "Chấm điểm",
+        "survey": "Khảo sát",
+    }.get((value or "").strip().lower(), "Không xác định")
+
+
+def vi_difficulty(value: str | None) -> str:
+    return {
+        "easy": "Dễ",
+        "medium": "Trung bình",
+        "hard": "Khó",
+    }.get((value or "").strip().lower(), "Không xác định")
+
+
+def vi_quiz_status(value: str | None) -> str:
+    return {
+        "draft": "Bản nháp",
+        "published": "Đang mở",
+        "archived": "Lưu trữ",
+    }.get((value or "").strip().lower(), "Không xác định")
+
+
+def vi_attempt_status(value: str | None) -> str:
+    return {
+        "in_progress": "Đang làm",
+        "submitted": "Đã nộp",
+        "graded": "Đã chấm",
+    }.get((value or "").strip().lower(), "Không xác định")
+
+
+def get_user_display_name(user) -> str:
+    if not user:
+        return "Không rõ"
+
+    profile = getattr(user, "profile", None)
+    full_name = getattr(profile, "full_name", None) if profile else None
+    username = getattr(user, "username", None)
+    email = getattr(user, "email", None)
+
+    return full_name or username or email or "Không rõ"
 
 
 def render_template(request: Request, template_name: str, context: dict, status_code: int = 200):
     tpl = get_template_by_path(request.url.path)
     base_context = {
         "request": request,
-        "page_title": "Quản lý Quiz",
+        "page_title": "Quản lý kỳ thi",
         "active_page": "quiz",
+        "vi_quiz_type": vi_quiz_type,
+        "vi_difficulty": vi_difficulty,
+        "vi_quiz_status": vi_quiz_status,
+        "vi_attempt_status": vi_attempt_status,
+        "get_user_display_name": get_user_display_name,
     }
     base_context.update(context)
     return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
@@ -43,7 +93,11 @@ def _parse_datetime_local(value: str | None):
     value = (value or "").strip()
     if not value:
         return None
-    return datetime.fromisoformat(value)
+
+    try:
+        return datetime.fromisoformat(value)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail="Thời gian không hợp lệ.") from e
 
 
 def _clean(value: str | None) -> str | None:
@@ -62,7 +116,7 @@ def _get_quiz_or_404(db: Session, quiz_id: str) -> Quiz:
         .first()
     )
     if not quiz:
-        raise HTTPException(status_code=404, detail="Không tìm thấy quiz")
+        raise HTTPException(status_code=404, detail="Không tìm thấy kỳ thi.")
     return quiz
 
 
@@ -74,19 +128,27 @@ def _refresh_total_questions(db: Session, quiz_id: str):
         db.flush()
 
 
-def _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts):
+def _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts, available_from=None, available_to=None):
     if not _clean(title):
-        raise HTTPException(status_code=400, detail="Tiêu đề quiz không được để trống.")
+        raise HTTPException(status_code=400, detail="Tiêu đề kỳ thi không được để trống.")
+
     if quiz_type not in VALID_QUIZ_TYPES:
-        raise HTTPException(status_code=400, detail="Loại quiz không hợp lệ.")
+        raise HTTPException(status_code=400, detail="Loại kỳ thi không hợp lệ.")
+
     if difficulty_level not in VALID_DIFFICULTIES:
         raise HTTPException(status_code=400, detail="Độ khó không hợp lệ.")
+
     if status not in VALID_STATUSES:
-        raise HTTPException(status_code=400, detail="Trạng thái không hợp lệ.")
+        raise HTTPException(status_code=400, detail="Trạng thái kỳ thi không hợp lệ.")
+
     if passing_score < 0 or passing_score > 100:
         raise HTTPException(status_code=400, detail="Điểm đạt phải từ 0 đến 100.")
+
     if max_attempts <= 0:
         raise HTTPException(status_code=400, detail="Số lần làm phải lớn hơn 0.")
+
+    if available_from and available_to and available_from > available_to:
+        raise HTTPException(status_code=400, detail="Thời gian mở bài không được sau thời gian đóng bài.")
 
 
 @router.get("/", include_in_schema=False)
@@ -141,8 +203,12 @@ def create_quiz_submit(
         available_from=available_from,
         available_to=available_to,
     )
+
     try:
-        _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts)
+        parsed_from = _parse_datetime_local(available_from)
+        parsed_to = _parse_datetime_local(available_to)
+        _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts, parsed_from, parsed_to)
+
         course = db.query(Course).filter(Course.id == course_id).first() if course_id else None
         if not course:
             raise HTTPException(status_code=400, detail="Vui lòng chọn khóa học hợp lệ.")
@@ -160,14 +226,15 @@ def create_quiz_submit(
             total_questions=0,
             status=status,
             is_approved=(status == "published"),
-            available_from=_parse_datetime_local(available_from),
-            available_to=_parse_datetime_local(available_to),
+            available_from=parsed_from,
+            available_to=parsed_to,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
         db.add(quiz)
         db.commit()
         return RedirectResponse(f"/admin/quiz/detail/{quiz.id}", status_code=303)
+
     except HTTPException as e:
         courses = db.query(Course).order_by(Course.course_name.asc()).all()
         return render_template(
@@ -175,6 +242,15 @@ def create_quiz_submit(
             "quiz/create.html",
             {"courses": courses, "form_data": form_data, "error": e.detail},
             status_code=e.status_code,
+        )
+    except SQLAlchemyError as e:
+        db.rollback()
+        courses = db.query(Course).order_by(Course.course_name.asc()).all()
+        return render_template(
+            request,
+            "quiz/create.html",
+            {"courses": courses, "form_data": form_data, "error": f"Lỗi lưu kỳ thi: {e}"},
+            status_code=500,
         )
 
 
@@ -211,8 +287,12 @@ def edit_quiz_submit(
     current_user=Depends(get_current_admin),
 ):
     quiz = _get_quiz_or_404(db, quiz_id)
+
     try:
-        _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts)
+        parsed_from = _parse_datetime_local(available_from)
+        parsed_to = _parse_datetime_local(available_to)
+        _validate_quiz_payload(title, quiz_type, difficulty_level, status, passing_score, max_attempts, parsed_from, parsed_to)
+
         course = db.query(Course).filter(Course.id == course_id).first() if course_id else None
         if not course:
             raise HTTPException(status_code=400, detail="Vui lòng chọn khóa học hợp lệ.")
@@ -227,12 +307,14 @@ def edit_quiz_submit(
         quiz.passing_score = passing_score
         quiz.status = status
         quiz.is_approved = (status == "published")
-        quiz.available_from = _parse_datetime_local(available_from)
-        quiz.available_to = _parse_datetime_local(available_to)
+        quiz.available_from = parsed_from
+        quiz.available_to = parsed_to
         quiz.updated_at = datetime.utcnow()
         db.commit()
         return RedirectResponse(f"/admin/quiz/detail/{quiz_id}", status_code=303)
+
     except HTTPException as e:
+        db.rollback()
         courses = db.query(Course).order_by(Course.course_name.asc()).all()
         return render_template(
             request,
@@ -240,20 +322,35 @@ def edit_quiz_submit(
             {"quiz": quiz, "courses": courses, "error": e.detail},
             status_code=e.status_code,
         )
+    except SQLAlchemyError as e:
+        db.rollback()
+        courses = db.query(Course).order_by(Course.course_name.asc()).all()
+        return render_template(
+            request,
+            "quiz/edit.html",
+            {"quiz": quiz, "courses": courses, "error": f"Lỗi cập nhật kỳ thi: {e}"},
+            status_code=500,
+        )
 
 
 @router.get("/delete/{quiz_id}", response_class=HTMLResponse)
 def confirm_delete_quiz(quiz_id: str, request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_admin)):
     quiz = _get_quiz_or_404(db, quiz_id)
-    return render_template(request, "quiz/delete.html", {"quiz": quiz, "page_title": "Xóa Quiz"})
+    return render_template(request, "quiz/delete.html", {"quiz": quiz, "page_title": "Xóa kỳ thi"})
 
 
 @router.post("/delete/{quiz_id}")
 def delete_quiz(quiz_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_admin)):
     quiz = _get_quiz_or_404(db, quiz_id)
-    db.delete(quiz)
-    db.commit()
-    return RedirectResponse(url="/admin/quiz/list", status_code=303)
+
+    try:
+        # Dùng ORM cascade để xóa câu hỏi, lựa chọn, bài làm và câu trả lời liên quan đúng thứ tự.
+        db.delete(quiz)
+        db.commit()
+        return RedirectResponse(url="/admin/quiz/list", status_code=303)
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi xóa kỳ thi: {e}") from e
 
 
 @router.post("/approve/{quiz_id}")
@@ -267,9 +364,10 @@ def approve_quiz(quiz_id: str, db: Session = Depends(get_db), current_user=Depen
 
 
 @router.post("/reject/{quiz_id}")
-def reject_quiz(quiz_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_admin)):
+def archive_quiz(quiz_id: str, db: Session = Depends(get_db), current_user=Depends(get_current_admin)):
+    # Giữ route cũ để không lỗi link, nhưng nghiệp vụ đúng là lưu trữ vì model không có trạng thái rejected.
     quiz = _get_quiz_or_404(db, quiz_id)
-    quiz.status = "rejected"
+    quiz.status = "archived"
     quiz.is_approved = False
     quiz.updated_at = datetime.utcnow()
     db.commit()
@@ -297,37 +395,60 @@ def create_question_submit(
     current_user=Depends(get_current_admin),
 ):
     _get_quiz_or_404(db, quiz_id)
-    if correct not in {"a", "b", "c", "d"}:
+
+    if not _clean(question_text):
+        raise HTTPException(status_code=400, detail="Nội dung câu hỏi không được để trống.")
+
+    options = {
+        "a": _clean(option_a),
+        "b": _clean(option_b),
+        "c": _clean(option_c),
+        "d": _clean(option_d),
+    }
+    if any(value is None for value in options.values()):
+        raise HTTPException(status_code=400, detail="Vui lòng nhập đủ 4 phương án trả lời.")
+
+    if correct not in options:
         raise HTTPException(status_code=400, detail="Đáp án đúng không hợp lệ.")
 
-    question = Question(
-        id=str(uuid.uuid4()),
-        quiz_id=quiz_id,
-        question_type="multiple_choice",
-        question_text=question_text.strip(),
-        explanation=_clean(explanation),
-        points=points,
-        difficulty_level="medium",
-        question_order=db.query(Question).filter(Question.quiz_id == quiz_id).count() + 1,
-    )
-    db.add(question)
-    db.flush()
+    if points <= 0:
+        raise HTTPException(status_code=400, detail="Điểm câu hỏi phải lớn hơn 0.")
 
-    options = {"a": option_a, "b": option_b, "c": option_c, "d": option_d}
-    for idx, (key, value) in enumerate(options.items(), start=1):
-        db.add(
-            QuestionOption(
-                id=str(uuid.uuid4()),
-                question_id=question.id,
-                option_text=value.strip(),
-                is_correct=1 if key == correct else 0,
-                option_order=idx,
-            )
+    try:
+        question = Question(
+            id=str(uuid.uuid4()),
+            quiz_id=quiz_id,
+            question_type="multiple_choice",
+            question_text=question_text.strip(),
+            explanation=_clean(explanation),
+            points=points,
+            difficulty_level="medium",
+            question_order=db.query(Question).filter(Question.quiz_id == quiz_id).count() + 1,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         )
+        db.add(question)
+        db.flush()
 
-    _refresh_total_questions(db, quiz_id)
-    db.commit()
-    return RedirectResponse(f"/admin/quiz/detail/{quiz_id}", status_code=303)
+        for idx, (key, value) in enumerate(options.items(), start=1):
+            db.add(
+                QuestionOption(
+                    id=str(uuid.uuid4()),
+                    question_id=question.id,
+                    option_text=value,
+                    is_correct=True if key == correct else False,
+                    option_order=idx,
+                    created_at=datetime.utcnow(),
+                )
+            )
+
+        _refresh_total_questions(db, quiz_id)
+        db.commit()
+        return RedirectResponse(f"/admin/quiz/detail/{quiz_id}", status_code=303)
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi thêm câu hỏi: {e}") from e
 
 
 @router.post("/question/delete/{question_id}")
@@ -335,11 +456,17 @@ def delete_question(question_id: str, db: Session = Depends(get_db), current_use
     question = db.query(Question).filter(Question.id == question_id).first()
     if not question:
         raise HTTPException(status_code=404, detail="Không tìm thấy câu hỏi.")
+
     quiz_id = question.quiz_id
-    db.delete(question)
-    _refresh_total_questions(db, quiz_id)
-    db.commit()
-    return RedirectResponse(f"/admin/quiz/detail/{quiz_id}", status_code=303)
+
+    try:
+        db.delete(question)
+        _refresh_total_questions(db, quiz_id)
+        db.commit()
+        return RedirectResponse(f"/admin/quiz/detail/{quiz_id}", status_code=303)
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi xóa câu hỏi: {e}") from e
 
 
 @router.get("/attempts/{quiz_id}", response_class=HTMLResponse)
@@ -349,7 +476,7 @@ def quiz_attempts(quiz_id: str, request: Request, db: Session = Depends(get_db),
         db.query(QuizAttempt)
         .options(joinedload(QuizAttempt.user).joinedload(User.profile))
         .filter(QuizAttempt.quiz_id == quiz_id)
-        .order_by(QuizAttempt.submitted_at.desc().nullslast(), QuizAttempt.started_at.desc())
+        .order_by(QuizAttempt.submitted_at.desc(), QuizAttempt.started_at.desc())
         .all()
     )
     return render_template(request, "quiz/attempts.html", {"quiz": quiz, "attempts": attempts})
@@ -369,6 +496,7 @@ def quiz_attempt_detail(attempt_id: str, request: Request, db: Session = Depends
     )
     if not attempt:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài làm.")
+
     return render_template(request, "quiz/attempt_detail.html", {"attempt": attempt})
 
 
@@ -377,7 +505,13 @@ def delete_attempt(attempt_id: str, db: Session = Depends(get_db), current_user=
     attempt = db.query(QuizAttempt).filter(QuizAttempt.id == attempt_id).first()
     if not attempt:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài làm.")
+
     quiz_id = attempt.quiz_id
-    db.delete(attempt)
-    db.commit()
-    return RedirectResponse(f"/admin/quiz/attempts/{quiz_id}", status_code=303)
+
+    try:
+        db.delete(attempt)
+        db.commit()
+        return RedirectResponse(f"/admin/quiz/attempts/{quiz_id}", status_code=303)
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Lỗi xóa bài làm: {e}") from e

@@ -3,106 +3,206 @@
 
 {% block content %}
 <style>
-  body {
-    background: linear-gradient(135deg, #eef2f7, #e3edff);
-    font-family: "Segoe UI", "Inter", sans-serif;
-    color: #333;
+  .students-year-page {
+    --page-bg: linear-gradient(135deg, #eef2f7, #e3edff);
+    --card-bg: #ffffff;
+    --card-text: #1f2937;
+    --muted-text: #64748b;
+    --border-color: rgba(15, 23, 42, 0.08);
+    --header-bg: linear-gradient(90deg, #0d6efd, #0b5ed7);
+    --table-hover-bg: #eef6ff;
+    --table-head-bg: #dbeafe;
+    --table-head-text: #0f172a;
+    --empty-bg: #fff7ed;
+    --empty-text: #9a3412;
+    --empty-border: #fed7aa;
+
+    min-height: calc(100vh - 80px);
+    padding: 1.5rem 0;
+    background: var(--page-bg);
+    color: var(--card-text);
   }
 
-  .card {
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-    border: none;
+  [data-bs-theme="dark"] .students-year-page,
+  body.dark .students-year-page,
+  body.dark-mode .students-year-page {
+    --page-bg: linear-gradient(135deg, #0f172a, #111827);
+    --card-bg: #1e293b;
+    --card-text: #e5e7eb;
+    --muted-text: #cbd5e1;
+    --border-color: rgba(148, 163, 184, 0.24);
+    --header-bg: linear-gradient(90deg, #1d4ed8, #1e40af);
+    --table-hover-bg: rgba(59, 130, 246, 0.14);
+    --table-head-bg: #243449;
+    --table-head-text: #f8fafc;
+    --empty-bg: rgba(234, 179, 8, 0.14);
+    --empty-text: #fde68a;
+    --empty-border: rgba(250, 204, 21, 0.35);
   }
 
-  .card-header {
-    background: linear-gradient(90deg, #0066ff, #0048b5);
-    color: #fff;
-    padding: 18px 24px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+  .students-year-page .student-card {
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 1rem;
+    background: var(--card-bg);
+    color: var(--card-text);
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.10);
   }
 
-  .btn {
-    border-radius: 8px;
-    font-weight: 500;
-    transition: 0.2s;
+  .students-year-page .student-card-header {
+    background: var(--header-bg);
+    color: #ffffff;
+    padding: 1.1rem 1.4rem;
   }
 
-  .btn:hover {
+  .students-year-page .student-card-header h4 {
+    font-weight: 700;
+  }
+
+  .students-year-page .btn {
+    border-radius: 999px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .students-year-page .btn:hover {
     transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
   }
 
-  .table-hover tbody tr:hover {
-    background-color: #f0f6ff;
-    transition: 0.25s;
+  .students-year-page .table {
+    overflow: hidden;
+    margin-bottom: 0;
+    border-color: var(--border-color);
+    color: var(--card-text);
   }
 
-  footer {
+  .students-year-page .table thead th {
+    background: var(--table-head-bg);
+    color: var(--table-head-text);
+    border-color: var(--border-color);
+    white-space: nowrap;
+  }
+
+  .students-year-page .table tbody td {
+    background: transparent;
+    color: var(--card-text);
+    border-color: var(--border-color);
+    vertical-align: middle;
+  }
+
+  .students-year-page .table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: rgba(15, 23, 42, 0.025);
+  }
+
+  [data-bs-theme="dark"] .students-year-page .table-striped > tbody > tr:nth-of-type(odd) > *,
+  body.dark .students-year-page .table-striped > tbody > tr:nth-of-type(odd) > *,
+  body.dark-mode .students-year-page .table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: rgba(255, 255, 255, 0.035);
+  }
+
+  .students-year-page .table-hover tbody tr:hover > * {
+    background-color: var(--table-hover-bg);
+  }
+
+  .students-year-page .student-code {
+    color: #0d6efd;
+    font-weight: 700;
+  }
+
+  [data-bs-theme="dark"] .students-year-page .student-code,
+  body.dark .students-year-page .student-code,
+  body.dark-mode .students-year-page .student-code {
+    color: #93c5fd;
+  }
+
+  .students-year-page .empty-state {
+    border: 1px solid var(--empty-border);
+    border-radius: 1rem;
+    background: var(--empty-bg);
+    color: var(--empty-text);
+    padding: 1rem;
     text-align: center;
-    font-size: 0.9rem;
-    color: #6c757d;
-    margin-top: 30px;
+    font-weight: 600;
+  }
+
+  .students-year-page .page-footer {
+    margin-top: 1.5rem;
+    color: var(--muted-text);
+    font-size: 0.92rem;
+    text-align: center;
   }
 </style>
 
-<div class="container py-4">
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <h4 class="mb-0">
-        <i class="bi bi-people-fill"></i> Sinh viên - {{ year.year_name }}
-      </h4>
-      <a href="/admin/academic_years/list" class="btn btn-light text-primary">
-        <i class="bi bi-arrow-left"></i> Quay lại
-      </a>
+<div class="students-year-page">
+  <div class="container">
+    <div class="student-card mb-4">
+      <div class="student-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h4 class="mb-0">
+          <i class="bi bi-people-fill me-1"></i> Sinh viên - {{ year.year_name }}
+        </h4>
+
+        <a href="/admin/academic_years/list" class="btn btn-light text-primary">
+          <i class="bi bi-arrow-left me-1"></i> Quay lại
+        </a>
+      </div>
+
+      <div class="card-body p-4">
+        {% if students %}
+          <div class="table-responsive rounded-4 border">
+            <table class="table table-hover table-striped align-middle">
+              <thead>
+                <tr>
+                  <th class="text-center" style="width: 70px;">STT</th>
+                  <th>Mã sinh viên</th>
+                  <th>Họ và tên</th>
+                  <th>Thư điện tử</th>
+                  <th>Ngành học</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for s in students %}
+                  {% set raw_status = s.enrollment_status if s.enrollment_status is defined and s.enrollment_status else s.status %}
+                  {% set status_value = (raw_status or '')|lower %}
+                  <tr>
+                    <td class="text-center fw-semibold">{{ loop.index }}</td>
+                    <td class="student-code">{{ s.mssv or "Chưa cập nhật" }}</td>
+                    <td class="fw-semibold">{{ s.full_name or s.username or "Chưa cập nhật" }}</td>
+                    <td>{{ s.email or "Chưa cập nhật" }}</td>
+                    <td>{{ s.major_name or "Chưa xác định" }}</td>
+                    <td>
+                      {% if status_value in ["active", "approved", "verified"] %}
+                        <span class="badge bg-success">Hoạt động</span>
+                      {% elif status_value in ["inactive", "disabled"] %}
+                        <span class="badge bg-secondary">Tạm ngưng</span>
+                      {% elif status_value in ["locked", "blocked"] %}
+                        <span class="badge bg-danger">Đã khóa</span>
+                      {% elif status_value in ["pending", "pending_enrollment", "applied", "waiting"] %}
+                        <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                      {% elif status_value in ["deleted", "removed"] %}
+                        <span class="badge bg-dark">Đã xóa</span>
+                      {% else %}
+                        <span class="badge bg-light text-dark border">Không xác định</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <i class="bi bi-info-circle me-1"></i> Không có sinh viên nào thuộc năm học này.
+          </div>
+        {% endif %}
+      </div>
     </div>
 
-    <div class="card-body p-4">
-      {% if students %}
-        <div class="table-responsive">
-          <table class="table table-hover table-striped align-middle shadow-sm rounded">
-            <thead class="table-primary">
-              <tr>
-                <th class="text-center">#</th>
-                <th>MSSV</th>
-                <th>Họ và tên</th>
-                <th>Email</th>
-                <th>Ngành học</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for s in students %}
-              <tr>
-                <td class="text-center">{{ loop.index }}</td>
-                <td class="fw-semibold text-primary">{{ s.mssv or "—" }}</td>
-                <td>{{ s.full_name or s.username }}</td>
-                <td>{{ s.email }}</td>
-                <td>{{ s.major_name or "Chưa xác định" }}</td>
-                <td>
-                  {% if s.status == "active" %}
-                    <span class="badge bg-success">Hoạt động</span>
-                  {% elif s.status == "inactive" %}
-                    <span class="badge bg-secondary">Ngưng</span>
-                  {% else %}
-                    <span class="badge bg-warning text-dark">{{ s.status or "Không rõ" }}</span>
-                  {% endif %}
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="alert alert-warning text-center mt-3">
-          <i class="bi bi-info-circle"></i> Không có sinh viên nào trong năm học này.
-        </div>
-      {% endif %}
+    <div class="page-footer">
+      © {{ now.year if now is defined else "2026" }} Hệ thống quản trị học tập — Danh sách sinh viên theo năm học
     </div>
   </div>
-
-  <footer>
-    <p>© {{ current_year if current_year else "2025" }} E-Learning Admin — Danh sách sinh viên năm học</p>
-  </footer>
 </div>
 {% endblock %}

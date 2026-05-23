@@ -1,85 +1,296 @@
 {% extends "layout_admin.html" %}
-{% block title %}⭐ Thống kê đánh giá khóa học{% endblock %}
 
-{% block head_extra %}
+{% block title %}Thống kê đánh giá khóa học{% endblock %}
+
+{% block extra_css %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-  .stats-box {
-    max-width: 900px;
-    margin: 30px auto;
-    background: #fff;
-    border-radius: 14px;
-    padding: 24px;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  .review-stats-page {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .review-stats-card {
+    background: #ffffff;
+    color: #111827;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 18px;
+    padding: 26px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  }
+
+  .review-stats-header {
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+  }
+
+  .review-title {
+    color: #f59e0b;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .review-subtitle {
+    color: #6b7280;
+    font-size: 0.95rem;
+  }
+
+  .review-summary-badge {
+    background: rgba(245, 158, 11, 0.18);
+    color: #92400e;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-weight: 800;
+  }
+
+  .review-chart-wrap {
+    min-height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .review-empty {
+    border: 1px dashed rgba(107, 114, 128, 0.45);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    color: #6b7280;
+    background: rgba(249, 250, 251, 0.9);
+  }
+
+  .review-empty i {
+    font-size: 2rem;
+    color: #f59e0b;
+  }
+
+  /* Dark mode: hỗ trợ nhiều kiểu layout hay dùng */
+  html[data-bs-theme="dark"] .review-stats-card,
+  body[data-bs-theme="dark"] .review-stats-card,
+  html.dark .review-stats-card,
+  body.dark .review-stats-card,
+  body.dark-mode .review-stats-card,
+  body.theme-dark .review-stats-card {
+    background: rgba(15, 23, 42, 0.96);
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.28);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32);
+  }
+
+  html[data-bs-theme="dark"] .review-stats-header,
+  body[data-bs-theme="dark"] .review-stats-header,
+  html.dark .review-stats-header,
+  body.dark .review-stats-header,
+  body.dark-mode .review-stats-header,
+  body.theme-dark .review-stats-header {
+    border-bottom-color: rgba(148, 163, 184, 0.22);
+  }
+
+  html[data-bs-theme="dark"] .review-subtitle,
+  body[data-bs-theme="dark"] .review-subtitle,
+  html.dark .review-subtitle,
+  body.dark .review-subtitle,
+  body.dark-mode .review-subtitle,
+  body.theme-dark .review-subtitle {
+    color: #cbd5e1;
+  }
+
+  html[data-bs-theme="dark"] .review-summary-badge,
+  body[data-bs-theme="dark"] .review-summary-badge,
+  html.dark .review-summary-badge,
+  body.dark .review-summary-badge,
+  body.dark-mode .review-summary-badge,
+  body.theme-dark .review-summary-badge {
+    background: rgba(245, 158, 11, 0.22);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.35);
+  }
+
+  html[data-bs-theme="dark"] .review-empty,
+  body[data-bs-theme="dark"] .review-empty,
+  html.dark .review-empty,
+  body.dark .review-empty,
+  body.dark-mode .review-empty,
+  body.theme-dark .review-empty {
+    background: rgba(15, 23, 42, 0.72);
+    color: #cbd5e1;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+
+  @media (max-width: 768px) {
+    .review-stats-card {
+      padding: 18px;
+    }
+
+    .review-chart-wrap {
+      min-height: 260px;
+    }
+
+    .review-actions {
+      width: 100%;
+    }
+
+    .review-actions .btn {
+      width: 100%;
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container py-4">
-  <div class="stats-box">
-    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
-      <div>
-        <h3 class="text-warning mb-1">⭐ Thống kê đánh giá khóa học</h3>
-        <div class="text-muted">Course ID: {{ course_id }}</div>
-      </div>
-      <div class="d-flex gap-2">
-        <span class="badge bg-warning text-dark fs-6">Điểm TB: {{ avg_rating }}</span>
-        <a href="/admin/reviews/manage" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-arrow-left"></i> Quay lại
-        </a>
-      </div>
-    </div>
+  <div class="review-stats-page">
+    <div class="review-stats-card">
 
-    <canvas id="reviewChart" height="120"></canvas>
+      <div class="review-stats-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+          <h3 class="review-title">
+            <i class="bi bi-star-fill me-2"></i>Thống kê đánh giá khóa học
+          </h3>
+          <div class="review-subtitle">
+            Mã khóa học: <strong>{{ course_id or 'Không xác định' }}</strong>
+          </div>
+        </div>
+
+        <div class="review-actions d-flex flex-wrap gap-2 align-items-center">
+          <span class="review-summary-badge">
+            Điểm trung bình:
+            {{ "%.2f"|format(avg_rating or 0) }}
+          </span>
+
+          <a href="/admin/reviews/manage" class="btn btn-outline-secondary btn-sm rounded-pill">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại
+          </a>
+        </div>
+      </div>
+
+      <div id="reviewEmpty" class="review-empty d-none">
+        <i class="bi bi-star mb-2 d-block"></i>
+        <h5 class="fw-bold mb-1">Chưa có đánh giá</h5>
+        <p class="mb-0">Khóa học này hiện chưa có dữ liệu đánh giá để hiển thị biểu đồ.</p>
+      </div>
+
+      <div id="reviewChartWrap" class="review-chart-wrap">
+        <canvas id="reviewChart" height="120"></canvas>
+      </div>
+
+    </div>
   </div>
 </div>
 
+<script id="reviewDataJson" type="application/json">
+  {{ review_data | default({}, true) | tojson | safe }}
+</script>
+
 <script>
-  const rawData = JSON.parse('{{ review_data | tojson | safe }}');
-  const reviewData = Array.isArray(rawData)
-    ? rawData
-    : [
-        rawData["5"] || rawData[5] || 0,
-        rawData["4"] || rawData[4] || 0,
-        rawData["3"] || rawData[3] || 0,
-        rawData["2"] || rawData[2] || 0,
-        rawData["1"] || rawData[1] || 0
+  const rawDataEl = document.getElementById("reviewDataJson");
+
+  let rawData = {};
+  try {
+    rawData = JSON.parse(rawDataEl.textContent || "{}");
+  } catch (error) {
+    console.error("Lỗi đọc dữ liệu thống kê đánh giá:", error);
+    rawData = {};
+  }
+
+  function normalizeReviewData(data) {
+    if (Array.isArray(data)) {
+      return [
+        Number(data[0] || 0),
+        Number(data[1] || 0),
+        Number(data[2] || 0),
+        Number(data[3] || 0),
+        Number(data[4] || 0)
       ];
+    }
 
-  const ctx = document.getElementById("reviewChart");
+    if (data && typeof data === "object") {
+      return [
+        Number(data["5"] ?? data[5] ?? 0),
+        Number(data["4"] ?? data[4] ?? 0),
+        Number(data["3"] ?? data[3] ?? 0),
+        Number(data["2"] ?? data[2] ?? 0),
+        Number(data["1"] ?? data[1] ?? 0)
+      ];
+    }
 
-  new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: ["5⭐", "4⭐", "3⭐", "2⭐", "1⭐"],
-      datasets: [{
-        data: reviewData,
-        backgroundColor: [
-          "#2ecc71", "#27ae60", "#f1c40f", "#e67e22", "#e74c3c"
-        ],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: "bottom",
-          labels: { color: "#333" }
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const value = context.parsed || 0;
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percent = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-              return `${value} đánh giá (${percent}%)`;
+    return [0, 0, 0, 0, 0];
+  }
+
+  const reviewData = normalizeReviewData(rawData);
+  const totalReviews = reviewData.reduce((sum, value) => sum + value, 0);
+
+  const chartWrap = document.getElementById("reviewChartWrap");
+  const emptyBox = document.getElementById("reviewEmpty");
+  const canvas = document.getElementById("reviewChart");
+
+  function isDarkMode() {
+    return (
+      document.documentElement.dataset.bsTheme === "dark" ||
+      document.body.dataset.bsTheme === "dark" ||
+      document.documentElement.classList.contains("dark") ||
+      document.body.classList.contains("dark") ||
+      document.body.classList.contains("dark-mode") ||
+      document.body.classList.contains("theme-dark")
+    );
+  }
+
+  if (totalReviews <= 0) {
+    chartWrap.classList.add("d-none");
+    emptyBox.classList.remove("d-none");
+  } else {
+    const labelColor = isDarkMode() ? "#e5e7eb" : "#374151";
+    const borderColor = isDarkMode() ? "#0f172a" : "#ffffff";
+
+    new Chart(canvas, {
+      type: "pie",
+      data: {
+        labels: ["5 sao", "4 sao", "3 sao", "2 sao", "1 sao"],
+        datasets: [{
+          data: reviewData,
+          backgroundColor: [
+            "#22c55e",
+            "#16a34a",
+            "#facc15",
+            "#f97316",
+            "#ef4444"
+          ],
+          borderColor: borderColor,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              color: labelColor,
+              font: {
+                weight: "600"
+              },
+              padding: 18
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const value = Number(context.parsed || 0);
+                const percent = totalReviews > 0
+                  ? ((value / totalReviews) * 100).toFixed(1)
+                  : "0.0";
+
+                return `${context.label}: ${value} đánh giá (${percent}%)`;
+              }
             }
           }
         }
       }
-    }
-  });
+    });
+  }
 </script>
 {% endblock %}

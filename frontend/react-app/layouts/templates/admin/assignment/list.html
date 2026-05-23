@@ -2,8 +2,9 @@
 {% block title %}🛠️ Quản lý bài tập{% endblock %}
 {% block content %}
 
+
 <style>
-  :root {
+  .assignment-page {
     --asg-primary: #2563eb;
     --asg-primary-2: #7c3aed;
     --asg-success: #16a34a;
@@ -15,24 +16,26 @@
     --asg-soft: #f8fafc;
     --asg-card: rgba(255, 255, 255, 0.96);
     --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
-  }
-
-  .assignment-page {
     max-width: 1280px;
     margin: 0 auto;
+    color: var(--asg-text);
   }
 
-  .a-hero,
-  .a-card,
-  .table-card,
-  .stat-card,
-  .empty-state {
+  .assignment-page.assignment-page-narrow {
+    max-width: 920px;
+  }
+
+  .assignment-page .a-hero,
+  .assignment-page .a-card,
+  .assignment-page .table-card,
+  .assignment-page .stat-card,
+  .assignment-page .empty-state {
     border: 1px solid rgba(226, 232, 240, .95);
     background: var(--asg-card);
     box-shadow: var(--asg-shadow);
   }
 
-  .a-hero {
+  .assignment-page .a-hero {
     position: relative;
     overflow: hidden;
     border-radius: 28px;
@@ -40,7 +43,7 @@
     margin-bottom: 22px;
   }
 
-  .a-hero::before {
+  .assignment-page .a-hero::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -50,12 +53,12 @@
     pointer-events: none;
   }
 
-  .a-hero > * {
+  .assignment-page .a-hero > * {
     position: relative;
     z-index: 1;
   }
 
-  .a-title {
+  .assignment-page .a-title {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -67,15 +70,15 @@
     word-break: break-word;
   }
 
-  .a-subtitle {
+  .assignment-page .a-subtitle {
     color: var(--asg-muted);
     margin: 8px 0 0;
     line-height: 1.55;
   }
 
-  .a-actions,
-  .action-buttons,
-  .page-actions {
+  .assignment-page .a-actions,
+  .assignment-page .action-buttons,
+  .assignment-page .page-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -83,36 +86,36 @@
     align-items: center;
   }
 
-  .a-card {
+  .assignment-page .a-card {
     border-radius: 24px;
     padding: 22px;
   }
 
-  .stat-grid {
+  .assignment-page .stat-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 18px;
   }
 
-  .stat-card {
+  .assignment-page .stat-card {
     border-radius: 22px;
     padding: 17px 18px;
     transition: .18s ease;
   }
 
-  .stat-card:hover {
+  .assignment-page .stat-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
   }
 
-  .stat-label {
+  .assignment-page .stat-label {
     color: var(--asg-muted);
     font-size: .88rem;
     font-weight: 700;
   }
 
-  .stat-value {
+  .assignment-page .stat-value {
     margin-top: 5px;
     font-size: 1.65rem;
     font-weight: 850;
@@ -120,7 +123,7 @@
     line-height: 1.15;
   }
 
-  .tool-row {
+  .assignment-page .tool-row {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -128,149 +131,244 @@
     align-items: center;
   }
 
-  .tool-row .form-control,
-  .tool-row .form-select {
-    max-width: 310px;
+  .assignment-page .tool-row .form-control,
+  .assignment-page .tool-row .form-select {
+    max-width: 340px;
     border-radius: 14px;
   }
 
-  .form-control,
-  .form-select {
+  .assignment-page .form-label {
+    color: var(--asg-text);
+  }
+
+  .assignment-page .form-control,
+  .assignment-page .form-select {
     border-radius: 14px;
     border-color: #dbe3ef;
+    color: var(--asg-text);
+    background-color: #ffffff;
   }
 
-  .form-control:focus,
-  .form-select:focus {
+  .assignment-page .form-control:focus,
+  .assignment-page .form-select:focus {
     border-color: #93c5fd;
     box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
   }
 
-  .btn {
+  .assignment-page .btn {
     border-radius: 13px;
     font-weight: 700;
   }
 
-  .table-card {
+  .assignment-page .table-card {
     border-radius: 24px;
     overflow: hidden;
   }
 
-  .table {
+  .assignment-page .table {
     margin-bottom: 0;
+    color: var(--asg-text);
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--asg-text);
+    --bs-table-border-color: var(--asg-line);
+    --bs-table-hover-bg: #f8fbff;
   }
 
-  .table thead th {
-    background: linear-gradient(180deg, #eff6ff, #e0edff);
-    color: #1e40af;
+  .assignment-page .table thead th {
+    background: linear-gradient(180deg, #eff6ff, #e0edff) !important;
+    color: #1e40af !important;
     font-weight: 850;
     white-space: nowrap;
     border-bottom: 1px solid #bfdbfe;
     vertical-align: middle;
   }
 
-  .table tbody td {
+  .assignment-page .table tbody td {
     vertical-align: middle;
+    color: var(--asg-text);
+    border-color: var(--asg-line);
   }
 
-  .table-hover tbody tr:hover {
-    background: #f8fbff;
+  .assignment-page .table-hover tbody tr:hover td {
+    background: #f8fbff !important;
   }
 
-  .info-grid {
+  .assignment-page .info-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
 
-  .info-box,
-  .file-box {
+  .assignment-page .info-box,
+  .assignment-page .file-box {
     border-radius: 18px;
     background: var(--asg-soft);
     border: 1px solid var(--asg-line);
     padding: 14px 16px;
   }
 
-  .file-box {
+  .assignment-page .file-box {
     line-height: 1.65;
   }
 
-  .status-badge,
-  .badge {
+  .assignment-page .status-badge,
+  .assignment-page .badge {
     border-radius: 999px;
     padding: 6px 10px;
     font-weight: 750;
   }
 
-  .text-pre-wrap {
+  .assignment-page .text-pre-wrap {
     white-space: pre-wrap;
     word-break: break-word;
   }
 
-  .empty-state {
+  .assignment-page .empty-state {
     border-radius: 24px;
     padding: 34px 20px;
     text-align: center;
   }
 
-  .mini-muted {
-    color: var(--asg-muted);
-    font-size: .9rem;
+  .assignment-page .mini-muted,
+  .assignment-page .text-muted {
+    color: var(--asg-muted) !important;
   }
 
-  .progress-thin {
+  .assignment-page .progress-thin {
     height: 9px;
     border-radius: 999px;
     overflow: hidden;
   }
 
-  img,
-  video,
-  canvas {
+  .assignment-page img,
+  .assignment-page video,
+  .assignment-page canvas {
     max-width: 100%;
     height: auto;
   }
 
-  body.dark-mode .a-hero,
-  body.dark-mode .a-card,
-  body.dark-mode .table-card,
-  body.dark-mode .stat-card,
-  body.dark-mode .empty-state {
-    background: rgba(15, 23, 42, .90);
-    border-color: rgba(148, 163, 184, .22);
-    color: #e5e7eb;
+  body.dark-mode .assignment-page,
+  html[data-bs-theme="dark"] .assignment-page,
+  body[data-theme="dark"] .assignment-page {
+    --asg-text: #e5e7eb;
+    --asg-muted: #cbd5e1;
+    --asg-line: rgba(148, 163, 184, .25);
+    --asg-soft: rgba(30, 41, 59, .86);
+    --asg-card: rgba(15, 23, 42, .90);
+    --asg-shadow: 0 18px 45px rgba(0, 0, 0, .38);
   }
 
-  body.dark-mode .a-title,
-  body.dark-mode .stat-value {
+  body.dark-mode .assignment-page .a-hero,
+  body.dark-mode .assignment-page .a-card,
+  body.dark-mode .assignment-page .table-card,
+  body.dark-mode .assignment-page .stat-card,
+  body.dark-mode .assignment-page .empty-state,
+  html[data-bs-theme="dark"] .assignment-page .a-hero,
+  html[data-bs-theme="dark"] .assignment-page .a-card,
+  html[data-bs-theme="dark"] .assignment-page .table-card,
+  html[data-bs-theme="dark"] .assignment-page .stat-card,
+  html[data-bs-theme="dark"] .assignment-page .empty-state,
+  body[data-theme="dark"] .assignment-page .a-hero,
+  body[data-theme="dark"] .assignment-page .a-card,
+  body[data-theme="dark"] .assignment-page .table-card,
+  body[data-theme="dark"] .assignment-page .stat-card,
+  body[data-theme="dark"] .assignment-page .empty-state {
+    background: var(--asg-card);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  body.dark-mode .assignment-page .a-title,
+  body.dark-mode .assignment-page .stat-value,
+  html[data-bs-theme="dark"] .assignment-page .a-title,
+  html[data-bs-theme="dark"] .assignment-page .stat-value,
+  body[data-theme="dark"] .assignment-page .a-title,
+  body[data-theme="dark"] .assignment-page .stat-value {
     color: #93c5fd;
   }
 
-  body.dark-mode .a-subtitle,
-  body.dark-mode .stat-label,
-  body.dark-mode .mini-muted {
-    color: #94a3b8;
-  }
-
-  body.dark-mode .info-box,
-  body.dark-mode .file-box {
-    background: rgba(30, 41, 59, .86);
-    border-color: rgba(148, 163, 184, .25);
+  body.dark-mode .assignment-page .form-control,
+  body.dark-mode .assignment-page .form-select,
+  html[data-bs-theme="dark"] .assignment-page .form-control,
+  html[data-bs-theme="dark"] .assignment-page .form-select,
+  body[data-theme="dark"] .assignment-page .form-control,
+  body[data-theme="dark"] .assignment-page .form-select {
+    background: rgba(15, 23, 42, .98);
+    border-color: rgba(148, 163, 184, .32);
     color: #e5e7eb;
   }
 
-  body.dark-mode .table thead th {
-    background: rgba(30, 64, 175, .35);
-    color: #dbeafe;
+  body.dark-mode .assignment-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .assignment-page .form-control::placeholder,
+  body[data-theme="dark"] .assignment-page .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .assignment-page .info-box,
+  body.dark-mode .assignment-page .file-box,
+  html[data-bs-theme="dark"] .assignment-page .info-box,
+  html[data-bs-theme="dark"] .assignment-page .file-box,
+  body[data-theme="dark"] .assignment-page .info-box,
+  body[data-theme="dark"] .assignment-page .file-box {
+    background: var(--asg-soft);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  body.dark-mode .assignment-page .table thead th,
+  html[data-bs-theme="dark"] .assignment-page .table thead th,
+  body[data-theme="dark"] .assignment-page .table thead th {
+    background: rgba(30, 64, 175, .38) !important;
+    color: #dbeafe !important;
     border-color: rgba(147, 197, 253, .25);
   }
 
-  body.dark-mode .table-hover tbody tr:hover {
-    background: rgba(30, 41, 59, .65);
+  body.dark-mode .assignment-page .table tbody td,
+  html[data-bs-theme="dark"] .assignment-page .table tbody td,
+  body[data-theme="dark"] .assignment-page .table tbody td {
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, .22);
+    background: rgba(15, 23, 42, .34) !important;
+  }
+
+  body.dark-mode .assignment-page .table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .assignment-page .table-hover tbody tr:hover td,
+  body[data-theme="dark"] .assignment-page .table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, .78) !important;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-secondary,
+  body[data-theme="dark"] .assignment-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-primary,
+  body[data-theme="dark"] .assignment-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-warning,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-warning,
+  body[data-theme="dark"] .assignment-page .btn-outline-warning {
+    color: #fbbf24;
+    border-color: #fbbf24;
+  }
+
+  body.dark-mode .assignment-page .btn-outline-danger,
+  html[data-bs-theme="dark"] .assignment-page .btn-outline-danger,
+  body[data-theme="dark"] .assignment-page .btn-outline-danger {
+    color: #fb7185;
+    border-color: #fb7185;
   }
 
   @media (max-width: 992px) {
-    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .assignment-page .stat-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 768px) {
@@ -279,73 +377,73 @@
       padding-right: 10px !important;
     }
 
-    .a-hero,
-    .a-card {
+    .assignment-page .a-hero,
+    .assignment-page .a-card {
       padding: 18px;
       border-radius: 22px;
     }
 
-    .a-title {
+    .assignment-page .a-title {
       font-size: 1.25rem;
     }
 
-    .a-actions,
-    .action-buttons,
-    .page-actions {
+    .assignment-page .a-actions,
+    .assignment-page .action-buttons,
+    .assignment-page .page-actions {
       justify-content: flex-start;
       width: 100%;
     }
 
-    .a-actions .btn,
-    .action-buttons .btn,
-    .page-actions .btn {
+    .assignment-page .a-actions .btn,
+    .assignment-page .action-buttons .btn,
+    .assignment-page .page-actions .btn {
       width: 100%;
     }
 
-    .stat-grid,
-    .info-grid {
+    .assignment-page .stat-grid,
+    .assignment-page .info-grid {
       grid-template-columns: 1fr;
     }
 
-    .tool-row .form-control,
-    .tool-row .form-select {
+    .assignment-page .tool-row .form-control,
+    .assignment-page .tool-row .form-select {
       max-width: none;
       width: 100%;
     }
 
-    .responsive-table thead {
+    .assignment-page .responsive-table thead {
       display: none;
     }
 
-    .responsive-table tbody,
-    .responsive-table tr,
-    .responsive-table td {
+    .assignment-page .responsive-table tbody,
+    .assignment-page .responsive-table tr,
+    .assignment-page .responsive-table td {
       display: block;
       width: 100%;
     }
 
-    .responsive-table tr {
-      border-bottom: 1px solid #e5e7eb;
+    .assignment-page .responsive-table tr {
+      border-bottom: 1px solid var(--asg-line);
       padding: 10px;
     }
 
-    .responsive-table td {
+    .assignment-page .responsive-table td {
       border: 0 !important;
       padding: 7px 4px !important;
     }
 
-    .responsive-table td::before {
+    .assignment-page .responsive-table td::before {
       content: attr(data-label);
       display: block;
       font-weight: 850;
-      color: #475569;
+      color: var(--asg-muted);
       margin-bottom: 2px;
     }
   }
 
   @media (orientation: landscape) and (max-height: 540px) {
-    .a-hero,
-    .a-card {
+    .assignment-page .a-hero,
+    .assignment-page .a-card {
       padding: 14px;
     }
 
@@ -356,5 +454,92 @@
   }
 </style>
 
-<div class="assignment-page px-2 px-md-4 py-3 py-md-4"><div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3"><div><h3 class="a-title"><i class="bi bi-kanban me-2"></i>Quản lý bài tập</h3><p class="a-subtitle">Admin xem toàn bộ bài tập, bài nộp và thống kê.</p></div><div class="a-actions"><a href="/admin/assignment/create" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Tạo bài tập</a><a href="/admin/assignment/stats" class="btn btn-outline-primary"><i class="bi bi-bar-chart"></i> Thống kê</a></div></div><div class="tool-row"><input id="searchInput" class="form-control" placeholder="Tìm bài tập / khóa học / giáo viên..."></div><div class="table-card table-responsive"><table class="table table-hover align-middle mb-0 responsive-table" id="assignmentTable"><thead><tr><th>#</th><th>Bài tập</th><th>Khóa học</th><th>Giáo viên</th><th>Hạn nộp</th><th class="text-center">Thao tác</th></tr></thead><tbody>{% for a in assignments or [] %}<tr><td data-label="#">{{ loop.index }}</td><td data-label="Bài tập"><strong>{{ a.title }}</strong></td><td data-label="Khóa học">{{ a.course.course_name if a.course else '—' }}</td><td data-label="Giáo viên">{{ a.teacher.username if a.teacher else '—' }}</td><td data-label="Hạn nộp">{{ a.due_date.strftime('%d/%m/%Y %H:%M') if a.due_date else '—' }}</td><td data-label="Thao tác" class="text-center"><div class="d-flex flex-wrap gap-2 justify-content-center"><a href="/admin/assignment/submissions/{{ a.id }}" class="btn btn-sm btn-outline-primary">Bài nộp</a><a href="/admin/assignment/edit/{{ a.id }}" class="btn btn-sm btn-outline-warning">Sửa</a><a href="/admin/assignment/delete/{{ a.id }}" class="btn btn-sm btn-outline-danger">Xóa</a></div></td></tr>{% else %}<tr><td colspan="6" class="text-center text-muted py-4">Chưa có bài tập.</td></tr>{% endfor %}</tbody></table></div></div><script>(function(){const s=document.getElementById('searchInput');s?.addEventListener('input',()=>{const q=s.value.toLowerCase();document.querySelectorAll('#assignmentTable tbody tr').forEach(tr=>tr.style.display=tr.innerText.toLowerCase().includes(q)?'':'none')})})();</script>
+
+<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
+  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="a-title">
+        <i class="bi bi-kanban me-2"></i>
+        Quản lý bài tập
+      </h3>
+      <p class="a-subtitle">Quản trị viên xem toàn bộ bài tập, bài nộp và thống kê trong hệ thống.</p>
+    </div>
+    <div class="a-actions">
+      <a href="/admin/assignment/create" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i>Tạo bài tập
+      </a>
+      <a href="/admin/assignment/stats" class="btn btn-outline-primary">
+        <i class="bi bi-bar-chart me-1"></i>Thống kê
+      </a>
+    </div>
+  </div>
+
+  <div class="tool-row">
+    <input id="searchInput" class="form-control" placeholder="Tìm bài tập, khóa học hoặc giảng viên..." autocomplete="off">
+  </div>
+
+  <div class="table-card table-responsive">
+    <table class="table table-hover align-middle mb-0 responsive-table" id="assignmentTable">
+      <thead>
+        <tr>
+          <th class="text-center">STT</th>
+          <th>Bài tập</th>
+          <th>Khóa học</th>
+          <th>Giảng viên</th>
+          <th>Hạn nộp</th>
+          <th class="text-center">Thao tác</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments or [] %}
+          {% set course_name = a.course.course_name if a.course is defined and a.course else "—" %}
+          {% set teacher_name = a.teacher.full_name if a.teacher is defined and a.teacher and a.teacher.full_name is defined and a.teacher.full_name else (a.teacher.username if a.teacher is defined and a.teacher else "—") %}
+          <tr>
+            <td data-label="STT" class="text-center fw-semibold text-muted">{{ loop.index }}</td>
+            <td data-label="Bài tập"><strong>{{ a.title or "Chưa có tiêu đề" }}</strong></td>
+            <td data-label="Khóa học">{{ course_name }}</td>
+            <td data-label="Giảng viên">{{ teacher_name }}</td>
+            <td data-label="Hạn nộp">{{ a.due_date.strftime('%d/%m/%Y %H:%M') if a.due_date else '—' }}</td>
+            <td data-label="Thao tác" class="text-center">
+              <div class="d-flex flex-wrap gap-2 justify-content-center">
+                <a href="/admin/assignment/submissions/{{ a.id }}" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-inboxes me-1"></i>Bài nộp
+                </a>
+                <a href="/admin/assignment/edit/{{ a.id }}" class="btn btn-sm btn-outline-warning">
+                  <i class="bi bi-pencil-square me-1"></i>Sửa
+                </a>
+                <a href="/admin/assignment/delete/{{ a.id }}" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-trash me-1"></i>Xóa
+                </a>
+              </div>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="bi bi-info-circle me-1"></i>Chưa có bài tập.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var searchInput = document.getElementById("searchInput");
+    var rows = document.querySelectorAll("#assignmentTable tbody tr");
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener("input", function () {
+      var keyword = searchInput.value.trim().toLowerCase();
+
+      rows.forEach(function (row) {
+        row.style.display = row.innerText.toLowerCase().includes(keyword) ? "" : "none";
+      });
+    });
+  });
+</script>
 {% endblock %}

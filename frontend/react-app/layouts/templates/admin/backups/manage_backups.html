@@ -47,7 +47,7 @@
 
         <form method="post" action="/admin/backups/cleanup" class="d-inline">
           <button class="btn btn-outline-danger">
-            <i class="bi bi-trash3"></i> Dọn dẹp backup cũ
+            <i class="bi bi-trash3"></i> Dọn dẹp bản sao lưu cũ
           </button>
         </form>
       </div>
@@ -64,7 +64,7 @@
       <thead class="text-center">
         <tr>
           <th>#</th>
-          <th>Tên file</th>
+          <th>Tên tệp</th>
           <th>Loại</th>
           <th>Trạng thái</th>
           <th>Thời gian</th>
@@ -85,9 +85,9 @@
 
           <td class="text-center">
             {% if b.backup_type == "full" %}
-              <span class="badge bg-primary badge-status">Full</span>
+              <span class="badge bg-primary badge-status">Toàn bộ</span>
             {% elif b.backup_type == "incremental" %}
-              <span class="badge bg-info text-dark badge-status">Incremental</span>
+              <span class="badge bg-info text-dark badge-status">Phần thay đổi</span>
             {% else %}
               <span class="badge bg-secondary badge-status">Khác</span>
             {% endif %}
@@ -124,7 +124,7 @@
 
             <a href="/admin/backups/delete/{{ b.id }}"
                class="btn btn-danger btn-sm btn-action"
-               data-bs-toggle="tooltip" title="Xóa bản backup">
+               data-bs-toggle="tooltip" title="Xóa bản sao lưu">
               <i class="bi bi-trash"></i>
             </a>
           </td>

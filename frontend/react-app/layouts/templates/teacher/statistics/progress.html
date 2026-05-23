@@ -1,0 +1,363 @@
+{% extends "layout_teacher.html" %}
+{% block title %}Tiến độ học viên{% endblock %}
+
+{% block content %}
+<style>
+/* =====================================================
+   TEACHER STUDENT PROGRESS - LIGHT / DARK MODE
+   Không sửa database, chỉ sửa giao diện HTML/CSS
+===================================================== */
+.teacher-progress-page {
+  --tp-card-bg: rgba(255, 255, 255, 0.96);
+  --tp-card-border: rgba(226, 232, 240, 0.95);
+  --tp-header-bg: rgba(248, 250, 252, 0.98);
+  --tp-table-head-bg: #eef5ff;
+  --tp-table-row-bg: #ffffff;
+  --tp-table-row-alt-bg: #fbfdff;
+  --tp-table-hover-bg: #f1f5f9;
+  --tp-main-text: #0f172a;
+  --tp-body-text: #334155;
+  --tp-muted-text: #64748b;
+  --tp-border: #e2e8f0;
+  --tp-input-bg: #ffffff;
+  --tp-input-text: #0f172a;
+  --tp-input-border: #cbd5e1;
+  --tp-progress-bg: #e5e7eb;
+  --tp-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
+}
+
+body.dark-mode .teacher-progress-page,
+body.theme-dark .teacher-progress-page,
+body[data-theme="dark"] .teacher-progress-page,
+html[data-theme="dark"] .teacher-progress-page,
+[data-bs-theme="dark"] .teacher-progress-page {
+  --tp-card-bg: rgba(15, 23, 42, 0.92);
+  --tp-card-border: rgba(148, 163, 184, 0.22);
+  --tp-header-bg: rgba(30, 41, 59, 0.96);
+  --tp-table-head-bg: rgba(30, 41, 59, 0.98);
+  --tp-table-row-bg: rgba(15, 23, 42, 0.90);
+  --tp-table-row-alt-bg: rgba(30, 41, 59, 0.72);
+  --tp-table-hover-bg: rgba(51, 65, 85, 0.88);
+  --tp-main-text: #f8fafc;
+  --tp-body-text: #e5e7eb;
+  --tp-muted-text: #cbd5e1;
+  --tp-border: rgba(148, 163, 184, 0.22);
+  --tp-input-bg: rgba(15, 23, 42, 0.95);
+  --tp-input-text: #f8fafc;
+  --tp-input-border: rgba(148, 163, 184, 0.38);
+  --tp-progress-bg: rgba(51, 65, 85, 0.95);
+  --tp-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+}
+
+.teacher-progress-page,
+.teacher-progress-page h1,
+.teacher-progress-page h2,
+.teacher-progress-page h3,
+.teacher-progress-page h4,
+.teacher-progress-page h5,
+.teacher-progress-page h6,
+.teacher-progress-page .fw-bold,
+.teacher-progress-page .fw-semibold {
+  color: var(--tp-main-text) !important;
+}
+
+.teacher-progress-page p,
+.teacher-progress-page td,
+.teacher-progress-page th,
+.teacher-progress-page label,
+.teacher-progress-page .small {
+  color: var(--tp-body-text) !important;
+}
+
+.teacher-progress-page .text-muted,
+.teacher-progress-page .small.text-muted,
+.teacher-progress-page .tp-muted {
+  color: var(--tp-muted-text) !important;
+}
+
+.teacher-progress-page .tp-card {
+  background: var(--tp-card-bg) !important;
+  border: 1px solid var(--tp-card-border) !important;
+  color: var(--tp-main-text) !important;
+  box-shadow: var(--tp-shadow) !important;
+  overflow: hidden;
+}
+
+.teacher-progress-page .tp-card-header {
+  background: var(--tp-header-bg) !important;
+  color: var(--tp-main-text) !important;
+  border-bottom: 1px solid var(--tp-border) !important;
+  font-weight: 800;
+  padding: 0.95rem 1.1rem;
+}
+
+.teacher-progress-page .tp-stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 110, 253, 0.10);
+  color: #0d6efd;
+  font-size: 1.35rem;
+}
+
+body.dark-mode .teacher-progress-page .tp-stat-icon,
+body.theme-dark .teacher-progress-page .tp-stat-icon,
+body[data-theme="dark"] .teacher-progress-page .tp-stat-icon,
+html[data-theme="dark"] .teacher-progress-page .tp-stat-icon,
+[data-bs-theme="dark"] .teacher-progress-page .tp-stat-icon {
+  background: rgba(96, 165, 250, 0.16);
+  color: #93c5fd;
+}
+
+.teacher-progress-page .form-control,
+.teacher-progress-page .form-select {
+  background-color: var(--tp-input-bg) !important;
+  color: var(--tp-input-text) !important;
+  border-color: var(--tp-input-border) !important;
+}
+
+.teacher-progress-page .form-control:focus,
+.teacher-progress-page .form-select:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 0.2rem rgba(96, 165, 250, 0.22) !important;
+}
+
+.teacher-progress-page .table-responsive {
+  background: var(--tp-card-bg) !important;
+}
+
+.teacher-progress-page .table,
+.teacher-progress-page table {
+  --bs-table-bg: var(--tp-table-row-bg) !important;
+  --bs-table-color: var(--tp-body-text) !important;
+  --bs-table-border-color: var(--tp-border) !important;
+  --bs-table-hover-bg: var(--tp-table-hover-bg) !important;
+  color: var(--tp-body-text) !important;
+  background: var(--tp-card-bg) !important;
+  margin-bottom: 0;
+}
+
+.teacher-progress-page .table thead,
+.teacher-progress-page .table-light,
+.teacher-progress-page thead.table-light {
+  --bs-table-bg: var(--tp-table-head-bg) !important;
+  --bs-table-color: var(--tp-main-text) !important;
+  --bs-table-border-color: var(--tp-border) !important;
+  background: var(--tp-table-head-bg) !important;
+  color: var(--tp-main-text) !important;
+}
+
+.teacher-progress-page .table thead th,
+.teacher-progress-page table thead th {
+  background: var(--tp-table-head-bg) !important;
+  color: var(--tp-main-text) !important;
+  border-color: var(--tp-border) !important;
+  font-weight: 800;
+}
+
+.teacher-progress-page .table tbody tr,
+.teacher-progress-page table tbody tr {
+  background: var(--tp-table-row-bg) !important;
+}
+
+.teacher-progress-page .table tbody tr:nth-child(even),
+.teacher-progress-page table tbody tr:nth-child(even) {
+  background: var(--tp-table-row-alt-bg) !important;
+}
+
+.teacher-progress-page .table tbody td,
+.teacher-progress-page table tbody td {
+  background: transparent !important;
+  color: var(--tp-body-text) !important;
+  border-color: var(--tp-border) !important;
+}
+
+.teacher-progress-page .table tbody tr:hover td,
+.teacher-progress-page table tbody tr:hover td {
+  background: var(--tp-table-hover-bg) !important;
+  color: var(--tp-main-text) !important;
+}
+
+.teacher-progress-page .progress {
+  background: var(--tp-progress-bg) !important;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.teacher-progress-page .progress-bar {
+  border-radius: 999px;
+  width: 0;
+  transition: width 0.35s ease;
+}
+
+body.dark-mode .teacher-progress-page .btn-outline-secondary,
+body.theme-dark .teacher-progress-page .btn-outline-secondary,
+body[data-theme="dark"] .teacher-progress-page .btn-outline-secondary,
+html[data-theme="dark"] .teacher-progress-page .btn-outline-secondary,
+[data-bs-theme="dark"] .teacher-progress-page .btn-outline-secondary {
+  color: #cbd5e1 !important;
+  border-color: #64748b !important;
+}
+
+body.dark-mode .teacher-progress-page .btn-outline-primary,
+body.theme-dark .teacher-progress-page .btn-outline-primary,
+body[data-theme="dark"] .teacher-progress-page .btn-outline-primary,
+html[data-theme="dark"] .teacher-progress-page .btn-outline-primary,
+[data-bs-theme="dark"] .teacher-progress-page .btn-outline-primary {
+  color: #93c5fd !important;
+  border-color: #60a5fa !important;
+}
+
+@media (max-width: 768px) {
+  .teacher-progress-page .tp-value {
+    font-size: 1.55rem !important;
+  }
+}
+</style>
+
+<div class="container-fluid py-4 teacher-progress-page">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1"><i class="bi bi-graph-up-arrow text-primary me-2"></i>Tiến độ học viên</h3>
+      <p class="text-muted mb-0">Theo dõi bài học, bài tập và trắc nghiệm của sinh viên trong khóa bạn phụ trách.</p>
+    </div>
+    <a href="/teacher/statistics/index" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-bar-chart-line me-1"></i> Thống kê tổng quan
+    </a>
+  </div>
+
+  {% if courses %}
+  <form method="get" action="/teacher/statistics/progress" class="tp-card rounded-4 mb-4">
+    <div class="card-body row g-3 align-items-end p-3 p-md-4">
+      <div class="col-md-8">
+        <label class="form-label fw-semibold">Chọn khóa học</label>
+        <select name="course_id" class="form-select" onchange="this.form.submit()">
+          {% for c in courses %}
+          <option value="{{ c.id }}" {% if selected_course and c.id == selected_course.id %}selected{% endif %}>
+            {{ c.course_code }} - {{ c.course_name }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button class="btn btn-primary w-100"><i class="bi bi-search me-1"></i>Xem tiến độ</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="tp-card rounded-4 h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div><div class="text-muted small">Học viên</div><div class="fs-3 fw-bold tp-value">{{ summary.total_students }}</div></div>
+          <span class="tp-stat-icon"><i class="bi bi-people-fill"></i></span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="tp-card rounded-4 h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div><div class="text-muted small">Tiến độ TB</div><div class="fs-3 fw-bold tp-value">{{ summary.avg_progress }}%</div></div>
+          <span class="tp-stat-icon"><i class="bi bi-speedometer2"></i></span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="tp-card rounded-4 h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div><div class="text-muted small">Cần theo dõi</div><div class="fs-3 fw-bold text-warning tp-value">{{ summary.need_attention }}</div></div>
+          <span class="tp-stat-icon"><i class="bi bi-exclamation-triangle"></i></span>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="tp-card rounded-4 h-100">
+        <div class="card-body d-flex justify-content-between align-items-start">
+          <div><div class="text-muted small">Học tốt</div><div class="fs-3 fw-bold text-success tp-value">{{ summary.completed_good }}</div></div>
+          <span class="tp-stat-icon"><i class="bi bi-award"></i></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tp-card rounded-4 overflow-hidden">
+    <div class="tp-card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div>{{ selected_course.course_name if selected_course else 'Danh sách học viên' }}</div>
+      <span class="badge bg-primary-subtle text-primary">{{ rows|length }} học viên</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Học viên</th>
+            <th>Bài học</th>
+            <th>Bài tập</th>
+            <th>Quiz</th>
+            <th>Điểm TB</th>
+            <th style="min-width:180px">Tiến độ</th>
+            <th>Trạng thái</th>
+            <th class="text-end">Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ r.full_name }}</div>
+              <div class="small text-muted">{{ r.mssv or r.email }}</div>
+            </td>
+            <td>{{ r.completed_lessons }}/{{ r.total_lessons }}</td>
+            <td>{{ r.submitted_assignments }}/{{ r.total_assignments }}</td>
+            <td>{{ r.done_quizzes }}/{{ r.total_quizzes }}</td>
+            <td>
+              <div class="small">BT: {{ r.avg_assignment_grade }}</div>
+              <div class="small">Quiz: {{ r.avg_quiz_score }}</div>
+            </td>
+            <td>
+              <div class="progress" style="height:10px">
+                <div
+                  class="progress-bar js-progress-bar"
+                  role="progressbar"
+                  data-progress="{{ r.overall_progress|default(0) }}"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0">
+                </div>
+              </div>
+              <div class="small text-muted mt-1">{{ r.overall_progress }}%</div>
+            </td>
+            <td><span class="badge text-bg-{{ r.status_class }}">{{ r.status_text }}</span></td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-primary rounded-pill" href="/teacher/statistics/progress/student/{{ r.student.id }}?course_id={{ selected_course.id }}">
+                Xem
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="8" class="text-center text-muted py-5">Khóa học này chưa có học viên.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="alert alert-info rounded-4 shadow-sm">Bạn chưa phụ trách khóa học nào.</div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".js-progress-bar[data-progress]").forEach(function (bar) {
+    var raw = parseFloat(bar.dataset.progress || "0");
+    var value = Math.max(0, Math.min(100, Number.isNaN(raw) ? 0 : raw));
+    bar.style.width = value + "%";
+    bar.setAttribute("aria-valuenow", String(value));
+  });
+});
+</script>
+{% endblock %}

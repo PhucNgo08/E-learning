@@ -18,6 +18,7 @@ from app.models.assignment_submission import AssignmentSubmission
 from app.models.quiz_attempt import QuizAttempt
 from app.models.notification import Notification
 from app.models.ai_chat_history import AIChatHistory
+from app.services.student.dashboard_service import get_continue_learning, get_dashboard_todo_summary
 
 router = APIRouter(prefix="/student", tags=["Student - Dashboard"])
 
@@ -182,6 +183,9 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
             or "/static/img/default_avatar.png"
         )
 
+        continue_learning = get_continue_learning(db, student.id)
+        todo_summary = get_dashboard_todo_summary(db, student.id)
+
         return templates["student"].TemplateResponse(
             "dashboard.html",
             {
@@ -191,6 +195,8 @@ async def get_student_dashboard(request: Request, db: Session = Depends(get_db))
                 "enrolled_courses": enrolled_courses,
                 "progress_stats": progress_stats,
                 "course_progress_list": course_progress_list,
+                "continue_learning": continue_learning,
+                "todo_summary": todo_summary,
                 "recent_lessons": recent_lessons,
                 "notifications": notifications,
                 "unread_notifications": unread_notifications,

@@ -1,5 +1,5 @@
 {% extends "layout_student.html" %}
-{% block title %}📄 Chi tiết bài nộp{% endblock %}
+{% block title %}Chi tiết bài nộp{% endblock %}
 {% block content %}
 
 <style>
@@ -445,6 +445,191 @@
     color: #e5e7eb;
   }
 
+
+  /* Bổ sung hỗ trợ sáng/tối theo nhiều layout: Bootstrap, class dark, dark-mode */
+  html[data-bs-theme="dark"],
+  body[data-bs-theme="dark"],
+  html.dark,
+  body.dark,
+  body.dark-mode,
+  body.theme-dark {
+    --asg-primary: #93c5fd;
+    --asg-primary-2: #c4b5fd;
+    --asg-success: #86efac;
+    --asg-warning: #fcd34d;
+    --asg-danger: #fca5a5;
+    --asg-text: #e5e7eb;
+    --asg-muted: #94a3b8;
+    --asg-line: rgba(148, 163, 184, .25);
+    --asg-soft: rgba(30, 41, 59, .86);
+    --asg-card: rgba(15, 23, 42, .92);
+    --asg-shadow: 0 18px 45px rgba(0, 0, 0, .32);
+  }
+
+  html[data-bs-theme="dark"] .a-hero,
+  html[data-bs-theme="dark"] .a-card,
+  html[data-bs-theme="dark"] .table-card,
+  html[data-bs-theme="dark"] .stat-card,
+  html[data-bs-theme="dark"] .empty-state,
+  body[data-bs-theme="dark"] .a-hero,
+  body[data-bs-theme="dark"] .a-card,
+  body[data-bs-theme="dark"] .table-card,
+  body[data-bs-theme="dark"] .stat-card,
+  body[data-bs-theme="dark"] .empty-state,
+  html.dark .a-hero,
+  html.dark .a-card,
+  html.dark .table-card,
+  html.dark .stat-card,
+  html.dark .empty-state,
+  body.dark .a-hero,
+  body.dark .a-card,
+  body.dark .table-card,
+  body.dark .stat-card,
+  body.dark .empty-state,
+  body.theme-dark .a-hero,
+  body.theme-dark .a-card,
+  body.theme-dark .table-card,
+  body.theme-dark .stat-card,
+  body.theme-dark .empty-state {
+    background: var(--asg-card);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  html[data-bs-theme="dark"] .a-title,
+  html[data-bs-theme="dark"] .stat-value,
+  body[data-bs-theme="dark"] .a-title,
+  body[data-bs-theme="dark"] .stat-value,
+  html.dark .a-title,
+  html.dark .stat-value,
+  body.dark .a-title,
+  body.dark .stat-value,
+  body.theme-dark .a-title,
+  body.theme-dark .stat-value {
+    color: var(--asg-primary);
+  }
+
+  html[data-bs-theme="dark"] .a-subtitle,
+  html[data-bs-theme="dark"] .stat-label,
+  html[data-bs-theme="dark"] .mini-muted,
+  html[data-bs-theme="dark"] .assignment-page .text-muted,
+  html[data-bs-theme="dark"] .assignment-page .form-text,
+  body[data-bs-theme="dark"] .a-subtitle,
+  body[data-bs-theme="dark"] .stat-label,
+  body[data-bs-theme="dark"] .mini-muted,
+  body[data-bs-theme="dark"] .assignment-page .text-muted,
+  body[data-bs-theme="dark"] .assignment-page .form-text,
+  html.dark .a-subtitle,
+  html.dark .stat-label,
+  html.dark .mini-muted,
+  html.dark .assignment-page .text-muted,
+  html.dark .assignment-page .form-text,
+  body.dark .a-subtitle,
+  body.dark .stat-label,
+  body.dark .mini-muted,
+  body.dark .assignment-page .text-muted,
+  body.dark .assignment-page .form-text,
+  body.theme-dark .a-subtitle,
+  body.theme-dark .stat-label,
+  body.theme-dark .mini-muted,
+  body.theme-dark .assignment-page .text-muted,
+  body.theme-dark .assignment-page .form-text {
+    color: var(--asg-muted) !important;
+  }
+
+  html[data-bs-theme="dark"] .info-box,
+  html[data-bs-theme="dark"] .file-box,
+  html[data-bs-theme="dark"] .attachment-card,
+  body[data-bs-theme="dark"] .info-box,
+  body[data-bs-theme="dark"] .file-box,
+  body[data-bs-theme="dark"] .attachment-card,
+  html.dark .info-box,
+  html.dark .file-box,
+  html.dark .attachment-card,
+  body.dark .info-box,
+  body.dark .file-box,
+  body.dark .attachment-card,
+  body.theme-dark .info-box,
+  body.theme-dark .file-box,
+  body.theme-dark .attachment-card {
+    background: var(--asg-soft);
+    border-color: var(--asg-line);
+    color: var(--asg-text);
+  }
+
+  html[data-bs-theme="dark"] .attachment-preview,
+  body[data-bs-theme="dark"] .attachment-preview,
+  html.dark .attachment-preview,
+  body.dark .attachment-preview,
+  body.theme-dark .attachment-preview {
+    background: rgba(30, 41, 59, .86);
+  }
+
+  html[data-bs-theme="dark"] .attachment-name,
+  body[data-bs-theme="dark"] .attachment-name,
+  html.dark .attachment-name,
+  body.dark .attachment-name,
+  body.theme-dark .attachment-name {
+    color: var(--asg-text);
+  }
+
+  html[data-bs-theme="dark"] .assignment-page .form-control,
+  html[data-bs-theme="dark"] .assignment-page .form-select,
+  body[data-bs-theme="dark"] .assignment-page .form-control,
+  body[data-bs-theme="dark"] .assignment-page .form-select,
+  html.dark .assignment-page .form-control,
+  html.dark .assignment-page .form-select,
+  body.dark .assignment-page .form-control,
+  body.dark .assignment-page .form-select,
+  body.theme-dark .assignment-page .form-control,
+  body.theme-dark .assignment-page .form-select {
+    background: rgba(15, 23, 42, .92);
+    color: var(--asg-text);
+    border-color: var(--asg-line);
+  }
+
+  html[data-bs-theme="dark"] .assignment-page .form-control::placeholder,
+  body[data-bs-theme="dark"] .assignment-page .form-control::placeholder,
+  html.dark .assignment-page .form-control::placeholder,
+  body.dark .assignment-page .form-control::placeholder,
+  body.theme-dark .assignment-page .form-control::placeholder {
+    color: #94a3b8;
+  }
+
+  html[data-bs-theme="dark"] .table thead th,
+  body[data-bs-theme="dark"] .table thead th,
+  html.dark .table thead th,
+  body.dark .table thead th,
+  body.theme-dark .table thead th {
+    background: rgba(30, 64, 175, .35);
+    color: #dbeafe;
+    border-color: rgba(147, 197, 253, .25);
+  }
+
+  html[data-bs-theme="dark"] .table-hover tbody tr:hover,
+  body[data-bs-theme="dark"] .table-hover tbody tr:hover,
+  html.dark .table-hover tbody tr:hover,
+  body.dark .table-hover tbody tr:hover,
+  body.theme-dark .table-hover tbody tr:hover {
+    background: rgba(30, 41, 59, .65);
+  }
+
+  html[data-bs-theme="dark"] .responsive-table tr,
+  body[data-bs-theme="dark"] .responsive-table tr,
+  html.dark .responsive-table tr,
+  body.dark .responsive-table tr,
+  body.theme-dark .responsive-table tr {
+    border-color: var(--asg-line);
+  }
+
+  html[data-bs-theme="dark"] .responsive-table td::before,
+  body[data-bs-theme="dark"] .responsive-table td::before,
+  html.dark .responsive-table td::before,
+  body.dark .responsive-table td::before,
+  body.theme-dark .responsive-table td::before {
+    color: #cbd5e1;
+  }
+
 </style>
 
 
@@ -476,7 +661,7 @@
       <div class="file-box text-pre-wrap mb-3">{{ submission.submission_text }}</div>
     {% endif %}
 
-    <h5 class="fw-bold text-primary">File đã nộp</h5>
+    <h5 class="fw-bold text-primary">Tệp đã nộp</h5>
     {% if submission.files %}
     <div class="attachment-grid">
       {% for f in submission.files %}
@@ -493,7 +678,7 @@
             {% else %}
               <div class="text-center p-4">
                 <i class="bi bi-file-earmark display-5 text-primary"></i>
-                <div class="mt-2 text-muted">Không xem trước trực tiếp</div>
+                <div class="mt-2 text-muted">Chưa hỗ trợ xem trước trực tiếp</div>
               </div>
             {% endif %}
           </div>
@@ -512,7 +697,7 @@
       {% endfor %}
     </div>
     {% else %}
-      <div class="file-box"><span class="text-muted">Không có file.</span></div>
+      <div class="file-box"><span class="text-muted">Không có tệp.</span></div>
     {% endif %}
   </div>
 </div>

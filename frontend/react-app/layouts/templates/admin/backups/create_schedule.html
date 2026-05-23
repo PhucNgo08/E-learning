@@ -35,17 +35,17 @@
 
     <form method="post" action="/admin/backups/schedule/create">
       <div class="mb-3">
-        <label class="form-label fw-semibold">Tên lịch backup</label>
+        <label class="form-label fw-semibold">Tên lịch sao lưu</label>
         <input type="text" class="form-control" name="schedule_name" required
-               placeholder="VD: Backup hàng ngày server"
+               placeholder="VD: Sao lưu máy chủ hằng ngày"
                value="{{ form_data.schedule_name if form_data else '' }}">
       </div>
 
       <div class="mb-3">
-        <label class="form-label fw-semibold">Loại backup</label>
+        <label class="form-label fw-semibold">Loại sao lưu</label>
         <select class="form-select" name="backup_type">
-          <option value="full" {% if not form_data or form_data.backup_type == 'full' %}selected{% endif %}>🔵 Full Backup</option>
-          <option value="incremental" {% if form_data and form_data.backup_type == 'incremental' %}selected{% endif %}>🟡 Incremental Backup</option>
+          <option value="full" {% if not form_data or form_data.backup_type == 'full' %}selected{% endif %}>🔵 Sao lưu toàn bộ</option>
+          <option value="incremental" {% if form_data and form_data.backup_type == 'incremental' %}selected{% endif %}>🟡 Sao lưu phần thay đổi</option>
         </select>
       </div>
 
@@ -60,9 +60,9 @@
 
       <div class="mb-3">
         <label class="form-label fw-semibold">
-          Giữ lại bản backup trong (ngày)
+          Giữ lại bản sao lưu trong (ngày)
           <i class="bi bi-info-circle text-muted" data-bs-toggle="tooltip"
-             title="Sau số ngày này backup cũ sẽ được xóa tự động."></i>
+             title="Sau số ngày này bản sao lưu cũ sẽ được xóa tự động."></i>
         </label>
         <input type="number" name="retention_days" class="form-control" min="1" max="365"
                value="{{ form_data.retention_days if form_data else 30 }}">

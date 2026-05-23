@@ -91,6 +91,88 @@ _mount_static_if_exists(
     "styles_legacy",
 )
 
+# =====================================================
+# VIETNAMESE DISPLAY HELPERS
+# =====================================================
+VI_STATUS_LABELS = {
+    "active": "Đang hoạt động",
+    "inactive": "Không hoạt động",
+    "suspended": "Tạm khóa",
+    "pending": "Đang chờ",
+    "pending_approval": "Chờ duyệt",
+    "approved": "Đã duyệt",
+    "rejected": "Đã từ chối",
+    "cancelled": "Đã hủy",
+    "completed": "Đã hoàn thành",
+    "in_progress": "Đang thực hiện",
+    "not_started": "Chưa bắt đầu",
+    "submitted": "Đã nộp",
+    "graded": "Đã chấm",
+    "late": "Nộp muộn",
+    "resubmitted": "Đã nộp lại",
+    "published": "Đã đăng",
+    "draft": "Bản nháp",
+    "archived": "Đã lưu trữ",
+    "planning": "Đang lên kế hoạch",
+    "open_for_enrollment": "Mở ghi danh",
+    "paid": "Đã thanh toán",
+    "failed": "Thất bại",
+    "success": "Thành công",
+    "verified": "Đã xác minh",
+    "issued": "Đã cấp",
+    "manual": "Thủ công",
+    "purchase": "Mua khóa học",
+    "auto": "Tự động",
+    "approval": "Cần duyệt",
+    "individual": "Cá nhân",
+    "group": "Nhóm",
+    "mandatory": "Bắt buộc",
+    "elective": "Tự chọn",
+    "beginner": "Cơ bản",
+    "intermediate": "Trung cấp",
+    "advanced": "Nâng cao",
+    "easy": "Dễ",
+    "medium": "Trung bình",
+    "hard": "Khó",
+    "practice": "Luyện tập",
+    "graded_quiz": "Tính điểm",
+    "survey": "Khảo sát",
+    "true_false": "Đúng/Sai",
+    "multiple_choice": "Trắc nghiệm",
+    "essay": "Tự luận",
+    "video": "Video",
+    "document": "Tài liệu",
+    "quiz": "Bài kiểm tra",
+    "assignment": "Bài tập",
+    "mixed": "Tổng hợp",
+}
+
+VI_ROLE_LABELS = {
+    "admin": "Quản trị viên",
+    "teacher": "Giảng viên",
+    "student": "Sinh viên",
+    "teaching_assistant": "Trợ giảng",
+    "prospective_student": "Học viên tiềm năng",
+}
+
+
+def vi_status_label(value):
+    if value is None:
+        return "Không rõ"
+    key = str(value).strip()
+    if not key:
+        return "Không rõ"
+    return VI_STATUS_LABELS.get(key.lower(), key.replace("_", " "))
+
+
+def vi_role_label(value):
+    if value is None:
+        return "Không rõ"
+    key = str(value).strip()
+    if not key:
+        return "Không rõ"
+    return VI_ROLE_LABELS.get(key.lower(), key.replace("_", " "))
+
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 app.templates = templates
 app.admin_templates = Jinja2Templates(directory=str(TEMPLATE_DIR / "admin"))
@@ -106,7 +188,12 @@ for env in [
     env.globals.update(
         now=datetime.now,
         app_env=settings.APP_ENV,
+        vi_status=vi_status_label,
+        vi_role=vi_role_label,
     )
+    env.filters["vi_status"] = vi_status_label
+    env.filters["vi_role"] = vi_role_label
+
 
 
 # =====================================================
@@ -129,7 +216,7 @@ async def serve_avatar(filename: str):
     if DEFAULT_AVATAR_PATH.exists():
         return FileResponse(DEFAULT_AVATAR_PATH)
 
-    return HTMLResponse("Avatar not found", status_code=404)
+    return HTMLResponse("Không tìm thấy ảnh đại diện", status_code=404)
 
 
 # =====================================================
@@ -408,6 +495,7 @@ from app.routers.admin.course_section import section_router  # noqa: E402
 from app.routers.admin.dashboard import dashboard_router  # noqa: E402
 from app.routers.admin.discussion_management import router as discussion_router  # noqa: E402
 from app.routers.admin.enrollment_management import enrollment_router  # noqa: E402
+from app.routers.admin.exams_compat import router as exams_compat_router  # noqa: E402
 
 from app.routers.admin.file_storage_management import router as file_storage_management_router  # noqa: E402
 from app.routers.admin.majors import router as majors_router  # noqa: E402
@@ -417,7 +505,7 @@ from app.routers.admin.quiz import router as quiz_router  # noqa: E402
 from app.routers.admin.quiz_template import router as quiz_template_router  # noqa: E402
 from app.routers.admin.report_management import report_router  # noqa: E402
 from app.routers.admin.settings import router as settings_router  # noqa: E402
-from app.routers.admin.statistics import statistics_router as admin_statistics_router  # noqa: E402
+from app.routers.admin.statistics import statistics_router  # noqa: E402
 from app.routers.admin.teacher_management import router as teacher_router  # noqa: E402
 from app.routers.admin.user_management import user_router  # noqa: E402
 from app.routers.admin.wallet_admin import router as admin_wallet_router  # noqa: E402
@@ -454,7 +542,7 @@ from app.routers.student.review_student import router as student_review_router  
 from app.routers.student.schedule_student import router as student_schedule_router  # noqa: E402
 from app.routers.student.student_dashboard import router as student_dashboard_router  # noqa: E402
 from app.routers.student.wallet_student import router as student_wallet_router  # noqa: E402
-
+from app.routers.student.todo_student import router as student_todo_router  # noqa: E402
 
 for group in [
     [login_router, register_router, logout_router, forgot_router, reset_router, social_login_router],
@@ -466,6 +554,7 @@ for group in [
         category_router,
         class_router,
         enrollment_router,
+        exams_compat_router,
         backup_router,
 
         report_router,
@@ -473,7 +562,7 @@ for group in [
         majors_router,
         academic_year_router,
         settings_router,
-        admin_statistics_router,
+        statistics_router,
         teacher_router,
         assignment_router,
         course_material_router,
@@ -517,6 +606,7 @@ for group in [
         chat_ai_router,
         student_cart_router,
         student_wallet_router,
+        student_todo_router,
     ],
 ]:
     for router in group:

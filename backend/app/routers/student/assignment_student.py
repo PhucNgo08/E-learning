@@ -402,10 +402,8 @@ async def submit_page(
     )
 
     # Lấy lỗi đã lưu trong session nếu có.
-    error_message = request.session.get("assignment_error")
-    submitted_text = request.session.get("assignment_submitted_text") or ""
-    request.session["assignment_error"] = None
-    request.session["assignment_submitted_text"] = None
+    error_message = request.session.pop("assignment_error", None)
+    submitted_text = request.session.pop("assignment_submitted_text", "") or ""
 
     return _render_submit_page(
         request,

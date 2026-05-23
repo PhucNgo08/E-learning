@@ -145,6 +145,100 @@
     object-fit: cover;
   }
 
+
+  body.dark-mode .admin-course-create-page,
+  html[data-bs-theme="dark"] .admin-course-create-page,
+  body[data-theme="dark"] .admin-course-create-page {
+    --surface: rgba(15, 23, 42, 0.94);
+    --surface-soft: rgba(30, 41, 59, 0.86);
+    --border-color: rgba(148, 163, 184, 0.25);
+    --text-main: #e5e7eb;
+    --text-muted: #cbd5e1;
+    --role-primary: #60a5fa;
+    --role-gradient: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+    --shadow-sm: 0 18px 45px rgba(0, 0, 0, 0.34);
+    --shadow-md: 0 22px 58px rgba(0, 0, 0, 0.42);
+  }
+
+  body.dark-mode .admin-course-create-page .admin-form-card,
+  html[data-bs-theme="dark"] .admin-course-create-page .admin-form-card,
+  body[data-theme="dark"] .admin-course-create-page .admin-form-card {
+    background: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-main);
+  }
+
+  body.dark-mode .admin-course-create-page .course-step-tabs,
+  html[data-bs-theme="dark"] .admin-course-create-page .course-step-tabs,
+  body[data-theme="dark"] .admin-course-create-page .course-step-tabs,
+  body.dark-mode .admin-course-create-page .step-actions,
+  html[data-bs-theme="dark"] .admin-course-create-page .step-actions,
+  body[data-theme="dark"] .admin-course-create-page .step-actions {
+    border-color: var(--border-color);
+  }
+
+  body.dark-mode .admin-course-create-page .course-step-tabs .nav-link,
+  html[data-bs-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link,
+  body[data-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link {
+    color: #cbd5e1;
+    background: rgba(30, 41, 59, 0.92);
+  }
+
+  body.dark-mode .admin-course-create-page .course-step-tabs .nav-link:hover,
+  html[data-bs-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link:hover,
+  body[data-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link:hover {
+    color: #bfdbfe;
+    background: rgba(37, 99, 235, 0.22);
+  }
+
+  body.dark-mode .admin-course-create-page .course-step-tabs .nav-link.active,
+  html[data-bs-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link.active,
+  body[data-theme="dark"] .admin-course-create-page .course-step-tabs .nav-link.active {
+    color: #ffffff !important;
+    background: #2563eb;
+  }
+
+  body.dark-mode .admin-course-create-page .form-control,
+  body.dark-mode .admin-course-create-page .form-select,
+  body.dark-mode .admin-course-create-page textarea,
+  html[data-bs-theme="dark"] .admin-course-create-page .form-control,
+  html[data-bs-theme="dark"] .admin-course-create-page .form-select,
+  html[data-bs-theme="dark"] .admin-course-create-page textarea,
+  body[data-theme="dark"] .admin-course-create-page .form-control,
+  body[data-theme="dark"] .admin-course-create-page .form-select,
+  body[data-theme="dark"] .admin-course-create-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .admin-course-create-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .admin-course-create-page .form-control::placeholder,
+  body[data-theme="dark"] .admin-course-create-page .form-control::placeholder,
+  body.dark-mode .admin-course-create-page textarea::placeholder,
+  html[data-bs-theme="dark"] .admin-course-create-page textarea::placeholder,
+  body[data-theme="dark"] .admin-course-create-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .admin-course-create-page .thumbnail-preview,
+  html[data-bs-theme="dark"] .admin-course-create-page .thumbnail-preview,
+  body[data-theme="dark"] .admin-course-create-page .thumbnail-preview,
+  body.dark-mode .admin-course-create-page .step-progress-wrap,
+  html[data-bs-theme="dark"] .admin-course-create-page .step-progress-wrap,
+  body[data-theme="dark"] .admin-course-create-page .step-progress-wrap {
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .admin-course-create-page .btn-outline-light,
+  html[data-bs-theme="dark"] .admin-course-create-page .btn-outline-light,
+  body[data-theme="dark"] .admin-course-create-page .btn-outline-light {
+    color: #f8fafc;
+    border-color: rgba(248, 250, 252, 0.65);
+  }
+
   @media (max-width: 768px) {
     .admin-page-header,
     .admin-form-card {
@@ -236,12 +330,12 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="tab-limit-btn" data-bs-toggle="tab" data-bs-target="#tab-limit" type="button" role="tab">
-          <i class="bi bi-4-circle me-1"></i>Giới hạn & Enroll
+          <i class="bi bi-4-circle me-1"></i>Giới hạn & đăng ký
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="tab-thumb-btn" data-bs-toggle="tab" data-bs-target="#tab-thumb" type="button" role="tab">
-          <i class="bi bi-5-circle me-1"></i>Ảnh Thumbnail
+          <i class="bi bi-5-circle me-1"></i>Ảnh đại diện
         </button>
       </li>
     </ul>
@@ -261,8 +355,8 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Môn học / Subject <span class="required-mark">*</span></label>
-              <input type="text" class="form-control" name="subject" required data-auto-next-required placeholder="VD: Python, Database, UI/UX" value="{{ f.get('subject','') }}">
+              <label class="form-label">Môn học <span class="required-mark">*</span></label>
+              <input type="text" class="form-control" name="subject" required data-auto-next-required placeholder="VD: Python, Cơ sở dữ liệu, Thiết kế giao diện" value="{{ f.get('subject','') }}">
             </div>
 
             <div class="col-md-4">
@@ -281,7 +375,7 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Cấp độ lớp / Grade</label>
+              <label class="form-label">Cấp độ lớp</label>
               <input type="number" class="form-control" name="grade_level" min="1" value="{{ f.get('grade_level','') }}" placeholder="VD: 1">
             </div>
 
@@ -303,8 +397,10 @@
               <select class="form-select" name="teacher_id" required data-auto-next-required>
                 <option value="">-- Chọn giảng viên --</option>
                 {% set teacher = f.get('teacher_id','') %}
-                {% for t in teachers %}
-                <option value="{{ t.id }}" {{ 'selected' if (teacher|string)==(t.id|string) else '' }}>{{ t.full_name }}</option>
+                {% for t in teachers or [] %}
+                <option value="{{ t.id }}" {{ 'selected' if (teacher|string)==(t.id|string) else '' }}>{{ t.full_name if t.full_name is defined and t.full_name else (t.username if t.username is defined and t.username else "Không rõ giảng viên") }}</option>
+                {% else %}
+                <option value="" disabled>Chưa có giảng viên</option>
                 {% endfor %}
               </select>
             </div>
@@ -314,8 +410,10 @@
               <select class="form-select" name="academic_year_id" required data-auto-next-required>
                 <option value="">-- Chọn năm học --</option>
                 {% set year = f.get('academic_year_id','') %}
-                {% for y in years %}
+                {% for y in years or [] %}
                 <option value="{{ y.id }}" {{ 'selected' if (year|string)==(y.id|string) else '' }}>{{ y.year_name }}</option>
+                {% else %}
+                <option value="" disabled>Chưa có năm học</option>
                 {% endfor %}
               </select>
             </div>
@@ -325,8 +423,10 @@
               <select class="form-select" name="major_id" required data-auto-next-required>
                 <option value="">-- Chọn ngành --</option>
                 {% set major = f.get('major_id','') %}
-                {% for m in majors %}
+                {% for m in majors or [] %}
                 <option value="{{ m.id }}" {{ 'selected' if (major|string)==(m.id|string) else '' }}>{{ m.major_name }}</option>
+                {% else %}
+                <option value="" disabled>Chưa có ngành học</option>
                 {% endfor %}
               </select>
             </div>
@@ -342,7 +442,7 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Kỳ học / Semester <span class="required-mark">*</span></label>
+              <label class="form-label">Kỳ học <span class="required-mark">*</span></label>
               <input type="number" class="form-control" name="semester" min="1" max="10" required data-auto-next-required value="{{ f.get('semester','') }}" placeholder="VD: 1">
             </div>
           </div>
@@ -360,9 +460,9 @@
                 {% set ctype = f.get('course_type','mandatory') %}
                 <option value="mandatory" {{ 'selected' if ctype=='mandatory' else '' }}>Bắt buộc</option>
                 <option value="elective" {{ 'selected' if ctype=='elective' else '' }}>Tự chọn</option>
-                <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Workshop</option>
-                <option value="online" {{ 'selected' if ctype=='online' else '' }}>Online</option>
-                <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Hybrid</option>
+                <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Chuyên đề</option>
+                <option value="online" {{ 'selected' if ctype=='online' else '' }}>Trực tuyến</option>
+                <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Kết hợp</option>
               </select>
             </div>
 
@@ -377,7 +477,7 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label">Môn tiên quyết / Prerequisites</label>
+              <label class="form-label">Môn tiên quyết</label>
               <textarea class="form-control" name="prerequisites" rows="2" placeholder="VD: Đã học HTML/CSS cơ bản">{{ f.get('prerequisites','') }}</textarea>
             </div>
 
@@ -403,12 +503,12 @@
 
         <div class="tab-pane fade" id="tab-limit" role="tabpanel" aria-labelledby="tab-limit-btn" data-step="4">
           <div class="form-section-title">
-            <i class="bi bi-person-check me-1"></i>Giới hạn & Enroll
+            <i class="bi bi-person-check me-1"></i>Giới hạn & đăng ký
           </div>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Giá khóa học / VNĐ <span class="required-mark">*</span></label>
+              <label class="form-label">Giá khóa học (VNĐ) <span class="required-mark">*</span></label>
               <input type="number" class="form-control" name="price" min="0" step="1000" required data-auto-next-required value="{{ f.get('price','0') }}" placeholder="VD: 499000">
             </div>
 
@@ -428,7 +528,7 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Công khai / Public <span class="required-mark">*</span></label>
+              <label class="form-label">Hiển thị công khai <span class="required-mark">*</span></label>
               <select class="form-select" name="is_public" required data-auto-next-required>
                 {% set pub = f.get('is_public','0') %}
                 <option value="0" {{ 'selected' if pub=='0' else '' }}>Không</option>
@@ -440,12 +540,12 @@
 
         <div class="tab-pane fade" id="tab-thumb" role="tabpanel" aria-labelledby="tab-thumb-btn" data-step="5">
           <div class="form-section-title">
-            <i class="bi bi-image me-1"></i>Ảnh Thumbnail
+            <i class="bi bi-image me-1"></i>Ảnh đại diện
           </div>
 
           <div class="row g-3 align-items-start">
             <div class="col-md-6">
-              <label class="form-label">Ảnh đại diện / Thumbnail</label>
+              <label class="form-label">Ảnh đại diện khóa học</label>
               <input type="file" class="form-control" name="thumbnail" id="thumbnailInput" accept="image/jpeg,image/png,image/gif,image/webp">
               <p class="form-hint mt-2 mb-0">Hỗ trợ: JPG, PNG, GIF, WEBP. Nên dùng ảnh tỷ lệ 16:9.</p>
             </div>
@@ -743,7 +843,7 @@
         }
 
         const imageUrl = URL.createObjectURL(file);
-        thumbnailPreview.innerHTML = `<img src="${imageUrl}" alt="Thumbnail preview">`;
+        thumbnailPreview.innerHTML = `<img src="${imageUrl}" alt="Xem trước ảnh đại diện">`;
       });
     }
 

@@ -142,7 +142,7 @@
     </a>
 
     {% if not progress or progress.progress_status != "completed" %}
-    <form action="/student/lesson/complete/{{ lesson.id }}" method="post">
+    <form id="completeLessonForm" action="/student/lesson/complete/{{ lesson.id }}" method="post">
       <button class="btn btn-success shadow-sm" type="submit">
         <i class="bi bi-check-circle-fill"></i> Đánh dấu hoàn thành
       </button>
@@ -155,6 +155,12 @@
   </div>
 
 </div>
+
+<div id="lessonProgressConfig"
+     data-can-save-progress="{{ '1' if enrolled or purchased else '0' }}"
+     data-lesson-id="{{ lesson.id }}"
+     data-lesson-duration-seconds="{{ (lesson.duration_minutes or 0) * 60 }}"
+     hidden></div>
 
 <style>
 .fade-in {
@@ -285,5 +291,60 @@ function showCorrectAnswers() {
   const btn = document.getElementById("submitQuizBtn");
   if (btn) btn.style.display = "none";
 }
+
+
+(function initAutoSaveLessonProgress() {
+  const configEl = document.getElementById("lessonProgressConfig");
+  if (!configEl) return;
+
+  const canSaveProgress = configEl.dataset.canSaveProgress === "1";
+  const lessonId = configEl.dataset.lessonId || "";
+  const rawDuration = Number(configEl.dataset.lessonDurationSeconds || 0);
+  const lessonDurationSeconds = Math.max(60, rawDuration || 0);
+
+  if (!canSaveProgress || !lessonId) return;
+
+  let lastSavedAt = Date.now();
+  const startedAt = Date.now();
+
+  function saveProgress(forceComplete = false) {
+    const now = Date.now();
+    const elapsedSeconds = Math.max(1, Math.floor((now - startedAt) / 1000));
+    const deltaSeconds = Math.max(1, Math.floor((now - lastSavedAt) / 1000));
+    lastSavedAt = now;
+
+    const completion = forceComplete
+      ? 100
+      : Math.min(99, Math.floor((elapsedSeconds / lessonDurationSeconds) * 100));
+
+    const formData = new FormData();
+    formData.append("position_seconds", String(Math.min(elapsedSeconds, lessonDurationSeconds)));
+    formData.append("completion_percentage", String(completion));
+    formData.append("duration_seconds", String(deltaSeconds));
+
+    if (navigator.sendBeacon && !forceComplete) {
+      navigator.sendBeacon("/student/lesson/progress/" + encodeURIComponent(lessonId), formData);
+      return;
+    }
+
+    fetch("/student/lesson/progress/" + encodeURIComponent(lessonId), {
+      method: "POST",
+      body: formData,
+      keepalive: true
+    }).catch(() => {});
+  }
+
+  const intervalId = setInterval(() => saveProgress(false), 30000);
+
+  window.addEventListener("beforeunload", () => {
+    clearInterval(intervalId);
+    saveProgress(false);
+  });
+
+  const completeForm = document.getElementById("completeLessonForm");
+  if (completeForm) {
+    completeForm.addEventListener("submit", () => saveProgress(true));
+  }
+})();
 </script>
 {% endblock %}

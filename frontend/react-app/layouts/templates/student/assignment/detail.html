@@ -1,358 +1,117 @@
 {% extends "layout_student.html" %}
-{% block title %}📄 Chi tiết bài tập{% endblock %}
+{% block title %}Chi tiết bài tập{% endblock %}
 {% block content %}
 
 <style>
   :root {
-    --asg-primary: #2563eb;
-    --asg-primary-2: #7c3aed;
-    --asg-success: #16a34a;
-    --asg-warning: #f59e0b;
-    --asg-danger: #dc2626;
-    --asg-text: #0f172a;
-    --asg-muted: #64748b;
-    --asg-line: #e5e7eb;
-    --asg-soft: #f8fafc;
-    --asg-card: rgba(255, 255, 255, 0.96);
-    --asg-shadow: 0 18px 45px rgba(15, 23, 42, .09);
+    --bt-primary: #2563eb;
+    --bt-primary-soft: rgba(37, 99, 235, .11);
+    --bt-success: #16a34a;
+    --bt-warning: #f59e0b;
+    --bt-danger: #dc2626;
+    --bt-text: #0f172a;
+    --bt-muted: #64748b;
+    --bt-border: #e2e8f0;
+    --bt-soft: #f8fafc;
+    --bt-card: #ffffff;
+    --bt-shadow: 0 14px 34px rgba(15, 23, 42, .08);
   }
 
-  .assignment-page {
-    max-width: 1280px;
+  .assignment-detail-page {
+    max-width: 1180px;
     margin: 0 auto;
+    color: var(--bt-text);
   }
 
-  .a-hero,
-  .a-card,
-  .table-card,
-  .stat-card,
-  .empty-state {
-    border: 1px solid rgba(226, 232, 240, .95);
-    background: var(--asg-card);
-    box-shadow: var(--asg-shadow);
+  .assignment-hero,
+  .assignment-card,
+  .assignment-info-box,
+  .attachment-card,
+  .empty-attachment {
+    background: var(--bt-card);
+    border: 1px solid var(--bt-border);
+    box-shadow: var(--bt-shadow);
   }
 
-  .a-hero {
-    position: relative;
-    overflow: hidden;
-    border-radius: 28px;
-    padding: 26px;
-    margin-bottom: 22px;
-  }
-
-  .a-hero::before {
-    content: "";
-    position: absolute;
-    inset: 0;
+  .assignment-hero {
+    border-radius: 22px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
     background:
-      radial-gradient(circle at top left, rgba(37, 99, 235, .15), transparent 32%),
-      radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
-    pointer-events: none;
+      radial-gradient(circle at top left, rgba(37, 99, 235, .14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(124, 58, 237, .12), transparent 36%),
+      var(--bt-card);
   }
 
-  .a-hero > * {
-    position: relative;
-    z-index: 1;
-  }
-
-  .a-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+  .assignment-title {
+    color: var(--bt-primary);
     font-weight: 850;
-    color: var(--asg-primary);
     margin: 0;
-    letter-spacing: -.02em;
-    line-height: 1.25;
+    line-height: 1.3;
     word-break: break-word;
   }
 
-  .a-subtitle {
-    color: var(--asg-muted);
-    margin: 8px 0 0;
-    line-height: 1.55;
+  .assignment-subtitle {
+    color: var(--bt-muted);
+    margin-top: 6px;
+    margin-bottom: 0;
   }
 
-  .a-actions,
-  .action-buttons,
-  .page-actions {
+  .assignment-actions {
     display: flex;
-    flex-wrap: wrap;
     gap: 10px;
-    justify-content: flex-end;
+    flex-wrap: wrap;
     align-items: center;
+    justify-content: flex-end;
   }
 
-  .a-card {
-    border-radius: 24px;
+  .assignment-card {
+    border-radius: 22px;
     padding: 22px;
   }
 
-  .stat-grid {
+  .assignment-info-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
     margin-bottom: 18px;
   }
 
-  .stat-card {
-    border-radius: 22px;
-    padding: 17px 18px;
-    transition: .18s ease;
-  }
-
-  .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 42px rgba(15, 23, 42, .11);
-  }
-
-  .stat-label {
-    color: var(--asg-muted);
-    font-size: .88rem;
-    font-weight: 700;
-  }
-
-  .stat-value {
-    margin-top: 5px;
-    font-size: 1.65rem;
-    font-weight: 850;
-    color: #1d4ed8;
-    line-height: 1.15;
-  }
-
-  .tool-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 14px;
-    align-items: center;
-  }
-
-  .tool-row .form-control,
-  .tool-row .form-select {
-    max-width: 310px;
-    border-radius: 14px;
-  }
-
-  .form-control,
-  .form-select {
-    border-radius: 14px;
-    border-color: #dbe3ef;
-  }
-
-  .form-control:focus,
-  .form-select:focus {
-    border-color: #93c5fd;
-    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
-  }
-
-  .btn {
-    border-radius: 13px;
-    font-weight: 700;
-  }
-
-  .table-card {
-    border-radius: 24px;
-    overflow: hidden;
-  }
-
-  .table {
-    margin-bottom: 0;
-  }
-
-  .table thead th {
-    background: linear-gradient(180deg, #eff6ff, #e0edff);
-    color: #1e40af;
-    font-weight: 850;
-    white-space: nowrap;
-    border-bottom: 1px solid #bfdbfe;
-    vertical-align: middle;
-  }
-
-  .table tbody td {
-    vertical-align: middle;
-  }
-
-  .table-hover tbody tr:hover {
-    background: #f8fbff;
-  }
-
-  .info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
-  }
-
-  .info-box,
-  .file-box {
-    border-radius: 18px;
-    background: var(--asg-soft);
-    border: 1px solid var(--asg-line);
+  .assignment-info-box {
+    border-radius: 16px;
     padding: 14px 16px;
+    box-shadow: none;
+    background: #fbfdff;
   }
 
-  .file-box {
-    line-height: 1.65;
+  .assignment-info-label {
+    display: block;
+    color: var(--bt-text);
+    font-weight: 800;
+    margin-bottom: 5px;
   }
 
-  .status-badge,
-  .badge {
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-weight: 750;
+  .assignment-section-title {
+    color: var(--bt-primary);
+    font-weight: 850;
+    margin: 0 0 10px;
   }
 
-  .text-pre-wrap {
+  .assignment-description {
+    border: 1px solid var(--bt-border);
+    background: var(--bt-soft);
+    border-radius: 16px;
+    padding: 18px;
+    min-height: 120px;
+    line-height: 1.7;
     white-space: pre-wrap;
     word-break: break-word;
   }
 
-  .empty-state {
-    border-radius: 24px;
-    padding: 34px 20px;
-    text-align: center;
-  }
-
-  .mini-muted {
-    color: var(--asg-muted);
-    font-size: .9rem;
-  }
-
-  .progress-thin {
-    height: 9px;
+  .badge {
     border-radius: 999px;
-    overflow: hidden;
-  }
-
-  img,
-  video,
-  canvas {
-    max-width: 100%;
-    height: auto;
-  }
-
-  body.dark-mode .a-hero,
-  body.dark-mode .a-card,
-  body.dark-mode .table-card,
-  body.dark-mode .stat-card,
-  body.dark-mode .empty-state {
-    background: rgba(15, 23, 42, .90);
-    border-color: rgba(148, 163, 184, .22);
-    color: #e5e7eb;
-  }
-
-  body.dark-mode .a-title,
-  body.dark-mode .stat-value {
-    color: #93c5fd;
-  }
-
-  body.dark-mode .a-subtitle,
-  body.dark-mode .stat-label,
-  body.dark-mode .mini-muted {
-    color: #94a3b8;
-  }
-
-  body.dark-mode .info-box,
-  body.dark-mode .file-box {
-    background: rgba(30, 41, 59, .86);
-    border-color: rgba(148, 163, 184, .25);
-    color: #e5e7eb;
-  }
-
-  body.dark-mode .table thead th {
-    background: rgba(30, 64, 175, .35);
-    color: #dbeafe;
-    border-color: rgba(147, 197, 253, .25);
-  }
-
-  body.dark-mode .table-hover tbody tr:hover {
-    background: rgba(30, 41, 59, .65);
-  }
-
-  @media (max-width: 992px) {
-    .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-
-  @media (max-width: 768px) {
-    .assignment-page {
-      padding-left: 10px !important;
-      padding-right: 10px !important;
-    }
-
-    .a-hero,
-    .a-card {
-      padding: 18px;
-      border-radius: 22px;
-    }
-
-    .a-title {
-      font-size: 1.25rem;
-    }
-
-    .a-actions,
-    .action-buttons,
-    .page-actions {
-      justify-content: flex-start;
-      width: 100%;
-    }
-
-    .a-actions .btn,
-    .action-buttons .btn,
-    .page-actions .btn {
-      width: 100%;
-    }
-
-    .stat-grid,
-    .info-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .tool-row .form-control,
-    .tool-row .form-select {
-      max-width: none;
-      width: 100%;
-    }
-
-    .responsive-table thead {
-      display: none;
-    }
-
-    .responsive-table tbody,
-    .responsive-table tr,
-    .responsive-table td {
-      display: block;
-      width: 100%;
-    }
-
-    .responsive-table tr {
-      border-bottom: 1px solid #e5e7eb;
-      padding: 10px;
-    }
-
-    .responsive-table td {
-      border: 0 !important;
-      padding: 7px 4px !important;
-    }
-
-    .responsive-table td::before {
-      content: attr(data-label);
-      display: block;
-      font-weight: 850;
-      color: #475569;
-      margin-bottom: 2px;
-    }
-  }
-
-  @media (orientation: landscape) and (max-height: 540px) {
-    .a-hero,
-    .a-card {
-      padding: 14px;
-    }
-
-    .assignment-page {
-      padding-top: 10px !important;
-      padding-bottom: 10px !important;
-    }
+    padding: 6px 10px;
+    font-weight: 750;
   }
 
   .attachment-grid {
@@ -362,52 +121,100 @@
   }
 
   .attachment-card {
-    border: 1px solid var(--asg-line);
     border-radius: 18px;
-    background: #fff;
     overflow: hidden;
-    box-shadow: 0 10px 26px rgba(15, 23, 42, .07);
+    display: flex;
+    flex-direction: column;
+    min-height: 300px;
   }
 
   .attachment-preview {
-    background: #f1f5f9;
-    min-height: 180px;
+    height: 150px;
+    overflow: hidden;
+    background: #eef4fb;
+    border-bottom: 1px solid var(--bt-border);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
   }
 
   .attachment-preview img {
     width: 100%;
-    max-height: 420px;
+    height: 100%;
     object-fit: contain;
     display: block;
     cursor: zoom-in;
+    background: #f8fafc;
   }
 
-  .attachment-preview iframe,
-  .attachment-preview video {
-    width: 100%;
-    height: 360px;
-    border: 0;
-    background: #fff;
+  .attachment-file-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 18px;
+    background: rgba(37, 99, 235, .12);
+    color: var(--bt-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .attachment-preview-note {
+    color: var(--bt-muted);
+    font-size: .9rem;
+    text-align: center;
+    padding: 0 10px;
   }
 
   .attachment-body {
-    padding: 12px 14px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .attachment-name {
-    font-weight: 800;
-    color: var(--asg-text);
+    font-weight: 850;
+    color: var(--bt-text);
     word-break: break-word;
+    line-height: 1.35;
+  }
+
+  .attachment-type {
+    color: var(--bt-muted);
+    font-size: .88rem;
+    margin-top: 5px;
   }
 
   .attachment-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 10px;
+    margin-top: auto;
+    padding-top: 12px;
+  }
+
+  .attachment-actions .btn {
+    border-radius: 999px;
+    font-weight: 750;
+  }
+
+  .submission-box {
+    border: 1px solid rgba(22, 163, 74, .25);
+    background: rgba(22, 163, 74, .06);
+    border-radius: 16px;
+    padding: 15px 16px;
+    line-height: 1.7;
+  }
+
+  .empty-attachment {
+    border-radius: 16px;
+    padding: 18px;
+    color: var(--bt-muted);
+    box-shadow: none;
+    background: var(--bt-soft);
   }
 
   .image-modal {
@@ -432,46 +239,206 @@
     background: #fff;
   }
 
-  body.dark-mode .attachment-card {
-    background: rgba(15, 23, 42, .92);
-    border-color: rgba(148, 163, 184, .25);
-  }
-
-  body.dark-mode .attachment-preview {
-    background: rgba(30, 41, 59, .86);
-  }
-
-  body.dark-mode .attachment-name {
+  body.dark-mode .assignment-detail-page,
+  body.dark .assignment-detail-page,
+  body.theme-dark .assignment-detail-page,
+  html.dark .assignment-detail-page,
+  html[data-bs-theme="dark"] .assignment-detail-page,
+  body[data-bs-theme="dark"] .assignment-detail-page {
     color: #e5e7eb;
   }
 
+  body.dark-mode .assignment-hero,
+  body.dark-mode .assignment-card,
+  body.dark-mode .assignment-info-box,
+  body.dark-mode .attachment-card,
+  body.dark-mode .empty-attachment,
+  body.dark .assignment-hero,
+  body.dark .assignment-card,
+  body.dark .assignment-info-box,
+  body.dark .attachment-card,
+  body.dark .empty-attachment,
+  body.theme-dark .assignment-hero,
+  body.theme-dark .assignment-card,
+  body.theme-dark .assignment-info-box,
+  body.theme-dark .attachment-card,
+  body.theme-dark .empty-attachment,
+  html.dark .assignment-hero,
+  html.dark .assignment-card,
+  html.dark .assignment-info-box,
+  html.dark .attachment-card,
+  html.dark .empty-attachment,
+  html[data-bs-theme="dark"] .assignment-hero,
+  html[data-bs-theme="dark"] .assignment-card,
+  html[data-bs-theme="dark"] .assignment-info-box,
+  html[data-bs-theme="dark"] .attachment-card,
+  html[data-bs-theme="dark"] .empty-attachment,
+  body[data-bs-theme="dark"] .assignment-hero,
+  body[data-bs-theme="dark"] .assignment-card,
+  body[data-bs-theme="dark"] .assignment-info-box,
+  body[data-bs-theme="dark"] .attachment-card,
+  body[data-bs-theme="dark"] .empty-attachment {
+    background: rgba(15, 23, 42, .92);
+    border-color: rgba(148, 163, 184, .28);
+    color: #e5e7eb;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, .28);
+  }
+
+  body.dark-mode .assignment-hero,
+  body.dark .assignment-hero,
+  body.theme-dark .assignment-hero,
+  html.dark .assignment-hero,
+  html[data-bs-theme="dark"] .assignment-hero,
+  body[data-bs-theme="dark"] .assignment-hero {
+    background:
+      radial-gradient(circle at top left, rgba(59, 130, 246, .22), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(168, 85, 247, .16), transparent 36%),
+      rgba(15, 23, 42, .92);
+  }
+
+  body.dark-mode .assignment-title,
+  body.dark .assignment-title,
+  body.theme-dark .assignment-title,
+  html.dark .assignment-title,
+  html[data-bs-theme="dark"] .assignment-title,
+  body[data-bs-theme="dark"] .assignment-title,
+  body.dark-mode .assignment-section-title,
+  body.dark .assignment-section-title,
+  body.theme-dark .assignment-section-title,
+  html.dark .assignment-section-title,
+  html[data-bs-theme="dark"] .assignment-section-title,
+  body[data-bs-theme="dark"] .assignment-section-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .assignment-subtitle,
+  body.dark .assignment-subtitle,
+  body.theme-dark .assignment-subtitle,
+  html.dark .assignment-subtitle,
+  html[data-bs-theme="dark"] .assignment-subtitle,
+  body[data-bs-theme="dark"] .assignment-subtitle,
+  body.dark-mode .attachment-type,
+  body.dark .attachment-type,
+  body.theme-dark .attachment-type,
+  html.dark .attachment-type,
+  html[data-bs-theme="dark"] .attachment-type,
+  body[data-bs-theme="dark"] .attachment-type,
+  body.dark-mode .attachment-preview-note,
+  body.dark .attachment-preview-note,
+  body.theme-dark .attachment-preview-note,
+  html.dark .attachment-preview-note,
+  html[data-bs-theme="dark"] .attachment-preview-note,
+  body[data-bs-theme="dark"] .attachment-preview-note {
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .assignment-info-label,
+  body.dark .assignment-info-label,
+  body.theme-dark .assignment-info-label,
+  html.dark .assignment-info-label,
+  html[data-bs-theme="dark"] .assignment-info-label,
+  body[data-bs-theme="dark"] .assignment-info-label,
+  body.dark-mode .attachment-name,
+  body.dark .attachment-name,
+  body.theme-dark .attachment-name,
+  html.dark .attachment-name,
+  html[data-bs-theme="dark"] .attachment-name,
+  body[data-bs-theme="dark"] .attachment-name {
+    color: #f8fafc;
+  }
+
+  body.dark-mode .assignment-description,
+  body.dark .assignment-description,
+  body.theme-dark .assignment-description,
+  html.dark .assignment-description,
+  html[data-bs-theme="dark"] .assignment-description,
+  body[data-bs-theme="dark"] .assignment-description,
+  body.dark-mode .attachment-preview,
+  body.dark .attachment-preview,
+  body.theme-dark .attachment-preview,
+  html.dark .attachment-preview,
+  html[data-bs-theme="dark"] .attachment-preview,
+  body[data-bs-theme="dark"] .attachment-preview {
+    background: rgba(30, 41, 59, .86);
+    border-color: rgba(148, 163, 184, .28);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .submission-box,
+  body.dark .submission-box,
+  body.theme-dark .submission-box,
+  html.dark .submission-box,
+  html[data-bs-theme="dark"] .submission-box,
+  body[data-bs-theme="dark"] .submission-box {
+    background: rgba(22, 163, 74, .12);
+    border-color: rgba(74, 222, 128, .24);
+  }
+
+  @media (max-width: 768px) {
+    .assignment-detail-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .assignment-hero,
+    .assignment-card {
+      padding: 18px;
+      border-radius: 18px;
+    }
+
+    .assignment-title {
+      font-size: 1.25rem;
+    }
+
+    .assignment-actions {
+      justify-content: flex-start;
+      width: 100%;
+    }
+
+    .assignment-actions .btn {
+      width: 100%;
+    }
+
+    .assignment-info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .attachment-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 
-
-<div class="assignment-page px-2 px-md-4 py-3 py-md-4">
-  <div class="a-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+<div class="assignment-detail-page px-2 px-md-4 py-3 py-md-4">
+  <div class="assignment-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
-      <h3 class="a-title"><i class="bi bi-file-text me-2"></i>{{ assignment.title }}</h3>
-      <p class="a-subtitle">{{ assignment.course.course_name if assignment.course else 'Bài tập' }}</p>
+      <h3 class="assignment-title">
+        <i class="bi bi-file-earmark-text me-2"></i>{{ assignment.title }}
+      </h3>
+      <p class="assignment-subtitle">
+        {{ assignment.course.course_name if assignment.course else 'Bài tập' }}
+      </p>
     </div>
-    <div class="a-actions">
+
+    <div class="assignment-actions">
       <a href="/student/assignment/submit/{{ assignment.id }}" class="btn btn-primary">
-        <i class="bi bi-upload"></i> {{ 'Nộp lại' if my_submission else 'Nộp bài' }}
+        <i class="bi bi-upload me-1"></i>{{ 'Nộp lại' if my_submission else 'Nộp bài' }}
       </a>
       <a href="/student/assignment/list" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left"></i> Danh sách
+        <i class="bi bi-arrow-left me-1"></i>Danh sách bài tập
       </a>
     </div>
   </div>
 
-  <div class="a-card p-3 p-md-4">
-    <div class="info-grid mb-3">
-      <div class="info-box">
-        <strong>Hạn nộp:</strong><br>
-        {{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else '—' }}
+  <div class="assignment-card">
+    <div class="assignment-info-grid">
+      <div class="assignment-info-box">
+        <span class="assignment-info-label">Hạn nộp</span>
+        {{ assignment.due_date.strftime('%d/%m/%Y %H:%M') if assignment.due_date else 'Chưa đặt hạn nộp' }}
       </div>
-      <div class="info-box">
-        <strong>Trạng thái:</strong><br>
+
+      <div class="assignment-info-box">
+        <span class="assignment-info-label">Trạng thái</span>
         {% if my_submission %}
           {% if my_submission.status == 'graded' %}
             <span class="badge bg-success">Đã chấm</span>
@@ -488,56 +455,70 @@
       </div>
     </div>
 
-    <h5 class="fw-bold text-primary">Yêu cầu bài tập</h5>
-    <div class="file-box text-pre-wrap mb-3">
+    <h5 class="assignment-section-title">Yêu cầu bài tập</h5>
+    <div class="assignment-description mb-4">
       {{ assignment_description_clean or assignment.description or 'Không có mô tả.' }}
     </div>
 
-    {% if teacher_attachments %}
-    <h5 class="fw-bold text-primary mt-4">
-      <i class="bi bi-paperclip"></i> File đề bài đính kèm
+    <h5 class="assignment-section-title mt-4">
+      <i class="bi bi-paperclip me-1"></i>Tệp đề bài đính kèm
     </h5>
-    <div class="attachment-grid mb-4">
-      {% for file in teacher_attachments %}
-      <div class="attachment-card">
-        <div class="attachment-preview">
-          {% if file.is_image %}
-            <img src="{{ file.url }}" alt="{{ file.name }}" class="preview-image" data-full="{{ file.url }}">
-          {% elif file.is_pdf %}
-            <iframe src="{{ file.url }}" title="{{ file.name }}"></iframe>
-          {% elif file.is_video %}
-            <video src="{{ file.url }}" controls></video>
-          {% else %}
-            <div class="text-center p-4">
-              <i class="bi bi-file-earmark-arrow-down display-5 text-primary"></i>
-              <div class="mt-2 text-muted">Không xem trước trực tiếp</div>
+
+    {% if teacher_attachments %}
+      <div class="attachment-grid mb-4">
+        {% for file in teacher_attachments %}
+          <div class="attachment-card">
+            <div class="attachment-preview">
+              {% if file.is_image %}
+                <img src="{{ file.url }}" alt="{{ file.name }}" class="preview-image" data-full="{{ file.url }}">
+              {% elif file.is_pdf %}
+                <div class="text-center">
+                  <div class="attachment-file-icon"><i class="bi bi-file-earmark-pdf"></i></div>
+                  <div class="attachment-preview-note">Tệp PDF, bấm “Xem” để mở rõ hơn</div>
+                </div>
+              {% elif file.is_video %}
+                <div class="text-center">
+                  <div class="attachment-file-icon"><i class="bi bi-file-earmark-play"></i></div>
+                  <div class="attachment-preview-note">Tệp video, bấm “Xem” để mở</div>
+                </div>
+              {% else %}
+                <div class="text-center">
+                  <div class="attachment-file-icon"><i class="bi bi-file-earmark-arrow-down"></i></div>
+                  <div class="attachment-preview-note">Không xem trước trực tiếp</div>
+                </div>
+              {% endif %}
             </div>
-          {% endif %}
-        </div>
-        <div class="attachment-body">
-          <div class="attachment-name">{{ file.name }}</div>
-          <div class="text-muted small">Loại file: {{ file.ext|upper if file.ext else 'FILE' }}</div>
-          <div class="attachment-actions">
-            <a href="{{ file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-              <i class="bi bi-eye"></i> Xem
-            </a>
-            <a href="{{ file.url }}" download class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-download"></i> Tải
-            </a>
+
+            <div class="attachment-body">
+              <div class="attachment-name">{{ file.name }}</div>
+              <div class="attachment-type">
+                Loại tệp: {{ file.ext|upper if file.ext else 'TỆP' }}
+              </div>
+              <div class="attachment-actions">
+                <a href="{{ file.url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                  <i class="bi bi-eye me-1"></i>Xem
+                </a>
+                <a href="{{ file.url }}" download class="btn btn-sm btn-outline-secondary">
+                  <i class="bi bi-download me-1"></i>Tải về
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
+        {% endfor %}
       </div>
-      {% endfor %}
-    </div>
+    {% else %}
+      <div class="empty-attachment mb-4">
+        <i class="bi bi-info-circle me-1"></i>Bài tập này chưa có tệp đề bài đính kèm.
+      </div>
     {% endif %}
 
     {% if my_submission %}
-    <h5 class="fw-bold text-success">Bài nộp của bạn</h5>
-    <div class="file-box mb-3">
-      <div><strong>Thời gian:</strong> {{ my_submission.submission_time.strftime('%d/%m/%Y %H:%M') if my_submission.submission_time else '—' }}</div>
-      <div><strong>Điểm:</strong> {{ my_submission.grade if my_submission.grade is not none else 'Chưa chấm' }}</div>
-      <div><strong>Nhận xét:</strong> {{ my_submission.feedback or '—' }}</div>
-    </div>
+      <h5 class="assignment-section-title text-success">Bài nộp của bạn</h5>
+      <div class="submission-box">
+        <div><strong>Thời gian nộp:</strong> {{ my_submission.submission_time.strftime('%d/%m/%Y %H:%M') if my_submission.submission_time else '—' }}</div>
+        <div><strong>Điểm:</strong> {{ my_submission.grade if my_submission.grade is not none else 'Chưa chấm' }}</div>
+        <div><strong>Nhận xét:</strong> {{ my_submission.feedback or 'Chưa có nhận xét' }}</div>
+      </div>
     {% endif %}
   </div>
 </div>
@@ -547,18 +528,31 @@
 </div>
 
 <script>
-document.querySelectorAll(".preview-image").forEach(img => {
-  img.addEventListener("click", () => {
-    const modal = document.getElementById("imageModal");
-    modal.querySelector("img").src = img.dataset.full || img.src;
-    modal.classList.add("show");
-  });
-});
+  document.querySelectorAll(".preview-image").forEach((img) => {
+    img.addEventListener("click", () => {
+      const modal = document.getElementById("imageModal");
+      if (!modal) return;
+      modal.querySelector("img").src = img.dataset.full || img.src;
+      modal.classList.add("show");
+    });
 
-document.getElementById("imageModal")?.addEventListener("click", () => {
-  const modal = document.getElementById("imageModal");
-  modal.classList.remove("show");
-  modal.querySelector("img").src = "";
-});
+    img.addEventListener("error", () => {
+      const preview = img.closest(".attachment-preview");
+      if (!preview) return;
+      preview.innerHTML = `
+        <div class="text-center">
+          <div class="attachment-file-icon"><i class="bi bi-image"></i></div>
+          <div class="attachment-preview-note">Không tải được ảnh xem trước</div>
+        </div>
+      `;
+    });
+  });
+
+  document.getElementById("imageModal")?.addEventListener("click", () => {
+    const modal = document.getElementById("imageModal");
+    if (!modal) return;
+    modal.classList.remove("show");
+    modal.querySelector("img").src = "";
+  });
 </script>
 {% endblock %}

@@ -26,7 +26,7 @@ from app.config.paths import (
 )
 
 
-# backend/app. main.py đang mount /uploads vào app/uploads, nên file phải lưu ở đây.
+# backend/app/main.py mount /uploads vào app/uploads.
 APP_DIR = Path(__file__).resolve().parents[2]
 BACKEND_DIR = APP_DIR.parent
 UPLOAD_DIR = ensure_upload_dir(UPLOADS_BASE / "assignments")
@@ -552,7 +552,7 @@ def resolve_file_response_target(file_info: AssignmentFile | None) -> dict:
     else:
         file_path = Path(file_url)
         if not file_path.is_absolute():
-            # Hỗ trợ cả dữ liệu cũ: uploads/... hoặc đường dẫn tương đối backend/...
+            # Hỗ trợ dữ liệu cũ: uploads/... hoặc đường dẫn tương đối backend/app...
             candidate_app = (APP_DIR / file_url.lstrip("/\\")).resolve()
             candidate_backend = (BACKEND_DIR / file_url.lstrip("/\\")).resolve()
             file_path = candidate_app if candidate_app.exists() else candidate_backend

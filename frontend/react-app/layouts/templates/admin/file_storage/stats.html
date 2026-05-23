@@ -1,74 +1,422 @@
 {% extends "layout_admin.html" %}
-{% block title %}📊 Thống kê Lưu trữ{% endblock %}
+{% block title %}📊 Thống kê lưu trữ{% endblock %}
 {% block head_extra %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="fw-bold mb-0"><i class="bi bi-bar-chart"></i> Thống kê Lưu trữ</h4>
+
+<style>
+  .file-storage-page {
+    --fs-primary: #2563eb;
+    --fs-success: #16a34a;
+    --fs-danger: #dc2626;
+    --fs-warning: #f59e0b;
+    --fs-info: #0891b2;
+    --fs-text: #0f172a;
+    --fs-muted: #64748b;
+    --fs-line: #e2e8f0;
+    --fs-soft: #f8fafc;
+    --fs-card: rgba(255, 255, 255, 0.96);
+    --fs-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--fs-text);
+  }
+
+  .file-storage-page.file-storage-narrow {
+    max-width: 760px;
+  }
+
+  .file-storage-page .fs-hero,
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    box-shadow: var(--fs-shadow);
+    border-radius: 24px;
+  }
+
+  .file-storage-page .fs-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .file-storage-page .fs-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 38%);
+    pointer-events: none;
+  }
+
+  .file-storage-page .fs-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-storage-page .fs-title {
+    color: var(--fs-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .file-storage-page .fs-subtitle,
+  .file-storage-page .text-muted,
+  .file-storage-page .form-text {
+    color: var(--fs-muted) !important;
+  }
+
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    padding: 22px;
+  }
+
+  .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.28);
+    box-shadow: none;
+  }
+
+  .file-storage-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .file-storage-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .file-storage-page .badge {
+    font-size: 0.85rem;
+    padding: 0.45em 0.7em;
+    border-radius: 999px;
+    font-weight: 750;
+  }
+
+  .file-storage-page .fs-table {
+    margin-bottom: 0;
+    color: var(--fs-text);
+    --bs-table-color: var(--fs-text);
+    --bs-table-border-color: var(--fs-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .file-storage-page .fs-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table tbody td {
+    color: var(--fs-text);
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .file-storage-page .file-link {
+    color: var(--fs-primary);
+    text-decoration: none;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .file-storage-page .file-link:hover {
+    text-decoration: underline;
+  }
+
+  .file-storage-page .stat-card {
+    height: 100%;
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 22px;
+    box-shadow: var(--fs-shadow);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .file-storage-page .stat-label {
+    color: var(--fs-muted);
+    font-weight: 750;
+    margin-bottom: 6px;
+  }
+
+  .file-storage-page .stat-value {
+    color: var(--fs-primary);
+    font-size: 1.7rem;
+    font-weight: 850;
+    margin: 0;
+  }
+
+  .file-storage-page .form-control,
+  .file-storage-page .form-select {
+    border-radius: 14px;
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+    background: #fff;
+  }
+
+  .file-storage-page .form-control:focus,
+  .file-storage-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .file-storage-page .chart-card {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 24px;
+    box-shadow: var(--fs-shadow);
+    padding: 22px;
+  }
+
+  body.dark-mode .file-storage-page,
+  html[data-bs-theme="dark"] .file-storage-page,
+  body[data-theme="dark"] .file-storage-page {
+    --fs-text: #e5e7eb;
+    --fs-muted: #cbd5e1;
+    --fs-line: rgba(148, 163, 184, 0.25);
+    --fs-soft: rgba(30, 41, 59, 0.86);
+    --fs-card: rgba(15, 23, 42, 0.92);
+    --fs-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --fs-primary: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-card,
+  body.dark-mode .file-storage-page .fs-hero,
+  body.dark-mode .file-storage-page .stat-card,
+  body.dark-mode .file-storage-page .chart-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-hero,
+  html[data-bs-theme="dark"] .file-storage-page .stat-card,
+  html[data-bs-theme="dark"] .file-storage-page .chart-card,
+  body[data-theme="dark"] .file-storage-page .fs-card,
+  body[data-theme="dark"] .file-storage-page .fs-hero,
+  body[data-theme="dark"] .file-storage-page .stat-card,
+  body[data-theme="dark"] .file-storage-page .chart-card {
+    background: var(--fs-card);
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+  }
+
+  body.dark-mode .file-storage-page .fs-title,
+  body.dark-mode .file-storage-page .stat-value,
+  html[data-bs-theme="dark"] .file-storage-page .fs-title,
+  html[data-bs-theme="dark"] .file-storage-page .stat-value,
+  body[data-theme="dark"] .file-storage-page .fs-title,
+  body[data-theme="dark"] .file-storage-page .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-warning-box,
+  html[data-bs-theme="dark"] .file-storage-page .fs-warning-box,
+  body[data-theme="dark"] .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(251, 191, 36, 0.28);
+    color: #fde68a;
+  }
+
+  body.dark-mode .file-storage-page .fs-table thead th,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table thead th,
+  body[data-theme="dark"] .file-storage-page .fs-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .file-storage-page .fs-table tbody td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table tbody td,
+  body[data-theme="dark"] .file-storage-page .fs-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .file-storage-page .file-link,
+  html[data-bs-theme="dark"] .file-storage-page .file-link,
+  body[data-theme="dark"] .file-storage-page .file-link {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .form-control,
+  body.dark-mode .file-storage-page .form-select,
+  html[data-bs-theme="dark"] .file-storage-page .form-control,
+  html[data-bs-theme="dark"] .file-storage-page .form-select,
+  body[data-theme="dark"] .file-storage-page .form-control,
+  body[data-theme="dark"] .file-storage-page .form-select {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-secondary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-primary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .file-storage-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .file-storage-page .fs-hero,
+    .file-storage-page .fs-card,
+    .file-storage-page .fs-warning-box,
+    .file-storage-page .chart-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .file-storage-page .fs-actions,
+    .file-storage-page .fs-actions .btn,
+    .file-storage-page .fs-hero .btn {
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table thead {
+      display: none;
+    }
+
+    .file-storage-page .responsive-table tbody,
+    .file-storage-page .responsive-table tr,
+    .file-storage-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table tr {
+      border-bottom: 1px solid var(--fs-line);
+      padding: 10px;
+    }
+
+    .file-storage-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .file-storage-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--fs-muted);
+      margin-bottom: 2px;
+    }
+  }
+</style>
+
+
+{% set s = stats if stats is defined and stats else {} %}
+{% set total_files = s.total_files | default(0, true) %}
+{% set total_size = s.total_size | default(0, true) %}
+{% set cdn_count = s.cdn_count | default(0, true) %}
+{% set optimized_files = s.optimized_files | default(0, true) %}
+
+<div class="file-storage-page px-2 px-md-4 py-3 py-md-4">
+  <div class="fs-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h4 class="fs-title mb-0"><i class="bi bi-bar-chart me-2"></i>Thống kê lưu trữ</h4>
+      <p class="fs-subtitle mb-0 mt-2">Theo dõi số lượng tệp, dung lượng, bộ nhớ đệm CDN và tệp đã tối ưu.</p>
+    </div>
     <a href="/admin/file-storage/list" class="btn btn-outline-secondary">
-      <i class="bi bi-arrow-left"></i> Quay lại
+      <i class="bi bi-arrow-left me-1"></i>Quay lại
     </a>
   </div>
 
   <div class="row g-4">
     <div class="col-md-3">
-      <div class="card shadow-sm text-center p-3">
-        <h6 class="text-muted">Tổng số file</h6>
-        <h3>{{ stats.total_files }}</h3>
+      <div class="stat-card">
+        <div class="stat-label">Tổng số tệp</div>
+        <h3 class="stat-value">{{ total_files }}</h3>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card shadow-sm text-center p-3">
-        <h6 class="text-muted">Dung lượng (MB)</h6>
-        <h3>{{ stats.total_size }}</h3>
+      <div class="stat-card">
+        <div class="stat-label">Dung lượng (MB)</div>
+        <h3 class="stat-value">{{ total_size }}</h3>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card shadow-sm text-center p-3">
-        <h6 class="text-muted">CDN Cache</h6>
-        <h3>{{ stats.cdn_count }}</h3>
+      <div class="stat-card">
+        <div class="stat-label">Bộ nhớ đệm CDN</div>
+        <h3 class="stat-value">{{ cdn_count }}</h3>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card shadow-sm text-center p-3">
-        <h6 class="text-muted">File tối ưu</h6>
-        <h3>{{ stats.optimized_files }}</h3>
+      <div class="stat-card">
+        <div class="stat-label">Tệp đã tối ưu</div>
+        <h3 class="stat-value">{{ optimized_files }}</h3>
       </div>
     </div>
   </div>
 
-  <div class="mt-5">
+  <div class="chart-card mt-5">
     <canvas id="storageChart" height="120"></canvas>
   </div>
 </div>
 
 <script>
-  const totalFiles = JSON.parse('{{ stats.total_files | default(0) | tojson | safe }}');
-  const cdnCount = JSON.parse('{{ stats.cdn_count | default(0) | tojson | safe }}');
-  const optimizedFiles = JSON.parse('{{ stats.optimized_files | default(0) | tojson | safe }}');
+  const totalFiles = JSON.parse('{{ total_files | tojson | safe }}');
+  const cdnCount = JSON.parse('{{ cdn_count | tojson | safe }}');
+  const optimizedFiles = JSON.parse('{{ optimized_files | tojson | safe }}');
 
   const ctx = document.getElementById("storageChart");
+  const isDark =
+    document.body.classList.contains("dark-mode") ||
+    document.documentElement.getAttribute("data-bs-theme") === "dark" ||
+    document.body.getAttribute("data-theme") === "dark";
 
-  new Chart(ctx, {
-    type: "doughnut",
-    data: {
-      labels: ["Tổng File", "CDN Cache", "Đã Tối ưu"],
-      datasets: [{
-        data: [totalFiles, cdnCount, optimizedFiles],
-        backgroundColor: ["#0d6efd", "#20c997", "#ffc107"],
-        borderWidth: 1
-      }]
-    },
-    options: {
-      plugins: {
-        legend: {
-          position: "bottom"
+  if (ctx && typeof Chart !== "undefined") {
+    new Chart(ctx, {
+      type: "doughnut",
+      data: {
+        labels: ["Tổng số tệp", "Bộ nhớ đệm CDN", "Đã tối ưu"],
+        datasets: [{
+          data: [totalFiles, cdnCount, optimizedFiles],
+          backgroundColor: ["#0d6efd", "#20c997", "#ffc107"],
+          borderColor: isDark ? "#0f172a" : "#ffffff",
+          borderWidth: 1
+        }]
+      },
+      options: {
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {
+              color: isDark ? "#e5e7eb" : "#0f172a"
+            }
+          }
         }
       }
-    }
-  });
+    });
+  }
 </script>
 {% endblock %}

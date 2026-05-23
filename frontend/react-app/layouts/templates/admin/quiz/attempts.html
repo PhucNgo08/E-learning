@@ -1,36 +1,465 @@
 {% extends "layout_admin.html" %}
-{% block title %}📄 Bài làm Quiz{% endblock %}
+{% block title %}📄 Bài làm kỳ thi{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="fw-bold text-primary mb-0">📄 Bài làm — {{ quiz.title }}</h3>
-    <a href="/admin/quiz/detail/{{ quiz.id }}" class="btn btn-outline-secondary">← Chi tiết</a>
+
+<style>
+  .quiz-admin-page {
+    --qz-primary: #2563eb;
+    --qz-success: #16a34a;
+    --qz-danger: #dc2626;
+    --qz-warning: #f59e0b;
+    --qz-info: #0891b2;
+    --qz-text: #0f172a;
+    --qz-muted: #64748b;
+    --qz-line: #e2e8f0;
+    --qz-soft: #f8fafc;
+    --qz-card: rgba(255, 255, 255, 0.96);
+    --qz-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--qz-text);
+  }
+
+  .quiz-admin-page.quiz-page-narrow {
+    max-width: 860px;
+  }
+
+  .quiz-admin-page .qz-hero,
+  .quiz-admin-page .qz-card,
+  .quiz-admin-page .qz-info-box,
+  .quiz-admin-page .qz-question-card,
+  .quiz-admin-page .qz-chart-card {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-card);
+    box-shadow: var(--qz-shadow);
+    border-radius: 24px;
+  }
+
+  .quiz-admin-page .qz-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quiz-admin-page .qz-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.12), transparent 38%);
+    pointer-events: none;
+  }
+
+  .quiz-admin-page .qz-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .quiz-admin-page .qz-title {
+    color: var(--qz-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .quiz-admin-page .qz-subtitle,
+  .quiz-admin-page .text-muted,
+  .quiz-admin-page .form-text,
+  .quiz-admin-page .field-hint {
+    color: var(--qz-muted) !important;
+  }
+
+  .quiz-admin-page .qz-card,
+  .quiz-admin-page .qz-info-box,
+  .quiz-admin-page .qz-question-card,
+  .quiz-admin-page .qz-chart-card {
+    padding: 22px;
+  }
+
+  .quiz-admin-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+  }
+
+  .quiz-admin-page .form-control,
+  .quiz-admin-page .form-select,
+  .quiz-admin-page textarea {
+    border-radius: 14px;
+    border-color: var(--qz-line);
+    color: var(--qz-text);
+    background: #fff;
+  }
+
+  .quiz-admin-page .form-control:focus,
+  .quiz-admin-page .form-select:focus,
+  .quiz-admin-page textarea:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .quiz-admin-page .form-control::placeholder,
+  .quiz-admin-page textarea::placeholder {
+    color: var(--qz-muted);
+  }
+
+  .quiz-admin-page .badge,
+  .quiz-admin-page .qz-badge {
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-weight: 750;
+  }
+
+  .quiz-admin-page .qz-table {
+    margin-bottom: 0;
+    color: var(--qz-text);
+    --bs-table-color: var(--qz-text);
+    --bs-table-border-color: var(--qz-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .quiz-admin-page .qz-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-color: var(--qz-line);
+  }
+
+  .quiz-admin-page .qz-table tbody td {
+    color: var(--qz-text);
+    vertical-align: middle;
+    border-color: var(--qz-line);
+  }
+
+  .quiz-admin-page .qz-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .quiz-admin-page .qz-option {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-soft);
+    border-radius: 14px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+  }
+
+  .quiz-admin-page .qz-option.correct {
+    border-color: rgba(22, 163, 74, 0.35);
+    background: rgba(22, 163, 74, 0.10);
+  }
+
+  .quiz-admin-page .qz-option.selected-wrong {
+    border-color: rgba(220, 38, 38, 0.35);
+    background: rgba(220, 38, 38, 0.10);
+  }
+
+  .quiz-admin-page .qz-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .quiz-admin-page .qz-meta-item {
+    border: 1px solid var(--qz-line);
+    background: var(--qz-soft);
+    border-radius: 16px;
+    padding: 12px 14px;
+  }
+
+  .quiz-admin-page .qz-meta-label {
+    color: var(--qz-muted);
+    font-size: 0.86rem;
+    font-weight: 750;
+  }
+
+  .quiz-admin-page .qz-meta-value {
+    color: var(--qz-text);
+    font-weight: 850;
+    margin-top: 3px;
+  }
+
+  body.dark-mode .quiz-admin-page,
+  html[data-bs-theme="dark"] .quiz-admin-page,
+  body[data-theme="dark"] .quiz-admin-page {
+    --qz-text: #e5e7eb;
+    --qz-muted: #cbd5e1;
+    --qz-line: rgba(148, 163, 184, 0.25);
+    --qz-soft: rgba(30, 41, 59, 0.86);
+    --qz-card: rgba(15, 23, 42, 0.92);
+    --qz-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --qz-primary: #93c5fd;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-hero,
+  body.dark-mode .quiz-admin-page .qz-card,
+  body.dark-mode .quiz-admin-page .qz-info-box,
+  body.dark-mode .quiz-admin-page .qz-question-card,
+  body.dark-mode .quiz-admin-page .qz-chart-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-hero,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-info-box,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-question-card,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-chart-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-hero,
+  body[data-theme="dark"] .quiz-admin-page .qz-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-info-box,
+  body[data-theme="dark"] .quiz-admin-page .qz-question-card,
+  body[data-theme="dark"] .quiz-admin-page .qz-chart-card {
+    background: var(--qz-card);
+    border-color: var(--qz-line);
+    color: var(--qz-text);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-title,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-title,
+  body[data-theme="dark"] .quiz-admin-page .qz-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .quiz-admin-page .form-control,
+  body.dark-mode .quiz-admin-page .form-select,
+  body.dark-mode .quiz-admin-page textarea,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-control,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-select,
+  html[data-bs-theme="dark"] .quiz-admin-page textarea,
+  body[data-theme="dark"] .quiz-admin-page .form-control,
+  body[data-theme="dark"] .quiz-admin-page .form-select,
+  body[data-theme="dark"] .quiz-admin-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .quiz-admin-page .form-control::placeholder,
+  body.dark-mode .quiz-admin-page textarea::placeholder,
+  html[data-bs-theme="dark"] .quiz-admin-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .quiz-admin-page textarea::placeholder,
+  body[data-theme="dark"] .quiz-admin-page .form-control::placeholder,
+  body[data-theme="dark"] .quiz-admin-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table thead th,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table thead th,
+  body[data-theme="dark"] .quiz-admin-page .qz-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table tbody td,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table tbody td,
+  body[data-theme="dark"] .quiz-admin-page .qz-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .quiz-admin-page .qz-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option,
+  body.dark-mode .quiz-admin-page .qz-meta-item,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-meta-item,
+  body[data-theme="dark"] .quiz-admin-page .qz-option,
+  body[data-theme="dark"] .quiz-admin-page .qz-meta-item {
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option.correct,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option.correct,
+  body[data-theme="dark"] .quiz-admin-page .qz-option.correct {
+    background: rgba(22, 163, 74, 0.16);
+    border-color: rgba(34, 197, 94, 0.30);
+  }
+
+  body.dark-mode .quiz-admin-page .qz-option.selected-wrong,
+  html[data-bs-theme="dark"] .quiz-admin-page .qz-option.selected-wrong,
+  body[data-theme="dark"] .quiz-admin-page .qz-option.selected-wrong {
+    background: rgba(220, 38, 38, 0.16);
+    border-color: rgba(248, 113, 113, 0.30);
+  }
+
+  body.dark-mode .quiz-admin-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .quiz-admin-page .btn-outline-secondary,
+  body[data-theme="dark"] .quiz-admin-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .quiz-admin-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .quiz-admin-page .btn-outline-primary,
+  body[data-theme="dark"] .quiz-admin-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 992px) {
+    .quiz-admin-page .qz-meta-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .quiz-admin-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .quiz-admin-page .qz-hero,
+    .quiz-admin-page .qz-card,
+    .quiz-admin-page .qz-info-box,
+    .quiz-admin-page .qz-question-card,
+    .quiz-admin-page .qz-chart-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .quiz-admin-page .qz-actions,
+    .quiz-admin-page .qz-actions .btn,
+    .quiz-admin-page .qz-hero .btn {
+      width: 100%;
+    }
+
+    .quiz-admin-page .qz-meta-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .quiz-admin-page .responsive-table thead {
+      display: none;
+    }
+
+    .quiz-admin-page .responsive-table tbody,
+    .quiz-admin-page .responsive-table tr,
+    .quiz-admin-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .quiz-admin-page .responsive-table tr {
+      border-bottom: 1px solid var(--qz-line);
+      padding: 10px;
+    }
+
+    .quiz-admin-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .quiz-admin-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--qz-muted);
+      margin-bottom: 2px;
+    }
+  }
+</style>
+
+{% macro quiz_type_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'practice' -%}Luyện tập
+  {%- elif v == 'graded' -%}Chấm điểm
+  {%- elif v == 'survey' -%}Khảo sát
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro difficulty_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'easy' -%}Dễ
+  {%- elif v == 'medium' -%}Trung bình
+  {%- elif v == 'hard' -%}Khó
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro status_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'draft' -%}Bản nháp
+  {%- elif v == 'published' -%}Đang mở
+  {%- elif v == 'archived' -%}Lưu trữ
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro attempt_status_label(value) -%}
+  {%- set v = (value or '')|lower -%}
+  {%- if v == 'in_progress' -%}Đang làm
+  {%- elif v == 'submitted' -%}Đã nộp
+  {%- elif v == 'graded' -%}Đã chấm
+  {%- else -%}Không xác định
+  {%- endif -%}
+{%- endmacro %}
+
+<div class="quiz-admin-page px-2 px-md-4 py-3 py-md-4">
+  <div class="qz-hero d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <h3 class="qz-title"><i class="bi bi-clipboard-check me-2"></i>Bài làm — {{ quiz.title }}</h3>
+      <p class="qz-subtitle mb-0 mt-2">Theo dõi kết quả làm bài của sinh viên.</p>
+    </div>
+    <a href="/admin/quiz/detail/{{ quiz.id }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Chi tiết kỳ thi
+    </a>
   </div>
-  <div class="table-responsive card border-0 shadow-sm rounded-4 p-3">
-    <table class="table table-hover align-middle mb-0 text-center">
-      <thead class="table-primary"><tr><th>#</th><th class="text-start">Học viên</th><th>Điểm</th><th>Đúng/Sai</th><th>Lần</th><th>Thời gian nộp</th><th>Thao tác</th></tr></thead>
-      <tbody>
-      {% for a in attempts %}
-        {% set total = a.total_questions or 0 %}
-        {% set correct = a.correct_answers or 0 %}
-        {% set wrong = total - correct %}
-        <tr>
-          <td>{{ loop.index }}</td>
-          <td class="text-start">{{ a.user.profile.full_name if a.user and a.user.profile else (a.user.username if a.user else 'Không rõ') }}</td>
-          <td class="fw-bold">{{ a.score or 0 }}%</td>
-          <td><span class="text-success">{{ correct }} đúng</span> / <span class="text-danger">{{ wrong }} sai</span></td>
-          <td>{{ a.attempt_number }}</td>
-          <td>{{ a.submitted_at.strftime('%d/%m/%Y %H:%M') if a.submitted_at else '—' }}</td>
-          <td>
-            <a href="/admin/quiz/attempt/{{ a.id }}" class="btn btn-sm btn-outline-primary">Xem</a>
-            <form method="post" action="/admin/quiz/attempt/delete/{{ a.id }}" class="d-inline" onsubmit="return confirm('Xóa bài làm này?')"><button class="btn btn-sm btn-outline-danger">Xóa</button></form>
-          </td>
-        </tr>
-      {% else %}
-        <tr><td colspan="7" class="text-muted">Chưa có bài làm.</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
+
+  <div class="qz-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle qz-table responsive-table text-center">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th class="text-start">Sinh viên</th>
+            <th>Điểm</th>
+            <th>Đúng/Sai</th>
+            <th>Lần làm</th>
+            <th>Trạng thái</th>
+            <th>Thời gian nộp</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for a in attempts or [] %}
+          {% set total = a.total_questions or 0 %}
+          {% set correct = a.correct_answers or 0 %}
+          {% set wrong = total - correct %}
+          <tr>
+            <td data-label="STT">{{ loop.index }}</td>
+            <td data-label="Sinh viên" class="text-start">
+              {{ get_user_display_name(a.user) if get_user_display_name is defined else "Không rõ" }}
+            </td>
+            <td data-label="Điểm" class="fw-bold">{{ a.score or 0 }}%</td>
+            <td data-label="Đúng/Sai">
+              <span class="text-success">{{ correct }} đúng</span> /
+              <span class="text-danger">{{ wrong }} sai</span>
+            </td>
+            <td data-label="Lần làm">{{ a.attempt_number or 1 }}</td>
+            <td data-label="Trạng thái">{{ attempt_status_label(a.status) }}</td>
+            <td data-label="Thời gian nộp">{{ a.submitted_at.strftime('%d/%m/%Y %H:%M') if a.submitted_at else '—' }}</td>
+            <td data-label="Thao tác">
+              <a href="/admin/quiz/attempt/{{ a.id }}" class="btn btn-sm btn-outline-primary">Xem</a>
+              <form method="post" action="/admin/quiz/attempt/delete/{{ a.id }}" class="d-inline" onsubmit="return confirm('Xóa bài làm này?')">
+                <button class="btn btn-sm btn-outline-danger">Xóa</button>
+              </form>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="8" class="text-muted py-4">Chưa có bài làm.</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 {% endblock %}

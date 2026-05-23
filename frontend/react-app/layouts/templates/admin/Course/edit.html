@@ -7,9 +7,10 @@
   .admin-course-edit-page {
     max-width: 1180px;
     margin: 0 auto;
+    color: var(--text-main, #0f172a);
   }
 
-  .admin-page-header {
+  .admin-course-edit-page .admin-page-header {
     background: var(--role-gradient, linear-gradient(135deg, #1e3a8a, #2563eb));
     color: #fff;
     border-radius: var(--radius-xl, 18px);
@@ -17,11 +18,11 @@
     box-shadow: var(--shadow-md, 0 10px 30px rgba(15, 23, 42, 0.12));
   }
 
-  .admin-page-header .header-subtitle {
+  .admin-course-edit-page .admin-page-header .header-subtitle {
     color: rgba(255, 255, 255, 0.86);
   }
 
-  .admin-form-card {
+  .admin-course-edit-page .admin-form-card {
     background: var(--surface, #fff);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: var(--radius-xl, 18px);
@@ -29,12 +30,12 @@
     padding: 24px;
   }
 
-  .course-step-tabs {
+  .admin-course-edit-page .course-step-tabs {
     border-bottom: 1px solid var(--border-color, #e2e8f0);
     gap: 8px;
   }
 
-  .course-step-tabs .nav-link {
+  .admin-course-edit-page .course-step-tabs .nav-link {
     border: 0;
     border-radius: 999px;
     color: var(--text-muted, #64748b);
@@ -43,28 +44,28 @@
     padding: 0.72rem 1rem;
   }
 
-  .course-step-tabs .nav-link:hover {
+  .admin-course-edit-page .course-step-tabs .nav-link:hover {
     color: var(--role-primary, #2563eb);
     background: rgba(37, 99, 235, 0.08);
   }
 
-  .course-step-tabs .nav-link.active {
+  .admin-course-edit-page .course-step-tabs .nav-link.active {
     color: #fff !important;
     background: var(--role-primary, #2563eb);
     box-shadow: 0 8px 20px rgba(37, 99, 235, 0.22);
   }
 
-  .course-step-tabs .nav-link.tab-completed {
+  .admin-course-edit-page .course-step-tabs .nav-link.tab-completed {
     color: #15803d;
     background: rgba(22, 163, 74, 0.12);
   }
 
-  .course-step-tabs .nav-link.tab-completed.active {
+  .admin-course-edit-page .course-step-tabs .nav-link.tab-completed.active {
     color: #fff !important;
     background: #16a34a;
   }
 
-  .step-progress-wrap {
+  .admin-course-edit-page .step-progress-wrap {
     background: var(--surface-soft, #f8fafc);
     border: 1px solid var(--border-color, #e2e8f0);
     border-radius: 999px;
@@ -72,7 +73,7 @@
     overflow: hidden;
   }
 
-  .step-progress-bar {
+  .admin-course-edit-page .step-progress-bar {
     width: 20%;
     height: 100%;
     background: var(--role-primary, #2563eb);
@@ -80,44 +81,40 @@
     transition: width 0.25s ease;
   }
 
-  .form-section-title {
+  .admin-course-edit-page .form-section-title {
     color: var(--text-main, #0f172a);
     font-size: 1.05rem;
     font-weight: 800;
     margin-bottom: 14px;
   }
 
-  .form-label {
+  .admin-course-edit-page .form-label {
     color: var(--text-main, #0f172a);
     font-weight: 700;
   }
 
-  .required-mark {
+  .admin-course-edit-page .required-mark {
     color: var(--danger, #dc2626);
   }
 
-  .form-hint {
+  .admin-course-edit-page .form-hint,
+  .admin-course-edit-page .auto-next-note {
     color: var(--text-muted, #64748b);
-    font-size: 0.88rem;
+    font-size: 0.9rem;
   }
 
-  .tab-pane {
+  .admin-course-edit-page .tab-pane {
     padding-top: 20px;
   }
 
-  .step-actions {
+  .admin-course-edit-page .step-actions {
     border-top: 1px solid var(--border-color, #e2e8f0);
     padding-top: 18px;
     margin-top: 22px;
   }
 
-  .auto-next-note {
-    color: var(--text-muted, #64748b);
-    font-size: 0.9rem;
-  }
-
-  .thumbnail-current,
-  .thumbnail-preview {
+  .admin-course-edit-page .thumbnail-current,
+  .admin-course-edit-page .thumbnail-preview {
     width: 100%;
     max-width: 360px;
     aspect-ratio: 16 / 9;
@@ -131,26 +128,141 @@
     overflow: hidden;
   }
 
-  .thumbnail-current img,
-  .thumbnail-preview img {
+  .admin-course-edit-page .thumbnail-current img,
+  .admin-course-edit-page .thumbnail-preview img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
 
+  .admin-course-edit-page .form-control,
+  .admin-course-edit-page .form-select {
+    color: var(--text-main, #0f172a);
+    background-color: var(--surface, #fff);
+    border-color: var(--border-color, #dbe3ef);
+  }
+
+  .admin-course-edit-page .form-control::placeholder,
+  .admin-course-edit-page textarea::placeholder {
+    color: var(--text-muted, #64748b);
+  }
+
+  body.dark-mode .admin-course-edit-page,
+  html[data-bs-theme="dark"] .admin-course-edit-page,
+  body[data-theme="dark"] .admin-course-edit-page {
+    --surface: rgba(15, 23, 42, 0.94);
+    --surface-soft: rgba(30, 41, 59, 0.86);
+    --border-color: rgba(148, 163, 184, 0.25);
+    --text-main: #e5e7eb;
+    --text-muted: #cbd5e1;
+    --role-primary: #60a5fa;
+    --role-gradient: linear-gradient(135deg, #020617, #1e3a8a 58%, #312e81);
+    --shadow-sm: 0 18px 45px rgba(0, 0, 0, 0.34);
+    --shadow-md: 0 22px 58px rgba(0, 0, 0, 0.42);
+  }
+
+  body.dark-mode .admin-course-edit-page .admin-form-card,
+  html[data-bs-theme="dark"] .admin-course-edit-page .admin-form-card,
+  body[data-theme="dark"] .admin-course-edit-page .admin-form-card {
+    background: var(--surface);
+    border-color: var(--border-color);
+    color: var(--text-main);
+  }
+
+  body.dark-mode .admin-course-edit-page .course-step-tabs,
+  body.dark-mode .admin-course-edit-page .step-actions,
+  html[data-bs-theme="dark"] .admin-course-edit-page .course-step-tabs,
+  html[data-bs-theme="dark"] .admin-course-edit-page .step-actions,
+  body[data-theme="dark"] .admin-course-edit-page .course-step-tabs,
+  body[data-theme="dark"] .admin-course-edit-page .step-actions {
+    border-color: var(--border-color);
+  }
+
+  body.dark-mode .admin-course-edit-page .course-step-tabs .nav-link,
+  html[data-bs-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link,
+  body[data-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link {
+    color: #cbd5e1;
+    background: rgba(30, 41, 59, 0.92);
+  }
+
+  body.dark-mode .admin-course-edit-page .course-step-tabs .nav-link:hover,
+  html[data-bs-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link:hover,
+  body[data-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link:hover {
+    color: #bfdbfe;
+    background: rgba(37, 99, 235, 0.22);
+  }
+
+  body.dark-mode .admin-course-edit-page .course-step-tabs .nav-link.active,
+  html[data-bs-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link.active,
+  body[data-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link.active {
+    color: #ffffff !important;
+    background: #2563eb;
+  }
+
+  body.dark-mode .admin-course-edit-page .course-step-tabs .nav-link.tab-completed,
+  html[data-bs-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link.tab-completed,
+  body[data-theme="dark"] .admin-course-edit-page .course-step-tabs .nav-link.tab-completed {
+    color: #86efac;
+    background: rgba(22, 163, 74, 0.16);
+  }
+
+  body.dark-mode .admin-course-edit-page .form-control,
+  body.dark-mode .admin-course-edit-page .form-select,
+  body.dark-mode .admin-course-edit-page textarea,
+  html[data-bs-theme="dark"] .admin-course-edit-page .form-control,
+  html[data-bs-theme="dark"] .admin-course-edit-page .form-select,
+  html[data-bs-theme="dark"] .admin-course-edit-page textarea,
+  body[data-theme="dark"] .admin-course-edit-page .form-control,
+  body[data-theme="dark"] .admin-course-edit-page .form-select,
+  body[data-theme="dark"] .admin-course-edit-page textarea {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .admin-course-edit-page .form-control::placeholder,
+  body.dark-mode .admin-course-edit-page textarea::placeholder,
+  html[data-bs-theme="dark"] .admin-course-edit-page .form-control::placeholder,
+  html[data-bs-theme="dark"] .admin-course-edit-page textarea::placeholder,
+  body[data-theme="dark"] .admin-course-edit-page .form-control::placeholder,
+  body[data-theme="dark"] .admin-course-edit-page textarea::placeholder {
+    color: #94a3b8;
+  }
+
+  body.dark-mode .admin-course-edit-page .thumbnail-current,
+  body.dark-mode .admin-course-edit-page .thumbnail-preview,
+  body.dark-mode .admin-course-edit-page .step-progress-wrap,
+  html[data-bs-theme="dark"] .admin-course-edit-page .thumbnail-current,
+  html[data-bs-theme="dark"] .admin-course-edit-page .thumbnail-preview,
+  html[data-bs-theme="dark"] .admin-course-edit-page .step-progress-wrap,
+  body[data-theme="dark"] .admin-course-edit-page .thumbnail-current,
+  body[data-theme="dark"] .admin-course-edit-page .thumbnail-preview,
+  body[data-theme="dark"] .admin-course-edit-page .step-progress-wrap {
+    background: rgba(30, 41, 59, 0.86);
+    border-color: rgba(148, 163, 184, 0.28);
+    color: #cbd5e1;
+  }
+
+  body.dark-mode .admin-course-edit-page .btn-outline-light,
+  html[data-bs-theme="dark"] .admin-course-edit-page .btn-outline-light,
+  body[data-theme="dark"] .admin-course-edit-page .btn-outline-light {
+    color: #f8fafc;
+    border-color: rgba(248, 250, 252, 0.65);
+  }
+
   @media (max-width: 768px) {
-    .admin-page-header,
-    .admin-form-card {
+    .admin-course-edit-page .admin-page-header,
+    .admin-course-edit-page .admin-form-card {
       padding: 18px;
     }
 
-    .course-step-tabs .nav-link {
+    .admin-course-edit-page .course-step-tabs .nav-link {
       width: 100%;
       text-align: left;
       border-radius: 14px;
     }
 
-    .step-actions .btn {
+    .admin-course-edit-page .step-actions .btn {
       width: 100%;
     }
   }
@@ -159,8 +271,8 @@
 
 {% block content %}
 <div class="admin-course-edit-page">
-  {% set f = form or {} %}
-  {% set course_subject = course.subject if course.subject is defined else course.subject_name %}
+  {% set f = form if form is defined and form else {} %}
+  {% set course_subject = course.subject if course.subject is defined and course.subject else (course.subject_name if course.subject_name is defined and course.subject_name else '') %}
 
   <div class="admin-page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
     <div>
@@ -230,12 +342,12 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="tab-limit-btn" data-bs-toggle="tab" data-bs-target="#tab-limit" type="button" role="tab">
-          <i class="bi bi-4-circle me-1"></i>Giới hạn & Enroll
+          <i class="bi bi-4-circle me-1"></i>Giới hạn & đăng ký
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="tab-thumb-btn" data-bs-toggle="tab" data-bs-target="#tab-thumb" type="button" role="tab">
-          <i class="bi bi-5-circle me-1"></i>Ảnh Thumbnail
+          <i class="bi bi-5-circle me-1"></i>Ảnh đại diện
         </button>
       </li>
     </ul>
@@ -261,14 +373,14 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Môn học / Subject <span class="required-mark">*</span></label>
+              <label class="form-label">Môn học <span class="required-mark">*</span></label>
               <input type="text"
                      class="form-control"
                      name="subject"
                      required
                      data-auto-next-required
                      value="{{ f.get('subject', course_subject) }}"
-                     placeholder="VD: Python, Database, UI/UX">
+                     placeholder="VD: Python, Cơ sở dữ liệu, Thiết kế giao diện">
             </div>
 
             <div class="col-md-4">
@@ -293,7 +405,7 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Cấp độ lớp / Grade</label>
+              <label class="form-label">Cấp độ lớp</label>
               <input type="number"
                      class="form-control"
                      name="grade_level"
@@ -323,8 +435,12 @@
               {% set teacher_val = f.get('teacher_id', course.teacher_id) %}
               <select class="form-select" name="teacher_id" required data-auto-next-required>
                 <option value="">-- Chọn giảng viên --</option>
-                {% for t in teachers %}
-                <option value="{{ t.id }}" {{ 'selected' if (teacher_val|string)==(t.id|string) else '' }}>{{ t.full_name }}</option>
+                {% for t in teachers or [] %}
+                <option value="{{ t.id }}" {{ 'selected' if (teacher_val|string)==(t.id|string) else '' }}>
+                  {{ t.full_name if t.full_name is defined and t.full_name else (t.username if t.username is defined and t.username else "Không rõ giảng viên") }}
+                </option>
+                {% else %}
+                <option value="" disabled>Chưa có giảng viên</option>
                 {% endfor %}
               </select>
             </div>
@@ -334,8 +450,10 @@
               {% set year_val = f.get('academic_year_id', course.academic_year_id) %}
               <select class="form-select" name="academic_year_id" required data-auto-next-required>
                 <option value="">-- Chọn năm học --</option>
-                {% for y in years %}
+                {% for y in years or [] %}
                 <option value="{{ y.id }}" {{ 'selected' if (year_val|string)==(y.id|string) else '' }}>{{ y.year_name }}</option>
+                {% else %}
+                <option value="" disabled>Chưa có năm học</option>
                 {% endfor %}
               </select>
             </div>
@@ -345,8 +463,10 @@
               {% set major_val = f.get('major_id', course.major_id) %}
               <select class="form-select" name="major_id" required data-auto-next-required>
                 <option value="">-- Chọn ngành --</option>
-                {% for m in majors %}
+                {% for m in majors or [] %}
                 <option value="{{ m.id }}" {{ 'selected' if (major_val|string)==(m.id|string) else '' }}>{{ m.major_name }}</option>
+                {% else %}
+                <option value="" disabled>Chưa có ngành học</option>
                 {% endfor %}
               </select>
             </div>
@@ -364,7 +484,7 @@
             </div>
 
             <div class="col-md-4">
-              <label class="form-label">Kỳ học / Semester <span class="required-mark">*</span></label>
+              <label class="form-label">Kỳ học <span class="required-mark">*</span></label>
               <input type="number"
                      class="form-control"
                      name="semester"
@@ -390,9 +510,9 @@
               <select class="form-select" name="course_type" required data-auto-next-required>
                 <option value="mandatory" {{ 'selected' if ctype=='mandatory' else '' }}>Bắt buộc</option>
                 <option value="elective" {{ 'selected' if ctype=='elective' else '' }}>Tự chọn</option>
-                <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Workshop</option>
-                <option value="online" {{ 'selected' if ctype=='online' else '' }}>Online</option>
-                <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Hybrid</option>
+                <option value="workshop" {{ 'selected' if ctype=='workshop' else '' }}>Chuyên đề</option>
+                <option value="online" {{ 'selected' if ctype=='online' else '' }}>Trực tuyến</option>
+                <option value="hybrid" {{ 'selected' if ctype=='hybrid' else '' }}>Kết hợp</option>
               </select>
             </div>
 
@@ -407,7 +527,7 @@
             </div>
 
             <div class="col-12">
-              <label class="form-label">Môn tiên quyết / Prerequisites</label>
+              <label class="form-label">Môn tiên quyết</label>
               <textarea class="form-control"
                         name="prerequisites"
                         rows="2"
@@ -436,12 +556,12 @@
 
         <div class="tab-pane fade" id="tab-limit" role="tabpanel" aria-labelledby="tab-limit-btn" data-step="4">
           <div class="form-section-title">
-            <i class="bi bi-person-check me-1"></i>Giới hạn & Enroll
+            <i class="bi bi-person-check me-1"></i>Giới hạn & đăng ký
           </div>
 
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label">Giá khóa học / VNĐ <span class="required-mark">*</span></label>
+              <label class="form-label">Giá khóa học (VNĐ) <span class="required-mark">*</span></label>
               <input type="number"
                      class="form-control"
                      name="price"
@@ -475,7 +595,7 @@
             </div>
 
             <div class="col-md-6">
-              <label class="form-label">Công khai / Public <span class="required-mark">*</span></label>
+              <label class="form-label">Hiển thị công khai <span class="required-mark">*</span></label>
               {% set pub = f.get('is_public', course.is_public) %}
               <select class="form-select" name="is_public" required data-auto-next-required>
                 <option value="0" {{ 'selected' if (pub|string)=='0' else '' }}>Không</option>
@@ -487,15 +607,15 @@
 
         <div class="tab-pane fade" id="tab-thumb" role="tabpanel" aria-labelledby="tab-thumb-btn" data-step="5">
           <div class="form-section-title">
-            <i class="bi bi-image me-1"></i>Ảnh Thumbnail
+            <i class="bi bi-image me-1"></i>Ảnh đại diện
           </div>
 
           <div class="row g-3 align-items-start">
             <div class="col-md-6">
-              <label class="form-label">Thumbnail hiện tại</label>
+              <label class="form-label">Ảnh đại diện hiện tại</label>
               <div class="thumbnail-current">
                 {% if course.thumbnail_url %}
-                <img src="{{ course.thumbnail_url }}" alt="Thumbnail hiện tại">
+                <img src="{{ course.thumbnail_url }}" alt="Ảnh đại diện hiện tại">
                 {% else %}
                 <div class="text-center">
                   <i class="bi bi-image fs-2 d-block mb-1"></i>
@@ -802,7 +922,7 @@
         }
 
         const imageUrl = URL.createObjectURL(file);
-        thumbnailPreview.innerHTML = `<img src="${imageUrl}" alt="Thumbnail preview">`;
+        thumbnailPreview.innerHTML = `<img src="${imageUrl}" alt="Xem trước ảnh đại diện">`;
       });
     }
 

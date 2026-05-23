@@ -10,13 +10,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 
   <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin.css" />
-  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/theme.css" />
   <link rel="icon" type="image/png" href="/static/images/fox-logo.png" />
 
   {% block extra_css %}{% endblock %}
-  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/theme-admin.css" />
+  <link rel="stylesheet" href="/frontend/react-app/layouts/styles/admin_theme.css" />
 </head>
 <body>
+  <script>
+    (function () {
+      try {
+        if (localStorage.getItem("darkMode") === "true") {
+          document.body.classList.add("dark-mode");
+        }
+      } catch (e) {}
+    })();
+  </script>
   <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <nav id="sidebar">
@@ -39,6 +47,11 @@
         <a href="/admin/dashboard" class="nav-item {% block nav_dashboard %}{% endblock %}">
           <i class="bi bi-speedometer2"></i>
           <span>Trang chủ</span>
+        </a>
+
+        <a href="/admin/statistics/dashboard" class="nav-item {% block nav_statistics %}{% endblock %}">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>Tiến độ học tập</span>
         </a>
       </div>
 

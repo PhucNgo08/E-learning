@@ -121,6 +121,20 @@ def admin_create_wallet(
     )
 
 
+@router.get("/info", response_class=HTMLResponse)
+def admin_wallet_info_query(
+    request: Request,
+    user_id: str | None = None,
+    admin=Depends(get_current_admin),
+):
+    if not user_id:
+        return RedirectResponse(
+            "/admin/wallets/manage?error=" + quote("Vui lòng nhập ID người dùng."),
+            status_code=303,
+        )
+    return RedirectResponse(f"/admin/wallets/info/{user_id}", status_code=303)
+
+
 @router.get("/info/{user_id}", response_class=HTMLResponse)
 def admin_get_wallet_info_page(
     request: Request,

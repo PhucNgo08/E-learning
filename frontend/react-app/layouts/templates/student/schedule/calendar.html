@@ -1,8 +1,8 @@
 {% extends "layout_student.html" %}
-{% block title %}🗓️ Lịch học & Kiểm tra{% endblock %}
+{% block title %}Lịch học và kiểm tra{% endblock %}
 
 {% block head_extra %}
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/main.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
 <style>
   .schedule-page {
     max-width: 1180px;
@@ -10,7 +10,7 @@
   }
 
   .schedule-page-title {
-    color: var(--text);
+    color: var(--text, #0f172a);
   }
 
   .schedule-calendar-card {
@@ -68,16 +68,10 @@
     border-color: var(--border, rgba(15, 23, 42, 0.08)) !important;
   }
 
-  .fc .fc-scrollgrid,
-  .fc .fc-daygrid-day,
-  .fc .fc-timegrid-slot,
-  .fc .fc-timegrid-axis,
-  .fc .fc-col-header-cell {
-    background: transparent;
-  }
-
   .fc .fc-col-header-cell-cushion,
-  .fc .fc-daygrid-day-number {
+  .fc .fc-daygrid-day-number,
+  .fc .fc-timegrid-axis-cushion,
+  .fc .fc-timegrid-slot-label-cushion {
     color: var(--text, #0f172a);
     text-decoration: none;
   }
@@ -96,10 +90,6 @@
     box-shadow: 0 6px 12px rgba(15, 23, 42, 0.12);
   }
 
-  .fc .fc-daygrid-event-dot {
-    border-color: currentColor;
-  }
-
   .schedule-empty-note {
     background: var(--surface, #ffffff);
     color: var(--text-muted, #64748b);
@@ -108,11 +98,86 @@
     padding: 0.75rem 1rem;
   }
 
-  body.dark-mode .fc .fc-list,
-  body.dark-mode .fc .fc-list-table,
-  body.dark-mode .fc .fc-list-day-cushion {
-    background: var(--surface-strong, #0f172a) !important;
-    color: var(--text, #f8fafc) !important;
+  body.dark-mode .schedule-calendar-card,
+  body.theme-dark .schedule-calendar-card,
+  html.dark .schedule-calendar-card,
+  html.dark-mode .schedule-calendar-card,
+  html[data-theme="dark"] .schedule-calendar-card,
+  body[data-theme="dark"] .schedule-calendar-card,
+  [data-bs-theme="dark"] .schedule-calendar-card {
+    background: #0f172a;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.25);
+  }
+
+  body.dark-mode .fc,
+  body.theme-dark .fc,
+  html.dark .fc,
+  html.dark-mode .fc,
+  html[data-theme="dark"] .fc,
+  body[data-theme="dark"] .fc,
+  [data-bs-theme="dark"] .fc {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .fc .fc-button,
+  body.theme-dark .fc .fc-button,
+  html.dark .fc .fc-button,
+  html.dark-mode .fc .fc-button,
+  html[data-theme="dark"] .fc .fc-button,
+  body[data-theme="dark"] .fc .fc-button,
+  [data-bs-theme="dark"] .fc .fc-button {
+    background: #111827 !important;
+    color: #e5e7eb !important;
+    border-color: rgba(148, 163, 184, 0.28) !important;
+  }
+
+  body.dark-mode .fc .fc-toolbar-title,
+  body.theme-dark .fc .fc-toolbar-title,
+  html.dark .fc .fc-toolbar-title,
+  html.dark-mode .fc .fc-toolbar-title,
+  html[data-theme="dark"] .fc .fc-toolbar-title,
+  body[data-theme="dark"] .fc .fc-toolbar-title,
+  [data-bs-theme="dark"] .fc .fc-toolbar-title {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .fc .fc-col-header-cell-cushion,
+  body.dark-mode .fc .fc-daygrid-day-number,
+  body.dark-mode .fc .fc-timegrid-axis-cushion,
+  body.dark-mode .fc .fc-timegrid-slot-label-cushion,
+  body.theme-dark .fc .fc-col-header-cell-cushion,
+  body.theme-dark .fc .fc-daygrid-day-number,
+  body.theme-dark .fc .fc-timegrid-axis-cushion,
+  body.theme-dark .fc .fc-timegrid-slot-label-cushion,
+  html.dark .fc .fc-col-header-cell-cushion,
+  html.dark .fc .fc-daygrid-day-number,
+  html.dark .fc .fc-timegrid-axis-cushion,
+  html.dark .fc .fc-timegrid-slot-label-cushion,
+  html[data-theme="dark"] .fc .fc-col-header-cell-cushion,
+  html[data-theme="dark"] .fc .fc-daygrid-day-number,
+  html[data-theme="dark"] .fc .fc-timegrid-axis-cushion,
+  html[data-theme="dark"] .fc .fc-timegrid-slot-label-cushion,
+  [data-bs-theme="dark"] .fc .fc-col-header-cell-cushion,
+  [data-bs-theme="dark"] .fc .fc-daygrid-day-number,
+  [data-bs-theme="dark"] .fc .fc-timegrid-axis-cushion,
+  [data-bs-theme="dark"] .fc .fc-timegrid-slot-label-cushion {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .fc-theme-standard .fc-scrollgrid,
+  body.dark-mode .fc-theme-standard td,
+  body.dark-mode .fc-theme-standard th,
+  body.theme-dark .fc-theme-standard .fc-scrollgrid,
+  body.theme-dark .fc-theme-standard td,
+  body.theme-dark .fc-theme-standard th,
+  html[data-theme="dark"] .fc-theme-standard .fc-scrollgrid,
+  html[data-theme="dark"] .fc-theme-standard td,
+  html[data-theme="dark"] .fc-theme-standard th,
+  [data-bs-theme="dark"] .fc-theme-standard .fc-scrollgrid,
+  [data-bs-theme="dark"] .fc-theme-standard td,
+  [data-bs-theme="dark"] .fc-theme-standard th {
+    border-color: rgba(148, 163, 184, 0.22) !important;
   }
 
   @media (max-width: 768px) {
@@ -157,11 +222,6 @@
       font-size: 0.78rem !important;
     }
 
-    .fc .fc-daygrid-day-number {
-      font-size: 0.8rem;
-      padding: 4px;
-    }
-
     .fc .fc-event {
       font-size: 0.72rem;
       padding: 2px 4px;
@@ -174,25 +234,30 @@
 
 {% block content %}
 <div class="container py-4 fade-in schedule-page">
-
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h4 class="fw-bold schedule-page-title mb-0">
-      <i class="bi bi-calendar3 text-primary"></i> Lịch học & Kiểm tra
+      <i class="bi bi-calendar3 text-primary"></i> Lịch học và kiểm tra
     </h4>
     <a href="/student/schedule/list" class="btn btn-outline-primary btn-sm rounded-pill px-3">
       <i class="bi bi-list-task"></i> Xem dạng danh sách
     </a>
   </div>
 
+  {% if not events %}
+  <div class="schedule-empty-note mb-3">
+    <i class="bi bi-info-circle me-1"></i> Hiện chưa có lịch học hoặc kiểm tra.
+  </div>
+  {% endif %}
+
   <div class="schedule-calendar-card">
     <div id="calendar"></div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
 <script id="schedule-data" type="application/json">
-  {{ events | tojson | safe }}
+  {{ events | default([], true) | tojson | safe }}
 </script>
 
 <script>
@@ -204,21 +269,21 @@ document.addEventListener("DOMContentLoaded", function () {
   try {
     scheduleData = JSON.parse(rawDataEl.textContent || "[]");
   } catch (err) {
-    console.error("Không parse được dữ liệu lịch:", err);
+    console.error("Không đọc được dữ liệu lịch:", err);
     scheduleData = [];
   }
 
-  const events = scheduleData.map(function (s) {
+  const events = scheduleData.map(function (item) {
     return {
-      id: s.lesson_id || null,
-      title: s.lesson_title ? `${s.course_name} - ${s.lesson_title}` : (s.course_name || "Sự kiện"),
-      start: s.start,
-      end: s.end,
-      color: s.color || "#2563eb",
+      id: item.lesson_id || null,
+      title: item.lesson_title ? `${item.course_name || "Khóa học"} - ${item.lesson_title}` : (item.course_name || "Sự kiện"),
+      start: item.start,
+      end: item.end,
+      color: item.color || "#2563eb",
       extendedProps: {
-        module_name: s.module_name || "Không có module",
-        location: s.location || "Trực tuyến",
-        type: s.type || "lesson"
+        module_name: item.module_name || "Không có module",
+        location: item.location || "Trực tuyến",
+        type_label: item.type_label || item.type || "Sự kiện"
       }
     };
   });
@@ -227,7 +292,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initialView: window.innerWidth < 768 ? "timeGridWeek" : "dayGridMonth",
     locale: "vi",
     height: "auto",
-    themeSystem: "bootstrap5",
     nowIndicator: true,
     eventDisplay: "block",
 
@@ -247,14 +311,13 @@ document.addEventListener("DOMContentLoaded", function () {
     events: events,
 
     eventClick: function (info) {
-      const p = info.event.extendedProps || {};
-      const message =
-`📚 ${info.event.title}
-📦 Module: ${p.module_name || "Không có module"}
-📍 Địa điểm: ${p.location || "Trực tuyến"}
-🔖 Loại: ${p.type || "lesson"}`;
-
-      alert(message);
+      const props = info.event.extendedProps || {};
+      alert(
+`Môn học: ${info.event.title}
+Module: ${props.module_name || "Không có module"}
+Địa điểm: ${props.location || "Trực tuyến"}
+Loại lịch: ${props.type_label || "Sự kiện"}`
+      );
     }
   });
 

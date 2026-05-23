@@ -31,6 +31,7 @@ def _get_lesson_with_structure(db: Session, lesson_id: str):
         .filter(
             Lesson.id == lesson_id,
             Lesson.is_published == 1,
+            Lesson.deleted_at.is_(None) if hasattr(Lesson, "deleted_at") else True,
         )
         .first()
     )
@@ -40,7 +41,10 @@ def _get_module_with_course(db: Session, module_id: str):
     return (
         db.query(Module)
         .options(joinedload(Module.course))
-        .filter(Module.id == module_id)
+        .filter(
+            Module.id == module_id,
+            Module.deleted_at.is_(None) if hasattr(Module, "deleted_at") else True,
+        )
         .first()
     )
 
@@ -209,7 +213,11 @@ def get_modules_by_course(db: Session, course_id: str, user_id: str | None = Non
 
         return (
             db.query(Module)
-            .filter(Module.course_id == course_id)
+            .filter(
+                Module.course_id == course_id,
+                Module.is_published == 1,
+                Module.deleted_at.is_(None) if hasattr(Module, "deleted_at") else True,
+            )
             .order_by(Module.module_number.asc())
             .all()
         )
@@ -381,7 +389,11 @@ def get_modules_for_student(db: Session, user_id: str):
         return (
             db.query(Module)
             .options(joinedload(Module.course))
-            .filter(Module.course_id.in_(course_ids))
+            .filter(
+                Module.course_id.in_(course_ids),
+                Module.is_published == 1,
+                Module.deleted_at.is_(None) if hasattr(Module, "deleted_at") else True,
+            )
             .order_by(Module.created_at.desc(), Module.module_number.asc())
             .all()
         )

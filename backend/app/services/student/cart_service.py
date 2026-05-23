@@ -21,6 +21,8 @@ COUPON_MAPPING = {
     "GIAM20": Decimal("0.20"),
     "GIAM10": Decimal("0.10"),
 }
+VALID_ENROLLMENT_MODES = {"auto", "approval", "invite_only"}
+
 PAYMENT_LABELS = {
     "wallet": "Ví nội bộ",
     "vnpay": "VNPay",
@@ -171,6 +173,12 @@ def add_to_cart(db: Session, user_id: str, course_id: str):
     if not course:
         return {"status": "error", "message": "Không tìm thấy khóa học."}
 
+    enrollment_mode = (getattr(course, "enrollment_mode", "auto") or "auto").strip().lower()
+    if enrollment_mode == "invite_only":
+        return {"status": "error", "message": "Khóa học này chỉ ghi danh theo lời mời của quản trị viên/giảng viên."}
+    if enrollment_mode not in VALID_ENROLLMENT_MODES:
+        return {"status": "error", "message": "Chế độ ghi danh của khóa học không hợp lệ."}
+
     if has_course_access(db, user_id, course_id):
         return {"status": "exists", "message": "Bạn đã sở hữu hoặc đã được ghi danh khóa học này."}
 
@@ -214,6 +222,9 @@ def clear_cart(db: Session, user_id: str):
 
 def _prepare_enrollment_data(course: Course, now: datetime):
     enrollment_mode = (getattr(course, "enrollment_mode", "auto") or "auto").strip().lower()
+
+    if enrollment_mode == "invite_only":
+        raise ValueError("Khóa học này chỉ ghi danh theo lời mời của quản trị viên/giảng viên.")
 
     if enrollment_mode == "approval":
         return {
@@ -342,6 +353,11 @@ def checkout(
         for item in cart_items:
             course = item.course
             if not course:
+                continue
+
+            enrollment_mode = (getattr(course, "enrollment_mode", "auto") or "auto").strip().lower()
+            if enrollment_mode == "invite_only":
+                db.delete(item)
                 continue
 
             if has_course_access(db, user_id, course.id):

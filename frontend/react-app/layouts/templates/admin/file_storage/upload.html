@@ -1,45 +1,381 @@
 {% extends "layout_admin.html" %}
-{% block title %}📤 Upload File{% endblock %}
+{% block title %}📤 Tải tệp lên{% endblock %}
 
 {% block content %}
-<div class="container mt-5 col-lg-6">
-  <div class="card shadow-sm border-0">
-    <div class="card-body">
-      <h4 class="mb-3"><i class="bi bi-upload"></i> Upload File mới</h4>
 
-      {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-      {% endif %}
+<style>
+  .file-storage-page {
+    --fs-primary: #2563eb;
+    --fs-success: #16a34a;
+    --fs-danger: #dc2626;
+    --fs-warning: #f59e0b;
+    --fs-info: #0891b2;
+    --fs-text: #0f172a;
+    --fs-muted: #64748b;
+    --fs-line: #e2e8f0;
+    --fs-soft: #f8fafc;
+    --fs-card: rgba(255, 255, 255, 0.96);
+    --fs-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    max-width: 1180px;
+    margin: 0 auto;
+    color: var(--fs-text);
+  }
 
-      <form method="post" enctype="multipart/form-data" action="/admin/file-storage/upload">
-        <div class="mb-3">
-          <label class="form-label">Chọn file</label>
-          <input type="file" name="file" class="form-control" required>
-        </div>
+  .file-storage-page.file-storage-narrow {
+    max-width: 760px;
+  }
 
-        <div class="mb-3">
-          <label class="form-label">Storage Provider</label>
-          <select name="storage_provider" class="form-select">
-            <option value="local" {% if not form_data or form_data.storage_provider == 'local' %}selected{% endif %}>Local</option>
-            <option value="s3" {% if form_data and form_data.storage_provider == 's3' %}selected{% endif %}>S3</option>
-            <option value="cdn" {% if form_data and form_data.storage_provider == 'cdn' %}selected{% endif %}>CDN</option>
-          </select>
-        </div>
+  .file-storage-page .fs-hero,
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    box-shadow: var(--fs-shadow);
+    border-radius: 24px;
+  }
 
-        <div class="mb-3">
-          <label class="form-label">Công khai (Public)</label>
-          <select name="is_public" class="form-select">
-            <option value="1" {% if not form_data or form_data.is_public|string == '1' %}selected{% endif %}>Có</option>
-            <option value="0" {% if form_data and form_data.is_public|string == '0' %}selected{% endif %}>Không</option>
-          </select>
-        </div>
+  .file-storage-page .fs-hero {
+    padding: 24px;
+    margin-bottom: 18px;
+    position: relative;
+    overflow: hidden;
+  }
 
+  .file-storage-page .fs-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 34%),
+      radial-gradient(circle at bottom right, rgba(14, 165, 233, 0.14), transparent 38%);
+    pointer-events: none;
+  }
+
+  .file-storage-page .fs-hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-storage-page .fs-title {
+    color: var(--fs-primary);
+    font-weight: 850;
+    margin: 0;
+    letter-spacing: -0.02em;
+  }
+
+  .file-storage-page .fs-subtitle,
+  .file-storage-page .text-muted,
+  .file-storage-page .form-text {
+    color: var(--fs-muted) !important;
+  }
+
+  .file-storage-page .fs-card,
+  .file-storage-page .fs-warning-box {
+    padding: 22px;
+  }
+
+  .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.28);
+    box-shadow: none;
+  }
+
+  .file-storage-page .btn {
+    border-radius: 13px;
+    font-weight: 700;
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+
+  .file-storage-page .btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .file-storage-page .badge {
+    font-size: 0.85rem;
+    padding: 0.45em 0.7em;
+    border-radius: 999px;
+    font-weight: 750;
+  }
+
+  .file-storage-page .fs-table {
+    margin-bottom: 0;
+    color: var(--fs-text);
+    --bs-table-color: var(--fs-text);
+    --bs-table-border-color: var(--fs-line);
+    --bs-table-hover-bg: rgba(37, 99, 235, 0.06);
+  }
+
+  .file-storage-page .fs-table thead th {
+    background: #eaf1ff !important;
+    color: #1e40af !important;
+    font-weight: 800;
+    white-space: nowrap;
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table tbody td {
+    color: var(--fs-text);
+    vertical-align: middle;
+    border-color: var(--fs-line);
+  }
+
+  .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(37, 99, 235, 0.06) !important;
+  }
+
+  .file-storage-page .file-link {
+    color: var(--fs-primary);
+    text-decoration: none;
+    font-weight: 700;
+    word-break: break-word;
+  }
+
+  .file-storage-page .file-link:hover {
+    text-decoration: underline;
+  }
+
+  .file-storage-page .stat-card {
+    height: 100%;
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 22px;
+    box-shadow: var(--fs-shadow);
+    padding: 18px;
+    text-align: center;
+  }
+
+  .file-storage-page .stat-label {
+    color: var(--fs-muted);
+    font-weight: 750;
+    margin-bottom: 6px;
+  }
+
+  .file-storage-page .stat-value {
+    color: var(--fs-primary);
+    font-size: 1.7rem;
+    font-weight: 850;
+    margin: 0;
+  }
+
+  .file-storage-page .form-control,
+  .file-storage-page .form-select {
+    border-radius: 14px;
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+    background: #fff;
+  }
+
+  .file-storage-page .form-control:focus,
+  .file-storage-page .form-select:focus {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 .22rem rgba(37, 99, 235, .14);
+  }
+
+  .file-storage-page .chart-card {
+    border: 1px solid var(--fs-line);
+    background: var(--fs-card);
+    border-radius: 24px;
+    box-shadow: var(--fs-shadow);
+    padding: 22px;
+  }
+
+  body.dark-mode .file-storage-page,
+  html[data-bs-theme="dark"] .file-storage-page,
+  body[data-theme="dark"] .file-storage-page {
+    --fs-text: #e5e7eb;
+    --fs-muted: #cbd5e1;
+    --fs-line: rgba(148, 163, 184, 0.25);
+    --fs-soft: rgba(30, 41, 59, 0.86);
+    --fs-card: rgba(15, 23, 42, 0.92);
+    --fs-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    --fs-primary: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-card,
+  body.dark-mode .file-storage-page .fs-hero,
+  body.dark-mode .file-storage-page .stat-card,
+  body.dark-mode .file-storage-page .chart-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-card,
+  html[data-bs-theme="dark"] .file-storage-page .fs-hero,
+  html[data-bs-theme="dark"] .file-storage-page .stat-card,
+  html[data-bs-theme="dark"] .file-storage-page .chart-card,
+  body[data-theme="dark"] .file-storage-page .fs-card,
+  body[data-theme="dark"] .file-storage-page .fs-hero,
+  body[data-theme="dark"] .file-storage-page .stat-card,
+  body[data-theme="dark"] .file-storage-page .chart-card {
+    background: var(--fs-card);
+    border-color: var(--fs-line);
+    color: var(--fs-text);
+  }
+
+  body.dark-mode .file-storage-page .fs-title,
+  body.dark-mode .file-storage-page .stat-value,
+  html[data-bs-theme="dark"] .file-storage-page .fs-title,
+  html[data-bs-theme="dark"] .file-storage-page .stat-value,
+  body[data-theme="dark"] .file-storage-page .fs-title,
+  body[data-theme="dark"] .file-storage-page .stat-value {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .fs-warning-box,
+  html[data-bs-theme="dark"] .file-storage-page .fs-warning-box,
+  body[data-theme="dark"] .file-storage-page .fs-warning-box {
+    background: rgba(245, 158, 11, 0.14);
+    border-color: rgba(251, 191, 36, 0.28);
+    color: #fde68a;
+  }
+
+  body.dark-mode .file-storage-page .fs-table thead th,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table thead th,
+  body[data-theme="dark"] .file-storage-page .fs-table thead th {
+    background: rgba(30, 64, 175, 0.38) !important;
+    color: #dbeafe !important;
+    border-color: rgba(147, 197, 253, 0.25);
+  }
+
+  body.dark-mode .file-storage-page .fs-table tbody td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table tbody td,
+  body[data-theme="dark"] .file-storage-page .fs-table tbody td {
+    background: rgba(15, 23, 42, 0.34) !important;
+    color: #e5e7eb;
+    border-color: rgba(148, 163, 184, 0.22);
+  }
+
+  body.dark-mode .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  html[data-bs-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td,
+  body[data-theme="dark"] .file-storage-page .fs-table.table-hover tbody tr:hover td {
+    background: rgba(30, 41, 59, 0.78) !important;
+  }
+
+  body.dark-mode .file-storage-page .file-link,
+  html[data-bs-theme="dark"] .file-storage-page .file-link,
+  body[data-theme="dark"] .file-storage-page .file-link {
+    color: #93c5fd;
+  }
+
+  body.dark-mode .file-storage-page .form-control,
+  body.dark-mode .file-storage-page .form-select,
+  html[data-bs-theme="dark"] .file-storage-page .form-control,
+  html[data-bs-theme="dark"] .file-storage-page .form-select,
+  body[data-theme="dark"] .file-storage-page .form-control,
+  body[data-theme="dark"] .file-storage-page .form-select {
+    background: rgba(15, 23, 42, 0.98);
+    border-color: rgba(148, 163, 184, 0.32);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-secondary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-secondary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-secondary {
+    color: #cbd5e1;
+    border-color: #64748b;
+  }
+
+  body.dark-mode .file-storage-page .btn-outline-primary,
+  html[data-bs-theme="dark"] .file-storage-page .btn-outline-primary,
+  body[data-theme="dark"] .file-storage-page .btn-outline-primary {
+    color: #93c5fd;
+    border-color: #60a5fa;
+  }
+
+  @media (max-width: 768px) {
+    .file-storage-page {
+      padding-left: 10px !important;
+      padding-right: 10px !important;
+    }
+
+    .file-storage-page .fs-hero,
+    .file-storage-page .fs-card,
+    .file-storage-page .fs-warning-box,
+    .file-storage-page .chart-card {
+      padding: 18px;
+      border-radius: 20px;
+    }
+
+    .file-storage-page .fs-actions,
+    .file-storage-page .fs-actions .btn,
+    .file-storage-page .fs-hero .btn {
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table thead {
+      display: none;
+    }
+
+    .file-storage-page .responsive-table tbody,
+    .file-storage-page .responsive-table tr,
+    .file-storage-page .responsive-table td {
+      display: block;
+      width: 100%;
+    }
+
+    .file-storage-page .responsive-table tr {
+      border-bottom: 1px solid var(--fs-line);
+      padding: 10px;
+    }
+
+    .file-storage-page .responsive-table td {
+      border: 0 !important;
+      padding: 7px 4px !important;
+    }
+
+    .file-storage-page .responsive-table td::before {
+      content: attr(data-label);
+      display: block;
+      font-weight: 850;
+      color: var(--fs-muted);
+      margin-bottom: 2px;
+    }
+  }
+</style>
+
+
+{% set f = form_data if form_data is defined and form_data else {} %}
+
+<div class="file-storage-page file-storage-narrow px-2 px-md-4 py-3 py-md-4">
+  <div class="fs-hero">
+    <h4 class="fs-title mb-1"><i class="bi bi-upload me-2"></i>Tải tệp mới lên</h4>
+    <p class="fs-subtitle mb-0">Chọn tệp, nơi lưu trữ và quyền truy cập cho tệp.</p>
+  </div>
+
+  <div class="fs-card">
+    {% if error %}
+      <div class="alert alert-danger rounded-4">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" action="/admin/file-storage/upload">
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="file">Chọn tệp</label>
+        <input id="file" type="file" name="file" class="form-control" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="storage_provider">Nơi lưu trữ</label>
+        <select id="storage_provider" name="storage_provider" class="form-select">
+          <option value="local" {% if not f or f.storage_provider == 'local' %}selected{% endif %}>Máy chủ nội bộ</option>
+          <option value="s3" {% if f and f.storage_provider == 's3' %}selected{% endif %}>S3</option>
+          <option value="cdn" {% if f and f.storage_provider == 'cdn' %}selected{% endif %}>CDN</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label fw-semibold" for="is_public">Quyền truy cập</label>
+        <select id="is_public" name="is_public" class="form-select">
+          <option value="1" {% if not f or f.is_public|string == '1' %}selected{% endif %}>Công khai</option>
+          <option value="0" {% if f and f.is_public|string == '0' %}selected{% endif %}>Riêng tư</option>
+        </select>
+      </div>
+
+      <div class="fs-actions d-flex justify-content-between flex-wrap gap-2 mt-4">
+        <a href="/admin/file-storage/list" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i>Quay lại
+        </a>
         <button class="btn btn-primary" type="submit">
-          <i class="bi bi-cloud-upload"></i> Upload
+          <i class="bi bi-cloud-upload me-1"></i>Tải lên
         </button>
-        <a href="/admin/file-storage/list" class="btn btn-secondary">Quay lại</a>
-      </form>
-    </div>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}

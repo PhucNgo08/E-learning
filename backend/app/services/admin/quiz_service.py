@@ -1,37 +1,50 @@
 """
-=====================================================
-📘 QUIZ SERVICE
-Cung cấp các chức năng CRUD và sinh quiz từ ngân hàng câu hỏi.
-=====================================================
+Dịch vụ quản lý kỳ thi/bài kiểm tra.
+Đã chỉnh để khớp enum trong model:
+- quiz_type: practice, graded, survey
+- status: draft, published, archived
 """
 
 import uuid
 from datetime import datetime
-from sqlalchemy.orm import Session
+
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session, joinedload
 
-from app.models.quiz import Quiz
+from app.models.course import Course
 from app.models.question import Question
-from app.models.question_option import QuestionOption
 from app.models.question_bank import QuestionBank
+from app.models.question_option import QuestionOption
+from app.models.quiz import Quiz
 
 
-# =====================================================
-# 🧩 1️⃣ Lấy danh sách quiz
-# =====================================================
+VALID_QUIZ_TYPES = {"practice", "graded", "survey"}
+VALID_DIFFICULTIES = {"easy", "medium", "hard"}
+VALID_STATUSES = {"draft", "published", "archived"}
+
+
+def _clean(value: str | None) -> str | None:
+    value = (value or "").strip()
+    return value or None
+
+
+def _validate_quiz_core(quiz_type: str, difficulty_level: str, status: str = "published"):
+    if quiz_type not in VALID_QUIZ_TYPES:
+        raise ValueError("Loại kỳ thi không hợp lệ.")
+    if difficulty_level not in VALID_DIFFICULTIES:
+        raise ValueError("Độ khó không hợp lệ.")
+    if status not in VALID_STATUSES:
+        raise ValueError("Trạng thái kỳ thi không hợp lệ.")
+
+
 def get_all_quizzes(db: Session):
-    """Lấy tất cả quiz từ CSDL."""
     return db.query(Quiz).order_by(Quiz.created_at.desc()).all()
 
 
 def get_quiz_by_id(db: Session, quiz_id: str):
-    """Tìm quiz theo ID."""
     return db.query(Quiz).filter(Quiz.id == quiz_id).first()
 
 
-# =====================================================
-# ➕ 2️⃣ Tạo quiz mới
-# =====================================================
 def create_quiz(
     db: Session,
     title: str,
@@ -39,25 +52,33 @@ def create_quiz(
     quiz_type: str,
     difficulty_level: str,
     total_questions: int,
-    time_limit_minutes: int = None,
+    time_limit_minutes: int | None = None,
     passing_score: float = 60.0,
-    course_id: str = None,
-    lesson_id: str = None
+    course_id: str | None = None,
+    lesson_id: str | None = None,
+    status: str = "published",
 ):
-    """Tạo mới một quiz thủ công."""
+    _validate_quiz_core(quiz_type, difficulty_level, status)
+
+    if not _clean(title):
+        raise ValueError("Tiêu đề kỳ thi không được để trống.")
+
     try:
         quiz = Quiz(
             id=str(uuid.uuid4()),
-            title=title,
-            description=description,
+            title=title.strip(),
+            description=_clean(description),
             quiz_type=quiz_type,
             difficulty_level=difficulty_level,
-            total_questions=total_questions,
+            total_questions=max(int(total_questions or 0), 0),
             time_limit_minutes=time_limit_minutes,
             passing_score=passing_score,
             course_id=course_id,
             lesson_id=lesson_id,
+            status=status,
+            is_approved=(status == "published"),
             created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         )
 
         db.add(quiz)
@@ -66,12 +87,9 @@ def create_quiz(
         return quiz
     except SQLAlchemyError as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi khi tạo quiz: {str(e)}") from e
+        raise RuntimeError(f"Lỗi khi tạo kỳ thi: {str(e)}") from e
 
 
-# =====================================================
-# ✏️ 3️⃣ Cập nhật quiz
-# =====================================================
 def update_quiz(
     db: Session,
     quiz_id: str,
@@ -80,21 +98,25 @@ def update_quiz(
     quiz_type: str,
     difficulty_level: str,
     total_questions: int,
-    time_limit_minutes: int,
-    passing_score: float
+    time_limit_minutes: int | None,
+    passing_score: float,
+    status: str = "published",
 ):
-    """Cập nhật quiz."""
     quiz = get_quiz_by_id(db, quiz_id)
     if not quiz:
-        raise ValueError("Không tìm thấy quiz.")
+        raise ValueError("Không tìm thấy kỳ thi.")
 
-    quiz.title = title
-    quiz.description = description
+    _validate_quiz_core(quiz_type, difficulty_level, status)
+
+    quiz.title = title.strip()
+    quiz.description = _clean(description)
     quiz.quiz_type = quiz_type
     quiz.difficulty_level = difficulty_level
-    quiz.total_questions = total_questions
+    quiz.total_questions = max(int(total_questions or 0), 0)
     quiz.time_limit_minutes = time_limit_minutes
     quiz.passing_score = passing_score
+    quiz.status = status
+    quiz.is_approved = (status == "published")
     quiz.updated_at = datetime.utcnow()
 
     try:
@@ -103,43 +125,40 @@ def update_quiz(
         return quiz
     except SQLAlchemyError as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi khi cập nhật quiz: {str(e)}") from e
+        raise RuntimeError(f"Lỗi khi cập nhật kỳ thi: {str(e)}") from e
 
 
-# =====================================================
-# ❌ 4️⃣ Xóa quiz
-# =====================================================
 def delete_quiz(db: Session, quiz_id: str):
-    """Xóa quiz và tất cả câu hỏi liên quan."""
     quiz = get_quiz_by_id(db, quiz_id)
     if not quiz:
-        raise ValueError("Không tìm thấy quiz cần xóa.")
+        raise ValueError("Không tìm thấy kỳ thi cần xóa.")
 
     try:
-        # Xóa câu hỏi trước để tránh lỗi khóa ngoại
-        db.query(Question).filter(Question.quiz_id == quiz_id).delete()
+        # Không xóa Question bằng bulk delete vì có thể làm lỗi khóa ngoại attempt_answers.
+        # Dùng ORM cascade của Quiz -> Question/QuestionOption/QuizAttempt/AttemptAnswer.
         db.delete(quiz)
         db.commit()
         return True
     except SQLAlchemyError as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi khi xóa quiz: {str(e)}") from e
+        raise RuntimeError(f"Lỗi khi xóa kỳ thi: {str(e)}") from e
 
 
-# =====================================================
-# 🧠 5️⃣ Sinh quiz tự động từ ngân hàng câu hỏi
-# =====================================================
 def generate_quiz_from_bank(
     db: Session,
     title: str,
     description: str,
     difficulty_level: str,
     total_questions: int,
-    course_id: str = None
+    course_id: str | None = None,
 ):
     """
-    Tự động sinh quiz từ bảng QuestionBank dựa trên độ khó và số lượng.
+    Sinh kỳ thi từ ngân hàng câu hỏi.
+    Lưu ý nghiệp vụ: model Quiz không có quiz_type='auto', nên dùng 'practice'.
     """
+    if difficulty_level not in VALID_DIFFICULTIES:
+        raise ValueError("Độ khó không hợp lệ.")
+
     try:
         questions_bank = (
             db.query(QuestionBank)
@@ -150,85 +169,81 @@ def generate_quiz_from_bank(
         )
 
         if not questions_bank or len(questions_bank) < total_questions:
-            raise ValueError("Không đủ câu hỏi trong ngân hàng để tạo quiz.")
+            raise ValueError("Không đủ câu hỏi trong ngân hàng để tạo kỳ thi.")
 
-        # Tạo quiz mới
         new_quiz = Quiz(
             id=str(uuid.uuid4()),
-            title=title,
-            description=description,
-            quiz_type="auto",
+            title=title.strip(),
+            description=_clean(description),
+            quiz_type="practice",
             difficulty_level=difficulty_level,
-            total_questions=total_questions,
+            total_questions=0,
             course_id=course_id,
+            status="draft",
+            is_approved=False,
             created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         )
         db.add(new_quiz)
-        db.flush()  # Lấy ID quiz ngay
+        db.flush()
 
-        # Tạo câu hỏi từ ngân hàng
-        for q in questions_bank:
+        count = 0
+        for order, q in enumerate(questions_bank, start=1):
             question = Question(
                 id=str(uuid.uuid4()),
                 quiz_id=new_quiz.id,
-                question_type=q.question_type,
+                question_type=getattr(q, "question_type", "multiple_choice") or "multiple_choice",
                 question_text=q.question_text,
-                explanation=q.explanation,
-                points=q.points,
+                explanation=getattr(q, "explanation", None),
+                points=getattr(q, "points", 1.0) or 1.0,
                 difficulty_level=q.difficulty_level,
+                question_order=order,
                 created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
             )
             db.add(question)
+            db.flush()
+            count += 1
 
-            # Tạo các lựa chọn
             if hasattr(q, "options") and q.options:
-                for opt in q.options:
+                for opt_order, opt in enumerate(q.options, start=1):
                     db.add(
                         QuestionOption(
                             id=str(uuid.uuid4()),
                             question_id=question.id,
                             option_text=opt.option_text,
-                            is_correct=opt.is_correct,
+                            is_correct=bool(opt.is_correct),
+                            option_order=opt_order,
                             created_at=datetime.utcnow(),
                         )
                     )
 
+        new_quiz.total_questions = count
         db.commit()
         db.refresh(new_quiz)
         return new_quiz
 
     except SQLAlchemyError as e:
         db.rollback()
-        raise RuntimeError(f"Lỗi khi sinh quiz tự động: {str(e)}") from e
+        raise RuntimeError(f"Lỗi khi sinh kỳ thi tự động: {str(e)}") from e
 
 
-# =====================================================
-# 🧾 6️⃣ Lấy danh sách câu hỏi của quiz
-# =====================================================
 def get_questions_by_quiz(db: Session, quiz_id: str):
-    """Lấy tất cả câu hỏi thuộc quiz."""
     return (
         db.query(Question)
         .filter(Question.quiz_id == quiz_id)
-        .order_by(Question.created_at.asc())
+        .order_by(Question.question_order.asc(), Question.created_at.asc())
         .all()
     )
-from app.models.course import Course
-from app.models.user import User
-from sqlalchemy.orm import joinedload
+
 
 def get_all_quizzes_for_admin(db: Session):
     """
-    Lấy tất cả quiz + tên khóa học + tên giáo viên.
-    Dùng cho Admin xem danh sách đầy đủ.
+    Lấy tất cả kỳ thi. Không dùng inner join để tránh mất kỳ thi nếu khóa học/giảng viên bị thiếu.
     """
     return (
         db.query(Quiz)
-        .join(Course, Quiz.course_id == Course.id)
-        .join(User, Course.teacher_id == User.id)
-        .options(
-            joinedload(Quiz.course).joinedload(Course.teacher)
-        )
+        .options(joinedload(Quiz.course).joinedload(Course.teacher))
         .order_by(Quiz.created_at.desc())
         .all()
     )

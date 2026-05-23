@@ -81,7 +81,17 @@ def create_assignment(
     teacher_id: str | None = None,
     module_id: str | None = None,
 ):
-    title, _course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
+    title, course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
+
+    if due_date is None:
+        raise HTTPException(status_code=400, detail="Vui lòng chọn hạn nộp bài tập.")
+
+    effective_teacher_id = teacher_id or course.teacher_id
+    if not effective_teacher_id:
+        raise HTTPException(status_code=400, detail="Khóa học chưa có giảng viên phụ trách.")
+
+    # Kiểm tra teacher/admin hợp lệ nếu admin không chọn teacher và lấy từ course.teacher_id.
+    _validate_assignment_payload(db, title, course_id, module_id, effective_teacher_id)
 
     new_assignment = Assignment(
         id=str(uuid.uuid4()),
@@ -89,7 +99,7 @@ def create_assignment(
         description=(description or "").strip() or None,
         course_id=course_id,
         module_id=module_id or None,
-        teacher_id=teacher_id or None,
+        teacher_id=effective_teacher_id,
         start_date=datetime.utcnow(),
         due_date=due_date,
         submission_type="individual",
@@ -130,13 +140,21 @@ def update_assignment(
     if not assignment:
         raise HTTPException(status_code=404, detail="Bài tập không tồn tại.")
 
-    title, _course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
+    title, course = _validate_assignment_payload(db, title, course_id, module_id, teacher_id)
+
+    if due_date is None:
+        raise HTTPException(status_code=400, detail="Vui lòng chọn hạn nộp bài tập.")
+
+    effective_teacher_id = teacher_id or course.teacher_id
+    if not effective_teacher_id:
+        raise HTTPException(status_code=400, detail="Khóa học chưa có giảng viên phụ trách.")
+    _validate_assignment_payload(db, title, course_id, module_id, effective_teacher_id)
 
     assignment.title = title
     assignment.description = (description or "").strip() or None
     assignment.course_id = course_id
     assignment.module_id = module_id or None
-    assignment.teacher_id = teacher_id or None
+    assignment.teacher_id = effective_teacher_id
     assignment.due_date = due_date
     assignment.updated_at = datetime.utcnow()
 
@@ -375,10 +393,17 @@ def grade_submission(
     if not submission:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài nộp.")
 
-    if grade < 0:
-        raise HTTPException(status_code=400, detail="Điểm không được âm.")
+    try:
+        grade_value = float(grade)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="Điểm không hợp lệ.") from exc
 
-    submission.grade = grade
+    assignment = db.query(Assignment).filter(Assignment.id == submission.assignment_id).first()
+    max_points = float(getattr(assignment, "total_points", None) or 10)
+    if grade_value < 0 or grade_value > max_points:
+        raise HTTPException(status_code=400, detail=f"Điểm phải nằm trong khoảng 0 đến {max_points:g}.")
+
+    submission.grade = grade_value
     submission.feedback = (feedback or "").strip() or None
     submission.status = "graded"
     submission.graded_at = datetime.utcnow()

@@ -1,7 +1,7 @@
 from datetime import datetime
 import uuid
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, joinedload
 
@@ -19,6 +19,9 @@ from app.models.user import User
 from app.models.user_profile import UserProfile
 from app.models.rbac import Role
 from app.models.course_enrollment import CourseEnrollment
+
+ACTIVE_ENROLLMENT_STATUSES = ["active", "approved", "completed"]
+DONE_QUIZ_STATUSES = ["submitted", "graded", "completed"]
 
 
 def _clean_text(value: str | None) -> str | None:
@@ -61,67 +64,60 @@ def create_assignment(
     module_id: str | None,
     teacher_id: str,
     title: str,
-    description: str,
-    due_date,
-    submission_type: str = "individual",
-    allowed_file_types: str = "jpg,jpeg,png,webp,gif,pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar,7z,txt,md,py,html,css,js,json,sql,mp4",
-    max_files: int = 5,
+    description: str | None,
+    due_date: datetime,
+    allowed_file_types: str = "pdf,docx,zip",
+    max_files: int = 3,
     max_file_size_mb: int = 50,
-    allow_late_submission: bool = False,
-    late_penalty_percent: float = 0,
-    total_points: float = 10,
-    grading_criteria: str = "",
 ):
+    title = _clean_text(title)
+    description = _clean_text(description)
+
+    if not title:
+        raise ValueError("Tiêu đề bài tập không được để trống.")
+    if not course_id:
+        raise ValueError("Khóa học không hợp lệ.")
+    if due_date is None:
+        raise ValueError("Hạn nộp không được để trống.")
+
     course = (
         db.query(Course)
         .filter(Course.id == course_id, Course.teacher_id == teacher_id)
         .first()
     )
     if not course:
-        raise ValueError("Bạn không có quyền tạo bài tập cho khóa học này.")
+        raise ValueError("Khóa học không hợp lệ hoặc không thuộc giáo viên.")
 
     if module_id:
-        module = (
-            db.query(Module)
-            .filter(Module.id == module_id, Module.course_id == course_id)
-            .first()
-        )
+        module = db.query(Module).filter(Module.id == module_id).first()
         if not module:
-            raise ValueError("Module không thuộc khóa học đã chọn.")
+            raise ValueError("Module không tồn tại.")
+        if module.course_id != course_id:
+            raise ValueError("Module không thuộc khóa học được chọn.")
 
-    title = _clean_text(title)
-    if not title:
-        raise ValueError("Tiêu đề bài tập không được để trống.")
+    now = datetime.utcnow()
 
-    if submission_type not in {"individual", "group"}:
-        submission_type = "individual"
-
-    assignment = Assignment(
+    new_assignment = Assignment(
         id=str(uuid.uuid4()),
         course_id=course_id,
-        module_id=module_id or None,
+        module_id=module_id,
         teacher_id=teacher_id,
         title=title,
-        description=description or "",
-        submission_type=submission_type,
-        allowed_file_types=allowed_file_types or "jpg,jpeg,png,webp,gif,pdf,doc,docx,ppt,pptx,xls,xlsx,zip,rar,7z,txt,md,py,html,css,js,json,sql,mp4",
-        max_files=int(max_files or 5),
-        max_file_size_mb=int(max_file_size_mb or 50),
-        start_date=datetime.utcnow(),
+        description=description,
         due_date=due_date,
-        allow_late_submission=1 if allow_late_submission else 0,
-        late_penalty_percent=float(late_penalty_percent or 0),
-        total_points=float(total_points or 10),
-        grading_criteria=grading_criteria or "",
-        created_at=datetime.utcnow(),
-        updated_at=datetime.utcnow(),
+        allowed_file_types=allowed_file_types,
+        max_files=max_files,
+        max_file_size_mb=max_file_size_mb,
+        start_date=now,
+        created_at=now,
+        updated_at=now,
     )
 
     try:
-        db.add(assignment)
+        db.add(new_assignment)
         db.commit()
-        db.refresh(assignment)
-        return assignment
+        db.refresh(new_assignment)
+        return new_assignment
     except SQLAlchemyError:
         db.rollback()
         raise
@@ -137,45 +133,21 @@ def update_assignment_by_teacher(
     title: str,
     description: str | None,
     due_date: datetime | None = None,
-    submission_type: str | None = None,
-    allowed_file_types: str | None = None,
-    max_files: int | None = None,
-    max_file_size_mb: int | None = None,
-    allow_late_submission: bool | None = None,
-    late_penalty_percent: float | None = None,
-    total_points: float | None = None,
-    grading_criteria: str | None = None,
 ):
     assignment = get_assignment_owned(db, assignment_id, teacher_id)
     if not assignment:
         return None
 
     title = _clean_text(title)
+    description = _clean_text(description)
+
     if not title:
         raise ValueError("Tiêu đề bài tập không được để trống.")
 
     assignment.title = title
-    assignment.description = description or ""
+    assignment.description = description
     if due_date is not None:
         assignment.due_date = due_date
-
-    if submission_type in {"individual", "group"}:
-        assignment.submission_type = submission_type
-    if allowed_file_types is not None:
-        assignment.allowed_file_types = allowed_file_types
-    if max_files is not None:
-        assignment.max_files = int(max_files or 5)
-    if max_file_size_mb is not None:
-        assignment.max_file_size_mb = int(max_file_size_mb or 50)
-    if allow_late_submission is not None:
-        assignment.allow_late_submission = 1 if allow_late_submission else 0
-    if late_penalty_percent is not None:
-        assignment.late_penalty_percent = float(late_penalty_percent or 0)
-    if total_points is not None:
-        assignment.total_points = float(total_points or 10)
-    if grading_criteria is not None:
-        assignment.grading_criteria = grading_criteria or ""
-
     assignment.updated_at = datetime.utcnow()
 
     try:
@@ -339,13 +311,20 @@ def get_submission_export_rows(db: Session, assignment_id: str):
 # 🎯 Tiến độ học viên theo khóa học
 # ====================================================
 def get_student_progress_by_course(db: Session, course_id: str):
+    """
+    Thống kê tiến độ học viên theo khóa học.
+    Fix:
+    - Chỉ tính module/bài học đã publish.
+    - Quiz tính cả submitted/graded/completed.
+    - Assignment nhóm tính cho từng thành viên trong assignment_group_members.
+    """
     students = (
         db.query(User)
         .join(CourseEnrollment, CourseEnrollment.user_id == User.id)
         .join(User.roles)
         .filter(
             CourseEnrollment.course_id == course_id,
-            CourseEnrollment.enrollment_status.in_(["active", "approved", "completed"]),
+            CourseEnrollment.enrollment_status.in_(ACTIVE_ENROLLMENT_STATUSES),
             Role.role_code == "student",
         )
         .distinct()
@@ -355,7 +334,12 @@ def get_student_progress_by_course(db: Session, course_id: str):
     total_lessons = (
         db.query(Lesson)
         .join(Module, Module.id == Lesson.module_id)
-        .filter(Module.course_id == course_id)
+        .filter(
+            Module.course_id == course_id,
+            Module.is_published == 1,
+            Lesson.is_published == 1,
+            Module.deleted_at.is_(None),
+        )
         .count()
     )
 
@@ -367,7 +351,10 @@ def get_student_progress_by_course(db: Session, course_id: str):
 
     total_quizzes = (
         db.query(Quiz)
-        .filter(Quiz.course_id == course_id)
+        .filter(
+            Quiz.course_id == course_id,
+            Quiz.status == "published",
+        )
         .count()
     )
 
@@ -382,18 +369,33 @@ def get_student_progress_by_course(db: Session, course_id: str):
                 LessonProgress.user_id == stu.id,
                 LessonProgress.progress_status == "completed",
                 Module.course_id == course_id,
+                Module.is_published == 1,
+                Lesson.is_published == 1,
+                Module.deleted_at.is_(None),
             )
             .count()
         )
 
-        assignments_submitted = (
-            db.query(AssignmentSubmission)
-            .join(Assignment, Assignment.id == AssignmentSubmission.assignment_id)
-            .filter(
-                Assignment.course_id == course_id,
-                AssignmentSubmission.student_id == stu.id,
-            )
-            .count()
+        assignments_submitted = int(
+            db.execute(
+                text(
+                    """
+                    SELECT COUNT(DISTINCT s.id) AS total
+                    FROM assignment_submissions s
+                    JOIN assignments a ON a.id = s.assignment_id
+                    LEFT JOIN assignment_groups ag ON ag.id = s.group_id
+                    LEFT JOIN assignment_group_members agm ON agm.group_id = ag.id
+                    WHERE a.course_id = :course_id
+                      AND (
+                            s.student_id = :student_id
+                            OR agm.user_id = :student_id
+                          )
+                      AND s.status IN ('submitted', 'graded', 'late', 'resubmitted')
+                    """
+                ),
+                {"course_id": course_id, "student_id": stu.id},
+            ).scalar()
+            or 0
         )
 
         quiz_done = (
@@ -401,8 +403,9 @@ def get_student_progress_by_course(db: Session, course_id: str):
             .join(Quiz, Quiz.id == QuizAttempt.quiz_id)
             .filter(
                 QuizAttempt.user_id == stu.id,
-                QuizAttempt.status == "submitted",
+                QuizAttempt.status.in_(DONE_QUIZ_STATUSES),
                 Quiz.course_id == course_id,
+                Quiz.status == "published",
             )
             .count()
         )
@@ -420,9 +423,12 @@ def get_student_progress_by_course(db: Session, course_id: str):
             {
                 "student": stu,
                 "lessons_completed": lessons_completed,
+                "total_lessons": total_lessons,
                 "assignments_submitted": assignments_submitted,
+                "total_assignments": total_assignments,
                 "quiz_done": quiz_done,
-                "overall_progress": overall_progress,
+                "total_quizzes": total_quizzes,
+                "overall_progress": min(overall_progress, 100.0),
             }
         )
 
