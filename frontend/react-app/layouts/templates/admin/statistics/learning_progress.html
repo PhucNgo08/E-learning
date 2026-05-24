@@ -9,7 +9,7 @@
 {% block content %}
 <style>
 /* =====================================================
-   LEARNING PROGRESS - LIGHT / DARK MODE FIX
+   LEARNING PROGRESS - LIGHT / DARK MODE SAFE
    Chỉ áp dụng cho trang /admin/statistics/learning-progress
 ===================================================== */
 .learning-progress-page {
@@ -24,6 +24,7 @@
   --lp-body-text: #334155;
   --lp-muted-text: #64748b;
   --lp-border: #e2e8f0;
+  --lp-soft-bg: #f8fafc;
   --lp-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
 }
 
@@ -42,7 +43,8 @@ html[data-theme="dark"] .learning-progress-page,
   --lp-main-text: #f8fafc;
   --lp-body-text: #e5e7eb;
   --lp-muted-text: #cbd5e1;
-  --lp-border: rgba(148, 163, 184, 0.22);
+  --lp-border: rgba(148, 163, 184, 0.24);
+  --lp-soft-bg: rgba(30, 41, 59, 0.72);
   --lp-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
 }
 
@@ -127,6 +129,7 @@ html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
   color: var(--lp-main-text) !important;
   border-color: var(--lp-border) !important;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .learning-progress-page .table tbody tr,
@@ -157,6 +160,26 @@ html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
   background: transparent !important;
 }
 
+.learning-progress-page .form-select,
+.learning-progress-page .form-control {
+  background-color: var(--lp-card-bg) !important;
+  color: var(--lp-main-text) !important;
+  border-color: var(--lp-border) !important;
+}
+
+.learning-progress-page .form-select option {
+  color: #111827;
+}
+
+.learning-progress-page .progress {
+  background: var(--lp-soft-bg) !important;
+  border: 1px solid var(--lp-border);
+}
+
+.learning-progress-page .badge {
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   .learning-progress-page .lp-stat-card .card-body {
     padding: 1rem !important;
@@ -168,17 +191,50 @@ html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
 }
 </style>
 
-<div class="learning-progress-page">
+{% set summary = summary | default({}, true) %}
+{% set courses = courses | default([], true) %}
+{% set top_courses = top_courses | default([], true) %}
+{% set top_students = top_students | default([], true) %}
+{% set inactive_students = inactive_students | default([], true) %}
+{% set progress_rows = progress_rows | default([], true) %}
+{% set selected_course_id = selected_course_id | default("", true) %}
+
+{% set total_students_value = summary.get("total_students", total_students | default(progress_rows | length, true)) %}
+{% set total_teachers_value = summary.get("total_teachers", 0) %}
+{% set total_courses_value = summary.get("total_courses", courses | length) %}
+{% set total_enrollments_value = summary.get("total_enrollments", progress_rows | length) %}
+{% set total_lessons_value = summary.get("total_lessons", 0) %}
+{% set completed_lessons_value = summary.get("completed_lessons", 0) %}
+{% set total_assignments_value = summary.get("total_assignments", 0) %}
+{% set total_submissions_value = summary.get("total_submissions", 0) %}
+{% set total_quizzes_value = summary.get("total_quizzes", 0) %}
+{% set quiz_attempts_value = summary.get("quiz_attempts", 0) %}
+{% set published_courses_value = summary.get("published_courses", 0) %}
+{% set avg_progress_value = avg_progress | default(summary.get("avg_progress", 0), true) %}
+
+<div class="container-fluid learning-progress-page py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-graph-up-arrow me-2"></i>Tổng tiến độ học tập
+      </h3>
+      <p class="text-muted mb-0">Theo dõi học viên, bài học, bài tập và quiz trong hệ thống.</p>
+    </div>
+    <a href="/admin/statistics/dashboard" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-arrow-left me-1"></i> Quay lại thống kê
+    </a>
+  </div>
+
   <div class="row g-3 mb-4">
     {% set cards = [
-      ('Sinh viên', summary.total_students, 'bi-people-fill'),
-      ('Giảng viên', summary.total_teachers, 'bi-person-workspace'),
-      ('Khóa học', summary.total_courses, 'bi-book-half'),
-      ('Ghi danh', summary.total_enrollments, 'bi-person-check'),
-      ('Bài học hoàn thành', summary.completed_lessons ~ '/' ~ summary.total_lessons, 'bi-easel'),
-      ('Bài tập đã nộp', summary.total_submissions ~ '/' ~ summary.total_assignments, 'bi-journal-check'),
-      ('Quiz đã làm', summary.quiz_attempts ~ '/' ~ summary.total_quizzes, 'bi-question-circle'),
-      ('Khóa published', summary.published_courses, 'bi-broadcast')
+      ("Sinh viên", total_students_value, "bi-people-fill"),
+      ("Giảng viên", total_teachers_value, "bi-person-workspace"),
+      ("Khóa học", total_courses_value, "bi-book-half"),
+      ("Ghi danh", total_enrollments_value, "bi-person-check"),
+      ("Tiến độ TB", avg_progress_value ~ "%", "bi-speedometer2"),
+      ("Bài học hoàn thành", completed_lessons_value ~ "/" ~ total_lessons_value, "bi-easel"),
+      ("Bài tập đã nộp", total_submissions_value ~ "/" ~ total_assignments_value, "bi-journal-check"),
+      ("Quiz đã làm", quiz_attempts_value ~ "/" ~ total_quizzes_value, "bi-question-circle")
     ] %}
 
     {% for label, value, icon in cards %}
@@ -200,7 +256,33 @@ html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
     {% endfor %}
   </div>
 
-  <div class="row g-4">
+  <div class="card lp-card border-0 rounded-4 mb-4">
+    <div class="card-body">
+      <form method="get" action="/admin/statistics/learning-progress" class="row g-3 align-items-end">
+        <div class="col-md-8">
+          <label for="course_id" class="form-label fw-semibold mb-1">Lọc theo khóa học</label>
+          <select name="course_id" id="course_id" class="form-select">
+            <option value="">Tất cả khóa học</option>
+            {% for course in courses %}
+            <option value="{{ course.id }}" {% if selected_course_id|string == course.id|string %}selected{% endif %}>
+              {{ course.course_code }} - {{ course.course_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+          <button type="submit" class="btn btn-primary rounded-pill px-4">
+            <i class="bi bi-funnel me-1"></i> Lọc
+          </button>
+          <a href="/admin/statistics/learning-progress" class="btn btn-outline-secondary rounded-pill px-4">
+            Làm mới
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
     <div class="col-lg-6">
       <div class="card lp-card border-0 rounded-4 h-100">
         <div class="lp-card-header">Top khóa học nhiều học viên</div>
@@ -262,34 +344,105 @@ html[data-theme="dark"] .learning-progress-page .lp-stat-icon,
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="col-12">
-      <div class="card lp-card border-0 rounded-4">
-        <div class="lp-card-header">Sinh viên chưa bắt đầu học</div>
-        <div class="table-responsive">
-          <table class="table table-hover mb-0 align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>Họ tên</th>
-                <th>Email/Tài khoản</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for user, profile in inactive_students %}
-              <tr>
-                <td>{{ profile.full_name if profile else user.username }}</td>
-                <td>{{ user.email }}</td>
-              </tr>
-            {% else %}
-              <tr>
-                <td colspan="2" class="text-center lp-empty py-4">Không có sinh viên cần cảnh báo.</td>
-              </tr>
-            {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div class="card lp-card border-0 rounded-4 mb-4">
+    <div class="lp-card-header">Chi tiết tiến độ học viên</div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Học viên</th>
+            <th>Khóa học</th>
+            <th class="text-center">Tiến độ</th>
+            <th class="text-center">Bài học</th>
+            <th class="text-center">Bài tập</th>
+            <th class="text-center">Quiz</th>
+            <th class="text-center">Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for row in progress_rows %}
+          {% set percent = row.get("progress_percent", 0) %}
+          <tr>
+            <td>
+              <div class="fw-semibold">{{ row.get("student_name", "Không rõ") }}</div>
+              <div class="small text-muted">{{ row.get("email", "") }}</div>
+            </td>
+            <td>
+              <div class="fw-semibold">{{ row.get("course_name", "") }}</div>
+              <div class="small text-muted">{{ row.get("course_code", "") }}</div>
+            </td>
+            <td style="min-width: 160px;">
+              <div class="d-flex justify-content-between small mb-1">
+                <span>{{ percent }}%</span>
+              </div>
+              <div class="progress-bar lp-progress-bar" role="progressbar"
+                  data-progress="{{ percent }}"
+                  aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                     aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+            </td>
+            <td class="text-center">{{ row.get("completed_lessons", 0) }}/{{ row.get("total_lessons", 0) }}</td>
+            <td class="text-center">{{ row.get("submitted_assignments", 0) }}/{{ row.get("total_assignments", 0) }}</td>
+            <td class="text-center">{{ row.get("completed_quizzes", 0) }}/{{ row.get("total_quizzes", 0) }}</td>
+            <td class="text-center">
+              {% set status = row.get("enrollment_status", "") %}
+              <span class="badge rounded-pill bg-{{ 'success' if status in ['approved', 'active', 'completed'] else 'secondary' }}">
+                {{ status or "Không rõ" }}
+              </span>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center lp-empty py-4">Chưa có dữ liệu tiến độ học tập.</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card lp-card border-0 rounded-4">
+    <div class="lp-card-header">Sinh viên chưa bắt đầu học</div>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Họ tên</th>
+            <th>Email/Tài khoản</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for item in inactive_students %}
+          {% if item is sequence and item is not string %}
+            {% set user = item[0] %}
+            {% set profile = item[1] if item|length > 1 else none %}
+          {% else %}
+            {% set user = item %}
+            {% set profile = none %}
+          {% endif %}
+          <tr>
+            <td>{{ profile.full_name if profile and profile.full_name else user.username }}</td>
+            <td>{{ user.email }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="2" class="text-center lp-empty py-4">Không có sinh viên cần cảnh báo.</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".lp-progress-bar").forEach(function (bar) {
+    const rawValue = Number(bar.dataset.progress || 0);
+    const safeValue = Math.max(0, Math.min(100, Number.isFinite(rawValue) ? rawValue : 0));
+    bar.style.width = safeValue + "%";
+  });
+});
+</script>
 {% endblock %}

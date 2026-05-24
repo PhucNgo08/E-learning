@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
@@ -14,17 +15,27 @@ from app.models.assignment_submission import AssignmentSubmission
 from app.models.course import Course
 from app.models.course_enrollment import CourseEnrollment
 from app.models.course_progress import CourseProgress
-from app.models.course_review import CourseReview
 from app.models.lesson import Lesson
 from app.models.lesson_progress import LessonProgress
 from app.models.module import Module
 from app.models.quiz import Quiz
 from app.models.quiz_attempt import QuizAttempt
-from app.models.rbac import Role
 from app.models.user import User
 from app.models.user_profile import UserProfile
 from app.services.admin.review_stats_service import get_review_statistics
 from app.services.admin.user_statistics_service import get_user_statistics
+
+try:
+    # File service đã fix nằm tại:
+    # backend/app/services/admin/learning_progress_stats_service.py
+    from app.services.admin.statistics_service import (
+        get_learning_progress_overview,
+    )
+except Exception:
+    # Nếu project chưa có file service này thì route vẫn chạy bằng dữ liệu fallback,
+    # tránh làm sập toàn bộ trang thống kê.
+    get_learning_progress_overview = None
+
 
 statistics_router = APIRouter(
     prefix="/admin/statistics",
@@ -35,12 +46,13 @@ statistics_router = APIRouter(
 router = statistics_router
 
 ACTIVE_ENROLLMENT_STATUSES = ("approved", "active", "completed")
+DONE_QUIZ_STATUSES = ("submitted", "graded", "completed")
 
 
 def render_template(
     request: Request,
     template_name: str,
-    context: dict,
+    context: dict[str, Any],
     status_code: int = 200,
 ):
     tpl = get_template_by_path(request.url.path)
@@ -50,19 +62,31 @@ def render_template(
         "active_page": "statistics",
         "now": datetime.now(),
     }
-    base_context.update(context)
+    base_context.update(context or {})
     return tpl.TemplateResponse(template_name, base_context, status_code=status_code)
 
 
-def _count(db: Session, query):
-    return int(query.scalar() or 0)
+def _count(db: Session, query) -> int:
+    try:
+        return int(query.scalar() or 0)
+    except Exception:
+        return 0
 
 
-def _course_statistics(db: Session) -> dict:
+def _course_statistics(db: Session) -> dict[str, Any]:
     total_courses = _count(db, db.query(func.count(Course.id)))
-    published_courses = _count(db, db.query(func.count(Course.id)).filter(Course.status == "published"))
-    draft_courses = _count(db, db.query(func.count(Course.id)).filter(Course.status == "draft"))
-    archived_courses = _count(db, db.query(func.count(Course.id)).filter(Course.status == "archived"))
+    published_courses = _count(
+        db,
+        db.query(func.count(Course.id)).filter(Course.status == "published"),
+    )
+    draft_courses = _count(
+        db,
+        db.query(func.count(Course.id)).filter(Course.status == "draft"),
+    )
+    archived_courses = _count(
+        db,
+        db.query(func.count(Course.id)).filter(Course.status == "archived"),
+    )
 
     total_students = _count(
         db,
@@ -78,10 +102,7 @@ def _course_statistics(db: Session) -> dict:
             LessonProgress.progress_status == "completed"
         ),
     )
-    avg_progress = (
-        db.query(func.avg(CourseProgress.progress_percent)).scalar()
-        or 0
-    )
+    avg_progress = db.query(func.avg(CourseProgress.progress_percent)).scalar() or 0
 
     return {
         "Tổng khóa học": total_courses,
@@ -97,8 +118,8 @@ def _course_statistics(db: Session) -> dict:
     }
 
 
-def _user_statistics_vietnamese(db: Session) -> dict:
-    raw = get_user_statistics(db)
+def _user_statistics_vietnamese(db: Session) -> dict[str, Any]:
+    raw = get_user_statistics(db) or {}
     by_role = raw.get("by_role", {}) or {}
     by_status = raw.get("by_status", {}) or {}
 
@@ -129,7 +150,7 @@ def _user_statistics_vietnamese(db: Session) -> dict:
     }
 
 
-def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[dict]:
+def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[dict[str, Any]]:
     query = (
         db.query(CourseEnrollment, Course, User, UserProfile, CourseProgress)
         .join(Course, Course.id == CourseEnrollment.course_id)
@@ -141,13 +162,17 @@ def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[d
             & (CourseProgress.user_id == User.id),
         )
         .filter(CourseEnrollment.enrollment_status.in_(ACTIVE_ENROLLMENT_STATUSES))
-        .order_by(Course.course_code.asc(), UserProfile.full_name.asc(), User.username.asc())
+        .order_by(
+            Course.course_code.asc(),
+            UserProfile.full_name.asc(),
+            User.username.asc(),
+        )
     )
 
     if course_id:
         query = query.filter(Course.id == course_id)
 
-    rows: list[dict] = []
+    rows: list[dict[str, Any]] = []
 
     for enrollment, course, user, profile, saved_progress in query.all():
         total_lessons = _count(
@@ -170,7 +195,9 @@ def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[d
 
         total_assignments = _count(
             db,
-            db.query(func.count(Assignment.id)).filter(Assignment.course_id == course.id),
+            db.query(func.count(Assignment.id)).filter(
+                Assignment.course_id == course.id
+            ),
         )
         submitted_assignments = _count(
             db,
@@ -193,14 +220,18 @@ def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[d
             .filter(
                 Quiz.course_id == course.id,
                 QuizAttempt.user_id == user.id,
-                QuizAttempt.status.in_(("submitted", "graded")),
+                QuizAttempt.status.in_(DONE_QUIZ_STATUSES),
             ),
         )
 
         if saved_progress and saved_progress.progress_percent is not None:
             progress_percent = float(saved_progress.progress_percent)
         else:
-            progress_percent = round((completed_lessons / total_lessons) * 100, 2) if total_lessons else 0.0
+            progress_percent = (
+                round((completed_lessons / total_lessons) * 100, 2)
+                if total_lessons
+                else 0.0
+            )
 
         progress_percent = max(0.0, min(100.0, progress_percent))
 
@@ -210,7 +241,11 @@ def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[d
                 "course_code": course.course_code,
                 "course_name": course.course_name,
                 "student_id": user.id,
-                "student_name": profile.full_name if profile and profile.full_name else user.username,
+                "student_name": (
+                    profile.full_name
+                    if profile and profile.full_name
+                    else user.username
+                ),
                 "email": user.email,
                 "enrollment_status": enrollment.enrollment_status,
                 "progress_percent": progress_percent,
@@ -224,6 +259,116 @@ def _learning_progress_rows(db: Session, course_id: str | None = None) -> list[d
         )
 
     return rows
+
+
+def _fallback_learning_progress_overview(
+    courses: list[Course],
+    rows: list[dict[str, Any]],
+    total_students: int,
+    avg_progress: float,
+) -> dict[str, Any]:
+    completed_students = sum(
+        1 for row in rows if float(row.get("progress_percent") or 0) >= 100
+    )
+    in_progress_students = sum(
+        1 for row in rows if 0 < float(row.get("progress_percent") or 0) < 100
+    )
+    not_started_students = sum(
+        1 for row in rows if float(row.get("progress_percent") or 0) <= 0
+    )
+
+    # Dữ liệu fallback chỉ dùng để tránh lỗi template khi service overview chưa có.
+    return {
+        "summary": {
+            "total_students": total_students,
+            "total_teachers": 0,
+            "total_courses": len(courses or []),
+            "published_courses": sum(
+                1 for course in (courses or []) if getattr(course, "status", None) == "published"
+            ),
+            "total_enrollments": len(rows or []),
+            "total_lessons": sum(int(row.get("total_lessons") or 0) for row in rows),
+            "completed_lessons": sum(
+                int(row.get("completed_lessons") or 0) for row in rows
+            ),
+            "lesson_completion_rate": avg_progress,
+            "total_assignments": sum(
+                int(row.get("total_assignments") or 0) for row in rows
+            ),
+            "total_submissions": sum(
+                int(row.get("submitted_assignments") or 0) for row in rows
+            ),
+            "graded_submissions": 0,
+            "assignment_submit_rate": 0,
+            "total_quizzes": sum(int(row.get("total_quizzes") or 0) for row in rows),
+            "quiz_attempts": sum(
+                int(row.get("completed_quizzes") or 0) for row in rows
+            ),
+            "avg_progress": avg_progress,
+            "completed_students": completed_students,
+            "in_progress_students": in_progress_students,
+            "not_started_students": not_started_students,
+            "filtered_students": total_students,
+            "selected_total_students": total_students,
+        },
+        "top_courses": [],
+        "top_students": [],
+        "inactive_students": [],
+    }
+
+
+def _safe_learning_progress_overview(
+    db: Session,
+    courses: list[Course],
+    rows: list[dict[str, Any]],
+    total_students: int,
+    avg_progress: float,
+) -> dict[str, Any]:
+    try:
+        if get_learning_progress_overview:
+            overview = get_learning_progress_overview(db) or {}
+        else:
+            overview = {}
+    except Exception:
+        print("\n⚠️ LỖI SERVICE TỔNG QUAN TIẾN ĐỘ:\n", traceback.format_exc())
+        overview = {}
+
+    if not isinstance(overview, dict) or "summary" not in overview:
+        overview = _fallback_learning_progress_overview(
+            courses=courses,
+            rows=rows,
+            total_students=total_students,
+            avg_progress=avg_progress,
+        )
+
+    summary = dict(overview.get("summary") or {})
+
+    completed_students = sum(
+        1 for row in rows if float(row.get("progress_percent") or 0) >= 100
+    )
+    in_progress_students = sum(
+        1 for row in rows if 0 < float(row.get("progress_percent") or 0) < 100
+    )
+    not_started_students = sum(
+        1 for row in rows if float(row.get("progress_percent") or 0) <= 0
+    )
+
+    # Bổ sung các key mà template learning_progress.html có thể gọi bằng summary.xxx.
+    # Không xóa key cũ của service, chỉ thêm key mới để tránh UndefinedError.
+    summary.setdefault("system_total_students", summary.get("total_students", 0))
+    summary.setdefault("system_total_courses", summary.get("total_courses", len(courses or [])))
+    summary["avg_progress"] = avg_progress
+    summary["completed_students"] = completed_students
+    summary["in_progress_students"] = in_progress_students
+    summary["not_started_students"] = not_started_students
+    summary["filtered_students"] = total_students
+    summary["selected_total_students"] = total_students
+
+    overview["summary"] = summary
+    overview.setdefault("top_courses", [])
+    overview.setdefault("top_students", [])
+    overview.setdefault("inactive_students", [])
+    return overview
 
 
 @statistics_router.get("/dashboard", response_class=HTMLResponse)
@@ -267,10 +412,23 @@ def learning_progress(
         rows = _learning_progress_rows(db, course_id=course_id)
 
         total_students = len(rows)
-        avg_progress = round(
-            sum(row["progress_percent"] for row in rows) / total_students,
-            1,
-        ) if total_students else 0
+        avg_progress = (
+            round(
+                sum(float(row.get("progress_percent") or 0) for row in rows)
+                / total_students,
+                1,
+            )
+            if total_students
+            else 0
+        )
+
+        overview = _safe_learning_progress_overview(
+            db=db,
+            courses=courses,
+            rows=rows,
+            total_students=total_students,
+            avg_progress=avg_progress,
+        )
 
         return render_template(
             request,
@@ -281,6 +439,11 @@ def learning_progress(
                 "progress_rows": rows,
                 "total_students": total_students,
                 "avg_progress": avg_progress,
+                "summary": overview.get("summary", {}),
+                "top_courses": overview.get("top_courses", []),
+                "top_students": overview.get("top_students", []),
+                "inactive_students": overview.get("inactive_students", []),
+                "learning_overview": overview,
                 "page_title": "📈 Theo dõi tiến độ học tập",
             },
         )

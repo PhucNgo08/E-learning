@@ -54,13 +54,13 @@ def validate_quiz_inputs(
     available_to: datetime = None,
 ):
     if not _clean_text(title):
-        raise ValueError("Tiêu đề quiz không được để trống.")
+        raise ValueError("Tiêu đề bài kiểm tra không được để trống.")
 
     if quiz_type not in VALID_QUIZ_TYPES:
-        raise ValueError("Loại quiz không hợp lệ.")
+        raise ValueError("Loại bài kiểm tra không hợp lệ.")
 
     if difficulty_level not in VALID_DIFFICULTY_LEVELS:
-        raise ValueError("Độ khó quiz không hợp lệ.")
+        raise ValueError("Độ khó bài kiểm tra không hợp lệ.")
 
     if max_attempts is None or int(max_attempts) <= 0:
         raise ValueError("Số lần làm phải lớn hơn 0.")
@@ -101,6 +101,39 @@ def validate_exam_inputs(
 
     if available_from and available_to and available_to <= available_from:
         raise ValueError("Thời gian đóng phải lớn hơn thời gian mở.")
+
+
+def _archive_quiz_when_has_attempts(db: Session, quiz: Quiz) -> bool:
+    """
+    Không xóa cứng quiz đã có học viên làm bài.
+
+    Lý do:
+    - attempt_answers.selected_option_id đang khóa ngoại tới question_options.id.
+    - Nếu xóa question_options/questions trước thì MySQL sẽ báo lỗi FK 1451.
+    - Giữ lịch sử điểm/lần làm bài là đúng nghiệp vụ E-learning.
+
+    Return:
+    - True: quiz đã có attempt và đã được chuyển sang archived.
+    - False: quiz chưa có attempt, có thể xóa cứng.
+    """
+    attempt_count = (
+        db.query(QuizAttempt.id)
+        .filter(QuizAttempt.quiz_id == quiz.id)
+        .count()
+    )
+
+    if attempt_count <= 0:
+        return False
+
+    quiz.status = "archived"
+    quiz.updated_at = datetime.utcnow()
+
+    # Nếu có trường is_approved thì để False để bài thi không còn mở cho sinh viên.
+    if hasattr(quiz, "is_approved"):
+        quiz.is_approved = False
+
+    db.commit()
+    return True
 
 
 # ===================================================================
@@ -164,7 +197,7 @@ def create_quiz(
         .first()
     )
     if not course:
-        raise PermissionError("Bạn không có quyền tạo quiz trong khóa học này.")
+        raise PermissionError("Bạn không có quyền tạo bài kiểm tra trong khóa học này.")
 
     try:
         quiz = Quiz(
@@ -272,13 +305,22 @@ def delete_quiz(db: Session, teacher_id: str, quiz_id: str):
         return False
 
     try:
+        # Nếu quiz đã có lượt làm bài thì chỉ lưu trữ, không xóa cứng.
+        if _archive_quiz_when_has_attempts(db, quiz):
+            return True
+
+        question_ids = (
+            db.query(Question.id)
+            .filter(Question.quiz_id == quiz_id)
+        )
+
         db.query(QuestionOption).filter(
-            QuestionOption.question_id.in_(
-                db.query(Question.id).filter(Question.quiz_id == quiz_id)
-            )
+            QuestionOption.question_id.in_(question_ids)
         ).delete(synchronize_session=False)
 
-        db.query(Question).filter(Question.quiz_id == quiz_id).delete(synchronize_session=False)
+        db.query(Question).filter(
+            Question.quiz_id == quiz_id
+        ).delete(synchronize_session=False)
 
         db.delete(quiz)
         db.commit()
@@ -436,6 +478,8 @@ def create_exam(
             passing_score=passing_score,
             available_from=available_from,
             available_to=available_to,
+            # Giáo viên tạo bài tính điểm/kỳ thi xong sẽ chờ quản trị viên duyệt.
+            # Khi quản trị viên duyệt, approve_exam() mới đổi sang published/is_approved=True.
             status="pending",
             is_approved=False,
             created_at=datetime.utcnow(),
@@ -506,13 +550,23 @@ def delete_exam(db: Session, user_id: str, role: str, exam_id: str):
         raise PermissionError("Bạn không có quyền xóa bài thi này.")
 
     try:
+        # Nếu bài thi đã có lượt làm bài thì chỉ lưu trữ, không xóa cứng.
+        # Tránh lỗi FK: attempt_answers.selected_option_id -> question_options.id.
+        if _archive_quiz_when_has_attempts(db, exam):
+            return True
+
+        question_ids = (
+            db.query(Question.id)
+            .filter(Question.quiz_id == exam_id)
+        )
+
         db.query(QuestionOption).filter(
-            QuestionOption.question_id.in_(
-                db.query(Question.id).filter(Question.quiz_id == exam_id)
-            )
+            QuestionOption.question_id.in_(question_ids)
         ).delete(synchronize_session=False)
 
-        db.query(Question).filter(Question.quiz_id == exam_id).delete(synchronize_session=False)
+        db.query(Question).filter(
+            Question.quiz_id == exam_id
+        ).delete(synchronize_session=False)
 
         db.delete(exam)
         db.commit()
@@ -528,9 +582,21 @@ def approve_exam(db: Session, exam_id: str):
         raise ValueError("Không tìm thấy bài thi.")
 
     try:
+        question_count = (
+            db.query(Question)
+            .filter(Question.quiz_id == exam_id)
+            .count()
+        )
+
+        if question_count <= 0:
+            raise ValueError("Bài thi chưa có câu hỏi nên chưa thể duyệt.")
+
+        # Cập nhật lại tổng số câu theo câu hỏi thực tế trước khi duyệt.
+        exam.total_questions = question_count
         exam.is_approved = True
         exam.status = "published"
         exam.updated_at = datetime.utcnow()
+
         db.commit()
         db.refresh(exam)
         return exam
@@ -580,19 +646,19 @@ def _quiz_is_open_now(quiz: Quiz, now: datetime | None = None) -> tuple[bool, st
     now = now or datetime.utcnow()
 
     if not quiz:
-        return False, "Quiz không tồn tại."
+        return False, "Bài kiểm tra không tồn tại."
 
     if quiz.status != "published":
-        return False, "Quiz chưa được mở."
+        return False, "Bài kiểm tra chưa được mở."
 
     if quiz.quiz_type == "graded" and not bool(quiz.is_approved):
         return False, "Bài thi chưa được quản trị viên duyệt."
 
     if quiz.available_from and now < quiz.available_from:
-        return False, "Quiz chưa đến thời gian mở."
+        return False, "Bài kiểm tra chưa đến thời gian mở."
 
     if quiz.available_to and now > quiz.available_to:
-        return False, "Quiz đã hết thời gian làm."
+        return False, "Bài kiểm tra đã hết thời gian làm."
 
     return True, ""
 
@@ -604,7 +670,7 @@ def _student_can_access_quiz(db: Session, user_id: str, quiz: Quiz) -> tuple[boo
 
     # Quiz không gắn khóa học thì không cho học viên tự truy cập trực tiếp.
     if not quiz.course_id:
-        return False, "Quiz chưa gắn với khóa học hợp lệ."
+        return False, "Bài kiểm tra chưa gắn với khóa học hợp lệ."
 
     enrolled = (
         db.query(CourseEnrollment)
@@ -616,7 +682,7 @@ def _student_can_access_quiz(db: Session, user_id: str, quiz: Quiz) -> tuple[boo
         .first()
     )
     if not enrolled:
-        return False, "Bạn không thuộc khóa học của quiz này."
+        return False, "Bạn không thuộc khóa học của bài kiểm tra này."
 
     return True, ""
 
@@ -705,7 +771,7 @@ def submit_quiz(db: Session, quiz_id: str, form_data: dict, user_id: str):
         .first()
     )
     if not quiz:
-        return {"error": "Quiz không tồn tại."}
+        return {"error": "Bài kiểm tra không tồn tại."}
 
     can_access, access_message = _student_can_access_quiz(db, user_id, quiz)
     if not can_access:

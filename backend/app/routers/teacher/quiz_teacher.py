@@ -56,7 +56,7 @@ from app.services.quiz_service_full_v12 import (
 # ======================================================
 router = APIRouter(
     prefix="/teacher/quizzes",
-    tags=["Teacher – Quizzes"],
+    tags=["Giáo viên - Bài kiểm tra"],
 )
 
 
@@ -170,7 +170,7 @@ def create_quiz_post(
         af = parse_dt_local(available_from) or datetime.utcnow()
         at = parse_dt_local(available_to) or datetime.utcnow().replace(hour=23, minute=59, second=0, microsecond=0)
 
-        create_exam(
+        created_quiz = create_exam(
             db=db,
             user_id=teacher.id,
             role="teacher",
@@ -185,7 +185,7 @@ def create_quiz_post(
             available_to=at,
         )
     else:
-        create_quiz(
+        created_quiz = create_quiz(
             db=db,
             teacher_id=teacher.id,
             course_id=course_id,
@@ -199,7 +199,9 @@ def create_quiz_post(
             total_questions=total_questions,
         )
 
-    return RedirectResponse("/teacher/quizzes/list", 303)
+    # Sau khi tạo xong, đưa giáo viên đến trang chi tiết để thêm/import câu hỏi.
+    # Bài tính điểm/kỳ thi vẫn ở trạng thái chờ duyệt, học viên chưa nhìn thấy.
+    return RedirectResponse(f"/teacher/quizzes/detail/{created_quiz.id}", 303)
 
 
 # ======================================================
@@ -211,7 +213,7 @@ def edit_page(quiz_id: str, request: Request,
 
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     courses = db.query(Course).filter(Course.teacher_id == teacher.id).all()
 
@@ -248,7 +250,7 @@ def edit_post(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     time_limit_minutes = int(time_limit_minutes)
     max_attempts = int(max_attempts)
@@ -303,7 +305,7 @@ def delete_page(
 
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse("quizzes/delete.html", {
@@ -324,7 +326,7 @@ def delete_post(
 
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     if mode == "graded":
         delete_exam(db, teacher.id, "teacher", quiz_id)
@@ -345,7 +347,7 @@ def detail_page(
 
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse("quizzes/detail.html", {
@@ -367,7 +369,7 @@ def preview_page(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
@@ -390,7 +392,7 @@ def statistics_page(quiz_id: str, request: Request,
 
     data = get_quiz_statistics(db, teacher.id, quiz_id)
     if not data:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse("quizzes/statistics.html", {
@@ -415,7 +417,7 @@ def attempts_page(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     attempts = (
         db.query(QuizAttempt)
@@ -884,7 +886,7 @@ def import_upload(
 
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
@@ -906,7 +908,7 @@ async def import_preview(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     content = await file.read()
     rows = parse_import_file(content, file.filename or "")
@@ -949,7 +951,7 @@ def import_confirm(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     cache = ensure_import_cache(request)
     uid = request.session.get("user_id") or teacher.id
@@ -1039,7 +1041,7 @@ def create_question_page(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     tpl = get_template_by_path(request.url.path)
     return tpl.TemplateResponse(
@@ -1073,7 +1075,7 @@ def create_question_post(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     existed_count = db.query(Question).filter(Question.quiz_id == quiz_id).count()
 
@@ -1133,7 +1135,7 @@ def edit_question_page(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     question = (
         db.query(Question)
@@ -1178,7 +1180,7 @@ def edit_question_post(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     question = (
         db.query(Question)
@@ -1244,7 +1246,7 @@ def delete_question_page(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     question = (
         db.query(Question)
@@ -1282,7 +1284,7 @@ def delete_question_post(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     question = (
         db.query(Question)
@@ -1314,7 +1316,7 @@ def export_quiz_results(
 ):
     quiz, mode = auto_get_quiz(db, teacher.id, quiz_id)
     if not quiz:
-        raise HTTPException(404, "Quiz không tồn tại.")
+        raise HTTPException(404, "Bài kiểm tra không tồn tại.")
 
     attempts = (
         db.query(QuizAttempt)

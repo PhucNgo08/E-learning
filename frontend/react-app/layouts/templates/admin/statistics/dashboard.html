@@ -1,106 +1,299 @@
 {% extends "layout_admin.html" %}
 {% block title %}📊 Dashboard thống kê{% endblock %}
+{% block page_title %}Dashboard thống kê{% endblock %}
+{% block page_subtitle %}Tổng quan nhanh tình hình người dùng, khóa học và đánh giá trong hệ thống{% endblock %}
+{% block nav_statistics %}active{% endblock %}
 
 {% block content %}
-<div class="container mt-4 mb-5">
+<style>
+/* =====================================================
+   ADMIN STATISTICS DASHBOARD - LIGHT / DARK MODE SAFE
+===================================================== */
+.admin-stat-dashboard {
+  --stat-card-bg: rgba(255, 255, 255, 0.96);
+  --stat-card-border: rgba(226, 232, 240, 0.95);
+  --stat-header-bg: rgba(248, 250, 252, 0.98);
+  --stat-main-text: #0f172a;
+  --stat-body-text: #334155;
+  --stat-muted-text: #64748b;
+  --stat-border: #e2e8f0;
+  --stat-soft-bg: #f8fafc;
+  --stat-hover-bg: #f1f5f9;
+  --stat-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
+}
+
+body.dark-mode .admin-stat-dashboard,
+body.theme-dark .admin-stat-dashboard,
+body[data-theme="dark"] .admin-stat-dashboard,
+html[data-theme="dark"] .admin-stat-dashboard,
+[data-bs-theme="dark"] .admin-stat-dashboard {
+  --stat-card-bg: rgba(15, 23, 42, 0.92);
+  --stat-card-border: rgba(148, 163, 184, 0.22);
+  --stat-header-bg: rgba(30, 41, 59, 0.96);
+  --stat-main-text: #f8fafc;
+  --stat-body-text: #e5e7eb;
+  --stat-muted-text: #cbd5e1;
+  --stat-border: rgba(148, 163, 184, 0.24);
+  --stat-soft-bg: rgba(30, 41, 59, 0.72);
+  --stat-hover-bg: rgba(51, 65, 85, 0.88);
+  --stat-shadow: 0 18px 46px rgba(0, 0, 0, 0.36);
+}
+
+.admin-stat-dashboard .stat-card {
+  background: var(--stat-card-bg) !important;
+  border: 1px solid var(--stat-card-border) !important;
+  color: var(--stat-main-text) !important;
+  box-shadow: var(--stat-shadow) !important;
+  overflow: hidden;
+}
+
+.admin-stat-dashboard .stat-title,
+.admin-stat-dashboard .fw-bold,
+.admin-stat-dashboard .fw-semibold,
+.admin-stat-dashboard th,
+.admin-stat-dashboard td {
+  color: var(--stat-main-text) !important;
+}
+
+.admin-stat-dashboard .text-muted,
+.admin-stat-dashboard .small.text-muted,
+.admin-stat-dashboard .stat-muted {
+  color: var(--stat-muted-text) !important;
+}
+
+.admin-stat-dashboard .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 110, 253, 0.10);
+  color: #0d6efd;
+}
+
+.admin-stat-dashboard .stat-section-title {
+  background: var(--stat-header-bg) !important;
+  color: var(--stat-main-text) !important;
+  border-bottom: 1px solid var(--stat-border) !important;
+  padding: 0.95rem 1.1rem;
+  font-weight: 800;
+}
+
+.admin-stat-dashboard .table {
+  --bs-table-bg: var(--stat-card-bg) !important;
+  --bs-table-color: var(--stat-body-text) !important;
+  --bs-table-border-color: var(--stat-border) !important;
+  --bs-table-hover-bg: var(--stat-hover-bg) !important;
+  color: var(--stat-body-text) !important;
+  background: var(--stat-card-bg) !important;
+  margin-bottom: 0;
+}
+
+.admin-stat-dashboard .table th,
+.admin-stat-dashboard .table td {
+  border-color: var(--stat-border) !important;
+  vertical-align: middle;
+}
+
+.admin-stat-dashboard .table tbody tr:hover td {
+  background: var(--stat-hover-bg) !important;
+}
+
+.admin-stat-dashboard .nested-box,
+.admin-stat-dashboard .star-row {
+  background: var(--stat-soft-bg) !important;
+  border: 1px solid var(--stat-border) !important;
+  color: var(--stat-body-text) !important;
+}
+
+.admin-stat-dashboard .alert {
+  border-color: var(--stat-border) !important;
+}
+
+.admin-stat-dashboard .btn-outline-secondary {
+  color: var(--stat-body-text) !important;
+  border-color: var(--stat-border) !important;
+}
+
+.admin-stat-dashboard .btn-outline-secondary:hover {
+  color: #fff !important;
+}
+
+@media (max-width: 768px) {
+  .admin-stat-dashboard .display-value {
+    font-size: 1.65rem !important;
+  }
+}
+</style>
+
+{% set user_stats = user_stats | default({}, true) %}
+{% set course_stats = course_stats | default({}, true) %}
+{% set review_stats = review_stats | default({}, true) %}
+
+{% set total_users = user_stats.get("total_users", user_stats.get("Tổng người dùng", 0)) %}
+{% set total_courses = course_stats.get("total_courses", course_stats.get("Tổng khóa học", 0)) %}
+{% set total_reviews = review_stats.get("total_reviews", review_stats.get("Tổng đánh giá", review_stats.get("review_count", 0))) %}
+{% set avg_rating = review_stats.get("avg_rating", review_stats.get("average_rating", 0)) %}
+
+<div class="container-fluid admin-stat-dashboard py-4">
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-      <h3 class="fw-bold text-primary mb-1">📊 Dashboard thống kê</h3>
+      <h3 class="fw-bold text-primary mb-1">
+        <i class="bi bi-bar-chart-line-fill me-2"></i>Dashboard thống kê
+      </h3>
       <p class="text-muted mb-0">Tổng quan nhanh tình hình hệ thống.</p>
     </div>
-    <a href="/admin/dashboard" class="btn btn-outline-secondary">← Quay lại</a>
+    <a href="/admin/dashboard" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-arrow-left me-1"></i> Quay lại
+    </a>
+    <a href="/admin/statistics/learning-progress" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-graph-up-arrow me-1"></i> Tổng tiến độ học tập
+    </a>
+
   </div>
 
   <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <div class="card shadow-sm border-0 text-center p-3">
-        <h6 class="text-muted">Tổng người dùng</h6>
-        <h3 class="fw-bold text-primary">{{ user_stats.get("total_users", 0) if user_stats else 0 }}</h3>
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted mb-1">Tổng người dùng</div>
+            <div class="display-value fs-2 fw-bold text-primary">{{ total_users }}</div>
+          </div>
+          <span class="stat-icon"><i class="bi bi-people-fill fs-4"></i></span>
+        </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card shadow-sm border-0 text-center p-3">
-        <h6 class="text-muted">Tổng khóa học</h6>
-        <h3 class="fw-bold text-success">{{ course_stats.get("total_courses", 0) if course_stats else 0 }}</h3>
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted mb-1">Tổng khóa học</div>
+            <div class="display-value fs-2 fw-bold text-success">{{ total_courses }}</div>
+          </div>
+          <span class="stat-icon"><i class="bi bi-book-half fs-4"></i></span>
+        </div>
       </div>
     </div>
 
     <div class="col-md-4">
-      <div class="card shadow-sm border-0 text-center p-3">
-        <h6 class="text-muted">Tổng đánh giá</h6>
-        <h3 class="fw-bold text-warning">{{ review_stats.get("total_reviews", 0) if review_stats else 0 }}</h3>
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="card-body d-flex align-items-center justify-content-between gap-3">
+          <div>
+            <div class="small text-muted mb-1">Tổng đánh giá</div>
+            <div class="display-value fs-2 fw-bold text-warning">{{ total_reviews }}</div>
+          </div>
+          <span class="stat-icon"><i class="bi bi-star-fill fs-4"></i></span>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="row g-4">
     <div class="col-lg-4">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-body">
-          <h5 class="fw-bold mb-3 text-primary">👥 Thống kê người dùng</h5>
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="stat-section-title">
+          <i class="bi bi-people-fill me-2 text-primary"></i>Thống kê người dùng
+        </div>
+        <div class="card-body p-0">
           {% if user_stats %}
           <div class="table-responsive">
-            <table class="table table-bordered align-middle mb-0">
+            <table class="table table-hover align-middle">
               <tbody>
                 {% for key, value in user_stats.items() %}
                 <tr>
-                  <th style="width: 55%;">{{ key }}</th>
-                  <td>{{ value }}</td>
+                  <th style="width: 48%;">{{ key }}</th>
+                  <td>
+                    {% if value is mapping %}
+                      <div class="d-flex flex-column gap-2">
+                        {% for sub_key, sub_value in value.items() %}
+                        <div class="nested-box rounded-3 px-3 py-2 d-flex justify-content-between gap-2">
+                          <span>{{ sub_key }}</span>
+                          <strong>{{ sub_value }}</strong>
+                        </div>
+                        {% else %}
+                        <span class="text-muted">Không có dữ liệu</span>
+                        {% endfor %}
+                      </div>
+                    {% elif value is sequence and value is not string %}
+                      {{ value | length }}
+                    {% else %}
+                      {{ value }}
+                    {% endif %}
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
           {% else %}
-          <div class="alert alert-info mb-0">Chưa có dữ liệu người dùng.</div>
+          <div class="alert alert-info m-3 mb-0">Chưa có dữ liệu người dùng.</div>
           {% endif %}
         </div>
       </div>
     </div>
 
     <div class="col-lg-4">
-      <div class="card shadow-sm border-0 h-100">
-        <div class="card-body">
-          <h5 class="fw-bold mb-3 text-success">📘 Thống kê khóa học</h5>
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="stat-section-title">
+          <i class="bi bi-book-half me-2 text-success"></i>Thống kê khóa học
+        </div>
+        <div class="card-body p-0">
           {% if course_stats %}
           <div class="table-responsive">
-            <table class="table table-bordered align-middle mb-0">
+            <table class="table table-hover align-middle">
               <tbody>
                 {% for key, value in course_stats.items() %}
                 <tr>
                   <th style="width: 55%;">{{ key }}</th>
-                  <td>{{ value }}</td>
+                  <td class="fw-semibold">{{ value }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
           {% else %}
-          <div class="alert alert-info mb-0">Chưa có dữ liệu khóa học.</div>
+          <div class="alert alert-info m-3 mb-0">Chưa có dữ liệu khóa học.</div>
           {% endif %}
         </div>
       </div>
     </div>
 
     <div class="col-lg-4">
-      <div class="card shadow-sm border-0 h-100">
+      <div class="card stat-card border-0 rounded-4 h-100">
+        <div class="stat-section-title">
+          <i class="bi bi-star-fill me-2 text-warning"></i>Thống kê đánh giá
+        </div>
         <div class="card-body">
-          <h5 class="fw-bold mb-3 text-warning">⭐ Thống kê đánh giá</h5>
           {% if review_stats %}
           <div class="mb-3">
             <div class="small text-muted">Điểm trung bình</div>
-            <div class="fs-3 fw-bold text-dark">{{ review_stats.get("avg_rating", 0) }}</div>
+            <div class="fs-3 fw-bold text-warning">{{ avg_rating }}</div>
           </div>
 
           <div class="small text-muted mb-2">Phân bố sao</div>
-          {% set labels = ["5 sao", "4 sao", "3 sao", "2 sao", "1 sao"] %}
-          {% for count in review_stats.get("star_distribution", []) %}
-          <div class="d-flex justify-content-between border rounded px-3 py-2 mb-2">
-            <span>{{ labels[loop.index0] }}</span>
-            <strong>{{ count }}</strong>
-          </div>
-          {% endfor %}
+          {% set star_distribution = review_stats.get("star_distribution", review_stats.get("rating_distribution", [])) %}
+
+          {% if star_distribution is mapping %}
+            {% for star in range(5, 0, -1) %}
+            <div class="star-row rounded-3 px-3 py-2 mb-2 d-flex justify-content-between">
+              <span>{{ star }} sao</span>
+              <strong>{{ star_distribution.get(star, star_distribution.get(star|string, 0)) }}</strong>
+            </div>
+            {% endfor %}
+          {% elif star_distribution %}
+            {% set labels = ["5 sao", "4 sao", "3 sao", "2 sao", "1 sao"] %}
+            {% for count in star_distribution %}
+            <div class="star-row rounded-3 px-3 py-2 mb-2 d-flex justify-content-between">
+              <span>{{ labels[loop.index0] if loop.index0 < labels|length else loop.index }}</span>
+              <strong>{{ count }}</strong>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="alert alert-info mb-0">Chưa có dữ liệu phân bố sao.</div>
+          {% endif %}
           {% else %}
           <div class="alert alert-info mb-0">Chưa có dữ liệu đánh giá.</div>
           {% endif %}

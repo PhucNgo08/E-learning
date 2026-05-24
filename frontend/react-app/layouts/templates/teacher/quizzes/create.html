@@ -1,5 +1,5 @@
 {% extends "layout_teacher.html" %}
-{% block title %}➕ Tạo Quiz{% endblock %}
+{% block title %}➕ Tạo bài kiểm tra{% endblock %}
 
 {% block content %}
 
@@ -108,12 +108,21 @@
     <div class="quiz-card p-4">
       <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
-          <h3 class="quiz-title mb-1"><i class="bi bi-plus-square"></i> Tạo Quiz mới</h3>
-          <p class="text-muted mb-0">Tạo practice quiz hoặc graded quiz cho khóa học.</p>
+          <h3 class="quiz-title mb-1"><i class="bi bi-plus-square"></i> Tạo bài kiểm tra mới</h3>
+          <p class="text-muted mb-0">Tạo bài luyện tập hoặc bài kiểm tra tính điểm. Bài tính điểm cần được quản trị viên duyệt trước khi học viên nhìn thấy.</p>
         </div>
         <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">
           <i class="bi bi-arrow-left"></i> Quay lại
         </a>
+      </div>
+
+      <div class="alert alert-info rounded-4 border-0 mb-4">
+        <div class="fw-bold mb-1">
+          <i class="bi bi-info-circle"></i> Quy trình bài tính điểm / kỳ thi
+        </div>
+        <div>
+          Giáo viên tạo bài kiểm tra → thêm câu hỏi → quản trị viên duyệt → học viên mới nhìn thấy và làm bài.
+        </div>
       </div>
 
       <form method="post" action="/teacher/quizzes/create" class="needs-validation" novalidate>
@@ -129,17 +138,17 @@
           </div>
 
           <div class="col-md-6">
-            <label class="form-label">Loại quiz <span class="text-danger">*</span></label>
+            <label class="form-label">Loại bài kiểm tra <span class="text-danger">*</span></label>
             <select name="quiz_type" id="quiz_type" class="form-select" required>
-              <option value="practice" selected>Practice Quiz</option>
-              <option value="graded">Graded Quiz</option>
+              <option value="practice" selected>Bài luyện tập</option>
+              <option value="graded">Bài tính điểm / kỳ thi</option>
             </select>
-            <small class="text-muted">Practice dùng luyện tập, Graded dùng tính điểm.</small>
+            <small class="text-muted">Bài luyện tập hiển thị ngay cho học viên. Bài tính điểm/kỳ thi sẽ ở trạng thái chờ duyệt; quản trị viên duyệt xong mới hiện cho học viên.</small>
           </div>
 
           <div class="col-md-8">
             <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-            <input type="text" name="title" class="form-control" placeholder="Ví dụ: Quiz chương 1" required>
+            <input type="text" name="title" class="form-control" placeholder="Ví dụ: Bài kiểm tra chương 1" required>
           </div>
 
           <div class="col-md-4">
@@ -149,7 +158,7 @@
 
           <div class="col-12">
             <label class="form-label">Mô tả</label>
-            <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn cho quiz..."></textarea>
+            <textarea name="description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn cho bài kiểm tra..."></textarea>
           </div>
 
           <div class="col-md-4 practice-only">
@@ -196,7 +205,7 @@
         <div class="d-flex justify-content-end gap-2 mt-4 flex-wrap">
           <a href="/teacher/quizzes/list" class="btn btn-outline-secondary">Hủy</a>
           <button type="submit" class="btn btn-primary px-4">
-            <i class="bi bi-check-circle"></i> Tạo Quiz
+            <i class="bi bi-check-circle"></i> Tạo bài kiểm tra
           </button>
         </div>
       </form>

@@ -23,6 +23,27 @@ from app.models.course_enrollment import CourseEnrollment
 ACTIVE_ENROLLMENT_STATUSES = ["active", "approved", "completed"]
 DONE_QUIZ_STATUSES = ["submitted", "graded", "completed"]
 
+# Trong database/model hiện tại, Assignment.submission_type chỉ nhận:
+# - individual: bài tập cá nhân
+# - group: bài tập nhóm
+ASSIGNMENT_SUBMISSION_TYPES = {"individual", "group"}
+
+
+def _normalize_submission_type(value: str | None) -> str:
+    """
+    Chuẩn hóa submission_type theo enum của database.
+
+    Lưu ý: form cũ có thể gửi "file", "text", "link", "mixed".
+    Các giá trị đó KHÔNG hợp lệ cho cột Assignment.submission_type,
+    vì cột này chỉ dùng để phân biệt bài cá nhân / bài nhóm.
+    """
+    value = _clean_text(value)
+
+    if value in ASSIGNMENT_SUBMISSION_TYPES:
+        return value
+
+    return "individual"
+
 
 def _clean_text(value: str | None) -> str | None:
     if value is None:
@@ -69,9 +90,13 @@ def create_assignment(
     allowed_file_types: str = "pdf,docx,zip",
     max_files: int = 3,
     max_file_size_mb: int = 50,
+    submission_type: str = "individual",
+    allow_late_submission: bool = False,
+    **extra_fields,
 ):
     title = _clean_text(title)
     description = _clean_text(description)
+    submission_type = _normalize_submission_type(submission_type)
 
     if not title:
         raise ValueError("Tiêu đề bài tập không được để trống.")
@@ -97,21 +122,53 @@ def create_assignment(
 
     now = datetime.utcnow()
 
-    new_assignment = Assignment(
-        id=str(uuid.uuid4()),
-        course_id=course_id,
-        module_id=module_id,
-        teacher_id=teacher_id,
-        title=title,
-        description=description,
-        due_date=due_date,
-        allowed_file_types=allowed_file_types,
-        max_files=max_files,
-        max_file_size_mb=max_file_size_mb,
-        start_date=now,
-        created_at=now,
-        updated_at=now,
-    )
+    assignment_data = {
+        "id": str(uuid.uuid4()),
+        "course_id": course_id,
+        "module_id": module_id,
+        "teacher_id": teacher_id,
+        "title": title,
+        "description": description,
+        "due_date": due_date,
+        "allowed_file_types": allowed_file_types,
+        "max_files": max_files,
+        "max_file_size_mb": max_file_size_mb,
+        "start_date": now,
+        "created_at": now,
+        "updated_at": now,
+    }
+
+    # Chỉ lưu nếu model/database có cột này
+    if hasattr(Assignment, "submission_type"):
+        assignment_data["submission_type"] = submission_type
+
+    if hasattr(Assignment, "allow_late_submission"):
+        assignment_data["allow_late_submission"] = bool(allow_late_submission)
+
+    # Bắt thêm các field khác router có thể gửi,
+    # nhưng không cho extra_fields ghi đè các field đã chuẩn hóa ở trên.
+    skip_extra_fields = {
+        "id",
+        "course_id",
+        "module_id",
+        "teacher_id",
+        "title",
+        "description",
+        "due_date",
+        "submission_type",
+        "allow_late_submission",
+        "created_at",
+        "updated_at",
+    }
+
+    for field_name, field_value in extra_fields.items():
+        if field_name in skip_extra_fields:
+            continue
+
+        if hasattr(Assignment, field_name):
+            assignment_data[field_name] = field_value
+
+    new_assignment = Assignment(**assignment_data)
 
     try:
         db.add(new_assignment)
@@ -121,7 +178,6 @@ def create_assignment(
     except SQLAlchemyError:
         db.rollback()
         raise
-
 
 # ====================================================
 # ✏️ Cập nhật bài tập
@@ -133,6 +189,9 @@ def update_assignment_by_teacher(
     title: str,
     description: str | None,
     due_date: datetime | None = None,
+    submission_type: str | None = None,
+    allow_late_submission: bool | None = None,
+    **extra_fields,
 ):
     assignment = get_assignment_owned(db, assignment_id, teacher_id)
     if not assignment:
@@ -146,8 +205,37 @@ def update_assignment_by_teacher(
 
     assignment.title = title
     assignment.description = description
+
     if due_date is not None:
         assignment.due_date = due_date
+
+    if submission_type is not None and hasattr(Assignment, "submission_type"):
+        assignment.submission_type = _normalize_submission_type(submission_type)
+
+    if allow_late_submission is not None and hasattr(Assignment, "allow_late_submission"):
+        assignment.allow_late_submission = bool(allow_late_submission)
+
+    skip_extra_fields = {
+        "id",
+        "course_id",
+        "module_id",
+        "teacher_id",
+        "title",
+        "description",
+        "due_date",
+        "submission_type",
+        "allow_late_submission",
+        "created_at",
+        "updated_at",
+    }
+
+    for field_name, field_value in extra_fields.items():
+        if field_name in skip_extra_fields:
+            continue
+
+        if hasattr(Assignment, field_name):
+            setattr(assignment, field_name, field_value)
+
     assignment.updated_at = datetime.utcnow()
 
     try:
@@ -157,7 +245,6 @@ def update_assignment_by_teacher(
     except SQLAlchemyError:
         db.rollback()
         raise
-
 
 # ====================================================
 # 🗑️ Xóa bài tập

@@ -44,6 +44,34 @@ def _normalize_source(source: str | None) -> str:
     return source
 
 
+def _model_has_attr(model, attr_name: str) -> bool:
+    return getattr(model, attr_name, None) is not None
+
+
+def _apply_not_deleted(query, model):
+    deleted_at = getattr(model, "deleted_at", None)
+
+    if deleted_at is not None:
+        return query.filter(deleted_at.is_(None))
+
+    return query
+
+
+def _apply_desc_order(query, model, *attr_names: str):
+    for attr_name in attr_names:
+        column = getattr(model, attr_name, None)
+
+        if column is not None:
+            return query.order_by(column.desc())
+
+    id_column = getattr(model, "id", None)
+
+    if id_column is not None:
+        return query.order_by(id_column.desc())
+
+    return query
+
+
 # ======================================================
 # 💾 Lưu 1 dòng lịch sử chat
 # ======================================================
@@ -195,18 +223,12 @@ def get_chat_history(
             .filter(AIChatHistory.user_id == user_id)
         )
 
-        if newest_first:
-            return (
-                query.order_by(AIChatHistory.created_at.desc())
-                .limit(limit)
-                .all()
-            )
+        query = _apply_desc_order(query, AIChatHistory, "created_at", "updated_at")
 
-        rows = (
-            query.order_by(AIChatHistory.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        if newest_first:
+            return query.limit(limit).all()
+
+        rows = query.limit(limit).all()
 
         return list(reversed(rows))
 
@@ -333,30 +355,23 @@ def build_student_learning_context(db: Session, user_id: str) -> str:
         course_lines = []
 
         for enrollment in enrollments:
-            course = (
-                db.query(Course)
-                .filter(
-                    Course.id == enrollment.course_id,
-                    Course.deleted_at.is_(None),
-                )
-                .first()
-            )
+            course_query = db.query(Course).filter(Course.id == enrollment.course_id)
+            course_query = _apply_not_deleted(course_query, Course)
+            course = course_query.first()
 
             if not course:
                 continue
 
-            total_lessons = (
+            total_lessons_query = (
                 db.query(Lesson)
                 .join(Module, Lesson.module_id == Module.id)
-                .filter(
-                    Module.course_id == course.id,
-                    Module.deleted_at.is_(None),
-                    Lesson.deleted_at.is_(None),
-                )
-                .count()
+                .filter(Module.course_id == course.id)
             )
+            total_lessons_query = _apply_not_deleted(total_lessons_query, Module)
+            total_lessons_query = _apply_not_deleted(total_lessons_query, Lesson)
+            total_lessons = total_lessons_query.count()
 
-            completed_lessons = (
+            completed_lessons_query = (
                 db.query(LessonProgress)
                 .join(Lesson, LessonProgress.lesson_id == Lesson.id)
                 .join(Module, Lesson.module_id == Module.id)
@@ -364,11 +379,11 @@ def build_student_learning_context(db: Session, user_id: str) -> str:
                     LessonProgress.user_id == user_id,
                     LessonProgress.progress_status == "completed",
                     Module.course_id == course.id,
-                    Module.deleted_at.is_(None),
-                    Lesson.deleted_at.is_(None),
                 )
-                .count()
             )
+            completed_lessons_query = _apply_not_deleted(completed_lessons_query, Module)
+            completed_lessons_query = _apply_not_deleted(completed_lessons_query, Lesson)
+            completed_lessons = completed_lessons_query.count()
 
             percent = round((completed_lessons / total_lessons) * 100, 1) if total_lessons else 0
 
