@@ -16,6 +16,11 @@
       <i class="bi bi-play-circle"></i> Tiếp tục học
     </a>
     {% endif %}
+    {% if can_learn %}
+    <a href="/student/learning-path/{{ course.id }}" class="btn btn-success btn-sm rounded-pill shadow-sm">
+      <i class="bi bi-signpost-split"></i> Gợi ý lộ trình học
+    </a>
+    {% endif %}
   </div>
 
   {% if request.query_params.get('success') %}

@@ -1,0 +1,299 @@
+{% extends "layout_student.html" %}
+{% block title %}Gợi ý lộ trình học{% endblock %}
+
+{% block content %}
+{% set safe_progress = progress_percent or 0 %}
+{% set safe_completed = completed_lessons or 0 %}
+{% set safe_total = total_lessons or 0 %}
+
+<style>
+  .lp-page .lp-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, .07);
+    background: rgba(255, 255, 255, .86);
+  }
+
+  .lp-page .lp-pill {
+    border-radius: 999px;
+    padding: .35rem .7rem;
+    font-size: .82rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+  }
+
+  .lp-page .step-card {
+    border: 1px solid rgba(148, 163, 184, .25);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, .76);
+    transition: .22s ease;
+  }
+
+  .lp-page .step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .08);
+  }
+
+  .lp-page .metric-value {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .lp-page .progress {
+    background: rgba(148, 163, 184, .24);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+
+  .lp-page .progress-bar {
+    width: 0;
+    transition: width .75s ease;
+  }
+
+  .lp-page .lesson-row {
+    border-bottom: 1px solid rgba(148, 163, 184, .22);
+    padding: .7rem 0;
+  }
+
+  .lp-page .lesson-row:last-child {
+    border-bottom: 0;
+  }
+
+  body.dark-mode .lp-page .lp-card,
+  body.dark-mode .lp-page .step-card {
+    background: rgba(15, 23, 42, .86);
+    color: #e2e8f0;
+  }
+
+  body.dark-mode .lp-page .text-muted {
+    color: #94a3b8 !important;
+  }
+
+  body.dark-mode .lp-page .border-bottom {
+    border-color: rgba(148, 163, 184, .22) !important;
+  }
+</style>
+
+<div class="container-fluid py-4 lp-page">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-signpost-split text-primary me-2"></i>Gợi ý lộ trình học
+      </h3>
+      <p class="text-muted mb-0">
+        {{ course.course_code or '—' }} - {{ course.course_name }}
+      </p>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/student/course/detail/{{ course.id }}" class="btn btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left"></i> Chi tiết khóa học
+      </a>
+
+      <a href="/student/course/progress/{{ course.id }}" class="btn btn-primary rounded-pill">
+        <i class="bi bi-play-circle"></i> Tiếp tục học
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+      <div class="card lp-card h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-2">Tiến độ học</div>
+          <div class="metric-value text-primary">{{ safe_progress }}%</div>
+
+          <div class="progress mt-3" style="height:10px">
+            <div
+              class="progress-bar bg-primary js-progress"
+              data-progress="{{ safe_progress }}"
+            ></div>
+          </div>
+
+          <div class="small text-muted mt-2">
+            {{ safe_completed }}/{{ safe_total }} bài đã hoàn thành
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card lp-card h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-2">Điểm quiz trung bình</div>
+
+          <div class="metric-value
+            {% if quiz_average is not none and quiz_average < 5 %}
+              text-danger
+            {% elif quiz_average is not none and quiz_average < 7 %}
+              text-warning
+            {% elif quiz_average is not none %}
+              text-success
+            {% else %}
+              text-secondary
+            {% endif %}
+          ">
+            {{ quiz_average if quiz_average is not none else '—' }}{% if quiz_average is not none %}/10{% endif %}
+          </div>
+
+          <div class="small text-muted mt-3">
+            Đã làm {{ quiz_summary.attempted_quizzes if quiz_summary else 0 }}/{{ quiz_summary.total_quizzes if quiz_summary else 0 }} quiz
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card lp-card h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-2">Bài tập chưa nộp</div>
+          <div class="metric-value text-warning">{{ missing_assignments|length }}</div>
+          <div class="small text-muted mt-3">
+            Quá hạn: {{ overdue_assignments|length }} bài
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card lp-card h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-2">Trạng thái đề xuất</div>
+
+          {% if overdue_assignments|length > 0 or (quiz_average is not none and quiz_average < 5) or safe_progress < 40 %}
+            <span class="lp-pill bg-danger-subtle text-danger">
+              <i class="bi bi-exclamation-triangle"></i> Cần ưu tiên hỗ trợ
+            </span>
+          {% elif safe_progress >= 80 %}
+            <span class="lp-pill bg-success-subtle text-success">
+              <i class="bi bi-check-circle"></i> Gần hoàn thành
+            </span>
+          {% else %}
+            <span class="lp-pill bg-primary-subtle text-primary">
+              <i class="bi bi-graph-up-arrow"></i> Đang học ổn định
+            </span>
+          {% endif %}
+
+          <div class="small text-muted mt-3">
+            Dựa trên tiến độ, quiz và bài tập
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card lp-card">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-list-check text-primary me-2"></i>Lộ trình đề xuất
+          </h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          {% for step in recommended_steps %}
+          {% set severity = step.severity or 'primary' %}
+          <div class="step-card p-3 mb-3">
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+              <div class="flex-grow-1">
+                <span class="badge bg-{{ severity }} mb-2">{{ loop.index }}</span>
+                <h6 class="fw-bold mb-1">{{ step.title }}</h6>
+                <p class="text-muted mb-0">{{ step.description }}</p>
+              </div>
+
+              {% if step.url %}
+              <a href="{{ step.url }}" class="btn btn-sm btn-outline-primary rounded-pill flex-shrink-0">
+                <i class="bi bi-box-arrow-up-right"></i> Mở
+              </a>
+              {% endif %}
+            </div>
+          </div>
+          {% else %}
+          <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle"></i> Chưa có dữ liệu để gợi ý lộ trình.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card lp-card mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-book text-success me-2"></i>Bài học chưa hoàn thành
+          </h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          {% for lesson in incomplete_lessons %}
+          <div class="lesson-row d-flex justify-content-between gap-2 align-items-start">
+            <div>
+              <div class="fw-semibold">{{ lesson.title }}</div>
+              <div class="small text-muted">
+                Module {{ lesson.module.module_number if lesson.module else '—' }}
+                {% if lesson.module %} - {{ lesson.module.title }}{% endif %}
+              </div>
+            </div>
+
+            <a href="/student/lesson/view/{{ lesson.id }}" class="btn btn-sm btn-light rounded-pill flex-shrink-0">
+              <i class="bi bi-play-circle"></i> Học
+            </a>
+          </div>
+          {% else %}
+          <div class="text-muted">
+            <i class="bi bi-check-circle text-success"></i> Bạn đã hoàn thành các bài học hiện có.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card lp-card">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">
+            <i class="bi bi-exclamation-circle text-warning me-2"></i>Bài tập cần chú ý
+          </h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          {% for item in overdue_assignments %}
+          <div class="alert alert-danger py-2 mb-2">
+            <div class="fw-semibold">{{ item.title }}</div>
+            <div class="small">
+              Hạn:
+              {% if item.due_date %}
+                {{ item.due_date.strftime('%d/%m/%Y %H:%M') }}
+              {% else %}
+                —
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+
+          {% if overdue_assignments|length == 0 %}
+          <div class="text-muted">
+            <i class="bi bi-check-circle text-success"></i> Không có bài tập quá hạn.
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll(".js-progress").forEach(function (bar) {
+    const value = Number(bar.dataset.progress || 0);
+    const safeValue = Math.max(0, Math.min(100, value));
+
+    bar.style.width = safeValue + "%";
+    bar.setAttribute("aria-valuenow", safeValue);
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+  });
+</script>
+{% endblock %}

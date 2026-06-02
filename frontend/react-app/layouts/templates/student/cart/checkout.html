@@ -146,7 +146,7 @@ body.dark-mode .checkout-page .form-control {
             <label class="list-group-item d-flex align-items-center gap-3 glass border-0 py-3 glass-hover">
               <input type="radio" name="pay_method" value="vnpay" {% if pay_method == 'vnpay' %}checked{% endif %}>
               <img src="/uploads/pay/vnpay.png" height="26" alt="VNPay" onerror="this.style.display='none'">
-              <span>VNPay <small class="text-muted">(2% phí)</small></span>
+              <span>VNPay <small class="text-muted">(thanh toán trực tuyến)</small></span>
             </label>
           </div>
 
@@ -226,7 +226,6 @@ function updateTotals(showMessage = false) {
   const { code, rate, discounted, discountAmount } = calculateDiscountedTotal();
 
   let fee = 0;
-  if (method === "vnpay") fee = Math.round(discounted * 0.02);
 
   const total = discounted + fee;
 

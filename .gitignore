@@ -34,10 +34,9 @@ htmlcov/
 ############################
 # BACKEND
 ############################
-backend/uploads/
-backend/app/uploads/
-uploads/
-uploads/**
+backend/uploads/*
+backend/app/uploads/*
+uploads/*
 
 !backend/uploads/.gitkeep
 !backend/app/uploads/.gitkeep
@@ -52,6 +51,11 @@ backend/app/config/logs/
 backend/.env
 .env
 .env.*
+
+!.env.example
+!backend/.env.example
+!frontend/react-app/.env.example
+
 *.pem
 *.key
 
@@ -69,7 +73,7 @@ backend/alembic/versions/*_backup.py
 *.dump
 *.backup
 
-# Nếu muốn giữ file SQL khởi tạo mẫu thì bỏ ignore *.sql
+# Giữ file SQL khởi tạo mẫu để nộp/push
 # *.sql
 # !e_learning.sql
 
@@ -95,15 +99,23 @@ frontend/react-app/.env.local
 frontend/react-app/.env.production
 frontend/react-app/.env.development
 
+!frontend/react-app/.env.example
+
 ############################
 # STATIC GENERATED
 ############################
-# Chỉ ignore nếu đây là build sinh tự động
 backend/app/static/build/
 backend/static/build/
 static/build/
 
 frontend/react-app/layouts/styles/*.map
+
+############################
+# TEST REPORTS
+############################
+test-results/
+playwright-report/
+blob-report/
 
 ############################
 # IDE / OS

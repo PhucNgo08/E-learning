@@ -14,6 +14,7 @@ from app.services.wallet_service import (
     create_wallet,
     get_balance,
     get_student_transactions,
+    get_student_topup_requests,
     get_topup_request_by_id,
     get_wallet,
     student_transfer,
@@ -126,6 +127,11 @@ def wallet_page(
         common["student"].id,
         limit=50,
     )
+    topup_requests = get_student_topup_requests(
+        common["db"],
+        common["student"].id,
+        limit=5,
+    )
 
     return render_wallet_template(
         request,
@@ -133,6 +139,7 @@ def wallet_page(
         {
             **common,
             "transactions": transactions,
+            "topup_requests": topup_requests,
             "success": success,
             "error": error,
         },

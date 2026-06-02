@@ -1,0 +1,171 @@
+{% extends "layout_teacher.html" %}
+{% block title %}Phân tích học tập{% endblock %}
+
+{% block content %}
+<style>
+  .ana-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  }
+
+  .metric-value {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .progress {
+    background-color: rgba(148, 163, 184, 0.2);
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-graph-up-arrow text-primary me-2"></i>Phân tích học tập
+      </h3>
+      <p class="text-muted mb-0">
+        Theo dõi tiến độ và kết quả học tập theo từng môn phụ trách.
+      </p>
+    </div>
+
+    <a href="/teacher/dashboard" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-arrow-left"></i> Dashboard
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Khóa phụ trách</div>
+          <div class="metric-value text-primary">{{ data.total_courses }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Tổng học viên</div>
+          <div class="metric-value text-success">{{ data.total_students }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Tiến độ TB</div>
+          <div class="metric-value text-info">{{ data.avg_progress }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Cần hỗ trợ</div>
+          <div class="metric-value text-danger">{{ data.at_risk_total }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card ana-card">
+    <div class="card-header bg-transparent border-0 pt-4 px-4">
+      <h5 class="fw-bold mb-0">Danh sách khóa học</h5>
+    </div>
+
+    <div class="card-body p-4 pt-2">
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Tên khóa học</th>
+              <th>Học viên</th>
+              <th>Tiến độ TB</th>
+              <th>Quiz TB</th>
+              <th>Cần hỗ trợ</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for item in data.courses %}
+            <tr>
+              <td>
+                <span class="badge bg-primary-subtle text-primary">
+                  {{ item.course.course_code }}
+                </span>
+              </td>
+
+              <td class="fw-semibold">
+                {{ item.course.course_name }}
+              </td>
+
+              <td>
+                {{ item.total_students }}
+              </td>
+
+              <td style="min-width:160px">
+                <div class="d-flex justify-content-between small">
+                  <span>{{ item.avg_progress }}%</span>
+                </div>
+
+                <div class="progress" style="height:8px">
+                  <div
+                    class="progress-bar js-progress"
+                    data-progress="{{ item.avg_progress }}"
+                  ></div>
+                </div>
+              </td>
+
+              <td>
+                {{ item.avg_quiz if item.avg_quiz is not none else '—' }}
+              </td>
+
+              <td>
+                <span class="badge bg-danger-subtle text-danger">
+                  {{ item.at_risk_count }}
+                </span>
+              </td>
+
+              <td>
+                <a
+                  href="/teacher/analytics/course/{{ item.course.id }}"
+                  class="btn btn-sm btn-outline-primary rounded-pill"
+                >
+                  Xem chi tiết
+                </a>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-4">
+                Chưa có khóa học phụ trách.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll(".js-progress").forEach(function (bar) {
+    const value = Number(bar.dataset.progress || 0);
+    const safeValue = Math.max(0, Math.min(100, value));
+
+    bar.style.width = safeValue + "%";
+    bar.setAttribute("aria-valuenow", safeValue);
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends "layout_teacher.html" %}
+{% block title %}Dashboard phân tích học tập{% endblock %}
+
+{% block content %}
+<style>
+  .ana-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.07);
+  }
+
+  .metric-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .progress {
+    background-color: rgba(148, 163, 184, 0.2);
+  }
+</style>
+
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-1">
+        <i class="bi bi-speedometer2 text-primary me-2"></i>Dashboard phân tích học tập
+      </h3>
+      <p class="text-muted mb-0">
+        {{ course.course_code }} - {{ course.course_name }}
+      </p>
+    </div>
+
+    <a href="/teacher/analytics" class="btn btn-outline-secondary rounded-pill">
+      <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Học viên</div>
+          <div class="metric-value text-primary">{{ total_students }}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Tiến độ trung bình</div>
+          <div class="metric-value text-success">{{ avg_progress }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Điểm quiz TB</div>
+          <div class="metric-value text-info">
+            {{ avg_quiz if avg_quiz is not none else '—' }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 col-xl-3">
+      <div class="card ana-card">
+        <div class="card-body">
+          <div class="text-muted small">Sinh viên cần hỗ trợ</div>
+          <div class="metric-value text-danger">{{ at_risk_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="card ana-card mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">Sinh viên cần hỗ trợ</h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Học viên</th>
+                  <th>Tiến độ</th>
+                  <th>Quiz TB</th>
+                  <th>Bài quá hạn</th>
+                  <th>Lý do</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for student in at_risk_students %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ student.full_name }}</div>
+                    <div class="small text-muted">{{ student.email }}</div>
+                  </td>
+
+                  <td style="min-width:140px">
+                    <div class="small">{{ student.progress_percent }}%</div>
+                    <div class="progress" style="height:8px">
+                      <div
+                        class="progress-bar bg-warning js-progress"
+                        data-progress="{{ student.progress_percent }}"
+                      ></div>
+                    </div>
+                  </td>
+
+                  <td>
+                    {{ student.quiz_average if student.quiz_average is not none else '—' }}
+                  </td>
+
+                  <td>
+                    {{ student.overdue_assignments }}
+                  </td>
+
+                  <td>
+                    {% for reason in student.risk_reasons %}
+                    <span class="badge bg-danger-subtle text-danger me-1 mb-1">
+                      {{ reason }}
+                    </span>
+                    {% endfor %}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    Không có sinh viên cần hỗ trợ theo tiêu chí hiện tại.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ana-card">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">Toàn bộ học viên</h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead>
+                <tr>
+                  <th>Học viên</th>
+                  <th>Tiến độ</th>
+                  <th>Quiz TB</th>
+                  <th>Đã nộp</th>
+                  <th>Thiếu</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {% for student in student_rows %}
+                <tr>
+                  <td>
+                    <div class="fw-semibold">{{ student.full_name }}</div>
+                    <div class="small text-muted">
+                      {{ student.mssv or student.username }}
+                    </div>
+                  </td>
+
+                  <td>
+                    {{ student.progress_percent }}%
+                  </td>
+
+                  <td>
+                    {{ student.quiz_average if student.quiz_average is not none else '—' }}
+                  </td>
+
+                  <td>
+                    {{ student.submitted_assignments }}
+                  </td>
+
+                  <td>
+                    {{ student.missing_assignments }}
+                  </td>
+                </tr>
+                {% else %}
+                <tr>
+                  <td colspan="5" class="text-center text-muted py-4">
+                    Chưa có học viên.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card ana-card mb-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">Tình trạng bài tập</h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Đã nộp</span>
+            <b class="text-success">{{ assignment_submitted_total }}</b>
+          </div>
+
+          <div class="d-flex justify-content-between py-2 border-bottom">
+            <span>Chưa nộp</span>
+            <b class="text-warning">{{ assignment_missing_total }}</b>
+          </div>
+
+          <div class="d-flex justify-content-between py-2">
+            <span>Quá hạn</span>
+            <b class="text-danger">{{ assignment_overdue_total }}</b>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ana-card">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+          <h5 class="fw-bold mb-0">Bài học nhiều SV chưa hoàn thành</h5>
+        </div>
+
+        <div class="card-body p-4 pt-2">
+          {% for lesson in weak_lessons %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between gap-2">
+              <span class="fw-semibold">{{ lesson.title }}</span>
+              <span class="text-danger">{{ lesson.incomplete_count }}</span>
+            </div>
+
+            <div class="small text-muted">
+              Module {{ lesson.module_number }} - {{ lesson.module_title }}
+            </div>
+
+            <div class="progress mt-1" style="height:8px">
+              <div
+                class="progress-bar bg-danger js-progress"
+                data-progress="{{ lesson.incomplete_percent }}"
+              ></div>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-muted">Chưa có dữ liệu bài học yếu.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll(".js-progress").forEach(function (bar) {
+    const value = Number(bar.dataset.progress || 0);
+    const safeValue = Math.max(0, Math.min(100, value));
+
+    bar.style.width = safeValue + "%";
+    bar.setAttribute("aria-valuenow", safeValue);
+    bar.setAttribute("aria-valuemin", "0");
+    bar.setAttribute("aria-valuemax", "100");
+  });
+</script>
+{% endblock %}

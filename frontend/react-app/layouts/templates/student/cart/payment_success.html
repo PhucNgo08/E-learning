@@ -14,12 +14,6 @@
     </div>
 
     <div class="card-body p-4">
-      {% if demo_gateway %}
-      <div class="alert alert-warning shadow-sm">
-        <i class="bi bi-exclamation-circle-fill me-2"></i>
-        Giao dịch này đang ở chế độ mô phỏng nội bộ. Khi dùng VNPay thật, hệ thống sẽ nhận kết quả qua ReturnUrl/IPN và kích hoạt khóa học tự động.
-      </div>
-      {% endif %}
 
       {% if purchased_courses %}
       <h4 class="fw-semibold mb-3 title-gradient">🎓 Khóa học đã kích hoạt</h4>

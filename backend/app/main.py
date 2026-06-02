@@ -91,6 +91,7 @@ _mount_static_if_exists(
     "styles_legacy",
 )
 
+
 # =====================================================
 # VIETNAMESE DISPLAY HELPERS
 # =====================================================
@@ -159,19 +160,24 @@ VI_ROLE_LABELS = {
 def vi_status_label(value):
     if value is None:
         return "Không rõ"
+
     key = str(value).strip()
     if not key:
         return "Không rõ"
+
     return VI_STATUS_LABELS.get(key.lower(), key.replace("_", " "))
 
 
 def vi_role_label(value):
     if value is None:
         return "Không rõ"
+
     key = str(value).strip()
     if not key:
         return "Không rõ"
+
     return VI_ROLE_LABELS.get(key.lower(), key.replace("_", " "))
+
 
 templates = Jinja2Templates(directory=str(TEMPLATE_DIR))
 app.templates = templates
@@ -195,7 +201,6 @@ for env in [
     env.filters["vi_role"] = vi_role_label
 
 
-
 # =====================================================
 # UPLOADS DIR
 # =====================================================
@@ -210,6 +215,7 @@ DEFAULT_AVATAR_PATH = UPLOADS_BASE / "avatars" / "default-avatar.png"
 @app.get("/uploads/avatars/{filename}")
 async def serve_avatar(filename: str):
     avatar_path = UPLOADS_BASE / "avatars" / filename
+
     if avatar_path.exists():
         return FileResponse(avatar_path)
 
@@ -291,19 +297,25 @@ def build_error_page(
     </body>
     </html>
     """
+
     return HTMLResponse(content=page, status_code=status_code)
 
 
 def get_back_url(request: Request) -> str:
     referer = request.headers.get("referer")
+
     if referer:
         return referer
+
     if request.url.path.startswith("/admin"):
         return "/admin/dashboard"
+
     if request.url.path.startswith("/teacher"):
         return "/teacher/dashboard"
+
     if request.url.path.startswith("/student"):
         return "/student/dashboard"
+
     return "/"
 
 
@@ -363,6 +375,7 @@ async def template_not_found_handler(request: Request, exc: TemplateNotFound):
     traceback.print_exc()
 
     detail = f"Giao diện '{exc.name}' chưa được tạo hoặc đang đặt sai đường dẫn template."
+
     if wants_json(request):
         return JSONResponse(
             status_code=500,
@@ -388,6 +401,7 @@ async def operational_error_handler(request: Request, exc: OperationalError):
         "Không kết nối được cơ sở dữ liệu. Kiểm tra lại DB_HOST, DB_PORT, DB_USER, DB_PASS "
         "và trạng thái MySQL trước khi thao tác tiếp."
     )
+
     if wants_json(request):
         return JSONResponse(
             status_code=500,
@@ -413,6 +427,7 @@ async def programming_error_handler(request: Request, exc: ProgrammingError):
         "Mã nguồn đang truy vấn bảng/cột không khớp với cấu trúc cơ sở dữ liệu hiện tại. "
         "Bạn cần đồng bộ lại model ORM, migration và file SQL."
     )
+
     if wants_json(request):
         return JSONResponse(
             status_code=500,
@@ -435,6 +450,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
     traceback.print_exc()
 
     detail = "Dữ liệu không hợp lệ hoặc bị trùng khóa duy nhất. Vui lòng kiểm tra lại thông tin đã nhập."
+
     if wants_json(request):
         return JSONResponse(
             status_code=400,
@@ -496,7 +512,6 @@ from app.routers.admin.dashboard import dashboard_router  # noqa: E402
 from app.routers.admin.discussion_management import router as discussion_router  # noqa: E402
 from app.routers.admin.enrollment_management import enrollment_router  # noqa: E402
 from app.routers.admin.exams_compat import router as exams_compat_router  # noqa: E402
-
 from app.routers.admin.file_storage_management import router as file_storage_management_router  # noqa: E402
 from app.routers.admin.majors import router as majors_router  # noqa: E402
 from app.routers.admin.module_reorder import router as module_reorder_router  # noqa: E402
@@ -514,6 +529,7 @@ from app.routers.admin.wallet_admin import router as admin_wallet_router  # noqa
 from app.routers.teacher.assignment_teacher import router as teacher_assignment_router  # noqa: E402
 from app.routers.teacher.class_teacher import router as teacher_class_router  # noqa: E402
 from app.routers.teacher.course_teacher import router as teacher_course_router  # noqa: E402
+from app.routers.teacher.learning_analytics_teacher import router as teacher_learning_analytics_router  # noqa: E402
 from app.routers.teacher.lesson_teacher import router as teacher_lesson_router  # noqa: E402
 from app.routers.teacher.material_teacher import router as teacher_material_router  # noqa: E402
 from app.routers.teacher.message import router as teacher_message_router  # noqa: E402
@@ -532,6 +548,7 @@ from app.routers.student.cart_student import router as student_cart_router  # no
 from app.routers.student.chat_ai import router as chat_ai_router  # noqa: E402
 from app.routers.student.course_student import router as student_course_router  # noqa: E402
 from app.routers.student.discussion import router as student_discussion_router  # noqa: E402
+from app.routers.student.learning_path_student import router as student_learning_path_router  # noqa: E402
 from app.routers.student.lesson_student import router as student_lesson_router  # noqa: E402
 from app.routers.student.material_student import router as student_material_router  # noqa: E402
 from app.routers.student.message_student import router as student_message_router  # noqa: E402
@@ -541,11 +558,18 @@ from app.routers.student.quiz_student import router as student_quiz_router  # no
 from app.routers.student.review_student import router as student_review_router  # noqa: E402
 from app.routers.student.schedule_student import router as student_schedule_router  # noqa: E402
 from app.routers.student.student_dashboard import router as student_dashboard_router  # noqa: E402
-from app.routers.student.wallet_student import router as student_wallet_router  # noqa: E402
 from app.routers.student.todo_student import router as student_todo_router  # noqa: E402
+from app.routers.student.wallet_student import router as student_wallet_router  # noqa: E402
 
 for group in [
-    [login_router, register_router, logout_router, forgot_router, reset_router, social_login_router],
+    [
+        login_router,
+        register_router,
+        logout_router,
+        forgot_router,
+        reset_router,
+        social_login_router,
+    ],
     [
         dashboard_router,
         user_router,
@@ -556,7 +580,6 @@ for group in [
         enrollment_router,
         exams_compat_router,
         backup_router,
-
         report_router,
         review_router,
         majors_router,
@@ -585,6 +608,7 @@ for group in [
         teacher_class_router,
         teacher_schedule_router,
         teacher_statistics_router,
+        teacher_learning_analytics_router,
         teacher_assignment_router,
         teacher_message_router,
         teacher_quiz_router,
@@ -607,6 +631,7 @@ for group in [
         student_cart_router,
         student_wallet_router,
         student_todo_router,
+        student_learning_path_router,
     ],
 ]:
     for router in group:

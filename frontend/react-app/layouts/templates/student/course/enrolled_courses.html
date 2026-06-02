@@ -2,6 +2,9 @@
 {% block title %}🎓 Khóa học của tôi{% endblock %}
 
 {% block content %}
+{% set courses_list = courses|default([]) %}
+{% set major_list = majors|default([]) %}
+
 <style>
   .my-course-page .filter-card {
     background: rgba(255,255,255,.82);
@@ -16,7 +19,7 @@
   }
 
   .my-course-page .course-row {
-    transition: background .25s, transform .2s;
+    transition: background .25s ease, transform .2s ease;
   }
 
   .my-course-page .course-row:hover {
@@ -48,10 +51,23 @@
     font-weight: 600;
   }
 
+  .my-course-page .action-wrap {
+    min-width: 330px;
+  }
+
+  .my-course-page .course-title a:hover {
+    text-decoration: underline !important;
+  }
+
   body.dark-mode .my-course-page .filter-card,
   body.dark-mode .my-course-page .table {
     background: rgba(15, 23, 42, .82) !important;
     color: #e2e8f0;
+  }
+
+  body.dark-mode .my-course-page .table-light {
+    --bs-table-bg: rgba(30, 41, 59, .95);
+    --bs-table-color: #e2e8f0;
   }
 
   body.dark-mode .my-course-page .text-muted {
@@ -61,6 +77,10 @@
   body.dark-mode .my-course-page .major-chip {
     background: rgba(37, 99, 235, .18);
     color: #bfdbfe;
+  }
+
+  body.dark-mode .my-course-page .course-row:hover {
+    background: rgba(59, 130, 246, .12);
   }
 
   @media (max-width: 768px) {
@@ -94,19 +114,24 @@
       font-weight: 600;
       color: #6c757d;
       margin-right: 12px;
+      min-width: 90px;
+    }
+
+    .my-course-page .action-wrap {
+      min-width: 0;
+      justify-content: flex-end;
     }
   }
 </style>
 
 <div class="container-fluid py-3 my-course-page">
-
   <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <div>
       <h3 class="fw-bold text-primary mb-0">
         <i class="bi bi-mortarboard-fill"></i> Khóa học của tôi
       </h3>
       <small class="text-muted">
-        Xem và tiếp tục các khóa học bạn đã đăng ký hoặc mua.
+        Xem chi tiết, tiếp tục học và nhận gợi ý lộ trình học cho các khóa đã tham gia.
       </small>
     </div>
 
@@ -119,19 +144,24 @@
     <div class="row g-3 align-items-end">
       <div class="col-lg-3 col-md-6">
         <label class="form-label fw-semibold">Tìm kiếm</label>
-        <input type="text"
-               name="q"
-               value="{{ search_query or '' }}"
-               class="form-control rounded-pill"
-               placeholder="Tên khóa học, mã, ngành...">
+        <input
+          type="text"
+          name="q"
+          value="{{ search_query|default('') }}"
+          class="form-control rounded-pill"
+          placeholder="Tên khóa học, mã, ngành..."
+        >
       </div>
 
       <div class="col-lg-3 col-md-6">
         <label class="form-label fw-semibold">Ngành học</label>
         <select name="major_id" class="form-select rounded-pill">
           <option value="">Tất cả ngành học</option>
-          {% for major in majors %}
-          <option value="{{ major.id }}" {% if selected_major_id == major.id %}selected{% endif %}>
+          {% for major in major_list %}
+          <option
+            value="{{ major.id }}"
+            {% if selected_major_id|default('') == major.id or selected_major_id|default('') == major.id|string %}selected{% endif %}
+          >
             {{ major.major_name }}
           </option>
           {% endfor %}
@@ -142,9 +172,9 @@
         <label class="form-label fw-semibold">Mức độ</label>
         <select name="difficulty_level" class="form-select rounded-pill">
           <option value="">Tất cả</option>
-          <option value="beginner" {% if selected_difficulty == 'beginner' %}selected{% endif %}>Cơ bản</option>
-          <option value="intermediate" {% if selected_difficulty == 'intermediate' %}selected{% endif %}>Trung bình</option>
-          <option value="advanced" {% if selected_difficulty == 'advanced' %}selected{% endif %}>Nâng cao</option>
+          <option value="beginner" {% if selected_difficulty|default('') == 'beginner' %}selected{% endif %}>Cơ bản</option>
+          <option value="intermediate" {% if selected_difficulty|default('') == 'intermediate' %}selected{% endif %}>Trung bình</option>
+          <option value="advanced" {% if selected_difficulty|default('') == 'advanced' %}selected{% endif %}>Nâng cao</option>
         </select>
       </div>
 
@@ -152,24 +182,24 @@
         <label class="form-label fw-semibold">Tiến độ</label>
         <select name="progress_filter" class="form-select rounded-pill">
           <option value="">Tất cả</option>
-          <option value="not_started" {% if selected_progress_filter == 'not_started' %}selected{% endif %}>Chưa học</option>
-          <option value="learning" {% if selected_progress_filter == 'learning' %}selected{% endif %}>Đang học</option>
-          <option value="completed" {% if selected_progress_filter == 'completed' %}selected{% endif %}>Hoàn thành</option>
+          <option value="not_started" {% if selected_progress_filter|default('') == 'not_started' %}selected{% endif %}>Chưa học</option>
+          <option value="learning" {% if selected_progress_filter|default('') == 'learning' %}selected{% endif %}>Đang học</option>
+          <option value="completed" {% if selected_progress_filter|default('') == 'completed' %}selected{% endif %}>Hoàn thành</option>
         </select>
       </div>
 
       <div class="col-lg-2 col-md-6">
         <label class="form-label fw-semibold">Sắp xếp</label>
         <select name="sort" class="form-select rounded-pill">
-          <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
-          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>Mới nhất</option>
-          <option value="progress_desc" {% if selected_sort == 'progress_desc' %}selected{% endif %}>Tiến độ cao nhất</option>
-          <option value="progress_asc" {% if selected_sort == 'progress_asc' %}selected{% endif %}>Tiến độ thấp nhất</option>
+          <option value="name_asc" {% if selected_sort|default('name_asc') == 'name_asc' %}selected{% endif %}>Tên A-Z</option>
+          <option value="newest" {% if selected_sort|default('') == 'newest' %}selected{% endif %}>Mới nhất</option>
+          <option value="progress_desc" {% if selected_sort|default('') == 'progress_desc' %}selected{% endif %}>Tiến độ cao nhất</option>
+          <option value="progress_asc" {% if selected_sort|default('') == 'progress_asc' %}selected{% endif %}>Tiến độ thấp nhất</option>
         </select>
       </div>
 
       <div class="col-12 d-flex gap-2 flex-wrap">
-        <button class="btn btn-primary rounded-pill px-4">
+        <button class="btn btn-primary rounded-pill px-4" type="submit">
           <i class="bi bi-funnel"></i> Lọc khóa học
         </button>
 
@@ -181,7 +211,7 @@
   </form>
 
   <div class="mb-3 text-muted">
-    Đang hiển thị <strong>{{ courses|length }}</strong> khóa học.
+    Đang hiển thị <strong>{{ courses_list|length }}</strong> khóa học.
   </div>
 
   <div class="table-responsive shadow-sm table-card">
@@ -197,16 +227,20 @@
       </thead>
 
       <tbody>
-        {% for item in courses %}
-        {% set level = (item.course.difficulty_level or "beginner")|lower %}
+        {% for item in courses_list %}
+        {% if item.course %}
+        {% set course = item.course %}
+        {% set level = (course.difficulty_level or 'beginner')|lower %}
         {% set p = item.progress_percent or 0 %}
+        {% set completed = item.completed_lessons or 0 %}
+        {% set total = item.total_lessons or 0 %}
 
         <tr class="course-row">
           <td data-label="Khóa học">
-            <div class="fw-semibold course-title text-truncate" title="{{ item.course.course_name }}">
-              <a href="/student/course/detail/{{ item.course.id }}" class="text-primary text-decoration-none">
+            <div class="fw-semibold course-title text-truncate" title="{{ course.course_name }}">
+              <a href="/student/course/detail/{{ course.id }}" class="text-primary text-decoration-none">
                 <i class="bi bi-journal-bookmark-fill text-info"></i>
-                {{ item.course.course_name }}
+                {{ course.course_name }}
               </a>
             </div>
 
@@ -221,48 +255,69 @@
             </span>
 
             <div class="small text-muted mt-1">
-              <i class="bi bi-hash"></i> {{ item.course.course_code or "—" }}
+              <i class="bi bi-hash"></i> {{ course.course_code or '—' }}
             </div>
           </td>
 
           <td data-label="Ngành">
             <span class="major-chip">
               <i class="bi bi-diagram-3"></i>
-              {{ item.course.major.major_name if item.course.major else "Chưa phân ngành" }}
+              {{ course.major.major_name if course.major else 'Chưa phân ngành' }}
             </span>
           </td>
 
           <td data-label="Giảng viên">
             <i class="bi bi-person-badge"></i>
-            {{ item.course.teacher.full_name if item.course.teacher and item.course.teacher.full_name else (item.course.teacher.username if item.course.teacher else "—") }}
+            {{ course.teacher.full_name if course.teacher and course.teacher.full_name else (course.teacher.username if course.teacher else '—') }}
           </td>
 
           <td data-label="Tiến độ" style="min-width: 180px;">
             <div class="progress progress-custom">
               <div class="progress-bar" data-width="{{ p }}"></div>
             </div>
+
             <div class="small text-muted mt-1 fw-semibold">
               <i class="bi bi-flag"></i>
-              {{ item.completed_lessons }}/{{ item.total_lessons }}
+              {{ completed }}/{{ total }}
               <span class="text-primary">({{ p }}%)</span>
             </div>
           </td>
 
           <td class="text-end" data-label="Hành động">
-            {% if p < 100 %}
-              <a class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
-                 href="/student/course/progress/{{ item.course.id }}">
+            <div class="d-flex justify-content-end gap-2 flex-wrap action-wrap">
+              <a
+                class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm"
+                href="/student/course/detail/{{ course.id }}"
+              >
+                <i class="bi bi-eye"></i> Xem chi tiết
+              </a>
+
+              {% if p < 100 %}
+              <a
+                class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm"
+                href="/student/course/progress/{{ course.id }}"
+              >
                 <i class="bi bi-play-circle"></i> Học tiếp
               </a>
-            {% else %}
-              <a class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"
-                 href="/student/course/progress/{{ item.course.id }}">
+              {% else %}
+              <a
+                class="btn btn-sm btn-success rounded-pill px-3 shadow-sm"
+                href="/student/course/progress/{{ course.id }}"
+              >
                 <i class="bi bi-check-circle"></i> Xem lại
               </a>
-            {% endif %}
+              {% endif %}
+
+              <a
+                class="btn btn-sm btn-outline-success rounded-pill px-3 shadow-sm"
+                href="/student/learning-path/{{ course.id }}"
+              >
+                <i class="bi bi-signpost-split"></i> Lộ trình
+              </a>
+            </div>
           </td>
         </tr>
-
+        {% endif %}
         {% else %}
         <tr>
           <td colspan="5" class="text-center text-muted py-4">
@@ -277,9 +332,13 @@
 </div>
 
 <script>
-  document.querySelectorAll('.progress-bar[data-width]').forEach(el => {
-    const percent = el.dataset.width || 0;
-    setTimeout(() => el.style.width = percent + '%', 200);
+  document.querySelectorAll(".progress-bar[data-width]").forEach(function (el) {
+    const rawValue = Number(el.dataset.width || 0);
+    const safeValue = Math.max(0, Math.min(100, rawValue));
+
+    setTimeout(function () {
+      el.style.width = safeValue + "%";
+    }, 180);
   });
 </script>
 {% endblock %}
