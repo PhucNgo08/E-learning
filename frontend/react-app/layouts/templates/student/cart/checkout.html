@@ -148,39 +148,11 @@ body.dark-mode .checkout-page .form-control {
               <img src="/uploads/pay/vnpay.png" height="26" alt="VNPay" onerror="this.style.display='none'">
               <span>VNPay <small class="text-muted">(2% phí)</small></span>
             </label>
-
-            <label class="list-group-item d-flex align-items-center gap-3 glass border-0 py-3 glass-hover">
-              <input type="radio" name="pay_method" value="card" {% if pay_method == 'card' %}checked{% endif %}>
-              <i class="bi bi-credit-card text-primary fs-4"></i>
-              <span>Thẻ quốc tế <small class="text-muted">(3% phí)</small></span>
-            </label>
-          </div>
-
-          <div id="cardForm" class="glass p-3 mb-4 shadow-sm" style="display:none;">
-            <h6 class="fw-bold mb-3">Thông tin thẻ mô phỏng</h6>
-            <div class="mb-3">
-              <label class="form-label">Tên chủ thẻ</label>
-              <input type="text" class="form-control glass border-0 shadow-sm" placeholder="NGUYEN VAN A">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Số thẻ</label>
-              <input type="text" class="form-control glass border-0 shadow-sm" placeholder="1234 5678 9999 0000" maxlength="19">
-            </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label">Ngày hết hạn</label>
-                <input type="text" class="form-control glass border-0 shadow-sm" placeholder="MM/YY">
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label">CVV</label>
-                <input type="password" class="form-control glass border-0 shadow-sm" maxlength="3" placeholder="***">
-              </div>
-            </div>
           </div>
 
           <div class="alert alert-info small shadow-sm mb-0">
             <i class="bi bi-info-circle-fill me-2"></i>
-            VNPay và Thẻ quốc tế hiện đang ở chế độ mô phỏng nội bộ nếu bạn chưa tích hợp cổng thanh toán thật.
+            Nếu chọn VNPay, hệ thống sẽ chuyển sang cổng VNPay Sandbox để hoàn tất thanh toán. Nếu chọn Ví nội bộ, hệ thống sẽ trừ trực tiếp từ số dư ví.
           </div>
         </div>
 
@@ -255,18 +227,12 @@ function updateTotals(showMessage = false) {
 
   let fee = 0;
   if (method === "vnpay") fee = Math.round(discounted * 0.02);
-  if (method === "card") fee = Math.round(discounted * 0.03);
 
   const total = discounted + fee;
 
   document.getElementById("discountAmount").textContent = formatNumber(discountAmount);
   document.getElementById("fee").textContent = formatNumber(fee);
   document.getElementById("totalPrice").textContent = formatNumber(total);
-
-  const cardForm = document.getElementById("cardForm");
-  if (cardForm) {
-    cardForm.style.display = method === "card" ? "block" : "none";
-  }
 
   if (showMessage && note) {
     if (!code) {

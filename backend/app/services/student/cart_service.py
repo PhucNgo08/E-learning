@@ -6,6 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.user_course import UserCourse
 from app.models.cart_item import CartItem
 from app.models.course import Course
 from app.models.course_enrollment import CourseEnrollment
@@ -15,7 +16,7 @@ from app.services.common.course_access_service import has_course_access
 from app.services.wallet_service import get_balance, student_pay
 
 TWOPLACES = Decimal("0.01")
-SUPPORTED_PAYMENT_METHODS = {"wallet", "vnpay", "card"}
+SUPPORTED_PAYMENT_METHODS = {"wallet", "vnpay"}
 COUPON_MAPPING = {
     "GIAM50": Decimal("0.50"),
     "GIAM20": Decimal("0.20"),
@@ -25,8 +26,7 @@ VALID_ENROLLMENT_MODES = {"auto", "approval", "invite_only"}
 
 PAYMENT_LABELS = {
     "wallet": "Ví nội bộ",
-    "vnpay": "VNPay",
-    "card": "Thẻ quốc tế",
+    "vnpay": "VNPay Sandbox",
 }
 ACTIVE_ENROLLMENT_STATUSES = {"approved", "active", "completed"}
 BLOCK_CART_ENROLLMENT_STATUSES = {"approved", "active", "applied", "completed"}
@@ -130,8 +130,7 @@ def get_payment_fee(amount: Decimal, method: str) -> Decimal:
 
     if method == "vnpay":
         return (amount * Decimal("0.02")).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
-    if method == "card":
-        return (amount * Decimal("0.03")).quantize(TWOPLACES, rounding=ROUND_HALF_UP)
+
     return Decimal("0.00")
 
 
@@ -240,11 +239,48 @@ def _prepare_enrollment_data(course: Course, now: datetime):
     }
 
 
+def _upsert_user_course(
+    db: Session,
+    user_id: str,
+    course_id: str,
+    order_id: str | None,
+    now: datetime,
+    access_status: str = "active",
+):
+    user_course = (
+        db.query(UserCourse)
+        .filter(
+            UserCourse.user_id == user_id,
+            UserCourse.course_id == course_id,
+        )
+        .first()
+    )
+
+    if not user_course:
+        db.add(
+            UserCourse(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                course_id=course_id,
+                order_id=order_id,
+                purchased_at=now,
+                access_status=access_status,
+            )
+        )
+        return
+
+    if order_id and not getattr(user_course, "order_id", None):
+        user_course.order_id = order_id
+
+    user_course.access_status = access_status
+
+
 def _grant_course_access(
     db: Session,
     user_id: str,
     course: Course,
     now: datetime,
+    order_id: str | None = None,
 ):
     enrollment_data = _prepare_enrollment_data(course, now)
     target_status = enrollment_data["enrollment_status"]
@@ -271,32 +307,46 @@ def _grant_course_access(
             and course.current_students is not None
         ):
             course.current_students = int(course.current_students or 0) + 1
-        return
 
-    old_status = (enrolled.enrollment_status or "").strip().lower()
+    else:
+        old_status = (enrolled.enrollment_status or "").strip().lower()
 
-    enrolled.enrollment_source = "purchase"
-    if not getattr(enrolled, "applied_at", None):
-        enrolled.applied_at = now
+        enrolled.enrollment_source = "purchase"
+        if not getattr(enrolled, "applied_at", None):
+            enrolled.applied_at = now
 
-    if old_status not in BLOCK_CART_ENROLLMENT_STATUSES:
-        enrolled.enrollment_status = target_status
-        enrolled.approved_at = enrollment_data["approved_at"]
-        enrolled.enrolled_at = enrollment_data["enrolled_at"]
+        if old_status not in BLOCK_CART_ENROLLMENT_STATUSES:
+            enrolled.enrollment_status = target_status
+            enrolled.approved_at = enrollment_data["approved_at"]
+            enrolled.enrolled_at = enrollment_data["enrolled_at"]
 
-    elif old_status == "applied":
-        if target_status == "active":
+        elif old_status == "applied" and target_status == "active":
             enrolled.enrollment_status = "active"
             enrolled.approved_at = now
             enrolled.enrolled_at = now
 
-    if (
-        old_status not in ACTIVE_ENROLLMENT_STATUSES
-        and (enrolled.enrollment_status or "").strip().lower() in ACTIVE_ENROLLMENT_STATUSES
-        and hasattr(course, "current_students")
-        and course.current_students is not None
-    ):
-        course.current_students = int(course.current_students or 0) + 1
+        if (
+            old_status not in ACTIVE_ENROLLMENT_STATUSES
+            and (enrolled.enrollment_status or "").strip().lower() in ACTIVE_ENROLLMENT_STATUSES
+            and hasattr(course, "current_students")
+            and course.current_students is not None
+        ):
+            course.current_students = int(course.current_students or 0) + 1
+
+    access_status = (
+        "active"
+        if target_status in ACTIVE_ENROLLMENT_STATUSES
+        else "pending"
+    )
+
+    _upsert_user_course(
+        db=db,
+        user_id=user_id,
+        course_id=course.id,
+        order_id=order_id,
+        now=now,
+        access_status=access_status,
+    )
 
 
 def checkout(
@@ -400,7 +450,7 @@ def checkout(
             purchased_list: list[str] = []
             for item in valid_cart_items:
                 course = item.course
-                _grant_course_access(db, user_id, course, now)
+                _grant_course_access(db, user_id, course, now, order.id)
                 purchased_list.append(course.course_name)
                 db.delete(item)
 
@@ -454,3 +504,149 @@ def checkout(
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": str(e), **summary}
+
+
+def confirm_paid_order(
+    db: Session,
+    order_id: str,
+    amount: Decimal,
+    transaction_id: str | None = None,
+    payment_method: str = "vnpay",
+):
+    order = (
+        db.query(Order)
+        .options(joinedload(Order.items).joinedload(OrderItem.course))
+        .filter(Order.id == order_id)
+        .first()
+    )
+
+    if not order:
+        return {
+            "status": "error",
+            "code": "01",
+            "message": "Không tìm thấy đơn hàng.",
+        }
+
+    order_amount = D(order.total_amount)
+    paid_amount = D(amount)
+
+    if order_amount != paid_amount:
+        return {
+            "status": "error",
+            "code": "04",
+            "message": "Số tiền thanh toán không khớp.",
+        }
+
+    purchased_list = [
+        item.course.course_name
+        for item in order.items
+        if item.course
+    ]
+
+    if order.status == "paid":
+        return {
+            "status": "success",
+            "code": "00",
+            "message": "Đơn hàng đã được xác nhận trước đó.",
+            "order_id": order.id,
+            "transaction_id": transaction_id or "",
+            "subtotal": as_vnd_number(order.total_amount),
+            "discounted": as_vnd_number(order.total_amount),
+            "discount_amount": 0,
+            "fee": 0,
+            "total_paid": as_vnd_number(order.total_amount),
+            "coupon_code": "",
+            "payment_method": payment_method,
+            "payment_label": get_payment_label(payment_method),
+            "wallet_before": 0,
+            "wallet_after": 0,
+            "wallet_delta": 0,
+            "purchased_courses": purchased_list,
+            "demo_gateway": False,
+        }
+
+    if order.status != "pending":
+        return {
+            "status": "error",
+            "code": "02",
+            "message": "Trạng thái đơn hàng không hợp lệ.",
+        }
+
+    try:
+        now = datetime.utcnow()
+
+        order.status = "paid"
+        order.paid_at = now
+        order.payment_method = payment_method
+
+        for item in order.items:
+            course = item.course
+            if not course:
+                continue
+
+            _grant_course_access(
+                db=db,
+                user_id=order.user_id,
+                course=course,
+                now=now,
+                order_id=order.id,
+            )
+
+            cart_item = (
+                db.query(CartItem)
+                .filter(
+                    CartItem.user_id == order.user_id,
+                    CartItem.course_id == course.id,
+                )
+                .first()
+            )
+            if cart_item:
+                db.delete(cart_item)
+
+        db.commit()
+        db.refresh(order)
+
+        return {
+            "status": "success",
+            "code": "00",
+            "message": "Thanh toán thành công, khóa học đã được kích hoạt.",
+            "order_id": order.id,
+            "transaction_id": transaction_id or "",
+            "subtotal": as_vnd_number(order.total_amount),
+            "discounted": as_vnd_number(order.total_amount),
+            "discount_amount": 0,
+            "fee": 0,
+            "total_paid": as_vnd_number(order.total_amount),
+            "coupon_code": "",
+            "payment_method": payment_method,
+            "payment_label": get_payment_label(payment_method),
+            "wallet_before": 0,
+            "wallet_after": 0,
+            "wallet_delta": 0,
+            "purchased_courses": purchased_list,
+            "demo_gateway": False,
+        }
+
+    except Exception as e:
+        db.rollback()
+        return {
+            "status": "error",
+            "code": "99",
+            "message": str(e),
+        }
+
+
+def mark_order_failed(
+    db: Session,
+    order_id: str | None,
+):
+    if not order_id:
+        return None
+
+    order = db.query(Order).filter(Order.id == order_id).first()
+
+    if order and order.status == "pending":
+        order.status = "failed"
+        db.commit()
+
+    return order

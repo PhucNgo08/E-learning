@@ -58,6 +58,18 @@ class Settings(BaseSettings):
     MICROSOFT_CLIENT_ID: str | None = None
     MICROSOFT_CLIENT_SECRET: str | None = None
 
+
+    # =========================
+    # VNPay Sandbox
+    # =========================
+    VNPAY_TMN_CODE: str | None = None
+    VNPAY_HASH_SECRET: str | None = None
+    VNPAY_PAYMENT_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/student/cart/vnpay-return"
+    VNPAY_IPN_URL: str = "http://127.0.0.1:8000/student/cart/vnpay-ipn"
+
+    
+        
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -6,12 +6,15 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_db
 from app.config.template_config import templates
+from app.core.config import get_settings
+from app.services.payment.vnpay_service import build_payment_url, verify_secure_hash
 import app.services.student.cart_service as cart_service
 
 
@@ -201,6 +204,8 @@ async def cart_checkout(
     if not user_id:
         return RedirectResponse("/auth/login", status_code=302)
 
+    pay_method = (pay_method or "wallet").strip().lower()
+
     result = cart_service.checkout(
         db=db,
         user_id=user_id,
@@ -211,6 +216,28 @@ async def cart_checkout(
     if result.get("status") == "empty":
         request.session["cart_count"] = 0
         return RedirectResponse("/student/cart", status_code=303)
+
+    if pay_method == "vnpay" and result.get("status") == "pending_payment":
+        settings = get_settings()
+
+        if not settings.VNPAY_TMN_CODE or not settings.VNPAY_HASH_SECRET:
+            return RedirectResponse(
+                "/student/cart/checkout?error=Chưa cấu hình VNPay trong file .env",
+                status_code=303,
+            )
+
+        payment_url = build_payment_url(
+            payment_url=settings.VNPAY_PAYMENT_URL,
+            tmn_code=settings.VNPAY_TMN_CODE,
+            secret_key=settings.VNPAY_HASH_SECRET,
+            return_url=settings.VNPAY_RETURN_URL,
+            order_id=result["order_id"],
+            amount=Decimal(str(result["total_paid"])),
+            ip_address=request.client.host if request.client else "127.0.0.1",
+            order_info=f"Thanh toan don hang {result['order_id']}",
+        )
+
+        return RedirectResponse(payment_url, status_code=303)
 
     if result.get("status") != "success":
         summary = cart_service.build_checkout_summary(
@@ -244,6 +271,105 @@ async def cart_checkout(
     request.session["last_checkout"] = result
 
     return RedirectResponse("/student/cart/checkout/success", status_code=303)
+
+
+@router.get("/vnpay-return")
+async def vnpay_return(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user_id = get_current_student_id(request)
+    if not user_id:
+        return RedirectResponse("/auth/login", status_code=302)
+
+    settings = get_settings()
+    params = dict(request.query_params)
+
+    if not settings.VNPAY_HASH_SECRET:
+        return RedirectResponse(
+            "/student/cart/checkout?error=Chưa cấu hình VNPay",
+            status_code=303,
+        )
+
+    if not verify_secure_hash(params, settings.VNPAY_HASH_SECRET):
+        return RedirectResponse(
+            "/student/cart/checkout?error=Chữ ký VNPay không hợp lệ",
+            status_code=303,
+        )
+
+    order_id = params.get("vnp_TxnRef")
+    response_code = params.get("vnp_ResponseCode")
+    transaction_status = params.get("vnp_TransactionStatus")
+    transaction_id = params.get("vnp_TransactionNo", "")
+    amount = Decimal(params.get("vnp_Amount", "0")) / Decimal("100")
+
+    if response_code == "00" and transaction_status == "00":
+        result = cart_service.confirm_paid_order(
+            db=db,
+            order_id=order_id,
+            amount=amount,
+            transaction_id=transaction_id,
+            payment_method="vnpay",
+        )
+
+        if result.get("status") == "success":
+            request.session["cart_count"] = 0
+            request.session["last_checkout"] = result
+            return RedirectResponse("/student/cart/checkout/success", status_code=303)
+
+        return RedirectResponse(
+            f"/student/cart/checkout?error={result.get('message', 'Xác nhận thanh toán thất bại')}",
+            status_code=303,
+        )
+
+    cart_service.mark_order_failed(db, order_id)
+
+    return RedirectResponse(
+        f"/student/cart/checkout?error=Thanh toán VNPay thất bại. Mã lỗi: {response_code}",
+        status_code=303,
+    )
+
+
+@router.get("/vnpay-ipn")
+async def vnpay_ipn(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    settings = get_settings()
+    params = dict(request.query_params)
+
+    if not settings.VNPAY_HASH_SECRET:
+        return {"RspCode": "99", "Message": "Missing hash secret"}
+
+    if not verify_secure_hash(params, settings.VNPAY_HASH_SECRET):
+        return {"RspCode": "97", "Message": "Invalid checksum"}
+
+    order_id = params.get("vnp_TxnRef")
+    response_code = params.get("vnp_ResponseCode")
+    transaction_status = params.get("vnp_TransactionStatus")
+    transaction_id = params.get("vnp_TransactionNo", "")
+    amount = Decimal(params.get("vnp_Amount", "0")) / Decimal("100")
+
+    if response_code == "00" and transaction_status == "00":
+        result = cart_service.confirm_paid_order(
+            db=db,
+            order_id=order_id,
+            amount=amount,
+            transaction_id=transaction_id,
+            payment_method="vnpay",
+        )
+
+        if result.get("status") == "success":
+            return {"RspCode": "00", "Message": "Confirm Success"}
+
+        return {
+            "RspCode": result.get("code", "99"),
+            "Message": result.get("message", "Confirm Failed"),
+        }
+
+    cart_service.mark_order_failed(db, order_id)
+
+    return {"RspCode": "00", "Message": "Payment failed recorded"}
 
 
 # ======================================================
