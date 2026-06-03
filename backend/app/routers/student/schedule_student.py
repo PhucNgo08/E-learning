@@ -31,15 +31,17 @@ async def view_calendar(
 ):
     templates = get_template_by_path(request.url.path)
     events = schedule_service.get_student_schedule(db, current_user.id)
+    upcoming_reminders = schedule_service.get_upcoming_reminders(db, current_user.id, days=7)
 
     return templates.TemplateResponse(
         "schedule/calendar.html",
         {
             "request": request,
             "events": events,
+            "upcoming_reminders": upcoming_reminders,
             "student": current_user,
             "user": current_user,
-            "page_title": "Lịch học và kiểm tra",
+            "page_title": "Lịch học, lịch thi và bài tập",
             "active_page": "schedule",
             "now": datetime.now(),
         },
@@ -54,15 +56,17 @@ async def view_list(
 ):
     templates = get_template_by_path(request.url.path)
     schedules = schedule_service.get_schedule_list(db, current_user.id)
+    upcoming_reminders = schedule_service.get_upcoming_reminders(db, current_user.id, days=7)
 
     return templates.TemplateResponse(
         "schedule/list.html",
         {
             "request": request,
             "schedules": schedules,
+            "upcoming_reminders": upcoming_reminders,
             "student": current_user,
             "user": current_user,
-            "page_title": "Lịch học dạng danh sách",
+            "page_title": "Lịch học, lịch thi và bài tập",
             "active_page": "schedule",
             "now": datetime.now(),
         },

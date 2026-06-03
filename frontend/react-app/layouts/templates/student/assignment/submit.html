@@ -49,7 +49,18 @@
       radial-gradient(circle at bottom right, rgba(124, 58, 237, .13), transparent 35%);
     pointer-events: none;
   }
+  .info-box,
+.file-box,
+.attachment-name,
+.form-text {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}
 
+.info-grid > * {
+  min-width: 0;
+}
   .a-hero > * {
     position: relative;
     z-index: 1;
