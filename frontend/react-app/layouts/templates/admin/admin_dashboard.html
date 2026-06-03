@@ -1,3 +1,4 @@
+
 {% extends "layout_admin.html" %}
 
 {% block title %}📊 Bảng điều khiển quản trị{% endblock %}
@@ -128,15 +129,22 @@
   </div>
 
   <div class="d-flex justify-content-center gap-3 flex-wrap my-4 fade-in-up" style="animation-delay: 0.15s;">
+    <a href="/admin/revenue/dashboard" class="btn btn-outline-danger quick-btn px-4 py-2">
+      <i class="fa-solid fa-sack-dollar me-2"></i> Doanh thu
+    </a>
+
     <a href="/admin/file-storage/list" class="btn btn-outline-primary quick-btn px-4 py-2">
       <i class="fa-solid fa-folder-open me-2"></i> Quản lý tệp
     </a>
+
     <a href="/admin/statistics/dashboard" class="btn btn-outline-info quick-btn px-4 py-2">
       <i class="fa-solid fa-chart-line me-2"></i> Thống kê học tập
     </a>
+
     <a href="/admin/wallets/topup-requests" class="btn btn-outline-success quick-btn px-4 py-2">
       <i class="fa-solid fa-money-check-dollar me-2"></i> Duyệt nạp ví
     </a>
+
     <a href="/admin/notification/list" class="btn btn-outline-warning quick-btn px-4 py-2">
       <i class="fa-solid fa-bell me-2"></i> Quản lí thông báo
     </a>
@@ -166,7 +174,7 @@
       ]
     },
     {
-    "title": "Bài tập, kỳ thi và tương tác",
+      "title": "Bài tập, kỳ thi và tương tác",
       "items": [
         {"icon": "fa-list-check", "color": "primary", "bg": "bg-light-primary", "title": "Bài tập", "desc": "Quản lý bài tập, bài nộp và chấm điểm.", "link": "/admin/assignment/list"},
         {"icon": "fa-square-poll-vertical", "color": "info", "bg": "bg-light-info", "title": "Thống kê bài tập", "desc": "Xem thống kê bài tập và tình trạng nộp bài.", "link": "/admin/assignment/stats"},
@@ -174,19 +182,19 @@
         {"icon": "fa-brain", "color": "warning", "bg": "bg-light-warning", "title": "Mẫu bài kiểm tra", "desc": "Ngân hàng mẫu câu hỏi trắc nghiệm.", "link": "/admin/quiz-template/list"},
         {"icon": "fa-comments", "color": "success", "bg": "bg-light-success", "title": "Thảo luận", "desc": "Quản lý thảo luận trong khóa học.", "link": "/admin/discussion/list"},
         {"icon": "fa-star", "color": "warning", "bg": "bg-light-warning", "title": "Đánh giá", "desc": "Quản lý phản hồi từ sinh viên.", "link": "/admin/reviews/manage"}
-    ]
+      ]
     },
     {
       "title": "Hệ thống, ví và báo cáo",
       "items": [
+        {"icon": "fa-sack-dollar", "color": "danger", "bg": "bg-light-danger", "title": "Doanh thu", "desc": "Theo dõi tổng doanh thu VNPay và ví nội bộ.", "link": "/admin/revenue/dashboard"},
         {"icon": "fa-chart-pie", "color": "secondary", "bg": "bg-light-secondary", "title": "Báo cáo", "desc": "Thống kê dữ liệu hệ thống.", "link": "/admin/reports/manage"},
         {"icon": "fa-chart-line", "color": "info", "bg": "bg-light-info", "title": "Thống kê học tập", "desc": "Xem thống kê người dùng, khóa học và đánh giá.", "link": "/admin/statistics/dashboard"},
         {"icon": "fa-folder-open", "color": "primary", "bg": "bg-light-primary", "title": "Kho tệp", "desc": "Quản lý các file đã upload trong hệ thống.", "link": "/admin/file-storage/list"},
         {"icon": "fa-file-circle-plus", "color": "success", "bg": "bg-light-success", "title": "Tải tệp lên", "desc": "Upload thêm tệp dùng cho khóa học/hệ thống.", "link": "/admin/file-storage/upload"},
         {"icon": "fa-wallet", "color": "success", "bg": "bg-light-success", "title": "Ví học viên", "desc": "Quản lý ví, nạp tiền, hoàn tiền và điều chỉnh số dư.", "link": "/admin/wallets/manage"},
         {"icon": "fa-money-check-dollar", "color": "warning", "bg": "bg-light-warning", "title": "Yêu cầu nạp ví", "desc": "Duyệt hoặc từ chối yêu cầu nạp tiền.", "link": "/admin/wallets/topup-requests"},
-        {"icon": "fa-bell", "color": "warning", "bg": "bg-light-warning", "title": "Thông báo", "desc": "Gửi và quản lý thông báo hệ thống.", "link": "/admin/notification/list"},
-   
+        {"icon": "fa-bell", "color": "warning", "bg": "bg-light-warning", "title": "Thông báo", "desc": "Gửi và quản lý thông báo hệ thống.", "link": "/admin/notification/list"}
       ]
     }
   ] %}
@@ -229,3 +237,4 @@
   });
 </script>
 {% endblock %}
+

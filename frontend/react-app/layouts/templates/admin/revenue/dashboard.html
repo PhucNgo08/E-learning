@@ -1,0 +1,233 @@
+{% extends "layout_admin.html" %}
+
+{% block title %}💰 Quản lý doanh thu{% endblock %}
+{% block page_title %}💰 Quản lý doanh thu{% endblock %}
+{% block page_subtitle %}Theo dõi doanh thu VNPay và ví nội bộ{% endblock %}
+{% block nav_revenue %}active{% endblock %}
+
+{% block page_banner %}
+<section class="page-banner">
+  <div>
+    <h2>💰 Tổng quan doanh thu</h2>
+    <p>
+      Theo dõi doanh thu khóa học đã thanh toán, tách riêng theo VNPay, ví nội bộ và các phương thức khác.
+    </p>
+  </div>
+
+  <div class="page-banner-actions">
+    <a href="/admin/wallets/topup-requests" class="btn-glass-light">
+      <i class="bi bi-wallet2"></i>
+      <span>Duyệt nạp ví</span>
+    </a>
+
+    <a href="/admin/dashboard" class="btn-glass-outline">
+      <i class="bi bi-arrow-left"></i>
+      <span>Về dashboard</span>
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block stats_overview %}
+<section class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-top">
+      <span class="stat-label">Tổng doanh thu</span>
+      <span class="stat-icon"><i class="bi bi-cash-stack"></i></span>
+    </div>
+    <div class="stat-value">{{ summary.total_revenue_text }}</div>
+    <div class="stat-meta">{{ summary.total_orders }} đơn hàng đã thanh toán</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <span class="stat-label">Doanh thu VNPay</span>
+      <span class="stat-icon"><i class="bi bi-credit-card"></i></span>
+    </div>
+    <div class="stat-value">{{ summary.vnpay_revenue_text }}</div>
+    <div class="stat-meta">Thanh toán qua cổng VNPay</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <span class="stat-label">Doanh thu ví nội bộ</span>
+      <span class="stat-icon"><i class="bi bi-wallet2"></i></span>
+    </div>
+    <div class="stat-value">{{ summary.wallet_revenue_text }}</div>
+    <div class="stat-meta">Thanh toán bằng ví học viên</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <span class="stat-label">Nạp ví đã duyệt</span>
+      <span class="stat-icon"><i class="bi bi-bank"></i></span>
+    </div>
+    <div class="stat-value">{{ summary.topup_amount_text }}</div>
+    <div class="stat-meta">{{ summary.topup_count }} yêu cầu nạp ví thành công</div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<style>
+  .revenue-card {
+    border: 0;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+  }
+
+  .revenue-note {
+    border-left: 4px solid #0d6efd;
+    background: rgba(13, 110, 253, 0.08);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+
+  body.dark-mode .revenue-card {
+    background: #111827;
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .revenue-note {
+    background: rgba(13, 110, 253, 0.16);
+  }
+
+  body.dark-mode .table {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .table-light {
+    --bs-table-bg: #1f2937;
+    --bs-table-color: #e5e7eb;
+  }
+</style>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <div class="card revenue-card">
+      <div class="card-header bg-primary text-white fw-bold">
+        <i class="bi bi-receipt"></i> Đơn hàng đã thanh toán gần đây
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Sinh viên</th>
+              <th>Phương thức</th>
+              <th class="text-end">Số tiền</th>
+              <th>Thời gian thanh toán</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% if recent_orders %}
+              {% for o in recent_orders %}
+              <tr>
+                <td>{{ loop.index }}</td>
+
+                <td>
+                  <div class="fw-semibold">{{ o.full_name }}</div>
+                  <small class="text-muted">{{ o.username }}</small>
+                </td>
+
+                <td>
+                  {% if o.payment_method == 'wallet' %}
+                    <span class="badge bg-success">Ví nội bộ</span>
+                  {% elif o.payment_method == 'vnpay' %}
+                    <span class="badge bg-primary">VNPay</span>
+                  {% else %}
+                    <span class="badge bg-secondary">{{ o.payment_method_label }}</span>
+                  {% endif %}
+                </td>
+
+                <td class="text-end fw-bold">
+                  {{ o.total_amount_text }}
+                </td>
+
+                <td>
+                  {{ o.paid_at.strftime('%d/%m/%Y %H:%M') if o.paid_at else (o.created_at.strftime('%d/%m/%Y %H:%M') if o.created_at else '—') }}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  Chưa có đơn hàng đã thanh toán.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card revenue-card mb-4">
+      <div class="card-header fw-bold">
+        <i class="bi bi-pie-chart"></i> Cơ cấu doanh thu
+      </div>
+
+      <div class="card-body">
+        {% if summary.method_stats %}
+          {% for m in summary.method_stats %}
+          <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+            <div>
+              <div class="fw-semibold">{{ m.label }}</div>
+              <small class="text-muted">{{ m.order_count }} đơn hàng</small>
+            </div>
+
+            <div class="fw-bold text-primary">
+              {{ m.amount_text }}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted mb-0">Chưa có dữ liệu doanh thu.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card revenue-card">
+      <div class="card-header fw-bold">
+        <i class="bi bi-calendar-check"></i> Theo thời gian
+      </div>
+
+      <div class="card-body">
+        <div class="d-flex justify-content-between border-bottom py-2">
+          <span>Hôm nay</span>
+          <strong>{{ summary.today_revenue_text }}</strong>
+        </div>
+
+        <div class="d-flex justify-content-between border-bottom py-2">
+          <span>Đơn hôm nay</span>
+          <strong>{{ summary.today_orders }}</strong>
+        </div>
+
+        <div class="d-flex justify-content-between border-bottom py-2">
+          <span>Tháng này</span>
+          <strong>{{ summary.month_revenue_text }}</strong>
+        </div>
+
+        <div class="d-flex justify-content-between py-2">
+          <span>Đơn tháng này</span>
+          <strong>{{ summary.month_orders }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="revenue-note mt-4">
+      <div class="fw-bold mb-1">
+        <i class="bi bi-info-circle"></i> Ghi chú nghiệp vụ
+      </div>
+      <small>
+        Nạp ví là dòng tiền vào ví, không cộng trực tiếp vào doanh thu khóa học.
+        Doanh thu chính được tính từ đơn hàng đã thanh toán trong bảng orders.
+      </small>
+    </div>
+  </div>
+</div>
+{% endblock %}

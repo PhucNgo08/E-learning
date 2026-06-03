@@ -102,10 +102,13 @@ body.dark-mode .checkout-page .form-control {
             <span class="fw-semibold">{{ item.course.course_name }}</span><br>
             <small class="text-muted">Mã khóa học: {{ item.course.course_code or 'Chưa có' }}</small>
           </div>
+
           <div class="text-end">
             {% if item.course.discount_percent and item.course.discount_percent > 0 %}
               <span class="fw-bold price-final">{{ "{:,.0f}".format(item.course.final_price or 0) }}₫</span><br>
-              <small class="text-muted text-decoration-line-through">{{ "{:,.0f}".format(item.course.price or 0) }}₫</small>
+              <small class="text-muted text-decoration-line-through">
+                {{ "{:,.0f}".format(item.course.price or 0) }}₫
+              </small>
             {% else %}
               <span class="fw-bold price-main">{{ "{:,.0f}".format(item.course.final_price or 0) }}₫</span>
             {% endif %}
@@ -117,34 +120,52 @@ body.dark-mode .checkout-page .form-control {
       <div class="row g-4">
         <div class="col-lg-7">
           <h5 class="fw-semibold">🎁 Mã giảm giá</h5>
-          <div class="input-group mb-4">
-            <input type="text"
-                   id="couponInput"
-                   name="coupon_code"
-                   value="{{ coupon_code or '' }}"
-                   class="form-control glass border-0 shadow-sm"
-                   placeholder="Nhập mã GIAM10, GIAM20, GIAM50...">
-            <button class="btn btn-primary" type="button" onclick="applyCoupon()">Áp dụng</button>
+
+          <div class="input-group mb-3">
+            <input
+              type="text"
+              id="couponInput"
+              name="coupon_code"
+              value="{{ coupon_code or '' }}"
+              class="form-control glass border-0 shadow-sm"
+              placeholder="Nhập mã GIAM10, GIAM20, GIAM50..."
+              autocomplete="off"
+            >
+
+            <button class="btn btn-primary" type="button" onclick="applyCouponToServer()">
+              Áp dụng
+            </button>
           </div>
 
           <div id="discountNote" class="small fw-semibold mb-3">
             {% if valid_coupon %}
               <span class="text-success">✔ Đã áp dụng mã: <b>{{ valid_coupon }}</b></span>
             {% elif coupon_code %}
-              <span class="text-danger">❌ Mã không hợp lệ, hệ thống sẽ bỏ qua khi thanh toán.</span>
+              <span class="text-danger">❌ Mã không hợp lệ, hệ thống đã bỏ qua mã này.</span>
             {% endif %}
           </div>
 
           <h5 class="fw-semibold mb-2">💳 Phương thức thanh toán</h5>
+
           <div class="list-group mb-4">
             <label class="list-group-item d-flex align-items-center gap-3 glass border-0 py-3 glass-hover">
-              <input type="radio" name="pay_method" value="wallet" {% if pay_method == 'wallet' %}checked{% endif %}>
+              <input
+                type="radio"
+                name="pay_method"
+                value="wallet"
+                {% if pay_method == 'wallet' %}checked{% endif %}
+              >
               <i class="bi bi-wallet2 text-success fs-4"></i>
               <span>Ví nội bộ <small class="text-muted">(0% phí)</small></span>
             </label>
 
             <label class="list-group-item d-flex align-items-center gap-3 glass border-0 py-3 glass-hover">
-              <input type="radio" name="pay_method" value="vnpay" {% if pay_method == 'vnpay' %}checked{% endif %}>
+              <input
+                type="radio"
+                name="pay_method"
+                value="vnpay"
+                {% if pay_method == 'vnpay' %}checked{% endif %}
+              >
               <img src="/uploads/pay/vnpay.png" height="26" alt="VNPay" onerror="this.style.display='none'">
               <span>VNPay <small class="text-muted">(thanh toán trực tuyến)</small></span>
             </label>
@@ -152,7 +173,8 @@ body.dark-mode .checkout-page .form-control {
 
           <div class="alert alert-info small shadow-sm mb-0">
             <i class="bi bi-info-circle-fill me-2"></i>
-            Nếu chọn VNPay, hệ thống sẽ chuyển sang cổng VNPay Sandbox để hoàn tất thanh toán. Nếu chọn Ví nội bộ, hệ thống sẽ trừ trực tiếp từ số dư ví.
+            Nếu chọn VNPay, hệ thống sẽ chuyển sang cổng VNPay Sandbox để hoàn tất thanh toán.
+            Nếu chọn Ví nội bộ, hệ thống sẽ trừ trực tiếp từ số dư ví.
           </div>
         </div>
 
@@ -165,24 +187,26 @@ body.dark-mode .checkout-page .form-control {
 
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="fw-semibold">Tạm tính</span>
-              <span><span id="subtotal">{{ "{:,.0f}".format(subtotal or 0) }}</span>₫</span>
+              <span>{{ "{:,.0f}".format(subtotal or 0) }}₫</span>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="fw-semibold text-success">Giảm giá</span>
-              <span class="text-success">-<span id="discountAmount">{{ "{:,.0f}".format(discount_amount or 0) }}</span>₫</span>
+              <span class="text-success">-{{ "{:,.0f}".format(discount_amount or 0) }}₫</span>
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="fw-semibold text-danger">Phụ phí</span>
-              <span class="text-danger"><span id="fee">{{ "{:,.0f}".format(fee or 0) }}</span>₫</span>
+              <span class="text-danger">{{ "{:,.0f}".format(fee or 0) }}₫</span>
             </div>
 
             <hr>
 
             <div class="d-flex justify-content-between align-items-center">
               <span class="fw-bold fs-5">Tổng tiền</span>
-              <span class="fw-bold text-success fs-4"><span id="totalPrice">{{ "{:,.0f}".format(total_paid or 0) }}</span>₫</span>
+              <span class="fw-bold text-success fs-4">
+                {{ "{:,.0f}".format(total_paid or 0) }}₫
+              </span>
             </div>
           </div>
 
@@ -200,58 +224,48 @@ body.dark-mode .checkout-page .form-control {
 </div>
 
 <script>
-const baseTotal = parseFloat("{{ subtotal or 0 }}") || 0;
-const discounts = { GIAM50: 0.5, GIAM20: 0.2, GIAM10: 0.1 };
-
-function formatNumber(value) {
-  return Math.round(value).toLocaleString("vi-VN");
-}
-
 function getSelectedMethod() {
   const checked = document.querySelector("input[name='pay_method']:checked");
   return checked ? checked.value : "wallet";
 }
 
-function calculateDiscountedTotal() {
-  const code = (document.getElementById("couponInput").value || "").trim().toUpperCase();
-  const rate = discounts[code] || 0;
-  const discounted = Math.round(baseTotal * (1 - rate));
-  const discountAmount = Math.max(0, Math.round(baseTotal - discounted));
-  return { code, rate, discounted, discountAmount };
-}
-
-function updateTotals(showMessage = false) {
-  const note = document.getElementById("discountNote");
+function applyCouponToServer() {
+  const input = document.getElementById("couponInput");
+  const code = (input?.value || "").trim().toUpperCase();
   const method = getSelectedMethod();
-  const { code, rate, discounted, discountAmount } = calculateDiscountedTotal();
 
-  let fee = 0;
+  const params = new URLSearchParams();
+  params.set("pay_method", method);
 
-  const total = discounted + fee;
-
-  document.getElementById("discountAmount").textContent = formatNumber(discountAmount);
-  document.getElementById("fee").textContent = formatNumber(fee);
-  document.getElementById("totalPrice").textContent = formatNumber(total);
-
-  if (showMessage && note) {
-    if (!code) {
-      note.innerHTML = "";
-    } else if (rate > 0) {
-      note.innerHTML = `<span class="text-success">✔ Đã áp dụng mã: <b>${code}</b></span>`;
-    } else {
-      note.innerHTML = `<span class="text-danger">❌ Mã không hợp lệ, hệ thống sẽ bỏ qua khi thanh toán.</span>`;
-    }
+  if (code) {
+    params.set("coupon_code", code);
   }
+
+  window.location.href = `/student/cart/checkout?${params.toString()}`;
 }
 
-function applyCoupon() {
-  updateTotals(true);
-}
-
-document.querySelectorAll("input[name='pay_method']").forEach(el => {
-  el.addEventListener("change", () => updateTotals(false));
+document.getElementById("couponInput")?.addEventListener("keydown", function (event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    applyCouponToServer();
+  }
 });
 
-document.addEventListener("DOMContentLoaded", () => updateTotals(false));
+document.querySelectorAll("input[name='pay_method']").forEach(function (el) {
+  el.addEventListener("change", function () {
+    const input = document.getElementById("couponInput");
+    const code = (input?.value || "").trim().toUpperCase();
+    const method = getSelectedMethod();
+
+    const params = new URLSearchParams();
+    params.set("pay_method", method);
+
+    if (code) {
+      params.set("coupon_code", code);
+    }
+
+    window.location.href = `/student/cart/checkout?${params.toString()}`;
+  });
+});
 </script>
 {% endblock %}

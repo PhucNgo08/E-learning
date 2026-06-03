@@ -2,7 +2,6 @@
 {% block title %}📄 Chi tiết thông báo{% endblock %}
 
 {% block content %}
-
 <style>
   .notif-detail {
     max-width: 760px;
@@ -12,20 +11,24 @@
     box-shadow: 0 6px 20px rgba(0,0,0,0.08);
     padding: 2rem 2.2rem;
   }
+
   .notif-icon {
     font-size: 1.4rem;
     margin-right: 6px;
   }
+
   .notif-type-badge {
     font-size: 0.8rem;
     padding: 4px 10px;
     border-radius: 20px;
   }
+
   .notif-message {
     white-space: pre-line;
     line-height: 1.55;
     font-size: 1rem;
   }
+
   .fab-back {
     position: fixed;
     bottom: 40px;
@@ -43,14 +46,21 @@
     transition: 0.3s;
     z-index: 999;
   }
+
   .fab-back:hover {
     transform: scale(1.1);
     background: linear-gradient(135deg, #495057, #343a40);
+    color: #fff;
+  }
+
+  [data-bs-theme="dark"] .notif-detail,
+  body.dark-mode .notif-detail {
+    background: #111827;
+    color: #e5e7eb;
   }
 </style>
 
 <div class="container py-4 fade-in">
-
   {% if not notification %}
   <div class="alert alert-danger text-center">
     ❌ Không tìm thấy thông báo.
@@ -58,7 +68,6 @@
   {% else %}
 
   <div class="notif-detail">
-
     <h5 class="fw-bold mb-2">
       {% set icon = {
         'system': 'bi-gear',
@@ -77,10 +86,12 @@
       <span class="notif-type-badge bg-primary text-white me-2">
         {{ notification.notification_type | capitalize }}
       </span>
+
       <span class="text-muted small">
         <i class="bi bi-clock"></i>
         {{ notification.created_at.strftime("%d/%m/%Y %H:%M") if notification.created_at else "" }}
       </span>
+
       {% if notification.is_read %}
       <span class="badge bg-success">Đã đọc</span>
       {% else %}
@@ -101,25 +112,20 @@
       </a>
       {% endif %}
 
-      <a href="/student/notifications/toggle/{{ notification.id }}"
-         class="btn btn-outline-secondary btn-sm">
+      <a href="/student/notifications/toggle/{{ notification.id }}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-repeat"></i>
         {% if notification.is_read %}Đánh dấu chưa đọc{% else %}Đánh dấu đã đọc{% endif %}
       </a>
 
-      <a href="/student/notifications/delete/{{ notification.id }}"
-         class="btn btn-outline-danger btn-sm">
+      <a href="/student/notifications/delete/{{ notification.id }}" class="btn btn-outline-danger btn-sm">
         <i class="bi bi-trash"></i> Xóa thông báo
       </a>
     </div>
-
   </div>
   {% endif %}
-
 </div>
 
-<a href="/student/notifications" class="fab-back" title="Quay lại danh sách">
+<a href="/student/notifications/" class="fab-back" title="Quay lại danh sách">
   <i class="bi bi-arrow-left"></i>
 </a>
-
 {% endblock %}

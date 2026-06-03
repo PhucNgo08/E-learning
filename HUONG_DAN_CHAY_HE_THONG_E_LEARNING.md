@@ -1,135 +1,78 @@
-# HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY HỆ THỐNG E-LEARNING
+HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY HỆ THỐNG E-LEARNING
 
-## 1. Yêu cầu môi trường
+1. Yêu cầu môi trường
 
-Máy cần cài sẵn:
+Máy tính cần cài đặt các phần mềm sau:
 
-- Python 3.12
-- MySQL Server
-- Visual Studio Code hoặc Cursor
-- Git
-- Trình duyệt Chrome/Edge
+* Python 3.12
+* MySQL Server
+* Visual Studio Code hoặc Cursor
+* Git
+* Trình duyệt Chrome hoặc Microsoft Edge
+* Node.js nếu chạy kiểm thử tự động bằng Playwright
 
----
-
-## 2. Mở thư mục dự án
+2. Mở thư mục dự án
 
 Mở terminal tại thư mục backend của dự án:
 
-```bash
 cd D:\KhoaHoctructuyen\KHoaHocOnline\backend
-```
 
-Hoặc mở trực tiếp thư mục `backend` bằng VS Code/Cursor.
+3. Tạo và kích hoạt môi trường ảo Python
 
----
-
-## 3. Tạo môi trường ảo Python
-
-### Windows PowerShell
-
-```bash
 python -m venv .venv
-.\.venv\Scripts\activate
-```
+..venv\Scripts\activate
 
-Khi kích hoạt thành công, terminal sẽ hiện dạng:
+Khi kích hoạt thành công, terminal sẽ hiển thị tiền tố (.venv).
 
-```bash
-(.venv) PS D:\KhoaHoctructuyen\KHoaHocOnline\backend>
-```
+4. Cài đặt thư viện backend
 
----
-
-## 4. Cài đặt thư viện
-
-Cài thư viện từ file `requirements.txt`:
-
-```bash
 pip install -r requirements.txt
-```
 
-Nếu dùng kiểm thử tự động bằng Playwright, chạy thêm:
+5. Tạo và import cơ sở dữ liệu MySQL
 
-```bash
-playwright install
-```
+Tạo database:
 
----
-
-## 5. Cấu hình cơ sở dữ liệu MySQL
-
-Tạo database trong MySQL:
-
-```sql
 CREATE DATABASE e_learning CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
 
-Sau đó import file SQL của hệ thống vào database `e_learning`.
+Sau đó import file e_learning.sql vào database e_learning bằng MySQL Workbench, DBeaver hoặc dòng lệnh:
 
-Ví dụ nếu có file `e_learning.sql`:
-
-```bash
 mysql -u root -p e_learning < e_learning.sql
-```
 
----
+6. Cấu hình file .env
 
-## 6. Cấu hình file .env
+Tạo hoặc kiểm tra file .env trong thư mục backend:
 
-Tạo hoặc kiểm tra file `.env` trong thư mục `backend`.
-
-Ví dụ cấu hình:
-
-```env
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=your_password
+DB_PASS=your_mysql_password
 DB_NAME=e_learning
 
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-```
+APP_ENV=development
+DEBUG=true
+SESSION_SECRET_KEY=your_secret_key
 
-Lưu ý: thay `your_password` bằng mật khẩu MySQL trên máy.
+Lưu ý: thay your_mysql_password bằng mật khẩu MySQL trên máy đang chạy.
 
----
-## . Chạy tài khoản admin
-```bash
-PS D:\KhoaHoctructuyen\KHoaHocOnline\backend> py -m app.services.common.create_admin   
-```
-## 7. Chạy hệ thống
+7. Tạo tài khoản quản trị bắt buột
 
-Trong thư mục `backend`, chạy:
+py -m app.services.common.create_admin
 
-```bash
-uvicorn app.main:app --reload
-```
+8. Chạy hệ thống
 
-Nếu chạy thành công, terminal sẽ hiện:
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
-```bash
-Uvicorn running on http://127.0.0.1:8000
-```
+Sau khi chạy thành công, mở trình duyệt và truy cập:
 
-Mở trình duyệt và truy cập:
-
-```text
 http://127.0.0.1:8000
-```
 
----
+9. Một số đường dẫn thường dùng
 
-## 8. Một số đường dẫn thường dùng
-
-```text
 Trang chủ:
 http://127.0.0.1:8000
 
 Trang đăng nhập:
-http://127.0.0.1:8000/login
+http://127.0.0.1:8000/auth/login
 
 Trang quản trị viên:
 http://127.0.0.1:8000/admin/dashboard
@@ -139,222 +82,63 @@ http://127.0.0.1:8000/teacher/dashboard
 
 Trang sinh viên:
 http://127.0.0.1:8000/student/dashboard
-```
 
----
+10. Tài khoản kiểm thử
 
-## 9. Tài khoản kiểm thử
-
-Điền theo dữ liệu demo của nhóm:
-
-```text
 Admin:
-Email/Tài khoản: admin@example.com
-Mật khẩu: 123456
+Tài khoản: admin
 
 Giảng viên:
-Email/Tài khoản: teacher@example.com
-Mật khẩu: 123456
+Tài khoản: gv_an
+Tài khoản: gv_binh
 
 Sinh viên:
-Email/Tài khoản: student@example.com
-Mật khẩu: 123456
-```
+Tài khoản: sv001
+Tài khoản: sv002
+Tài khoản: sv003
+Tài khoản: sv004
+Tài khoản: sv005
+Tài khoản: sv006
 
-Nếu tài khoản trong database khác, cần thay lại đúng theo dữ liệu demo.
+Lưu ý: mật khẩu kiểm thử được cung cấp riêng trong dữ liệu demo hoặc khi trình bày demo, không nên ghi mật khẩu thật trong bản nộp công khai.
 
----
+11. Chạy kiểm thử tự động bằng Playwright
 
-## 10. Chạy kiểm thử tự động
+Trước khi chạy test, cần đảm bảo backend đang chạy tại http://127.0.0.1:8000.
 
-Nếu project có thư mục test, chạy:
+cd D:\KhoaHoctructuyen\KHoaHocOnline\tests\e2e
+npm install
+npx playwright install chromium
+npx playwright test --headed
 
-```bash
-pytest
-```
+12. Một số lỗi thường gặp
 
-Nếu có test Playwright riêng, chạy theo file test của nhóm, ví dụ:
+Lỗi thiếu thư viện:
+Cài lại thư viện bằng lệnh pip install -r requirements.txt hoặc cài riêng thư viện bị thiếu.
 
-```bash
-pytest tests/
-```
+Lỗi không kết nối được MySQL:
+Kiểm tra MySQL Server đã bật chưa, tên database có đúng không, thông tin DB_HOST, DB_PORT, DB_USER, DB_PASS và DB_NAME trong file .env có đúng không.
 
----
+Lỗi Jinja2 TemplateNotFound:
+Kiểm tra file HTML có tồn tại đúng thư mục không, tên file có đúng chữ hoa/chữ thường không và đường dẫn template trong code có chính xác không.
 
-## 11. Lỗi thường gặp và cách xử lý
-
-### Lỗi thiếu thư viện
-
-Nếu gặp lỗi:
-
-```text
-ModuleNotFoundError: No module named 'tên_thư_viện'
-```
-
-Cài thư viện bị thiếu:
-
-```bash
-pip install tên_thư_viện
-```
-
----
-
-### Lỗi không kết nối được MySQL
-
-Kiểm tra:
-
-- MySQL Server đã bật chưa
-- Tên database đúng chưa
-- User/password trong `.env` đúng chưa
-- Database đã import dữ liệu chưa
-
----
-
-### Lỗi Jinja2 TemplateNotFound
-
-Kiểm tra:
-
-- File HTML có tồn tại đúng thư mục không
-- Đường dẫn template trong code có đúng không
-- Tên file có bị sai chữ hoa/thường không
-
----
-
-### Lỗi port 8000 đã được sử dụng
-
+Lỗi port 8000 đã được sử dụng:
 Chạy bằng port khác:
 
-```bash
-uvicorn app.main:app --reload --port 8001
-```
+python -m uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
 
-Sau đó truy cập:
-
-```text
-http://127.0.0.1:8001
-```
-
----
-
-## 12. Ghi chú khi nộp đồ án
+13. Ghi chú khi nộp đồ án
 
 Nên nộp kèm:
 
-- Source code
-- File database SQL
-- File `.env.example`
-- File `requirements.txt`
-- File hướng dẫn chạy này
-- Báo cáo PDF
-- Poster PDF
-- Slide thuyết trình
+* Mã nguồn hệ thống
+* File cơ sở dữ liệu e_learning.sql
+* File .env.example
+* File requirements.txt
+* File hướng dẫn cài đặt và chạy hệ thống
+* Báo cáo PDF
+* Poster PDF
+* Slide thuyết trình
+* Video demo nếu có
 
-Không nên nộp thư mục `.venv`, `__pycache__`, `.pytest_cache`, file log hoặc dữ liệu tạm.
-
-
-Thông tin thẻ test
-#	Thông tin thẻ	Ghi chú
-1	
-Ngân hàng: NCB
-Số thẻ: 9704198526191432198
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Mật khẩu OTP:123456
-Thành công
-2	
-Ngân hàng: NCB
-Số thẻ: 9704195798459170488
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ không đủ số dư
-3	
-Ngân hàng: NCB
-Số thẻ: 9704192181368742
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ chưa kích hoạt
-4	
-Ngân hàng: NCB
-Số thẻ: 9704193370791314
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ bị khóa
-5	
-Ngân hàng: NCB
-Số thẻ: 9704194841945513
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:07/15
-Thẻ bị hết hạn
-6	
-Loại thẻ quốc tếVISA (No 3DS)
-Số thẻ: 4456530000001005
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-7	
-Loại thẻ quốc tếVISA (3DS)
-Số thẻ: 4456530000001096
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-8	
-Loại thẻ quốc tếMasterCard (No 3DS)
-Số thẻ: 5200000000001005
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-9	
-Loại thẻ quốc tếMasterCard (3DS)
-Số thẻ: 5200000000001096
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-10	
-Loại thẻ quốc tếJCB (No 3DS)
-Số thẻ: 3337000000000008
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/26
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-11	
-Loại thẻ quốc tếJCB (3DS)
-Số thẻ: 3337000000200004
-CVC/CVV: 123
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:12/24
-Email:test@gmail.com
-Địa chỉ:22 Lang Ha
-Thành phố:Ha Noi
-Thành công
-12	
-Loại thẻ ATM nội địaNhóm Bank qua NAPAS
-Số thẻ: 9704000000000018
-Số thẻ: 9704020000000016
-Tên chủ thẻ:NGUYEN VAN A
-Ngày phát hành:03/07
-OTP:otp
-Thành công
-12	
-Loại thẻ ATM nội địaEXIMBANK
-Số thẻ: 9704310005819191
-Tên chủ thẻ:NGUYEN VAN A
-Ngày hết hạn:10/26
+Không nên nộp các thư mục hoặc file tạm như .venv, **pycache**, .pytest_cache, file log, file cache hoặc dữ liệu cá nhân.

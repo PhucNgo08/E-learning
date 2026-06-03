@@ -524,6 +524,7 @@ from app.routers.admin.statistics import statistics_router  # noqa: E402
 from app.routers.admin.teacher_management import router as teacher_router  # noqa: E402
 from app.routers.admin.user_management import user_router  # noqa: E402
 from app.routers.admin.wallet_admin import router as admin_wallet_router  # noqa: E402
+from app.routers.admin.revenue import router as revenue_router  # noqa: E402
 
 # Teacher
 from app.routers.teacher.assignment_teacher import router as teacher_assignment_router  # noqa: E402
@@ -596,6 +597,7 @@ for group in [
         file_storage_management_router,
         notification_router,
         admin_wallet_router,
+        revenue_router,
     ],
     [
         teacher_dashboard_router,

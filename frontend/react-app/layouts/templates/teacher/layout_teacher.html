@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -135,9 +136,50 @@
   <!-- 🌟 HEADER -->
   <header class="teacher-header d-flex justify-content-end align-items-center p-3">
     <div class="nav-icons d-flex align-items-center">
-      <a href="/teacher/notifications/" title="Thông báo" class="me-3 text-decoration-none text-reset">
-        <i class="bi bi-bell"></i>
-      </a>
+
+      <!-- 🔔 NOTIFICATION DROPDOWN -->
+      <div class="dropdown me-3" id="teacherNotificationBox">
+        <a
+          href="#"
+          title="Thông báo"
+          class="text-decoration-none text-reset position-relative"
+          role="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i class="bi bi-bell"></i>
+
+          <span
+            id="teacherNotificationBadge"
+            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none"
+            style="font-size: 0.65rem;"
+          >
+            0
+          </span>
+        </a>
+
+        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3 p-2" style="min-width: 340px;">
+          <li class="dropdown-header fw-bold">
+            <i class="bi bi-bell-fill text-primary me-1"></i> Thông báo mới
+          </li>
+
+          <div id="teacherNotificationList">
+            <li>
+              <span class="dropdown-item text-muted small">
+                Đang tải thông báo...
+              </span>
+            </li>
+          </div>
+
+          <li><hr class="dropdown-divider" /></li>
+
+          <li>
+            <a class="dropdown-item text-center small fw-semibold" href="/teacher/notifications/">
+              Xem tất cả thông báo
+            </a>
+          </li>
+        </ul>
+      </div>
 
       <a href="/teacher/message/inbox" title="Tin nhắn" class="me-3 text-decoration-none text-reset">
         <i class="bi bi-envelope"></i>
@@ -312,6 +354,97 @@
     })();
   </script>
 
+  <!-- 🔔 Teacher Notification Dropdown -->
+  <script>
+    function escapeTeacherNotificationHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text || "";
+      return div.innerHTML;
+    }
+
+    async function loadTeacherNotifications() {
+      const badge = document.getElementById("teacherNotificationBadge");
+      const list = document.getElementById("teacherNotificationList");
+
+      if (!badge || !list) return;
+
+      try {
+        const response = await fetch("/teacher/notifications/api/summary", {
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        const data = await response.json();
+        const unreadCount = data.unread_count || 0;
+
+        if (unreadCount > 0) {
+          badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+          badge.classList.remove("d-none");
+        } else {
+          badge.classList.add("d-none");
+        }
+
+        const notifications = data.latest_notifications || [];
+
+        if (notifications.length === 0) {
+          list.innerHTML = `
+            <li>
+              <span class="dropdown-item text-muted small">
+                Chưa có thông báo mới.
+              </span>
+            </li>
+          `;
+          return;
+        }
+
+        list.innerHTML = notifications.map(n => {
+          const detailUrl = `/teacher/notifications/detail/${n.id}`;
+          const titleClass = n.is_read ? "" : "fw-bold";
+          const newBadge = n.is_read
+            ? ""
+            : `<span class="badge bg-danger ms-1">Mới</span>`;
+
+          return `
+            <li>
+              <a class="dropdown-item small ${titleClass}" href="${detailUrl}">
+                <div class="d-flex justify-content-between gap-2">
+                  <span class="text-truncate">
+                    ${escapeTeacherNotificationHtml(n.title)}
+                  </span>
+                  ${newBadge}
+                </div>
+
+                <div class="text-muted text-truncate" style="max-width: 290px;">
+                  ${escapeTeacherNotificationHtml(n.message)}
+                </div>
+
+                <small class="text-muted">
+                  ${escapeTeacherNotificationHtml(n.created_at || "")}
+                </small>
+              </a>
+            </li>
+          `;
+        }).join("");
+
+      } catch (error) {
+        list.innerHTML = `
+          <li>
+            <span class="dropdown-item text-danger small">
+              Không tải được thông báo.
+            </span>
+          </li>
+        `;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      loadTeacherNotifications();
+      setInterval(loadTeacherNotifications, 30000);
+    });
+  </script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>
+

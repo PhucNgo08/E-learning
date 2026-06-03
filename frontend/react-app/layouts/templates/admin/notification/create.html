@@ -6,11 +6,27 @@
   body {
     background: linear-gradient(180deg, #f6f9ff, #ffffff);
   }
-  .search-box-wrapper { position: relative; }
+
+  .notify-page {
+    padding-bottom: 40px;
+  }
+
+  .notify-card {
+    border: none;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  }
+
+  .search-box-wrapper {
+    position: relative;
+  }
+
   .search-box {
     border-radius: 10px;
     padding-left: 38px;
   }
+
   .search-icon {
     position: absolute;
     top: 50%;
@@ -18,6 +34,7 @@
     transform: translateY(-50%);
     color: #6c757d;
   }
+
   .suggestion-box {
     position: absolute;
     top: 100%;
@@ -27,63 +44,110 @@
     border: 1px solid #dee2e6;
     border-top: none;
     border-radius: 0 0 10px 10px;
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     max-height: 220px;
     overflow-y: auto;
     display: none;
   }
+
   .suggestion-item {
     padding: 8px 12px;
     cursor: pointer;
     transition: background 0.2s;
   }
+
   .suggestion-item:hover {
     background-color: #eef3ff;
   }
+
   .highlight {
     font-weight: 600;
     color: #4051b5;
   }
+
   .selected-users {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
     margin-top: 8px;
   }
+
   .user-tag {
     background: #5f72ff;
     color: #fff;
     border-radius: 20px;
     padding: 4px 10px;
     font-size: 0.85rem;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
   }
+
   .user-tag i {
     cursor: pointer;
   }
-  .broadcast-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 1rem;
+
+  .target-box {
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px 14px;
+    background: #f8fafc;
   }
-  .fade-in { animation: fadeIn 0.5s ease-in-out; }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
   @keyframes fadeIn {
-    from {opacity: 0; transform: translateY(10px);}
-    to {opacity: 1; transform: translateY(0);}
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  [data-bs-theme="dark"] body,
+  body.dark-mode {
+    background: #0f172a;
+  }
+
+  [data-bs-theme="dark"] .notify-card,
+  body.dark-mode .notify-card {
+    background: #111827;
+    color: #e5e7eb;
+  }
+
+  [data-bs-theme="dark"] .target-box,
+  body.dark-mode .target-box {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  [data-bs-theme="dark"] .suggestion-box,
+  body.dark-mode .suggestion-box {
+    background: #111827;
+    border-color: #374151;
+  }
+
+  [data-bs-theme="dark"] .suggestion-item:hover,
+  body.dark-mode .suggestion-item:hover {
+    background: #1f2937;
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4 fade-in">
-  <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container mt-4 notify-page fade-in">
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     <h4 class="fw-bold text-primary mb-0">
       <i class="bi bi-plus-circle"></i> Gửi thông báo mới
     </h4>
+
     <a href="/admin/notification/list" class="btn btn-outline-secondary">
       <i class="bi bi-arrow-left"></i> Quay lại danh sách
     </a>
@@ -97,25 +161,80 @@
 
   <div class="row g-4">
     <div class="col-lg-7">
-      <div class="card shadow-sm border-0 rounded-4">
+      <div class="card notify-card">
         <div class="card-body">
           <form method="post" action="/admin/notification/create" id="notifyForm">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">🎯 Đối tượng nhận thông báo</label>
 
-            <div class="broadcast-toggle">
-              <input
-                type="checkbox"
-                id="broadcastAll"
-                name="broadcast_all"
-                class="form-check-input"
-                {% if form_data.broadcast_all %}checked{% endif %}
-              >
-              <label for="broadcastAll" class="form-check-label fw-semibold text-danger">
-                📢 Gửi cho tất cả người dùng
-              </label>
+              <div class="target-box">
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="target_mode"
+                    id="targetUsers"
+                    value="users"
+                    {% if form_data.target_mode == 'users' %}checked{% endif %}
+                  >
+                  <label class="form-check-label" for="targetUsers">
+                    Chọn từng người nhận
+                  </label>
+                </div>
+
+                <div class="form-check mb-2">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="target_mode"
+                    id="targetCourse"
+                    value="course"
+                    {% if form_data.target_mode == 'course' %}checked{% endif %}
+                  >
+                  <label class="form-check-label" for="targetCourse">
+                    Gửi theo khóa học
+                  </label>
+                </div>
+
+                <div class="form-check">
+                  <input
+                    class="form-check-input"
+                    type="radio"
+                    name="target_mode"
+                    id="targetAll"
+                    value="all"
+                    {% if form_data.target_mode == 'all' %}checked{% endif %}
+                  >
+                  <label class="form-check-label text-danger fw-semibold" for="targetAll">
+                    Gửi cho tất cả người dùng
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div id="recipientSection">
+            <div id="courseSection" class="mb-3">
+              <label class="form-label fw-semibold">📚 Chọn khóa học</label>
+
+              <select name="course_id" id="courseSelect" class="form-select">
+                <option value="">-- Chọn khóa học --</option>
+                {% for c in courses %}
+                <option
+                  value="{{ c.id }}"
+                  {% if form_data.course_id == c.id %}selected{% endif %}
+                >
+                  {{ c.name }}
+                </option>
+                {% endfor %}
+              </select>
+
+              <small class="text-muted">
+                Thông báo sẽ gửi đến sinh viên đang học khóa này.
+              </small>
+            </div>
+
+            <div id="recipientSection" class="mb-3">
               <label class="form-label fw-semibold">👥 Người nhận</label>
+
               <div class="search-box-wrapper mb-2">
                 <i class="bi bi-search search-icon"></i>
                 <input
@@ -129,10 +248,20 @@
               </div>
 
               <div id="selectedUsers" class="selected-users"></div>
-              <input type="hidden" name="user_ids" id="userIds" value="{{ form_data.user_ids or '' }}">
-              <small class="text-muted">Gõ tên người dùng để tìm và chọn nhiều người.</small>
-              <hr>
+
+              <input
+                type="hidden"
+                name="user_ids"
+                id="userIds"
+                value="{{ form_data.user_ids or '' }}"
+              >
+
+              <small class="text-muted">
+                Gõ tên người dùng để tìm và chọn nhiều người.
+              </small>
             </div>
+
+            <hr>
 
             <div class="mb-3">
               <label class="form-label fw-semibold">📌 Tiêu đề</label>
@@ -146,7 +275,9 @@
                 value="{{ form_data.title or '' }}"
                 required
               >
-              <div class="text-end small text-muted"><span id="titleCount">0</span> / 100</div>
+              <div class="text-end small text-muted">
+                <span id="titleCount">0</span> / 100
+              </div>
             </div>
 
             <div class="mb-3">
@@ -160,7 +291,9 @@
                 placeholder="Nhập nội dung..."
                 required
               >{{ form_data.message or '' }}</textarea>
-              <div class="text-end small text-muted"><span id="messageCount">0</span> / 500</div>
+              <div class="text-end small text-muted">
+                <span id="messageCount">0</span> / 500
+              </div>
             </div>
 
             <div class="text-end">
@@ -174,17 +307,37 @@
     </div>
 
     <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-4">
+      <div class="card notify-card">
         <div class="card-body">
-          <h5 class="fw-bold text-primary"><i class="bi bi-eye me-2"></i> Xem trước</h5>
+          <h5 class="fw-bold text-primary">
+            <i class="bi bi-eye me-2"></i> Xem trước
+          </h5>
+
           <hr>
-          <p><strong>📌 Tiêu đề:</strong> <span id="previewTitle" class="text-dark">—</span></p>
-          <p><strong>💬 Nội dung:</strong></p>
-          <div id="previewMessage" class="border rounded p-2 bg-light small text-dark">—</div>
+
+          <p>
+            <strong>🎯 Đối tượng:</strong>
+            <span id="previewTarget" class="text-muted">—</span>
+          </p>
+
+          <p>
+            <strong>📌 Tiêu đề:</strong>
+            <span id="previewTitle" class="text-dark">—</span>
+          </p>
+
+          <p class="mb-2">
+            <strong>💬 Nội dung:</strong>
+          </p>
+
+          <div id="previewMessage" class="border rounded p-2 bg-light small text-dark">
+            —
+          </div>
+
           <hr>
+
           <p class="small text-muted mb-0">
             <i class="bi bi-info-circle"></i>
-            Nếu bật <strong>Broadcast</strong>, thông báo sẽ gửi đến tất cả người dùng.
+            Có thể gửi cho từng người, theo khóa học hoặc toàn bộ người dùng.
           </p>
         </div>
       </div>
@@ -201,20 +354,37 @@
 </script>
 
 <script>
-const allUsers = JSON.parse(document.getElementById('users-data').textContent);
-const initialSelectedUsers = JSON.parse(document.getElementById('selected-users-data').textContent);
+const allUsers = JSON.parse(document.getElementById('users-data').textContent || '[]');
+const initialSelectedUsers = JSON.parse(document.getElementById('selected-users-data').textContent || '[]');
 
 const userSearch = document.getElementById('userSearch');
 const suggestionBox = document.getElementById('suggestionBox');
 const selectedUsers = document.getElementById('selectedUsers');
 const userIds = document.getElementById('userIds');
-const broadcastAll = document.getElementById('broadcastAll');
+
 const recipientSection = document.getElementById('recipientSection');
+const courseSection = document.getElementById('courseSection');
+const courseSelect = document.getElementById('courseSelect');
+const targetRadios = document.querySelectorAll('input[name="target_mode"]');
+
+const titleInput = document.getElementById('titleInput');
+const messageInput = document.getElementById('messageInput');
+const titleCount = document.getElementById('titleCount');
+const messageCount = document.getElementById('messageCount');
+const previewTarget = document.getElementById('previewTarget');
+const previewTitle = document.getElementById('previewTitle');
+const previewMessage = document.getElementById('previewMessage');
 
 const selected = new Map();
 
 function escapeRegExp(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = String(text ?? '');
+  return div.innerHTML;
 }
 
 function updateHiddenInput() {
@@ -225,13 +395,22 @@ function createTag(user) {
   const tag = document.createElement('div');
   tag.className = 'user-tag';
   tag.dataset.userId = user.id;
-  tag.innerHTML = `${user.name} <i class="bi bi-x-circle"></i>`;
 
-  tag.querySelector('i').onclick = () => {
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = user.name;
+
+  const removeIcon = document.createElement('i');
+  removeIcon.className = 'bi bi-x-circle';
+
+  removeIcon.onclick = () => {
     selected.delete(user.id);
     tag.remove();
     updateHiddenInput();
+    updatePreview();
   };
+
+  tag.appendChild(nameSpan);
+  tag.appendChild(removeIcon);
 
   return tag;
 }
@@ -246,6 +425,8 @@ function selectUser(user) {
   suggestionBox.style.display = 'none';
   userSearch.value = '';
   userSearch.focus();
+
+  updatePreview();
 }
 
 function renderSuggestions(list, keyword = '') {
@@ -258,20 +439,22 @@ function renderSuggestions(list, keyword = '') {
 
   const safeKeyword = escapeRegExp(keyword);
 
-  list.forEach(u => {
+  list.forEach(user => {
     const item = document.createElement('div');
     item.className = 'suggestion-item';
 
+    const safeName = escapeHtml(user.name);
+
     if (safeKeyword) {
-      item.innerHTML = u.name.replace(
+      item.innerHTML = safeName.replace(
         new RegExp(`(${safeKeyword})`, 'gi'),
         '<span class="highlight">$1</span>'
       );
     } else {
-      item.textContent = u.name;
+      item.textContent = user.name;
     }
 
-    item.onclick = () => selectUser(u);
+    item.onclick = () => selectUser(user);
     suggestionBox.appendChild(item);
   });
 
@@ -285,62 +468,90 @@ function initSelectedUsers() {
       selectedUsers.appendChild(createTag(user));
     }
   });
+
   updateHiddenInput();
 }
 
-userSearch.addEventListener('input', () => {
-  const q = userSearch.value.toLowerCase().trim();
+function getTargetMode() {
+  const checked = document.querySelector('input[name="target_mode"]:checked');
+  return checked ? checked.value : 'users';
+}
 
-  if (!q) {
-    suggestionBox.style.display = 'none';
-    return;
+function updateTargetSections() {
+  const mode = getTargetMode();
+
+  recipientSection.style.display = mode === 'users' ? 'block' : 'none';
+  courseSection.style.display = mode === 'course' ? 'block' : 'none';
+
+  updatePreview();
+}
+
+function getTargetText() {
+  const mode = getTargetMode();
+
+  if (mode === 'all') {
+    return 'Tất cả người dùng';
   }
 
-  const matches = allUsers.filter(u =>
-    u.name.toLowerCase().includes(q) &&
-    !selected.has(u.id)
-  );
-
-  renderSuggestions(matches, q);
-});
-
-userSearch.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const first = suggestionBox.querySelector('.suggestion-item');
-    if (first) first.click();
+  if (mode === 'course') {
+    const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+    return selectedOption && selectedOption.value
+      ? `Khóa học: ${selectedOption.textContent.trim()}`
+      : 'Theo khóa học';
   }
-});
 
-document.addEventListener('click', e => {
-  if (!suggestionBox.contains(e.target) && e.target !== userSearch) {
-    suggestionBox.style.display = 'none';
-  }
-});
-
-broadcastAll.addEventListener('change', function() {
-  recipientSection.style.display = this.checked ? 'none' : 'block';
-});
-
-const titleInput = document.getElementById('titleInput');
-const messageInput = document.getElementById('messageInput');
-const titleCount = document.getElementById('titleCount');
-const messageCount = document.getElementById('messageCount');
-const previewTitle = document.getElementById('previewTitle');
-const previewMessage = document.getElementById('previewMessage');
+  const count = selected.size;
+  return count > 0 ? `${count} người nhận đã chọn` : 'Chọn từng người nhận';
+}
 
 function updatePreview() {
+  previewTarget.textContent = getTargetText();
   previewTitle.textContent = titleInput.value || '—';
   previewMessage.textContent = messageInput.value || '—';
   titleCount.textContent = titleInput.value.length;
   messageCount.textContent = messageInput.value.length;
 }
 
-initSelectedUsers();
-recipientSection.style.display = broadcastAll.checked ? 'none' : 'block';
-updatePreview();
+userSearch.addEventListener('input', () => {
+  const keyword = userSearch.value.toLowerCase().trim();
 
+  if (!keyword) {
+    suggestionBox.style.display = 'none';
+    return;
+  }
+
+  const matches = allUsers.filter(user =>
+    String(user.name || '').toLowerCase().includes(keyword) &&
+    !selected.has(user.id)
+  );
+
+  renderSuggestions(matches, keyword);
+});
+
+userSearch.addEventListener('keydown', event => {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    const first = suggestionBox.querySelector('.suggestion-item');
+    if (first) first.click();
+  }
+});
+
+document.addEventListener('click', event => {
+  if (!suggestionBox.contains(event.target) && event.target !== userSearch) {
+    suggestionBox.style.display = 'none';
+  }
+});
+
+targetRadios.forEach(radio => {
+  radio.addEventListener('change', updateTargetSections);
+});
+
+courseSelect.addEventListener('change', updatePreview);
 titleInput.addEventListener('input', updatePreview);
 messageInput.addEventListener('input', updatePreview);
+
+initSelectedUsers();
+updateTargetSections();
+updatePreview();
 </script>
 {% endblock %}
